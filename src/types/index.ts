@@ -47,6 +47,39 @@ export interface Booking {
   confirmedAt?: string;
   declinedAt?: string;
   cancelledAt?: string;
+  conversation?: Conversation;
+}
+
+export interface Conversation {
+  id: string;
+  bookingId: string;
+  agoraChannelId: string;
+  providerId: string;
+  customerId: string;
+  lastMessageAt?: string;
+  lastMessageText?: string;
+  lastMessageSender?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  
+  // Populated relations
+  booking?: Booking;
+  provider?: User;
+  customer?: User;
+}
+
+export interface ChatMessage {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  content: string;
+  timestamp: string;
+  type: 'text' | 'image' | 'file';
+  
+  // Populated for display
+  senderName?: string;
+  senderAvatar?: string;
 }
 
 export type SlotCategory = 'consultation' | 'coaching' | 'tutoring' | 'fitness' | 'creative' | 'other';
@@ -123,4 +156,21 @@ export interface BookingsState {
   updateBooking: (id: string, updates: Partial<Booking>) => void;
   getUserBookings: (userId: string) => Booking[];
   getProviderRequests: (providerId: string) => Booking[];
+}
+
+export interface ChatState {
+  conversations: Conversation[];
+  activeConversationId: string | null;
+  messages: Record<string, ChatMessage[]>;
+  isConnected: boolean;
+  
+  // Actions
+  setActiveConversation: (id: string | null) => void;
+  addMessage: (conversationId: string, message: ChatMessage) => void;
+  updateLastMessage: (conversationId: string, message: ChatMessage) => void;
+  loadConversations: () => Promise<void>;
+  loadMessages: (conversationId: string) => Promise<void>;
+  sendMessage: (conversationId: string, content: string) => Promise<void>;
+  connectToAgora: () => Promise<void>;
+  disconnectFromAgora: () => void;
 }
