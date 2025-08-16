@@ -1,36 +1,94 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BookMe - Peer-to-Peer Booking Platform
+
+A modern, responsive P2P booking platform where users can both offer their time slots and book from others.
+
+## Features
+
+- **Dual User Roles**: Each user can be both a service provider and a booker
+- **Slot Management**: Create, edit, and manage your available time slots
+- **Service Discovery**: Browse and search available services from other users
+- **Flexible Booking**: Book time slots from other providers
+- **User Profiles**: Complete user profiles with services offered
+- **Real-time Availability**: Live slot availability and booking confirmation
+- **Booking Management**: Track your bookings and slot reservations
+- **Responsive Design**: Works seamlessly on desktop and mobile devices
+
+## Tech Stack
+
+- **Frontend**: HTML5, CSS3, JavaScript (ES6+)
+- **Styling**: Modern CSS with Flexbox/Grid
+- **Build Tools**: Node.js and npm for development
+- **Storage**: Local storage for demo (can be upgraded to backend)
+
+## Project Structure
+
+```
+bookme/
+├── index.html          # Main application page
+├── css/
+│   ├── style.css       # Main styles
+│   └── responsive.css  # Mobile responsiveness
+├── js/
+│   ├── app.js          # Main application logic
+│   ├── users.js        # User management system
+│   ├── slots.js        # Slot creation and management
+│   ├── booking.js      # P2P booking functionality
+│   ├── calendar.js     # Calendar component
+│   └── dashboard.js    # User dashboard
+├── assets/
+│   └── images/         # Project images
+└── package.json        # Project configuration
+```
 
 ## Getting Started
 
-First, run the development server:
+1. **Clone/Setup**: Ensure you're in the project directory
+2. **Install Dependencies**: Run `npm install`
+3. **Start Development**: Run `npm start`
+4. **Open Browser**: Navigate to `http://localhost:3000`
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Usage
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### As a Service Provider:
+1. **Create Profile**: Set up your user profile with services offered
+2. **Create Slots**: Define available time slots with pricing
+3. **Manage Bookings**: View and manage incoming booking requests
+4. **Update Availability**: Modify or delete your available slots
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### As a Booker:
+1. **Browse Services**: Discover available services from other users
+2. **Search & Filter**: Find specific services or time slots
+3. **Book Slots**: Request to book available time slots
+4. **Manage Bookings**: Track your booking requests and confirmations
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Key Workflows
 
-## Learn More
+- **User Registration**: Simple profile creation with service offerings
+- **Slot Creation**: Easy interface to create recurring or one-time slots
+- **Service Discovery**: Browse, search, and filter available services
+- **Booking Flow**: Request slots → Provider approval → Confirmation
+- **Dashboard**: Unified view of your slots offered and bookings made
 
-To learn more about Next.js, take a look at the following resources:
+## Development
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Development Server**: `npm run dev`
+- **Build Production**: `npm run build`
+- **Run Tests**: `npm test`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Data Models
 
-## Deploy on Vercel
+- **Users**: Profile, contact info, services offered, ratings
+- **Slots**: Time, duration, price, description, provider, availability
+- **Bookings**: Slot reference, booker, status, timestamps
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Contributing
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## License
+
+MIT License - feel free to use for personal or commercial projects.
