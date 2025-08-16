@@ -38,8 +38,6 @@ model User {
   bookings    Booking[] @relation("BookingRequester")
   reviews     Review[]  @relation("ReviewAuthor")
   receivedReviews Review[] @relation("ReviewTarget")
-  providerConversations Conversation[] @relation("ConversationProvider")
-  customerConversations Conversation[] @relation("ConversationCustomer")
   
   @@map("users")
 }
@@ -122,7 +120,6 @@ model Booking {
   service       Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
   requester     User     @relation("BookingRequester", fields: [requesterId], references: [id], onDelete: Cascade)
   sessions      BookedSession[]
-  conversation  Conversation?
   
   @@map("bookings")
 }
@@ -146,31 +143,4 @@ model Review {
   target      User     @relation("ReviewTarget", fields: [targetId], references: [id], onDelete: Cascade)
   
   @@map("reviews")
-}
-
-model Conversation {
-  id          String   @id @default(cuid())
-  bookingId   String   @unique  // One conversation per booking
-  agoraChannelId String @unique  // Agora channel identifier
-  
-  // Participants (derived from booking)
-  providerId  String   // Service provider
-  customerId  String   // Service booker
-  
-  // Metadata
-  lastMessageAt DateTime?
-  lastMessageText String?  // For chat list preview
-  lastMessageSender String? // User ID of last message sender
-  isActive    Boolean  @default(true)
-  
-  // Timestamps
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  // Relations
-  booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  provider    User     @relation("ConversationProvider", fields: [providerId], references: [id], onDelete: Cascade)
-  customer    User     @relation("ConversationCustomer", fields: [customerId], references: [id], onDelete: Cascade)
-  
-  @@map("conversations")
 }

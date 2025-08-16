@@ -170,30 +170,6 @@ export default function DashboardPage() {
     }
   };
 
-  const handleOpenChat = async (bookingId: string) => {
-    try {
-      // First, try to get or create the conversation for this booking
-      const response = await fetch(`/api/bookings/${bookingId}/conversation`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ userId: user?.id })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        // Navigate to messages page with the conversation
-        router.push(`/messages?conversationId=${data.conversation.id}`);
-      } else {
-        alert('Failed to open chat. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error opening chat:', error);
-      alert('Failed to open chat. Please try again.');
-    }
-  };
-
   const handleLogout = () => {
     logout();
     router.push('/');
@@ -216,13 +192,6 @@ export default function DashboardPage() {
             </Link>
             
             <div className="flex items-center space-x-4">
-              <Link
-                href="/messages"
-                className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                title="Messages"
-              >
-                <MessageCircle className="w-5 h-5" />
-              </Link>
               <img 
                 src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=3b82f6&color=fff`}
                 alt={user.name}
@@ -314,7 +283,7 @@ export default function DashboardPage() {
               ].map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as typeof activeTab)}
+                  onClick={() => setActiveTab(tab.id as any)}
                   className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                     activeTab === tab.id
                       ? 'border-blue-500 text-blue-600'
@@ -488,18 +457,6 @@ export default function DashboardPage() {
                             </button>
                           </div>
                         )}
-
-                        {booking.status === 'confirmed' && (
-                          <div className="flex gap-3">
-                            <button
-                              onClick={() => handleOpenChat(booking.id)}
-                              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
-                            >
-                              <MessageCircle className="w-4 h-4" />
-                              Message Customer
-                            </button>
-                          </div>
-                        )}
                       </div>
                     ))}
                   </div>
@@ -544,21 +501,9 @@ export default function DashboardPage() {
                           </div>
                         </div>
 
-                        <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+                        <div className="p-4 bg-gray-50 rounded-lg">
                           <p className="text-sm text-gray-700 italic">"{booking.message}"</p>
                         </div>
-
-                        {booking.status === 'confirmed' && (
-                          <div className="flex gap-3">
-                            <button
-                              onClick={() => handleOpenChat(booking.id)}
-                              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
-                            >
-                              <MessageCircle className="w-4 h-4" />
-                              Message Provider
-                            </button>
-                          </div>
-                        )}
                       </div>
                     ))}
                   </div>

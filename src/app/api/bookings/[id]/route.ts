@@ -70,31 +70,9 @@ export async function PATCH(
             rating: true,
             reviewCount: true,
           }
-        },
-        conversation: true
+        }
       }
     });
-
-    // Auto-create conversation when booking is confirmed
-    if (status === 'confirmed' && existingBooking.status !== 'confirmed' && !updatedBooking.conversation) {
-      try {
-        const agoraChannelId = `bookme_${bookingId}`;
-        
-        await prisma.conversation.create({
-          data: {
-            bookingId,
-            agoraChannelId,
-            providerId: updatedBooking.service.provider.id,
-            customerId: updatedBooking.requester.id
-          }
-        });
-        
-        console.log(`Conversation created for booking ${bookingId}`);
-      } catch (conversationError) {
-        console.error('Error creating conversation:', conversationError);
-        // Don't fail the booking update if conversation creation fails
-      }
-    }
 
     return NextResponse.json({ booking: updatedBooking });
   } catch (error) {
