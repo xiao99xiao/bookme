@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 
 export async function GET(req: NextRequest) {
   try {
@@ -7,48 +7,47 @@ export async function GET(req: NextRequest) {
     const userId = searchParams.get('userId');
     const providerId = searchParams.get('providerId');
 
-    let whereClause: any = {};
+    let query = supabase
+      .from('bookings')
+      .select(`
+        *,
+        service:services(
+          *,
+          provider:users(
+            id,
+            display_name,
+            avatar,
+            rating,
+            review_count
+          )
+        ),
+        requester:users(
+          id,
+          display_name,
+          avatar,
+          rating,
+          review_count
+        )
+      `)
+      .order('created_at', { ascending: false });
 
     if (userId) {
-      whereClause.requesterId = userId;
+      query = query.eq('requester_id', userId);
     }
 
     if (providerId) {
-      whereClause.service = {
-        providerId: providerId
-      };
+      query = query.eq('service.provider_id', providerId);
     }
 
-    const bookings = await prisma.booking.findMany({
-      where: whereClause,
-      include: {
-        service: {
-          include: {
-            provider: {
-              select: {
-                id: true,
-                displayName: true,
-                avatar: true,
-                rating: true,
-                reviewCount: true,
-              }
-            }
-          }
-        },
-        requester: {
-          select: {
-            id: true,
-            displayName: true,
-            avatar: true,
-            rating: true,
-            reviewCount: true,
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    });
+    const { data: bookings, error } = await query;
+
+    if (error) {
+      console.error('Supabase error:', error);
+      return NextResponse.json(
+        { error: 'Failed to fetch bookings' },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({ bookings });
   } catch (error) {
@@ -65,18 +64,20 @@ export async function POST(req: NextRequest) {
     const { serviceId, requesterId, message } = await req.json();
 
     // Check if service exists and is available
-    const service = await prisma.service.findUnique({
-      where: { id: serviceId },
-    });
+    const { data: service, error: serviceError } = await supabase
+      .from('services')
+      .select('*')
+      .eq('id', serviceId)
+      .single();
 
-    if (!service) {
+    if (serviceError || !service) {
       return NextResponse.json(
         { error: 'Service not found' },
         { status: 404 }
       );
     }
 
-    if (!service.isActive) {
+    if (!service.is_active) {
       return NextResponse.json(
         { error: 'Service is not available' },
         { status: 400 }
@@ -84,13 +85,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if user already has a pending booking for this service
-    const existingBooking = await prisma.booking.findFirst({
-      where: {
-        serviceId,
-        requesterId,
-        status: 'pending'
-      }
-    });
+    const { data: existingBooking } = await supabase
+      .from('bookings')
+      .select('id')
+      .eq('service_id', serviceId)
+      .eq('requester_id', requesterId)
+      .eq('status', 'pending')
+      .single();
 
     if (existingBooking) {
       return NextResponse.json(
@@ -99,37 +100,42 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const booking = await prisma.booking.create({
-      data: {
-        serviceId,
-        requesterId,
+    const { data: booking, error: bookingError } = await supabase
+      .from('bookings')
+      .insert({
+        service_id: serviceId,
+        requester_id: requesterId,
         message,
-      },
-      include: {
-        service: {
-          include: {
-            provider: {
-              select: {
-                id: true,
-                displayName: true,
-                avatar: true,
-                rating: true,
-                reviewCount: true,
-              }
-            }
-          }
-        },
-        requester: {
-          select: {
-            id: true,
-            displayName: true,
-            avatar: true,
-            rating: true,
-            reviewCount: true,
-          }
-        }
-      }
-    });
+      })
+      .select(`
+        *,
+        service:services(
+          *,
+          provider:users(
+            id,
+            display_name,
+            avatar,
+            rating,
+            review_count
+          )
+        ),
+        requester:users(
+          id,
+          display_name,
+          avatar,
+          rating,
+          review_count
+        )
+      `)
+      .single();
+
+    if (bookingError) {
+      console.error('Supabase error:', bookingError);
+      return NextResponse.json(
+        { error: 'Failed to create booking' },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({ booking }, { status: 201 });
   } catch (error) {

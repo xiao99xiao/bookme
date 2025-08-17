@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id: bookingId } = await params;
@@ -19,11 +19,13 @@ export async function PATCH(
     }
 
     // Check if booking exists
-    const existingBooking = await prisma.booking.findUnique({
-      where: { id: bookingId },
-    });
+    const { data: existingBooking, error: findError } = await supabase
+      .from('bookings')
+      .select('*')
+      .eq('id', bookingId)
+      .single();
 
-    if (!existingBooking) {
+    if (findError || !existingBooking) {
       return NextResponse.json(
         { error: 'Booking not found' },
         { status: 404 }
@@ -31,48 +33,53 @@ export async function PATCH(
     }
 
     // Prepare update data
-    const updateData: any = { status };
+    const updateData: Record<string, unknown> = { status };
     
     // Add timestamp fields based on status
     if (status === 'confirmed') {
-      updateData.confirmedAt = new Date();
+      updateData.confirmed_at = new Date().toISOString();
     } else if (status === 'declined') {
-      updateData.declinedAt = new Date();
+      updateData.declined_at = new Date().toISOString();
     } else if (status === 'cancelled') {
-      updateData.cancelledAt = new Date();
+      updateData.cancelled_at = new Date().toISOString();
     } else if (status === 'completed') {
-      updateData.completedAt = new Date();
+      updateData.completed_at = new Date().toISOString();
     }
 
     // Update the booking
-    const updatedBooking = await prisma.booking.update({
-      where: { id: bookingId },
-      data: updateData,
-      include: {
-        service: {
-          include: {
-            provider: {
-              select: {
-                id: true,
-                displayName: true,
-                avatar: true,
-                rating: true,
-                reviewCount: true,
-              }
-            }
-          }
-        },
-        requester: {
-          select: {
-            id: true,
-            displayName: true,
-            avatar: true,
-            rating: true,
-            reviewCount: true,
-          }
-        }
-      }
-    });
+    const { data: updatedBooking, error: updateError } = await supabase
+      .from('bookings')
+      .update(updateData)
+      .eq('id', bookingId)
+      .select(`
+        *,
+        service:services(
+          *,
+          provider:users(
+            id,
+            display_name,
+            avatar,
+            rating,
+            review_count
+          )
+        ),
+        requester:users(
+          id,
+          display_name,
+          avatar,
+          rating,
+          review_count
+        )
+      `)
+      .single();
+
+    if (updateError) {
+      console.error('Supabase error:', updateError);
+      return NextResponse.json(
+        { error: 'Failed to update booking' },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({ booking: updatedBooking });
   } catch (error) {
@@ -86,17 +93,19 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id: bookingId } = await params;
 
     // Check if booking exists
-    const booking = await prisma.booking.findUnique({
-      where: { id: bookingId },
-    });
+    const { data: booking, error: findError } = await supabase
+      .from('bookings')
+      .select('*')
+      .eq('id', bookingId)
+      .single();
 
-    if (!booking) {
+    if (findError || !booking) {
       return NextResponse.json(
         { error: 'Booking not found' },
         { status: 404 }
@@ -104,9 +113,18 @@ export async function DELETE(
     }
 
     // Delete the booking
-    await prisma.booking.delete({
-      where: { id: bookingId },
-    });
+    const { error: deleteError } = await supabase
+      .from('bookings')
+      .delete()
+      .eq('id', bookingId);
+
+    if (deleteError) {
+      console.error('Supabase error:', deleteError);
+      return NextResponse.json(
+        { error: 'Failed to delete booking' },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({ message: 'Booking deleted successfully' });
   } catch (error) {

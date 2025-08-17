@@ -1,8 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { createClient } from '@supabase/supabase-js';
 
 export async function POST(req: NextRequest) {
   try {
+    // Create Supabase client bypassing RLS for API operations
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
+
     const data = await req.json();
     const { 
       title, 
@@ -24,33 +36,41 @@ export async function POST(req: NextRequest) {
     }
 
     // Create the service
-    const service = await prisma.service.create({
-      data: {
+    const { data: service, error } = await supabase
+      .from('services')
+      .insert({
         title,
         description,
         category,
         duration: parseInt(duration),
         price: parseFloat(price),
         location,
-        providerId,
-        availabilitySlots: typeof availabilitySlots === 'string' ? availabilitySlots : JSON.stringify(availabilitySlots),
-      },
-      include: {
-        provider: {
-          select: {
-            id: true,
-            displayName: true,
-            bio: true,
-            location: true,
-            hobbies: true,
-            interests: true,
-            avatar: true,
-            rating: true,
-            reviewCount: true,
-          },
-        },
-      },
-    });
+        provider_id: providerId,
+        availability_slots: typeof availabilitySlots === 'string' ? availabilitySlots : JSON.stringify(availabilitySlots),
+      })
+      .select(`
+        *,
+        provider:users(
+          id,
+          display_name,
+          bio,
+          location,
+          hobbies,
+          interests,
+          avatar,
+          rating,
+          review_count
+        )
+      `)
+      .single();
+
+    if (error) {
+      console.error('Supabase error:', error);
+      return NextResponse.json(
+        { error: 'Failed to create service' },
+        { status: 500 }
+      );
+    }
 
     // Parse JSON fields for response
     const serviceResponse = {
@@ -60,7 +80,7 @@ export async function POST(req: NextRequest) {
         hobbies: service.provider.hobbies ? JSON.parse(service.provider.hobbies) : [],
         interests: service.provider.interests ? JSON.parse(service.provider.interests) : [],
       },
-      availabilitySlots: JSON.parse(service.availabilitySlots),
+      availabilitySlots: JSON.parse(service.availability_slots),
     };
 
     return NextResponse.json({ service: serviceResponse });
@@ -75,65 +95,91 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
+    // Create Supabase client for API operations
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
+
     const { searchParams } = new URL(req.url);
     const providerId = searchParams.get('providerId');
     const category = searchParams.get('category');
     const location = searchParams.get('location');
     const search = searchParams.get('search');
 
-    const where: any = {
-      isActive: true,
-    };
+    let query = supabase
+      .from('services')
+      .select(`
+        *,
+        provider:users(
+          id,
+          display_name,
+          bio,
+          location,
+          hobbies,
+          interests,
+          avatar,
+          rating,
+          review_count
+        )
+      `)
+      .order('created_at', { ascending: false });
+
+    // Only filter by is_active if this is not a provider's own dashboard request
+    if (!providerId) {
+      query = query.eq('is_active', true);
+    }
 
     if (providerId) {
-      where.providerId = providerId;
+      query = query.eq('provider_id', providerId);
     }
 
     if (category && category !== 'all') {
-      where.category = category;
+      query = query.eq('category', category);
     }
 
     if (location && location !== 'all') {
-      where.location = location;
+      query = query.eq('location', location);
     }
 
     if (search) {
-      where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-      ];
+      query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
     }
 
-    const services = await prisma.service.findMany({
-      where,
-      include: {
-        provider: {
-          select: {
-            id: true,
-            displayName: true,
-            bio: true,
-            location: true,
-            hobbies: true,
-            interests: true,
-            avatar: true,
-            rating: true,
-            reviewCount: true,
-          },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
+    console.log('API Query params:', { providerId, category, location, search });
+    
+    const { data: services, error } = await query;
+
+    console.log('Services query result:', { 
+      servicesCount: services?.length || 0, 
+      error: error?.message,
+      services: services 
     });
 
+    if (error) {
+      console.error('Supabase error:', error);
+      return NextResponse.json(
+        { error: 'Failed to fetch services' },
+        { status: 500 }
+      );
+    }
+
     // Parse JSON fields for response
-    const servicesResponse = services.map(service => ({
+    const servicesResponse = services?.map(service => ({
       ...service,
       provider: {
         ...service.provider,
         hobbies: service.provider.hobbies ? JSON.parse(service.provider.hobbies) : [],
         interests: service.provider.interests ? JSON.parse(service.provider.interests) : [],
       },
-      availabilitySlots: JSON.parse(service.availabilitySlots),
-    }));
+      availabilitySlots: JSON.parse(service.availability_slots),
+    })) || [];
 
     return NextResponse.json({ services: servicesResponse });
   } catch (error) {

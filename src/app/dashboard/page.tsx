@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Calendar, MessageCircle, Star, Clock, MapPin, Edit, Trash2, Check, X, LogOut } from 'lucide-react';
+import { Plus, Calendar, MessageCircle, Star, Clock, MapPin, Edit, Trash2, Check, X, LogOut, ExternalLink, Copy, User } from 'lucide-react';
 import Link from 'next/link';
 
 import { useAuthStore } from '@/stores/auth';
 import { formatDate, formatTime, formatPrice, getSlotCategoryEmoji, getLocationIcon } from '@/lib/utils';
 import type { SlotFormData } from '@/lib/validations';
+import { supabase } from '@/lib/supabase';
 
 interface UserService {
   id: string;
@@ -49,14 +50,22 @@ interface Booking {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, isAuthenticated, logout } = useAuthStore();
+  const { user, isAuthenticated, signOut } = useAuthStore();
   
-  const [activeTab, setActiveTab] = useState<'overview' | 'slots' | 'bookings' | 'requests'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'slots' | 'bookings' | 'requests' | 'profile'>('overview');
   const [userServices, setUserServices] = useState<UserService[]>([]);
   const [incomingRequests, setIncomingRequests] = useState<Booking[]>([]);
   const [myRequests, setMyRequests] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [createLoading, setCreateLoading] = useState(false);
+  
+  // Profile settings state
+  const [profileData, setProfileData] = useState({
+    displayName: '',
+    bio: '',
+    location: '',
+  });
+  const [profileLoading, setProfileLoading] = useState(false);
   
   // Redirect if not authenticated
   useEffect(() => {
@@ -72,11 +81,47 @@ export default function DashboardPage() {
     
     setLoading(true);
     try {
-      // Fetch user's services
-      const servicesResponse = await fetch(`/api/services?providerId=${user.id}`);
-      const servicesData = await servicesResponse.json();
-      if (servicesResponse.ok) {
-        setUserServices(servicesData.services || []);
+      // Fetch user's services directly from Supabase (bypasses API RLS issues)
+      const { data: services, error: servicesError } = await supabase
+        .from('services')
+        .select(`
+          *,
+          provider:users(
+            id,
+            display_name,
+            bio,
+            location,
+            hobbies,
+            interests,
+            avatar,
+            rating,
+            review_count
+          )
+        `)
+        .eq('provider_id', user.id)
+        .order('created_at', { ascending: false });
+
+      console.log('Direct Supabase query result:', { 
+        servicesCount: services?.length || 0, 
+        error: servicesError?.message,
+        services: services 
+      });
+
+      if (!servicesError && services) {
+        // Parse JSON fields for response
+        const parsedServices = services.map(service => ({
+          ...service,
+          provider: {
+            ...service.provider,
+            hobbies: service.provider?.hobbies ? JSON.parse(service.provider.hobbies) : [],
+            interests: service.provider?.interests ? JSON.parse(service.provider.interests) : [],
+          },
+          availabilitySlots: service.availability_slots ? JSON.parse(service.availability_slots) : {},
+        }));
+        
+        setUserServices(parsedServices);
+      } else if (servicesError) {
+        console.error('Error fetching services:', servicesError);
       }
 
       // Fetch incoming booking requests
@@ -102,6 +147,12 @@ export default function DashboardPage() {
   useEffect(() => {
     if (user) {
       fetchUserData();
+      // Initialize profile data from user
+      setProfileData({
+        displayName: user.displayName || '',
+        bio: user.bio || '',
+        location: user.location || '',
+      });
     }
   }, [user]);
 
@@ -151,6 +202,29 @@ export default function DashboardPage() {
     }
   };
 
+  const handleToggleServiceStatus = async (serviceId: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('services')
+        .update({ is_active: !currentStatus })
+        .eq('id', serviceId)
+        .eq('provider_id', user?.id); // Ensure user owns this service
+
+      if (error) {
+        console.error('Supabase error:', error);
+        alert('Failed to update service status');
+        return;
+      }
+
+      // Refresh the data
+      fetchUserData();
+      alert(`Service ${!currentStatus ? 'activated' : 'deactivated'} successfully!`);
+    } catch (error) {
+      console.error('Error toggling service status:', error);
+      alert('Failed to update service status. Please try again.');
+    }
+  };
+
   const handleBookingResponse = async (bookingId: string, status: 'confirmed' | 'declined') => {
     try {
       const response = await fetch(`/api/bookings/${bookingId}`, {
@@ -171,8 +245,68 @@ export default function DashboardPage() {
   };
 
   const handleLogout = () => {
-    logout();
+    signOut();
     router.push('/');
+  };
+
+  const handleCopyProfileLink = async () => {
+    if (!user) return;
+    
+    const profileUrl = `${window.location.origin}/profile/${user.id}`;
+    try {
+      await navigator.clipboard.writeText(profileUrl);
+      alert('Profile link copied to clipboard!');
+    } catch (error) {
+      // Fallback for browsers that don't support clipboard API
+      const textArea = document.createElement('textarea');
+      textArea.value = profileUrl;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      alert('Profile link copied to clipboard!');
+    }
+  };
+
+  const handleViewProfile = () => {
+    if (!user) return;
+    window.open(`/profile/${user.id}`, '_blank');
+  };
+
+  const handleUpdateProfile = async () => {
+    if (!user) return;
+    
+    setProfileLoading(true);
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({
+          display_name: profileData.displayName,
+          bio: profileData.bio,
+          location: profileData.location,
+        })
+        .eq('id', user.id);
+
+      if (error) {
+        console.error('Supabase error:', error);
+        alert('Failed to update profile');
+        return;
+      }
+
+      // Update local auth store
+      await useAuthStore.getState().updateProfile({
+        displayName: profileData.displayName,
+        bio: profileData.bio,
+        location: profileData.location,
+      });
+
+      alert('Profile updated successfully!');
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      alert('Failed to update profile. Please try again.');
+    } finally {
+      setProfileLoading(false);
+    }
   };
 
   if (!isAuthenticated || !user) {
@@ -192,13 +326,20 @@ export default function DashboardPage() {
             </Link>
             
             <div className="flex items-center space-x-4">
+              <button
+                onClick={handleViewProfile}
+                className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                title="View your public profile"
+              >
+                <ExternalLink className="w-5 h-5" />
+              </button>
               <img 
-                src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=3b82f6&color=fff`}
-                alt={user.name}
+                src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName)}&background=3b82f6&color=fff`}
+                alt={user.displayName}
                 className="w-10 h-10 rounded-full border-2 border-gray-200"
               />
               <div className="hidden md:block">
-                <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                <div className="text-sm font-medium text-gray-900">{user.displayName}</div>
                 <div className="text-xs text-gray-500">{user.email}</div>
               </div>
               <button
@@ -216,7 +357,7 @@ export default function DashboardPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome back, {user.name}!</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome back, {user.displayName}!</h1>
           <p className="text-lg text-gray-600">Manage your services and bookings</p>
         </div>
 
@@ -280,6 +421,7 @@ export default function DashboardPage() {
                 { id: 'slots', label: 'My Services' },
                 { id: 'bookings', label: 'Incoming Requests' },
                 { id: 'requests', label: 'My Requests' },
+                { id: 'profile', label: 'Profile Settings' },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -299,6 +441,42 @@ export default function DashboardPage() {
           <div className="p-6">
             {activeTab === 'overview' && (
               <div className="space-y-6">
+                {/* Profile Section */}
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-200">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center">
+                      <div className="p-2 bg-blue-100 rounded-lg mr-4">
+                        <User className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">Your Public Profile</h3>
+                        <p className="text-gray-600 text-sm">Share your profile link with potential clients</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleViewProfile}
+                        className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                      >
+                        <ExternalLink className="w-4 h-4 mr-1" />
+                        Preview
+                      </button>
+                      <button
+                        onClick={handleCopyProfileLink}
+                        className="flex items-center px-3 py-2 bg-white text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors text-sm"
+                      >
+                        <Copy className="w-4 h-4 mr-1" />
+                        Copy Link
+                      </button>
+                    </div>
+                  </div>
+                  <div className="bg-white rounded-lg p-3 border border-blue-200">
+                    <code className="text-sm text-gray-600 break-all">
+                      {typeof window !== 'undefined' ? `${window.location.origin}/profile/${user.id}` : `/profile/${user.id}`}
+                    </code>
+                  </div>
+                </div>
+
                 <div className="text-center py-12">
                   <div className="text-6xl mb-4">👋</div>
                   <h3 className="text-2xl font-semibold text-gray-900 mb-2">Dashboard Overview</h3>
@@ -355,12 +533,39 @@ export default function DashboardPage() {
                         <div className="flex items-start justify-between mb-4">
                           <div className="flex items-center">
                             <span className="text-2xl mr-3">{getSlotCategoryEmoji(service.category)}</span>
-                            <div>
-                              <h4 className="font-semibold text-lg text-gray-900">{service.title}</h4>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h4 className="font-semibold text-lg text-gray-900">{service.title}</h4>
+                                <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                                  service.is_active 
+                                    ? 'bg-green-100 text-green-800' 
+                                    : 'bg-red-100 text-red-800'
+                                }`}>
+                                  {service.is_active ? 'Active' : 'Inactive'}
+                                </span>
+                              </div>
                               <p className="text-gray-600 text-sm">{service.description}</p>
                             </div>
                           </div>
                           <div className="flex gap-2">
+                            <button
+                              onClick={() => handleToggleServiceStatus(service.id, service.is_active)}
+                              className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
+                                service.is_active 
+                                  ? 'bg-green-100 text-green-700 hover:bg-red-100 hover:text-red-700' 
+                                  : 'bg-red-100 text-red-700 hover:bg-green-100 hover:text-green-700'
+                              }`}
+                              title={service.is_active ? 'Click to deactivate service' : 'Click to activate service'}
+                            >
+                              {service.is_active ? 'Deactivate' : 'Activate'}
+                            </button>
+                            <button
+                              onClick={() => router.push(`/edit-service/${service.id}`)}
+                              className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                              title="Edit service"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
                             <button
                               onClick={() => handleDeleteService(service.id)}
                               className="p-1 text-gray-400 hover:text-red-600 transition-colors"
@@ -388,13 +593,6 @@ export default function DashboardPage() {
 
                         <div className="flex items-center justify-between">
                           <span className="text-lg font-semibold text-green-600">{formatPrice(service.price)}</span>
-                          <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-                            service.isActive 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {service.isActive ? 'Active' : 'Inactive'}
-                          </div>
                         </div>
                       </div>
                     ))}
@@ -508,6 +706,132 @@ export default function DashboardPage() {
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {activeTab === 'profile' && (
+              <div className="space-y-6">
+                <h3 className="text-xl font-semibold text-gray-900">Profile Settings</h3>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* Profile Form */}
+                  <div className="space-y-6">
+                    {/* Display Name */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Display Name
+                      </label>
+                      <input
+                        type="text"
+                        value={profileData.displayName}
+                        onChange={(e) => setProfileData(prev => ({ ...prev, displayName: e.target.value }))}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Your display name"
+                      />
+                    </div>
+
+                    {/* Location */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Location
+                      </label>
+                      <input
+                        type="text"
+                        value={profileData.location}
+                        onChange={(e) => setProfileData(prev => ({ ...prev, location: e.target.value }))}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="e.g., San Francisco, CA"
+                      />
+                    </div>
+
+                    {/* Bio with Markdown Support */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        About Me (Bio)
+                      </label>
+                      <textarea
+                        value={profileData.bio}
+                        onChange={(e) => setProfileData(prev => ({ ...prev, bio: e.target.value }))}
+                        rows={8}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none font-mono text-sm"
+                        placeholder="Tell potential clients about yourself...
+
+You can use basic markdown:
+- **bold text**
+- *italic text*
+- [link text](https://example.com)
+- ## Headings
+- - Bullet points"
+                        maxLength={1000}
+                      />
+                      <div className="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>Supports basic Markdown formatting</span>
+                        <span>{profileData.bio.length}/1000</span>
+                      </div>
+                    </div>
+
+                    {/* Save Button */}
+                    <div className="flex justify-end">
+                      <button
+                        onClick={handleUpdateProfile}
+                        disabled={profileLoading}
+                        className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {profileLoading ? 'Saving...' : 'Save Profile'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Preview */}
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Preview</h4>
+                    <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                      <div className="flex items-center gap-4 mb-4">
+                        <img 
+                          src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(profileData.displayName || user.displayName)}&background=3b82f6&color=fff`}
+                          alt={profileData.displayName || user.displayName}
+                          className="w-16 h-16 rounded-full border-4 border-gray-100"
+                        />
+                        <div>
+                          <h3 className="text-xl font-bold text-gray-900">
+                            {profileData.displayName || 'Your Name'}
+                          </h3>
+                          {profileData.location && (
+                            <div className="flex items-center text-gray-600 text-sm">
+                              <MapPin className="h-4 w-4 mr-1" />
+                              {profileData.location}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {profileData.bio && (
+                        <div>
+                          <h4 className="font-semibold text-gray-900 mb-2">About</h4>
+                          <div className="text-gray-700 text-sm space-y-2">
+                            {profileData.bio.split('\n').map((line, index) => {
+                              // Basic markdown rendering
+                              let processedLine = line
+                                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                                .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">$1</a>')
+                                .replace(/^## (.+)$/g, '<h3 class="text-lg font-semibold text-gray-900 mt-3 mb-1">$1</h3>')
+                                .replace(/^- (.+)$/g, '<li class="ml-4">• $1</li>');
+                              
+                              return (
+                                <div key={index} dangerouslySetInnerHTML={{ __html: processedLine || '<br>' }} />
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="mt-4 text-sm text-gray-500">
+                      <p>This is how your profile will appear to potential clients.</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>

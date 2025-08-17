@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth';
 import { getSlotCategoryEmoji, getLocationIcon } from '@/lib/utils';
 import WeeklyScheduleGrid from '@/components/WeeklyScheduleGrid';
+import { supabase } from '@/lib/supabase';
 
 // Updated schema for service with weekly schedule
 const serviceSchema = z.object({
@@ -69,25 +70,33 @@ export default function CreateServicePage() {
     
     setIsLoading(true);
     try {
-      const response = await fetch('/api/services', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...data,
-          providerId: user.id,
-          availabilitySlots: JSON.stringify(availabilitySlots),
-        }),
-      });
+      // Create service directly with Supabase
+      const { data: service, error } = await supabase
+        .from('services')
+        .insert({
+          title: data.title,
+          description: data.description,
+          category: data.category,
+          duration: data.duration,
+          price: data.price,
+          location: data.location,
+          provider_id: user.id,
+          availability_slots: JSON.stringify(availabilitySlots),
+          is_active: true,
+        })
+        .select()
+        .single();
 
-      const result = await response.json();
-
-      if (response.ok) {
-        form.reset();
-        setAvailabilitySlots({});
-        router.push('/dashboard');
-      } else {
-        alert(result.error || 'Failed to create service');
+      if (error) {
+        console.error('Supabase error:', error);
+        alert(error.message || 'Failed to create service');
+        return;
       }
+
+      // Success!
+      form.reset();
+      setAvailabilitySlots({});
+      router.push('/dashboard');
     } catch (error) {
       console.error('Failed to create service:', error);
       alert('Failed to create service. Please try again.');
