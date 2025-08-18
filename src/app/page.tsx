@@ -5,39 +5,57 @@ import Link from 'next/link';
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="page-layout">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+      <header style={{ background: 'var(--bg-primary)', borderBottom: '1px solid var(--border-light)' }}>
+        <div className="container-wide" style={{ padding: 'var(--space-lg) var(--space-lg)' }}>
+          <div className="flex-between">
             {/* Logo */}
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            <Link href="/" style={{ textDecoration: 'none' }}>
+              <h1 style={{ 
+                fontSize: '1.5rem', 
+                fontWeight: '700', 
+                color: 'var(--text-primary)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--space-sm)'
+              }}>
                 BookMe
+                <span style={{ color: '#22c55e', fontSize: '1.25rem' }}>●</span>
               </h1>
-            </div>
+            </Link>
 
             {/* Navigation */}
-            <nav className="hidden md:flex items-center space-x-8">
+            <nav className="hidden md:flex items-center" style={{ gap: 'var(--space-xl)' }}>
               <Link 
                 href="/discover" 
-                className="text-gray-600 hover:text-blue-600 font-medium transition-colors duration-200 relative group"
+                className="text-muted"
+                style={{ 
+                  fontWeight: '500',
+                  transition: 'color 0.2s ease'
+                }}
               >
                 Discover
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-200 group-hover:w-full"></span>
               </Link>
               <Link 
                 href="/dashboard" 
-                className="text-gray-600 hover:text-blue-600 font-medium transition-colors duration-200 relative group"
+                className="text-muted"
+                style={{ 
+                  fontWeight: '500',
+                  transition: 'color 0.2s ease'
+                }}
               >
                 Dashboard
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-200 group-hover:w-full"></span>
               </Link>
             </nav>
 
             {/* Auth Button */}
-            <Link href="/auth">
-              <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 hover:shadow-lg">
+            <Link href="/auth" style={{ textDecoration: 'none' }}>
+              <button className="btn-primary" style={{ 
+                width: 'auto', 
+                minWidth: '120px',
+                padding: '0.75rem 1.5rem' 
+              }}>
                 Sign In
               </button>
             </Link>
@@ -46,37 +64,34 @@ export default function Home() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%233b82f6' fill-opacity='0.4'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }} />
-        </div>
-        
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
+      <section style={{ padding: 'var(--space-3xl) var(--space-lg)' }}>
+        <div className="container-wide">
           <div className="text-center">
-            <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-6">
-              Connect, Share,{' '}
-              <span className="bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
-                Book Time
-              </span>
-            </h2>
-            <p className="text-xl md:text-2xl text-gray-600 mb-10 max-w-3xl mx-auto leading-relaxed">
-              Join the peer-to-peer booking community where everyone can offer and book services
+            <h1 style={{ 
+              fontSize: 'clamp(2.5rem, 5vw, 3.5rem)', 
+              fontWeight: '700', 
+              lineHeight: '1.1'
+            }}>
+              Welcome back
+            </h1>
+            <p className="text-large text-muted" style={{ 
+              margin: 'var(--space-lg) auto var(--space-3xl)',
+              maxWidth: '500px'
+            }}>
+              Connect with your community through BookMe
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Link href="/discover">
-                <button className="bg-white text-blue-600 px-8 py-4 rounded-2xl font-semibold text-lg hover:bg-gray-50 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl border border-gray-200 flex items-center gap-2">
-                  <Search className="w-5 h-5" />
+            <div className="space-y-lg" style={{ maxWidth: '300px', margin: '0 auto' }}>
+              <Link href="/discover" style={{ textDecoration: 'none' }}>
+                <button className="btn-primary">
+                  <Search size={20} />
                   Browse Services
                 </button>
               </Link>
-              <Link href="/dashboard">
-                <button className="bg-transparent text-gray-700 px-8 py-4 rounded-2xl font-semibold text-lg border-2 border-gray-300 hover:bg-gray-900 hover:text-white hover:border-gray-900 transition-all duration-300 transform hover:scale-105 flex items-center gap-2">
-                  <Plus className="w-5 h-5" />
-                  Start Offering
+              <Link href="/auth" style={{ textDecoration: 'none' }}>
+                <button className="btn-secondary">
+                  <Plus size={20} />
+                  Get Started
                 </button>
               </Link>
             </div>
@@ -85,48 +100,79 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h3 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-              How BookMe Works
-            </h3>
-            <p className="text-lg text-gray-600">
+      <section style={{ 
+        padding: 'var(--space-3xl) var(--space-lg)', 
+        background: 'var(--bg-secondary)' 
+      }}>
+        <div className="container-wide">
+          <div className="text-center">
+            <h2>How BookMe Works</h2>
+            <p className="text-large text-muted" style={{ 
+              margin: 'var(--space-lg) auto var(--space-2xl)',
+              maxWidth: '500px'
+            }}>
               Simple steps to connect with your community
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid-responsive">
             {/* Feature 1 */}
-            <div className="text-center p-6">
-              <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Calendar className="w-8 h-8 text-blue-600" />
+            <div className="card text-center">
+              <div style={{ 
+                width: '60px', 
+                height: '60px', 
+                borderRadius: 'var(--radius-md)', 
+                background: 'var(--accent-light)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto var(--space-lg)'
+              }}>
+                <Calendar size={24} style={{ color: 'var(--accent-primary)' }} />
               </div>
-              <h4 className="text-xl font-semibold text-gray-900 mb-2">Create Your Services</h4>
-              <p className="text-gray-600">
-                Set up time slots for services you want to offer. Define your expertise, availability, and pricing.
+              <h3>Create Services</h3>
+              <p className="text-muted" style={{ marginTop: 'var(--space-md)' }}>
+                Set up time slots for services you want to offer. Define your expertise and availability.
               </p>
             </div>
 
             {/* Feature 2 */}
-            <div className="text-center p-6">
-              <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="w-8 h-8 text-green-600" />
+            <div className="card text-center">
+              <div style={{ 
+                width: '60px', 
+                height: '60px', 
+                borderRadius: 'var(--radius-md)', 
+                background: 'var(--accent-light)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto var(--space-lg)'
+              }}>
+                <Users size={24} style={{ color: 'var(--accent-primary)' }} />
               </div>
-              <h4 className="text-xl font-semibold text-gray-900 mb-2">Connect & Book</h4>
-              <p className="text-gray-600">
-                Browse available services from community members and send booking requests with personalized messages.
+              <h3>Connect & Book</h3>
+              <p className="text-muted" style={{ marginTop: 'var(--space-md)' }}>
+                Browse available services and send booking requests with personalized messages.
               </p>
             </div>
 
             {/* Feature 3 */}
-            <div className="text-center p-6">
-              <div className="bg-yellow-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Star className="w-8 h-8 text-yellow-600" />
+            <div className="card text-center">
+              <div style={{ 
+                width: '60px', 
+                height: '60px', 
+                borderRadius: 'var(--radius-md)', 
+                background: 'var(--accent-light)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto var(--space-lg)'
+              }}>
+                <Star size={24} style={{ color: 'var(--accent-primary)' }} />
               </div>
-              <h4 className="text-xl font-semibold text-gray-900 mb-2">Build Your Reputation</h4>
-              <p className="text-gray-600">
-                Complete services, receive reviews, and build your reputation in the community ecosystem.
+              <h3>Build Reputation</h3>
+              <p className="text-muted" style={{ marginTop: 'var(--space-md)' }}>
+                Complete services, receive reviews, and build your reputation in the community.
               </p>
             </div>
           </div>
@@ -134,42 +180,51 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h3 className="text-3xl lg:text-4xl font-bold mb-4">
-            Ready to Start Your Journey?
-          </h3>
-          <p className="text-xl text-blue-100 mb-8">
+      <section style={{ padding: 'var(--space-3xl) var(--space-lg)' }}>
+        <div className="container-wide text-center">
+          <h2>Ready to Get Started?</h2>
+          <p className="text-large text-muted" style={{ 
+            margin: 'var(--space-lg) auto var(--space-2xl)',
+            maxWidth: '500px'
+          }}>
             Join thousands of community members sharing their time and expertise
           </p>
-          <Link href="/auth">
-            <button className="bg-white text-blue-600 px-8 py-4 rounded-2xl font-semibold text-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl inline-flex items-center gap-2">
-              Get Started Today
-              <ArrowRight className="w-5 h-5" />
-            </button>
-          </Link>
+          <div style={{ maxWidth: '300px', margin: '0 auto' }}>
+            <Link href="/auth" style={{ textDecoration: 'none' }}>
+              <button className="btn-primary">
+                Get Started Today
+                <ArrowRight size={20} />
+              </button>
+            </Link>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <footer style={{ 
+        padding: 'var(--space-2xl) var(--space-lg)',
+        background: 'var(--bg-secondary)',
+        borderTop: '1px solid var(--border-light)'
+      }}>
+        <div className="container-wide">
           <div className="text-center">
-            <h3 className="text-2xl font-bold mb-2">BookMe</h3>
-            <p className="text-gray-400 mb-6">Connecting people through shared time and expertise</p>
-            <div className="flex justify-center space-x-6">
-              <a href="#" className="text-gray-400 hover:text-white transition-colors duration-200">
-                Privacy Policy
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors duration-200">
-                Terms of Service
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors duration-200">
-                Contact
-              </a>
+            <h3 style={{ color: 'var(--text-primary)' }}>BookMe</h3>
+            <p className="text-muted" style={{ margin: 'var(--space-lg) 0' }}>
+              Connecting people through shared time and expertise
+            </p>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              gap: 'var(--space-xl)',
+              flexWrap: 'wrap',
+              margin: 'var(--space-lg) 0'
+            }}>
+              <a href="#" className="link-purple">Privacy Policy</a>
+              <a href="#" className="link-purple">Terms of Service</a>
+              <a href="#" className="link-purple">Contact</a>
             </div>
-            <p className="text-sm text-gray-500 mt-6">
-              © 2024 BookMe P2P Platform. All rights reserved.
+            <p className="text-small">
+              © 2024 BookMe Platform. All rights reserved.
             </p>
           </div>
         </div>

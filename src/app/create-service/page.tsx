@@ -3,14 +3,15 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeft, Clock, DollarSign, MapPin, Tag, FileText } from 'lucide-react';
+import { Clock, DollarSign, MapPin, Tag, FileText } from 'lucide-react';
 import { z } from 'zod';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth';
 import { getSlotCategoryEmoji, getLocationIcon } from '@/lib/utils';
 import WeeklyScheduleGrid from '@/components/WeeklyScheduleGrid';
 import { supabase } from '@/lib/supabase';
+import { Page, FormField, Input, TextArea, Select, Button, Card, CardHeader, CardContent } from '@/components/ui';
+import Link from 'next/link';
 
 // Updated schema for service with weekly schedule
 const serviceSchema = z.object({
@@ -121,116 +122,93 @@ export default function CreateServicePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Link href="/dashboard" className="flex items-center text-gray-600 hover:text-blue-600 mr-4">
-                <ArrowLeft className="w-5 h-5 mr-2" />
-                Back to Dashboard
-              </Link>
-              <h1 className="text-2xl font-bold text-gray-900">Create New Service</h1>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <Page 
+      title="Create New Service" 
+      backUrl="/dashboard" 
+      backLabel="Back to Dashboard"
+      maxWidth="xl"
+    >
         <form onSubmit={form.handleSubmit(handleSubmit)}>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid-responsive">
             {/* Left Side - Basic Info */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6">Service Details</h3>
+            <Card>
+              <CardHeader title="Service Details" />
               
-              <div className="space-y-6">
+              <CardContent spacing="xl">
                 {/* Service Title */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Tag className="inline w-4 h-4 mr-1" />
-                    Service Title
-                  </label>
-                  <input
+                <FormField 
+                  label="Service Title" 
+                  icon={<Tag size={16} />}
+                  error={form.formState.errors.title?.message}
+                >
+                  <Input
                     {...form.register('title')}
                     type="text"
                     placeholder="e.g., JavaScript Programming Fundamentals"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    error={!!form.formState.errors.title}
                   />
-                  {form.formState.errors.title && (
-                    <p className="mt-1 text-sm text-red-600">{form.formState.errors.title.message}</p>
-                  )}
-                </div>
+                </FormField>
 
                 {/* Description */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <FileText className="inline w-4 h-4 mr-1" />
-                    Description
-                  </label>
-                  <textarea
+                <FormField 
+                  label="Description" 
+                  icon={<FileText size={16} />}
+                  error={form.formState.errors.description?.message}
+                >
+                  <TextArea
                     {...form.register('description')}
                     rows={4}
                     placeholder="Describe what you'll cover, who it's for, and what participants will learn..."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                    error={!!form.formState.errors.description}
                   />
-                  {form.formState.errors.description && (
-                    <p className="mt-1 text-sm text-red-600">{form.formState.errors.description.message}</p>
-                  )}
-                </div>
+                </FormField>
 
                 {/* Category & Location */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Category
-                    </label>
-                    <select
+                <div className="grid-2">
+                  <FormField 
+                    label="Category"
+                    error={form.formState.errors.category?.message}
+                  >
+                    <Select
                       {...form.register('category')}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white"
+                      error={!!form.formState.errors.category}
                     >
                       {categories.map((category) => (
                         <option key={category.value} value={category.value}>
                           {category.emoji} {category.label}
                         </option>
                       ))}
-                    </select>
-                    {form.formState.errors.category && (
-                      <p className="mt-1 text-sm text-red-600">{form.formState.errors.category.message}</p>
-                    )}
-                  </div>
+                    </Select>
+                  </FormField>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <MapPin className="inline w-4 h-4 mr-1" />
-                      Location Type
-                    </label>
-                    <select
+                  <FormField 
+                    label="Location Type" 
+                    icon={<MapPin size={16} />}
+                    error={form.formState.errors.location?.message}
+                  >
+                    <Select
                       {...form.register('location')}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white"
+                      error={!!form.formState.errors.location}
                     >
                       {locations.map((location) => (
                         <option key={location.value} value={location.value}>
                           {location.icon} {location.label}
                         </option>
                       ))}
-                    </select>
-                    {form.formState.errors.location && (
-                      <p className="mt-1 text-sm text-red-600">{form.formState.errors.location.message}</p>
-                    )}
-                  </div>
+                    </Select>
+                  </FormField>
                 </div>
 
                 {/* Duration & Price */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <Clock className="inline w-4 h-4 mr-1" />
-                      Session Duration
-                    </label>
-                    <select
+                <div className="grid-2">
+                  <FormField 
+                    label="Session Duration" 
+                    icon={<Clock size={16} />}
+                    error={form.formState.errors.duration?.message}
+                  >
+                    <Select
                       {...form.register('duration', { valueAsNumber: true })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white"
+                      error={!!form.formState.errors.duration}
                     >
                       <option value={15}>15 minutes</option>
                       <option value={30}>30 minutes</option>
@@ -240,83 +218,81 @@ export default function CreateServicePage() {
                       <option value={120}>2 hours</option>
                       <option value={180}>3 hours</option>
                       <option value={240}>4 hours</option>
-                    </select>
-                    {form.formState.errors.duration && (
-                      <p className="mt-1 text-sm text-red-600">{form.formState.errors.duration.message}</p>
-                    )}
-                  </div>
+                    </Select>
+                  </FormField>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <DollarSign className="inline w-4 h-4 mr-1" />
-                      Price per Session
-                    </label>
-                    <input
+                  <FormField 
+                    label="Price per Session" 
+                    icon={<DollarSign size={16} />}
+                    error={form.formState.errors.price?.message}
+                  >
+                    <Input
                       {...form.register('price', { valueAsNumber: true })}
                       type="number"
                       min="0"
                       max="10000"
                       placeholder="50.00"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      error={!!form.formState.errors.price}
                     />
-                    {form.formState.errors.price && (
-                      <p className="mt-1 text-sm text-red-600">{form.formState.errors.price.message}</p>
-                    )}
-                  </div>
+                  </FormField>
                 </div>
 
                 {/* Preview */}
                 {form.watch('title') && (
-                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                    <h3 className="text-sm font-medium text-gray-700 mb-2">Preview:</h3>
-                    <div className="bg-white rounded-lg p-4 border border-gray-200">
-                      <div className="flex items-center mb-2">
-                        <span className="text-xl mr-2">{getSlotCategoryEmoji(form.watch('category'))}</span>
-                        <h4 className="font-semibold text-gray-900">{form.watch('title')}</h4>
+                  <div style={{ background: 'var(--bg-secondary)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-lg)', border: '1px solid var(--border-light)' }}>
+                    <h3 style={{ fontSize: '0.875rem', fontWeight: '500', color: 'var(--text-secondary)', marginBottom: 'var(--space-sm)' }}>Preview:</h3>
+                    <div className="card" style={{ background: 'var(--bg-primary)', padding: 'var(--space-lg)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 'var(--space-sm)' }}>
+                        <span style={{ fontSize: '1.25rem', marginRight: 'var(--space-sm)' }}>{getSlotCategoryEmoji(form.watch('category'))}</span>
+                        <h4 style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{form.watch('title')}</h4>
                       </div>
-                      <p className="text-sm text-gray-600 mb-2">{form.watch('description')}</p>
-                      <div className="flex items-center justify-between text-xs text-gray-500">
+                      <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: 'var(--space-sm)' }}>{form.watch('description')}</p>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                         <span>{form.watch('duration')} min • {getLocationIcon(form.watch('location'))} {form.watch('location')}</span>
-                        <span className="font-semibold text-green-600">${form.watch('price')}</span>
+                        <span style={{ fontWeight: '600', color: 'var(--accent-primary)' }}>${form.watch('price')}</span>
                       </div>
                       {getTotalSlots() > 0 && (
-                        <div className="mt-2 text-xs text-blue-600">
+                        <div style={{ marginTop: 'var(--space-sm)', fontSize: '0.75rem', color: 'var(--accent-primary)' }}>
                           {getTotalSlots()} availability slots selected
                         </div>
                       )}
                     </div>
                   </div>
                 )}
-              </div>
-            </div>
+              </CardContent>
+            </Card>
 
             {/* Right Side - Availability Schedule */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 h-fit">
-              <WeeklyScheduleGrid
-                selectedSlots={availabilitySlots}
-                onSlotsChange={setAvailabilitySlots}
-              />
-            </div>
+            <Card style={{ height: 'fit-content' }}>
+              <CardHeader title="Availability Schedule" />
+              <CardContent>
+                <WeeklyScheduleGrid
+                  selectedSlots={availabilitySlots}
+                  onSlotsChange={setAvailabilitySlots}
+                />
+              </CardContent>
+            </Card>
           </div>
 
           {/* Form Actions */}
-          <div className="flex gap-4 pt-8 mt-8">
+          <div style={{ display: 'flex', gap: 'var(--space-lg)', paddingTop: 'var(--space-2xl)', marginTop: 'var(--space-2xl)', borderTop: '1px solid var(--border-light)' }}>
             <Link
               href="/dashboard"
-              className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 px-6 rounded-xl font-medium transition-colors text-center"
+              className="btn-secondary"
+              style={{ flex: '1', textAlign: 'center', textDecoration: 'none' }}
             >
               Cancel
             </Link>
-            <button
+            <Button
               type="submit"
               disabled={isLoading || !form.formState.isValid || getTotalSlots() === 0}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-3 px-6 rounded-xl font-medium transition-colors"
+              loading={isLoading}
+              style={{ flex: '1' }}
             >
               {isLoading ? 'Creating...' : `Create Service (${getTotalSlots()} slots)`}
-            </button>
+            </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </Page>
   );
 }

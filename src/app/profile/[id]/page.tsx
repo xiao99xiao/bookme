@@ -169,18 +169,29 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      <div className="page-layout flex-center">
+        <div className="text-center">
+          <div style={{ 
+            width: '32px', 
+            height: '32px', 
+            border: '3px solid var(--border-light)', 
+            borderTop: '3px solid var(--accent-primary)',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto var(--space-md)'
+          }}></div>
+          <p className="text-muted">Loading profile...</p>
+        </div>
       </div>
     );
   }
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="page-layout flex-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Profile Not Found</h1>
-          <Link href="/discover" className="text-blue-600 hover:text-blue-700">
+          <h1 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: 'var(--space-lg)' }}>Profile Not Found</h1>
+          <Link href="/discover" className="link-purple">
             ← Back to Discover
           </Link>
         </div>
@@ -189,80 +200,122 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="page-layout">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link href="/discover" className="flex items-center text-gray-600 hover:text-gray-900 transition-colors">
-              <ArrowLeft className="w-5 h-5 mr-2" />
+      <header style={{ background: 'var(--bg-primary)', borderBottom: '1px solid var(--border-light)' }}>
+        <div className="container-wide" style={{ padding: 'var(--space-lg) var(--space-lg)' }}>
+          <div className="flex-between">
+            <Link href="/discover" style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              textDecoration: 'none',
+              color: 'var(--text-secondary)',
+              transition: 'color 0.2s ease'
+            }}>
+              <ArrowLeft size={20} style={{ marginRight: 'var(--space-sm)' }} />
               Back to Discover
             </Link>
-            <Link href="/" className="flex items-center">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            <Link href="/" style={{ textDecoration: 'none' }}>
+              <h1 style={{ 
+                fontSize: '1.5rem', 
+                fontWeight: '700', 
+                color: 'var(--text-primary)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--space-sm)'
+              }}>
                 BookMe
+                <span style={{ color: '#22c55e', fontSize: '1.25rem' }}>●</span>
               </h1>
             </Link>
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="container-wide" style={{ padding: 'var(--space-2xl) var(--space-lg)' }}>
         {/* Profile Header */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8">
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+        <div className="card-elevated" style={{ marginBottom: 'var(--space-2xl)' }}>
+          <div style={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: 'var(--space-xl)'
+          }}>
             {/* Avatar */}
-            <div className="flex-shrink-0">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xl)' }}>
               {profile.avatar ? (
                 <img
                   src={profile.avatar}
                   alt={profile.display_name}
-                  className="w-24 h-24 rounded-full object-cover border-4 border-gray-100"
+                  style={{
+                    width: '96px',
+                    height: '96px',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    border: '4px solid var(--bg-primary)',
+                    flexShrink: 0
+                  }}
                 />
               ) : (
-                <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center border-4 border-gray-100">
-                  <User className="h-12 w-12 text-gray-500" />
+                <div style={{
+                  width: '96px',
+                  height: '96px',
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--bg-secondary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '4px solid var(--bg-primary)',
+                  flexShrink: 0
+                }}>
+                  <User size={48} style={{ color: 'var(--text-tertiary)' }} />
                 </div>
               )}
             </div>
 
             {/* Profile Info */}
-            <div className="flex-1">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div style={{ flex: 1 }}>
+              <div className="flex-between" style={{ flexWrap: 'wrap', gap: 'var(--space-lg)' }}>
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                  <h1 style={{ fontSize: '2rem', fontWeight: '700', marginBottom: 'var(--space-md)' }}>
                     {profile.display_name}
                   </h1>
                   
-                  <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 'var(--space-lg)', 
+                    fontSize: '0.875rem', 
+                    color: 'var(--text-secondary)',
+                    marginBottom: 'var(--space-md)'
+                  }}>
                     {profile.location && (
-                      <div className="flex items-center">
-                        <MapPin className="h-4 w-4 mr-1" />
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <MapPin size={16} style={{ marginRight: 'var(--space-xs)' }} />
                         {profile.location}
                       </div>
                     )}
                     
-                    <div className="flex items-center">
-                      <Calendar className="h-4 w-4 mr-1" />
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <Calendar size={16} style={{ marginRight: 'var(--space-xs)' }} />
                       Joined {formatJoinDate(profile.created_at)}
                     </div>
                   </div>
 
                   {/* Rating */}
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
                       {[...Array(5)].map((_, i) => (
                         <Star 
                           key={i} 
-                          className={`h-4 w-4 ${
-                            i < Math.floor(profile.rating) 
-                              ? 'text-yellow-400 fill-current' 
-                              : 'text-gray-300'
-                          }`} 
+                          size={16}
+                          style={{
+                            color: i < Math.floor(profile.rating) ? '#fbbf24' : 'var(--border-medium)',
+                            fill: i < Math.floor(profile.rating) ? '#fbbf24' : 'none'
+                          }}
                         />
                       ))}
                     </div>
-                    <span className="text-sm text-gray-600">
+                    <span className="text-small">
                       {profile.rating.toFixed(1)} ({profile.review_count} reviews)
                     </span>
                   </div>
@@ -270,9 +323,13 @@ export default function ProfilePage() {
 
                 {/* Contact Button */}
                 {isAuthenticated && currentUser?.id !== userId && (
-                  <div className="mt-4 sm:mt-0">
-                    <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                      <MessageCircle className="h-4 w-4 mr-2" />
+                  <div>
+                    <button className="btn-primary" style={{ 
+                      width: 'auto', 
+                      padding: 'var(--space-md) var(--space-lg)',
+                      fontSize: '0.875rem'
+                    }}>
+                      <MessageCircle size={16} />
                       Contact
                     </button>
                   </div>
@@ -281,20 +338,20 @@ export default function ProfilePage() {
 
               {/* Bio */}
               {profile.bio && (
-                <div className="mt-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">About</h3>
-                  <div className="text-gray-700 leading-relaxed space-y-2">
+                <div style={{ marginTop: 'var(--space-xl)' }}>
+                  <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: 'var(--space-md)' }}>About</h3>
+                  <div style={{ color: 'var(--text-secondary)', lineHeight: '1.6' }}>
                     {profile.bio.split('\n').map((line, index) => {
                       // Basic markdown rendering
                       let processedLine = line
                         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                         .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">$1</a>')
-                        .replace(/^## (.+)$/g, '<h4 class="text-lg font-semibold text-gray-900 mt-4 mb-2">$1</h4>')
-                        .replace(/^- (.+)$/g, '<li class="ml-4">• $1</li>');
+                        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color: var(--accent-primary); text-decoration: none;" target="_blank" rel="noopener noreferrer">$1</a>')
+                        .replace(/^## (.+)$/g, '<h4 style="font-size: 1.125rem; font-weight: 600; margin-top: var(--space-lg); margin-bottom: var(--space-sm);">$1</h4>')
+                        .replace(/^- (.+)$/g, '<li style="margin-left: var(--space-lg);">• $1</li>');
                       
                       return (
-                        <div key={index} dangerouslySetInnerHTML={{ __html: processedLine || '<br>' }} />
+                        <div key={index} dangerouslySetInnerHTML={{ __html: processedLine || '<br>' }} style={{ marginBottom: 'var(--space-sm)' }} />
                       );
                     })}
                   </div>
@@ -305,56 +362,61 @@ export default function ProfilePage() {
         </div>
 
         {/* Services Section */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Available Services</h2>
-            <span className="text-sm text-gray-500">
+        <div className="card-elevated">
+          <div className="flex-between" style={{ marginBottom: 'var(--space-xl)' }}>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: '700' }}>Available Services</h2>
+            <span className="text-small">
               {services.length} service{services.length !== 1 ? 's' : ''} available
             </span>
           </div>
 
           {services.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-gray-400 mb-4">
-                <Calendar className="h-16 w-16 mx-auto" />
+            <div className="text-center" style={{ padding: 'var(--space-3xl) 0' }}>
+              <div style={{ color: 'var(--text-tertiary)', marginBottom: 'var(--space-lg)' }}>
+                <Calendar size={64} style={{ margin: '0 auto' }} />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Services Available</h3>
-              <p className="text-gray-600">This user hasn't created any services yet.</p>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: 'var(--space-md)' }}>No Services Available</h3>
+              <p className="text-muted">This user hasn't created any services yet.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid-responsive">
               {services.map((service) => (
-                <div key={service.id} className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center">
-                      <span className="text-2xl mr-3">{getSlotCategoryEmoji(service.category)}</span>
+                <div key={service.id} className="card" style={{ transition: 'all 0.2s ease' }}>
+                  <div style={{ marginBottom: 'var(--space-lg)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
+                      <span style={{ fontSize: '1.5rem', marginRight: 'var(--space-md)' }}>{getSlotCategoryEmoji(service.category)}</span>
                       <div>
-                        <h4 className="font-semibold text-lg text-gray-900">{service.title}</h4>
-                        <p className="text-gray-600 text-sm line-clamp-2">{service.description}</p>
+                        <h4 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: 'var(--space-xs)' }}>{service.title}</h4>
+                        <p className="text-muted" style={{ fontSize: '0.875rem', lineHeight: '1.4' }}>{service.description}</p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="space-y-2 text-sm text-gray-600 mb-4">
-                    <div className="flex items-center">
-                      <Clock className="h-4 w-4 mr-2" />
+                  <div className="space-y-sm" style={{ marginBottom: 'var(--space-lg)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                      <Clock size={16} style={{ marginRight: 'var(--space-sm)' }} />
                       <span>{service.duration} minutes</span>
                     </div>
-                    <div className="flex items-center">
-                      <MapPin className="h-4 w-4 mr-2" />
-                      <span className="capitalize">{service.location}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                      <MapPin size={16} style={{ marginRight: 'var(--space-sm)' }} />
+                      <span style={{ textTransform: 'capitalize' }}>{service.location}</span>
                     </div>
-                    <div className="flex items-center">
-                      <Tag className="h-4 w-4 mr-2" />
-                      <span className="capitalize">{service.category}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                      <Tag size={16} style={{ marginRight: 'var(--space-sm)' }} />
+                      <span style={{ textTransform: 'capitalize' }}>{service.category}</span>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <span className="text-xl font-bold text-green-600">{formatPrice(service.price)}</span>
+                  <div className="flex-between">
+                    <span style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--success)' }}>{formatPrice(service.price)}</span>
                     <button
                       onClick={() => handleBookService(service)}
-                      className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                      className="btn-primary"
+                      style={{ 
+                        width: 'auto', 
+                        padding: 'var(--space-md) var(--space-lg)',
+                        fontSize: '0.875rem'
+                      }}
                     >
                       Book Now
                     </button>
@@ -368,28 +430,42 @@ export default function ProfilePage() {
 
       {/* Booking Modal */}
       {showBookingModal && selectedService && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Request Booking</h3>
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 'var(--space-lg)',
+          zIndex: 50
+        }}>
+          <div className="card-elevated" style={{
+            maxWidth: '500px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflowY: 'auto'
+          }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: 'var(--space-lg)' }}>Request Booking</h3>
             
             {/* Service Details */}
-            <div className="bg-gray-50 rounded-xl p-4 mb-6">
-              <div className="flex items-start gap-3">
-                <span className="text-2xl">{getSlotCategoryEmoji(selectedService.category)}</span>
-                <div className="flex-1">
-                  <h4 className="font-semibold text-lg text-gray-900 mb-1">{selectedService.title}</h4>
-                  <p className="text-gray-600 text-sm mb-2">{selectedService.description}</p>
-                  <div className="flex items-center gap-4 text-sm text-gray-500">
-                    <div className="flex items-center">
-                      <Clock className="h-4 w-4 mr-1" />
+            <div className="card" style={{ backgroundColor: 'var(--bg-secondary)', marginBottom: 'var(--space-xl)' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-md)' }}>
+                <span style={{ fontSize: '1.5rem' }}>{getSlotCategoryEmoji(selectedService.category)}</span>
+                <div style={{ flex: 1 }}>
+                  <h4 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: 'var(--space-xs)' }}>{selectedService.title}</h4>
+                  <p className="text-muted" style={{ fontSize: '0.875rem', marginBottom: 'var(--space-md)' }}>{selectedService.description}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-lg)', fontSize: '0.875rem', color: 'var(--text-tertiary)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <Clock size={16} style={{ marginRight: 'var(--space-xs)' }} />
                       {selectedService.duration} min
                     </div>
-                    <div className="flex items-center">
-                      <MapPin className="h-4 w-4 mr-1" />
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <MapPin size={16} style={{ marginRight: 'var(--space-xs)' }} />
                       {selectedService.location}
                     </div>
-                    <div className="flex items-center">
-                      <DollarSign className="h-4 w-4 mr-1" />
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <DollarSign size={16} style={{ marginRight: 'var(--space-xs)' }} />
                       {formatPrice(selectedService.price)}
                     </div>
                   </div>
@@ -398,45 +474,81 @@ export default function ProfilePage() {
             </div>
 
             {/* Message Input */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div style={{ marginBottom: 'var(--space-xl)' }}>
+              <label style={{ 
+                display: 'block', 
+                fontSize: '0.875rem', 
+                fontWeight: '500', 
+                color: 'var(--text-primary)',
+                marginBottom: 'var(--space-sm)'
+              }}>
                 Message to {profile?.display_name}
               </label>
               <textarea
                 value={bookingMessage}
                 onChange={(e) => setBookingMessage(e.target.value)}
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                style={{
+                  width: '100%',
+                  padding: 'var(--space-lg)',
+                  border: '1px solid var(--border-light)',
+                  borderRadius: 'var(--radius-lg)',
+                  background: 'var(--bg-primary)',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.875rem',
+                  resize: 'none',
+                  outline: 'none',
+                  transition: 'all 0.2s ease'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = 'var(--accent-primary)';
+                  e.target.style.boxShadow = '0 0 0 3px var(--accent-light)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = 'var(--border-light)';
+                  e.target.style.boxShadow = 'none';
+                }}
                 placeholder="Tell the service provider why you're interested and any specific requirements..."
                 maxLength={500}
               />
-              <div className="text-right text-xs text-gray-500 mt-1">
+              <div style={{ textAlign: 'right', fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: 'var(--space-xs)' }}>
                 {bookingMessage.length}/500
               </div>
             </div>
 
             {/* Booking Info */}
-            <div className="bg-blue-50 rounded-xl p-4 mb-6">
-              <h4 className="font-medium text-blue-900 mb-2">What happens next?</h4>
-              <ul className="text-sm text-blue-800 space-y-1">
+            <div className="card" style={{ backgroundColor: 'var(--accent-light)', marginBottom: 'var(--space-xl)' }}>
+              <h4 style={{ fontWeight: '600', color: 'var(--accent-primary)', marginBottom: 'var(--space-md)' }}>What happens next?</h4>
+              <ul style={{ fontSize: '0.875rem', color: 'var(--accent-primary)' }} className="space-y-xs">
                 <li>• Your booking request will be sent to {profile?.display_name}</li>
                 <li>• They'll review your request and respond within 24 hours</li>
                 <li>• Once confirmed, you'll be able to message each other directly</li>
               </ul>
             </div>
             
-            <div className="flex gap-3">
+            <div style={{ display: 'flex', gap: 'var(--space-md)' }}>
               <button
                 onClick={() => setShowBookingModal(false)}
                 disabled={isBookingLoading}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                className="btn-secondary"
+                style={{ 
+                  flex: 1,
+                  padding: 'var(--space-lg)',
+                  opacity: isBookingLoading ? '0.5' : '1'
+                }}
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmBooking}
                 disabled={isBookingLoading || !bookingMessage.trim()}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-primary"
+                style={{ 
+                  flex: 1,
+                  padding: 'var(--space-lg)',
+                  opacity: (isBookingLoading || !bookingMessage.trim()) ? '0.5' : '1',
+                  cursor: (isBookingLoading || !bookingMessage.trim()) ? 'not-allowed' : 'pointer'
+                }}
               >
                 {isBookingLoading ? 'Sending...' : 'Send Request'}
               </button>

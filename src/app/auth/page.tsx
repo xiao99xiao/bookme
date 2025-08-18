@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 
 import { useAuthStore } from '@/stores/auth';
@@ -86,214 +85,173 @@ export default function AuthPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
+      <div className="page-layout flex-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <div style={{ 
+            width: '32px', 
+            height: '32px', 
+            border: '3px solid var(--border-light)', 
+            borderTop: '3px solid var(--accent-primary)',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto var(--space-md)'
+          }}></div>
+          <p className="text-muted">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-block">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2">
+    <div className="page-layout flex-center" style={{ padding: 'var(--space-xl) var(--space-lg)' }}>
+      <div className="container-center">
+        {/* Header - Matching Linktree exactly */}
+        <div className="text-center">
+          <Link href="/" style={{ textDecoration: 'none' }}>
+            <h1 style={{ 
+              fontSize: '1.5rem', 
+              fontWeight: '700', 
+              color: 'var(--text-primary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 'var(--space-sm)',
+              marginBottom: 'var(--space-3xl)'
+            }}>
               BookMe
+              <span style={{ color: '#22c55e', fontSize: '1.25rem' }}>●</span>
             </h1>
           </Link>
-          <p className="text-gray-600">
-            {mode === 'login' ? 'Welcome back!' : 'Join the community'}
+          
+          <h1 style={{ 
+            fontSize: 'clamp(2rem, 5vw, 2.5rem)', 
+            fontWeight: '700'
+          }}>
+            Welcome back
+          </h1>
+          
+          <p className="text-muted text-large" style={{ 
+            margin: 'var(--space-lg) 0 var(--space-3xl)'
+          }}>
+            {mode === 'login' ? 'Log in to your BookMe' : 'Create your BookMe account'}
           </p>
         </div>
 
-        {/* Auth Form */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          {/* Mode Toggle */}
-          <div className="flex bg-gray-100 rounded-xl p-1 mb-6">
-            <button
-              onClick={() => setMode('login')}
-              className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
-                mode === 'login'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-700'
-              }`}
-            >
-              Login
+        {/* Form - Matching Linktree exactly */}
+        <div className="space-y-lg">
+          {/* Email Input */}
+          <div>
+            <input
+              type="email"
+              required
+              className="input-field"
+              placeholder="Email or username"
+              value={mode === 'login' ? loginForm.email : registerForm.email}
+              onChange={(e) => {
+                if (mode === 'login') {
+                  setLoginForm({ ...loginForm, email: e.target.value });
+                } else {
+                  setRegisterForm({ ...registerForm, email: e.target.value });
+                }
+              }}
+            />
+          </div>
+
+          {/* Name Input (Register only) */}
+          {mode === 'register' && (
+            <div>
+              <input
+                type="text"
+                required
+                className="input-field"
+                placeholder="Full name"
+                value={registerForm.name}
+                onChange={(e) => setRegisterForm({ ...registerForm, name: e.target.value })}
+              />
+            </div>
+          )}
+
+          {/* Password Input */}
+          <div>
+            <input
+              type="password"
+              required
+              className="input-field"
+              placeholder="Password"
+              value={mode === 'login' ? loginForm.password : registerForm.password}
+              onChange={(e) => {
+                if (mode === 'login') {
+                  setLoginForm({ ...loginForm, password: e.target.value });
+                } else {
+                  setRegisterForm({ ...registerForm, password: e.target.value });
+                }
+              }}
+            />
+          </div>
+
+          {/* Continue Button */}
+          <button
+            type="submit"
+            disabled={formLoading}
+            className="btn-primary"
+            onClick={mode === 'login' ? handleLogin : handleRegister}
+          >
+            {formLoading ? 'Loading...' : 'Continue'}
+          </button>
+
+          {/* OR Divider */}
+          <div className="text-center">
+            <span className="text-muted" style={{ fontSize: '0.875rem' }}>OR</span>
+          </div>
+
+          {/* Social Login Buttons */}
+          <div className="space-y-md">
+            <button className="btn-social">
+              <span style={{ color: '#4285f4' }}>G</span>
+              Continue with Google
             </button>
-            <button
-              onClick={() => setMode('register')}
-              className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
-                mode === 'register'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-700'
-              }`}
-            >
-              Register
+            <button className="btn-social">
+              <span style={{ color: '#000' }}>🍎</span>
+              Continue with Apple
             </button>
           </div>
 
-          {/* Login Form */}
-          {mode === 'login' && (
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <input
-                    type="email"
-                    required
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="your@email.com"
-                    value={loginForm.email}
-                    onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Password
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    required
-                    className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter your password"
-                    value={loginForm.password}
-                    onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={formLoading}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+          {/* Footer Links */}
+          <div className="text-center">
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              gap: 'var(--space-sm)', 
+              fontSize: '0.875rem',
+              marginBottom: 'var(--space-md)'
+            }}>
+              <a href="#" className="link-purple">Forgot password?</a>
+              <span className="text-muted">•</span>
+              <a href="#" className="link-purple">Forgot username?</a>
+            </div>
+            
+            <p className="text-muted" style={{ fontSize: '0.875rem' }}>
+              Don't have an account?{' '}
+              <button 
+                className="link-purple"
+                onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
+                style={{ background: 'none', border: 'none', cursor: 'pointer' }}
               >
-                {formLoading ? 'Signing in...' : 'Sign In'}
+                {mode === 'login' ? 'Sign up' : 'Sign in'}
               </button>
-            </form>
-          )}
-
-          {/* Register Form */}
-          {mode === 'register' && (
-            <form onSubmit={handleRegister} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Full Name
-                </label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <input
-                    type="text"
-                    required
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="John Doe"
-                    value={registerForm.name}
-                    onChange={(e) => setRegisterForm({ ...registerForm, name: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <input
-                    type="email"
-                    required
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="your@email.com"
-                    value={registerForm.email}
-                    onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Password
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    required
-                    className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Create a password"
-                    value={registerForm.password}
-                    onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Bio (Optional)
-                </label>
-                <textarea
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                  placeholder="Tell us about yourself..."
-                  rows={3}
-                  value={registerForm.bio}
-                  onChange={(e) => setRegisterForm({ ...registerForm, bio: e.target.value })}
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={formLoading}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-3 px-4 rounded-lg transition-colors"
-              >
-                {formLoading ? 'Creating account...' : 'Create Account'}
-              </button>
-            </form>
-          )}
-
-          {/* Footer */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              By continuing, you agree to our{' '}
-              <a href="#" className="text-blue-600 hover:text-blue-700 underline">
-                Terms of Service
-              </a>{' '}
-              and{' '}
-              <a href="#" className="text-blue-600 hover:text-blue-700 underline">
-                Privacy Policy
-              </a>
             </p>
           </div>
         </div>
 
-        {/* Bottom Link */}
-        <div className="mt-8 text-center">
-          <Link href="/" className="text-sm text-gray-600 hover:text-gray-700 underline">
-            ← Back to Home
-          </Link>
+        {/* Cookie Preferences */}
+        <div style={{ 
+          position: 'fixed', 
+          bottom: 'var(--space-lg)', 
+          left: 'var(--space-lg)',
+          fontSize: '0.75rem',
+          color: 'var(--text-tertiary)'
+        }}>
+          Cookie preferences
         </div>
       </div>
     </div>

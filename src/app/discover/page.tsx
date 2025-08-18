@@ -113,28 +113,50 @@ export default function DiscoverPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="page-layout">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/" className="flex items-center">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+      <header style={{ background: 'var(--bg-primary)', borderBottom: '1px solid var(--border-light)' }}>
+        <div className="container-wide" style={{ padding: 'var(--space-lg) var(--space-lg)' }}>
+          <div className="flex-between">
+            <Link href="/" style={{ textDecoration: 'none' }}>
+              <h1 style={{ 
+                fontSize: '1.5rem', 
+                fontWeight: '700', 
+                color: 'var(--text-primary)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--space-sm)'
+              }}>
                 BookMe
+                <span style={{ color: '#22c55e', fontSize: '1.25rem' }}>●</span>
               </h1>
             </Link>
             
-            <nav className="flex items-center space-x-6">
-              <Link href="/" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">
+            <nav style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xl)' }}>
+              <Link href="/" className="text-muted" style={{ 
+                fontWeight: '500',
+                transition: 'color 0.2s ease',
+                textDecoration: 'none'
+              }}>
                 Home
               </Link>
               {isAuthenticated ? (
-                <Link href="/dashboard" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">
+                <Link href="/dashboard" className="text-muted" style={{ 
+                  fontWeight: '500',
+                  transition: 'color 0.2s ease',
+                  textDecoration: 'none'
+                }}>
                   Dashboard
                 </Link>
               ) : (
-                <Link href="/auth" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
-                  Sign In
+                <Link href="/auth" style={{ textDecoration: 'none' }}>
+                  <button className="btn-primary" style={{ 
+                    width: 'auto', 
+                    padding: 'var(--space-md) var(--space-lg)',
+                    fontSize: '0.875rem'
+                  }}>
+                    Sign In
+                  </button>
                 </Link>
               )}
             </nav>
@@ -142,39 +164,53 @@ export default function DiscoverPage() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="container-wide" style={{ padding: 'var(--space-2xl) var(--space-lg)' }}>
         {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Discover Services</h1>
-          <p className="text-lg text-gray-600">Find and book services from community members</p>
+        <div style={{ marginBottom: 'var(--space-2xl)' }}>
+          <h1 style={{ fontSize: '2rem', fontWeight: '700', marginBottom: 'var(--space-md)' }}>Discover Services</h1>
+          <p className="text-large text-muted">Find and book services from community members</p>
         </div>
 
         {/* Search and Filters */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="card-elevated" style={{ marginBottom: 'var(--space-2xl)' }}>
+          <div className="grid-responsive">
             {/* Search */}
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-gray-400" />
+            <div style={{ position: 'relative' }}>
+              <div style={{ 
+                position: 'absolute', 
+                top: '50%', 
+                left: 'var(--space-lg)', 
+                transform: 'translateY(-50%)',
+                pointerEvents: 'none'
+              }}>
+                <Search size={20} style={{ color: 'var(--text-tertiary)' }} />
               </div>
               <input
                 type="text"
                 placeholder="Search services..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="input-field"
+                style={{ paddingLeft: '3rem' }}
               />
             </div>
 
             {/* Category Filter */}
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Filter className="h-5 w-5 text-gray-400" />
+            <div style={{ position: 'relative' }}>
+              <div style={{ 
+                position: 'absolute', 
+                top: '50%', 
+                left: 'var(--space-lg)', 
+                transform: 'translateY(-50%)',
+                pointerEvents: 'none'
+              }}>
+                <Filter size={20} style={{ color: 'var(--text-tertiary)' }} />
               </div>
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white"
+                className="input-field"
+                style={{ paddingLeft: '3rem', appearance: 'none' }}
               >
                 {categories.map(category => (
                   <option key={category} value={category}>
@@ -185,14 +221,21 @@ export default function DiscoverPage() {
             </div>
 
             {/* Location Filter */}
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <MapPin className="h-5 w-5 text-gray-400" />
+            <div style={{ position: 'relative' }}>
+              <div style={{ 
+                position: 'absolute', 
+                top: '50%', 
+                left: 'var(--space-lg)', 
+                transform: 'translateY(-50%)',
+                pointerEvents: 'none'
+              }}>
+                <MapPin size={20} style={{ color: 'var(--text-tertiary)' }} />
               </div>
               <select
                 value={selectedLocation}
                 onChange={(e) => setSelectedLocation(e.target.value)}
-                className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white"
+                className="input-field"
+                style={{ paddingLeft: '3rem', appearance: 'none' }}
               >
                 {locations.map(location => (
                   <option key={location} value={location}>
@@ -206,107 +249,153 @@ export default function DiscoverPage() {
 
         {/* Results */}
         {loading ? (
-          <div className="text-center py-12">
-            <div className="text-gray-500 text-lg">Loading services...</div>
+          <div className="text-center" style={{ padding: 'var(--space-3xl) 0' }}>
+            <div style={{ 
+              width: '32px', 
+              height: '32px', 
+              border: '3px solid var(--border-light)', 
+              borderTop: '3px solid var(--accent-primary)',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+              margin: '0 auto var(--space-md)'
+            }}></div>
+            <div className="text-muted">Loading services...</div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid-2">
             {services.length === 0 ? (
-              <div className="col-span-full text-center py-12">
-                <div className="text-gray-500 text-lg mb-2">No services found</div>
-                <p className="text-gray-400">Try adjusting your search criteria</p>
+              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: 'var(--space-3xl) 0' }}>
+                <div style={{ fontSize: '3rem', marginBottom: 'var(--space-lg)' }}>🔍</div>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: 'var(--space-md)' }}>No services found</h3>
+                <p className="text-muted">Try adjusting your search criteria</p>
               </div>
             ) : (
               services.map((service) => (
-                <div key={service.id} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
-                  <div className="p-6">
-                    {/* Provider Profile */}
-                    <div className="mb-6">
-                      <UserProfileCard user={service.provider} size="sm" />
-                    </div>
+                <div key={service.id} className="card" style={{ transition: 'all 0.2s ease' }}>
+                  {/* Provider Profile */}
+                  <div style={{ marginBottom: 'var(--space-xl)' }}>
+                    <UserProfileCard user={service.provider} size="sm" />
+                  </div>
 
-                    {/* Service Info */}
-                    <div className="mb-4">
-                      <div className="flex items-center mb-3">
-                        <span className="text-2xl mr-3">{getSlotCategoryEmoji(service.category)}</span>
-                        <h4 className="font-semibold text-xl text-gray-900 flex-1">{service.title}</h4>
-                      </div>
-                      <p className="text-gray-600 text-sm mb-4">{service.description}</p>
+                  {/* Service Info */}
+                  <div style={{ marginBottom: 'var(--space-lg)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
+                      <span style={{ fontSize: '1.5rem', marginRight: 'var(--space-md)' }}>{getSlotCategoryEmoji(service.category)}</span>
+                      <h4 style={{ fontSize: '1.25rem', fontWeight: '600', flex: 1 }}>{service.title}</h4>
                     </div>
+                    <p className="text-muted" style={{ fontSize: '0.875rem', marginBottom: 'var(--space-lg)' }}>{service.description}</p>
+                  </div>
 
-                    {/* Details */}
-                    <div className="space-y-2 mb-6 text-sm">
-                      <div className="flex items-center text-gray-600">
-                        <Calendar className="w-4 h-4 mr-2 flex-shrink-0" />
-                        <span>{Object.values(service.availabilitySlots).reduce((total, slots) => total + slots.length, 0)} available slots</span>
-                      </div>
-                      <div className="flex items-center text-gray-600">
-                        <Clock className="w-4 h-4 mr-2 flex-shrink-0" />
-                        <span>{service.duration} min sessions</span>
-                      </div>
-                      <div className="flex items-center text-gray-600">
-                        <span className="text-lg mr-2">{getLocationIcon(service.location)}</span>
-                        <span className="capitalize">{service.location}</span>
-                      </div>
+                  {/* Details */}
+                  <div className="space-y-sm" style={{ marginBottom: 'var(--space-xl)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                      <Calendar size={16} style={{ marginRight: 'var(--space-sm)', flexShrink: 0 }} />
+                      <span>{Object.values(service.availabilitySlots).reduce((total, slots) => total + slots.length, 0)} available slots</span>
                     </div>
+                    <div style={{ display: 'flex', alignItems: 'center', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                      <Clock size={16} style={{ marginRight: 'var(--space-sm)', flexShrink: 0 }} />
+                      <span>{service.duration} min sessions</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                      <span style={{ fontSize: '1.125rem', marginRight: 'var(--space-sm)' }}>{getLocationIcon(service.location)}</span>
+                      <span style={{ textTransform: 'capitalize' }}>{service.location}</span>
+                    </div>
+                  </div>
 
-                    {/* Provider Highlights */}
-                    {(service.provider.hobbies?.length || service.provider.interests?.length) && (
-                      <div className="mb-6 space-y-3">
-                        {service.provider.hobbies && service.provider.hobbies.length > 0 && (
-                          <div>
-                            <div className="flex items-center text-xs font-medium text-gray-500 mb-2">
-                              <Heart className="w-3 h-3 mr-1" />
-                              Provider's Hobbies
-                            </div>
-                            <div className="flex flex-wrap gap-1">
-                              {service.provider.hobbies.slice(0, 4).map((hobby) => (
-                                <span
-                                  key={hobby}
-                                  className="px-2 py-1 text-xs bg-pink-50 text-pink-700 rounded-full border border-pink-200"
-                                >
-                                  {hobby}
-                                </span>
-                              ))}
-                            </div>
+                  {/* Provider Highlights */}
+                  {(service.provider.hobbies?.length || service.provider.interests?.length) && (
+                    <div className="space-y-md" style={{ marginBottom: 'var(--space-xl)' }}>
+                      {service.provider.hobbies && service.provider.hobbies.length > 0 && (
+                        <div>
+                          <div style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            fontSize: '0.75rem', 
+                            fontWeight: '500', 
+                            color: 'var(--text-tertiary)',
+                            marginBottom: 'var(--space-sm)'
+                          }}>
+                            <Heart size={12} style={{ marginRight: 'var(--space-xs)' }} />
+                            Provider's Hobbies
                           </div>
-                        )}
-
-                        {service.provider.interests && service.provider.interests.length > 0 && (
-                          <div>
-                            <div className="flex items-center text-xs font-medium text-gray-500 mb-2">
-                              <Target className="w-3 h-3 mr-1" />
-                              Provider's Interests
-                            </div>
-                            <div className="flex flex-wrap gap-1">
-                              {service.provider.interests.slice(0, 4).map((interest) => (
-                                <span
-                                  key={interest}
-                                  className="px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded-full border border-blue-200"
-                                >
-                                  {interest}
-                                </span>
-                              ))}
-                            </div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-xs)' }}>
+                            {service.provider.hobbies.slice(0, 4).map((hobby) => (
+                              <span
+                                key={hobby}
+                                style={{
+                                  padding: 'var(--space-xs) var(--space-sm)',
+                                  fontSize: '0.75rem',
+                                  backgroundColor: '#fdf2f8',
+                                  color: '#be185d',
+                                  borderRadius: 'var(--radius-full)',
+                                  border: '1px solid #fce7f3'
+                                }}
+                              >
+                                {hobby}
+                              </span>
+                            ))}
                           </div>
-                        )}
-                      </div>
-                    )}
+                        </div>
+                      )}
 
-                    {/* Price and Action */}
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                      <div className="text-3xl font-bold text-green-600">
-                        {formatPrice(service.price)}
-                      </div>
-                      <button
-                        onClick={() => setShowBookingModal(service.id)}
-                        disabled={!isAuthenticated}
-                        className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white px-6 py-3 rounded-xl font-medium transition-colors flex items-center gap-2"
-                      >
-                        <MessageCircle className="w-4 h-4" />
-                        Book Now
-                      </button>
+                      {service.provider.interests && service.provider.interests.length > 0 && (
+                        <div>
+                          <div style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            fontSize: '0.75rem', 
+                            fontWeight: '500', 
+                            color: 'var(--text-tertiary)',
+                            marginBottom: 'var(--space-sm)'
+                          }}>
+                            <Target size={12} style={{ marginRight: 'var(--space-xs)' }} />
+                            Provider's Interests
+                          </div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-xs)' }}>
+                            {service.provider.interests.slice(0, 4).map((interest) => (
+                              <span
+                                key={interest}
+                                style={{
+                                  padding: 'var(--space-xs) var(--space-sm)',
+                                  fontSize: '0.75rem',
+                                  backgroundColor: 'var(--accent-light)',
+                                  color: 'var(--accent-primary)',
+                                  borderRadius: 'var(--radius-full)',
+                                  border: '1px solid var(--accent-primary)'
+                                }}
+                              >
+                                {interest}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
+                  )}
+
+                  {/* Price and Action */}
+                  <div className="flex-between" style={{ 
+                    paddingTop: 'var(--space-lg)', 
+                    borderTop: '1px solid var(--border-light)' 
+                  }}>
+                    <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--success)' }}>
+                      {formatPrice(service.price)}
+                    </div>
+                    <button
+                      onClick={() => setShowBookingModal(service.id)}
+                      disabled={!isAuthenticated}
+                      className="btn-primary"
+                      style={{ 
+                        width: 'auto',
+                        padding: 'var(--space-md) var(--space-lg)',
+                        fontSize: '0.875rem',
+                        opacity: !isAuthenticated ? '0.5' : '1',
+                        cursor: !isAuthenticated ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      <MessageCircle size={16} />
+                      Book Now
+                    </button>
                   </div>
                 </div>
               ))
@@ -316,11 +405,26 @@ export default function DiscoverPage() {
 
         {/* Booking Modal */}
         {showBookingModal && (
-          <div className="fixed inset-0 flex items-center justify-center p-4 z-50" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
-            <div className="bg-white rounded-2xl max-w-md w-full p-6">
-              <h3 className="text-xl font-semibold mb-4">Send Booking Request</h3>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 'var(--space-lg)',
+            zIndex: 50,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)'
+          }}>
+            <div className="card-elevated" style={{ maxWidth: '500px', width: '100%' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: 'var(--space-lg)' }}>Send Booking Request</h3>
+              <div style={{ marginBottom: 'var(--space-lg)' }}>
+                <label style={{ 
+                  display: 'block', 
+                  fontSize: '0.875rem', 
+                  fontWeight: '500', 
+                  color: 'var(--text-primary)',
+                  marginBottom: 'var(--space-sm)'
+                }}>
                   Message to provider:
                 </label>
                 <textarea
@@ -328,23 +432,49 @@ export default function DiscoverPage() {
                   onChange={(e) => setBookingMessage(e.target.value)}
                   placeholder="Introduce yourself and explain why you're interested in this service..."
                   rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  style={{
+                    width: '100%',
+                    padding: 'var(--space-lg)',
+                    border: '1px solid var(--border-light)',
+                    borderRadius: 'var(--radius-lg)',
+                    background: 'var(--bg-primary)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.875rem',
+                    resize: 'none',
+                    outline: 'none',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = 'var(--accent-primary)';
+                    e.target.style.boxShadow = '0 0 0 3px var(--accent-light)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = 'var(--border-light)';
+                    e.target.style.boxShadow = 'none';
+                  }}
                 />
-                <div className="text-xs text-gray-500 mt-1">
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: 'var(--space-xs)' }}>
                   {bookingMessage.length}/500 characters (minimum 10)
                 </div>
               </div>
-              <div className="flex gap-3">
+              <div style={{ display: 'flex', gap: 'var(--space-md)' }}>
                 <button
                   onClick={() => setShowBookingModal(null)}
-                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-4 rounded-lg font-medium transition-colors"
+                  className="btn-secondary"
+                  style={{ flex: 1, padding: 'var(--space-lg)' }}
                 >
                   Cancel
                 </button>
                 <button
                   onClick={() => handleBookingSubmit(showBookingModal)}
                   disabled={bookingMessage.trim().length < 10 || bookingLoading}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+                  className="btn-primary"
+                  style={{ 
+                    flex: 1,
+                    padding: 'var(--space-lg)',
+                    opacity: (bookingMessage.trim().length < 10 || bookingLoading) ? '0.5' : '1',
+                    cursor: (bookingMessage.trim().length < 10 || bookingLoading) ? 'not-allowed' : 'pointer'
+                  }}
                 >
                   {bookingLoading ? 'Sending...' : 'Send Request'}
                 </button>
@@ -354,9 +484,23 @@ export default function DiscoverPage() {
         )}
 
         {!isAuthenticated && (
-          <div className="fixed bottom-4 right-4 bg-blue-600 text-white p-4 rounded-lg shadow-lg max-w-sm">
-            <p className="text-sm font-medium mb-2">Sign in to book services</p>
-            <Link href="/auth" className="text-blue-200 hover:text-white text-sm underline">
+          <div className="card" style={{
+            position: 'fixed',
+            bottom: 'var(--space-lg)',
+            right: 'var(--space-lg)',
+            backgroundColor: 'var(--accent-primary)',
+            color: 'white',
+            padding: 'var(--space-lg)',
+            boxShadow: 'var(--shadow-heavy)',
+            maxWidth: '300px'
+          }}>
+            <p style={{ fontSize: '0.875rem', fontWeight: '500', marginBottom: 'var(--space-sm)' }}>Sign in to book services</p>
+            <Link href="/auth" style={{ 
+              color: 'rgba(255, 255, 255, 0.8)', 
+              fontSize: '0.875rem',
+              textDecoration: 'underline',
+              transition: 'color 0.2s ease'
+            }}>
               Create an account →
             </Link>
           </div>

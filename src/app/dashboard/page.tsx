@@ -314,108 +314,174 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="page-layout">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/" className="flex items-center">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+      <header style={{ background: 'var(--bg-primary)', borderBottom: '1px solid var(--border-light)' }}>
+        <div className="container-wide" style={{ padding: 'var(--space-lg) var(--space-lg)' }}>
+          <div className="flex-between">
+            <Link href="/" style={{ textDecoration: 'none' }}>
+              <h1 style={{ 
+                fontSize: '1.5rem', 
+                fontWeight: '700', 
+                color: 'var(--text-primary)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--space-sm)'
+              }}>
                 BookMe
+                <span style={{ color: '#22c55e', fontSize: '1.25rem' }}>●</span>
               </h1>
             </Link>
             
-            <div className="flex items-center space-x-4">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
               <button
                 onClick={handleViewProfile}
-                className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                style={{
+                  padding: 'var(--space-sm)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: 'var(--text-tertiary)',
+                  transition: 'color 0.2s ease'
+                }}
                 title="View your public profile"
               >
-                <ExternalLink className="w-5 h-5" />
+                <ExternalLink size={20} />
               </button>
               <img 
-                src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName)}&background=3b82f6&color=fff`}
+                src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName)}&background=8b5cf6&color=fff`}
                 alt={user.displayName}
-                className="w-10 h-10 rounded-full border-2 border-gray-200"
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  border: '2px solid var(--border-light)'
+                }}
               />
               <div className="hidden md:block">
-                <div className="text-sm font-medium text-gray-900">{user.displayName}</div>
-                <div className="text-xs text-gray-500">{user.email}</div>
+                <div style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--text-primary)' }}>
+                  {user.displayName}
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
+                  {user.email}
+                </div>
               </div>
               <button
                 onClick={handleLogout}
-                className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                style={{
+                  padding: 'var(--space-sm)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: 'var(--text-tertiary)',
+                  transition: 'color 0.2s ease'
+                }}
                 title="Logout"
               >
-                <LogOut className="w-5 h-5" />
+                <LogOut size={20} />
               </button>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="container-wide" style={{ padding: 'var(--space-2xl) var(--space-lg)' }}>
         {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome back, {user.displayName}!</h1>
-          <p className="text-lg text-gray-600">Manage your services and bookings</p>
+        <div style={{ marginBottom: 'var(--space-2xl)' }}>
+          <h1 style={{ fontSize: '2rem', fontWeight: '700', marginBottom: 'var(--space-sm)' }}>
+            Welcome back, {user.displayName}!
+          </h1>
+          <p className="text-large text-muted">Manage your services and bookings</p>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Calendar className="w-6 h-6 text-blue-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-2xl font-semibold text-gray-900">{userServices.length}</p>
-                <p className="text-sm text-gray-600">Active Services</p>
-              </div>
+        <div className="grid-responsive" style={{ marginBottom: 'var(--space-2xl)' }}>
+          <div className="card text-center">
+            <div style={{ 
+              width: '48px', 
+              height: '48px', 
+              borderRadius: 'var(--radius-md)', 
+              background: 'var(--accent-light)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto var(--space-md)'
+            }}>
+              <Calendar size={24} style={{ color: 'var(--accent-primary)' }} />
             </div>
+            <div style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: 'var(--space-xs)' }}>
+              {userServices.length}
+            </div>
+            <div className="text-small">Active Services</div>
           </div>
           
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <MessageCircle className="w-6 h-6 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-2xl font-semibold text-gray-900">{incomingRequests.filter(r => r.status === 'pending').length}</p>
-                <p className="text-sm text-gray-600">Pending Requests</p>
-              </div>
+          <div className="card text-center">
+            <div style={{ 
+              width: '48px', 
+              height: '48px', 
+              borderRadius: 'var(--radius-md)', 
+              background: 'var(--accent-light)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto var(--space-md)'
+            }}>
+              <MessageCircle size={24} style={{ color: 'var(--accent-primary)' }} />
             </div>
+            <div style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: 'var(--space-xs)' }}>
+              {incomingRequests.filter(r => r.status === 'pending').length}
+            </div>
+            <div className="text-small">Pending Requests</div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <Star className="w-6 h-6 text-yellow-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-2xl font-semibold text-gray-900">{user.rating.toFixed(1)}</p>
-                <p className="text-sm text-gray-600">Average Rating</p>
-              </div>
+          <div className="card text-center">
+            <div style={{ 
+              width: '48px', 
+              height: '48px', 
+              borderRadius: 'var(--radius-md)', 
+              background: 'var(--accent-light)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto var(--space-md)'
+            }}>
+              <Star size={24} style={{ color: 'var(--accent-primary)' }} />
             </div>
+            <div style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: 'var(--space-xs)' }}>
+              {user.rating.toFixed(1)}
+            </div>
+            <div className="text-small">Average Rating</div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Clock className="w-6 h-6 text-purple-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-2xl font-semibold text-gray-900">{myRequests.length}</p>
-                <p className="text-sm text-gray-600">My Requests</p>
-              </div>
+          <div className="card text-center">
+            <div style={{ 
+              width: '48px', 
+              height: '48px', 
+              borderRadius: 'var(--radius-md)', 
+              background: 'var(--accent-light)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto var(--space-md)'
+            }}>
+              <Clock size={24} style={{ color: 'var(--accent-primary)' }} />
             </div>
+            <div style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: 'var(--space-xs)' }}>
+              {myRequests.length}
+            </div>
+            <div className="text-small">My Requests</div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="border-b border-gray-200">
-            <nav className="flex space-x-8 px-6">
+        <div className="card-elevated">
+          <div style={{ borderBottom: '1px solid var(--border-light)' }}>
+            <nav style={{ 
+              display: 'flex', 
+              gap: 'var(--space-lg)', 
+              padding: '0 var(--space-lg)',
+              overflowX: 'auto'
+            }}>
               {[
                 { id: 'overview', label: 'Overview' },
                 { id: 'slots', label: 'My Services' },
@@ -426,11 +492,20 @@ export default function DashboardPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                    activeTab === tab.id
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
+                  style={{
+                    padding: 'var(--space-lg) var(--space-sm)',
+                    borderTop: 'none',
+                    borderLeft: 'none',
+                    borderRight: 'none',
+                    borderBottom: `2px solid ${activeTab === tab.id ? 'var(--accent-primary)' : 'transparent'}`,
+                    fontWeight: '500',
+                    fontSize: '0.875rem',
+                    transition: 'all 0.2s ease',
+                    background: 'none',
+                    cursor: 'pointer',
+                    color: activeTab === tab.id ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                    whiteSpace: 'nowrap'
+                  }}
                 >
                   {tab.label}
                 </button>
@@ -438,60 +513,96 @@ export default function DashboardPage() {
             </nav>
           </div>
 
-          <div className="p-6">
+          <div style={{ padding: 'var(--space-xl)' }}>
             {activeTab === 'overview' && (
-              <div className="space-y-6">
+              <div className="space-y-xl">
                 {/* Profile Section */}
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-200">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center">
-                      <div className="p-2 bg-blue-100 rounded-lg mr-4">
-                        <User className="w-6 h-6 text-blue-600" />
+                <div className="card" style={{ backgroundColor: 'var(--accent-light)' }}>
+                  <div className="flex-between" style={{ marginBottom: 'var(--space-lg)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <div style={{ 
+                        padding: 'var(--space-sm)', 
+                        backgroundColor: 'var(--accent-primary)', 
+                        borderRadius: 'var(--radius-md)',
+                        marginRight: 'var(--space-lg)'
+                      }}>
+                        <User size={24} style={{ color: 'white' }} />
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900">Your Public Profile</h3>
-                        <p className="text-gray-600 text-sm">Share your profile link with potential clients</p>
+                        <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: 'var(--space-xs)' }}>
+                          Your Public Profile
+                        </h3>
+                        <p className="text-small">Share your profile link with potential clients</p>
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
                       <button
                         onClick={handleViewProfile}
-                        className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                        className="btn-primary"
+                        style={{ 
+                          width: 'auto', 
+                          padding: 'var(--space-sm) var(--space-lg)',
+                          fontSize: '0.875rem'
+                        }}
                       >
-                        <ExternalLink className="w-4 h-4 mr-1" />
+                        <ExternalLink size={16} />
                         Preview
                       </button>
                       <button
                         onClick={handleCopyProfileLink}
-                        className="flex items-center px-3 py-2 bg-white text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors text-sm"
+                        className="btn-secondary"
+                        style={{ 
+                          width: 'auto', 
+                          padding: 'var(--space-sm) var(--space-lg)',
+                          fontSize: '0.875rem'
+                        }}
                       >
-                        <Copy className="w-4 h-4 mr-1" />
+                        <Copy size={16} />
                         Copy Link
                       </button>
                     </div>
                   </div>
-                  <div className="bg-white rounded-lg p-3 border border-blue-200">
-                    <code className="text-sm text-gray-600 break-all">
-                      {typeof window !== 'undefined' ? `${window.location.origin}/profile/${user.id}` : `/profile/${user.id}`}
-                    </code>
+                  <div className="card" style={{ 
+                    padding: 'var(--space-md)',
+                    fontSize: '0.875rem',
+                    fontFamily: 'monospace',
+                    color: 'var(--text-secondary)',
+                    wordBreak: 'break-all'
+                  }}>
+                    {typeof window !== 'undefined' ? `${window.location.origin}/profile/${user.id}` : `/profile/${user.id}`}
                   </div>
                 </div>
 
-                <div className="text-center py-12">
-                  <div className="text-6xl mb-4">👋</div>
-                  <h3 className="text-2xl font-semibold text-gray-900 mb-2">Dashboard Overview</h3>
-                  <p className="text-gray-600 mb-6">
+                <div className="text-center" style={{ padding: 'var(--space-3xl) 0' }}>
+                  <div style={{ fontSize: '3rem', marginBottom: 'var(--space-lg)' }}>👋</div>
+                  <h2 style={{ marginBottom: 'var(--space-md)' }}>Dashboard Overview</h2>
+                  <p className="text-muted" style={{ 
+                    marginBottom: 'var(--space-xl)',
+                    maxWidth: '400px',
+                    margin: '0 auto var(--space-xl)'
+                  }}>
                     This is your central hub for managing services and bookings
                   </p>
-                  <div className="flex justify-center gap-4">
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    gap: 'var(--space-md)',
+                    flexWrap: 'wrap'
+                  }}>
                     <button
                       onClick={() => setActiveTab('slots')}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                      className="btn-primary"
+                      style={{ width: 'auto', padding: 'var(--space-lg) var(--space-xl)' }}
                     >
                       Manage Services
                     </button>
-                    <Link href="/discover" className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium transition-colors">
-                      Browse Services
+                    <Link href="/discover" style={{ textDecoration: 'none' }}>
+                      <button 
+                        className="btn-secondary"
+                        style={{ width: 'auto', padding: 'var(--space-lg) var(--space-xl)' }}
+                      >
+                        Browse Services
+                      </button>
                     </Link>
                   </div>
                 </div>
@@ -499,100 +610,145 @@ export default function DashboardPage() {
             )}
 
             {activeTab === 'slots' && (
-              <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-semibold text-gray-900">My Services</h3>
-                  <Link
-                    href="/create-service"
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Add Service
+              <div className="space-y-xl">
+                <div className="flex-between">
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: '600' }}>My Services</h3>
+                  <Link href="/create-service" style={{ textDecoration: 'none' }}>
+                    <button className="btn-primary" style={{ 
+                      width: 'auto', 
+                      padding: 'var(--space-md) var(--space-lg)',
+                      fontSize: '0.875rem'
+                    }}>
+                      <Plus size={16} />
+                      Add Service
+                    </button>
                   </Link>
                 </div>
 
                 {loading ? (
-                  <div className="text-center py-12">
-                    <div className="text-gray-500">Loading your services...</div>
+                  <div className="text-center" style={{ padding: 'var(--space-3xl) 0' }}>
+                    <div style={{ 
+                      width: '32px', 
+                      height: '32px', 
+                      border: '3px solid var(--border-light)', 
+                      borderTop: '3px solid var(--accent-primary)',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite',
+                      margin: '0 auto var(--space-md)'
+                    }}></div>
+                    <div className="text-muted">Loading your services...</div>
                   </div>
                 ) : userServices.length === 0 ? (
-                  <div className="text-center py-12">
-                    <div className="text-gray-400 text-lg mb-2">No services yet</div>
-                    <p className="text-gray-500 mb-4">Create your first service to get started</p>
-                    <Link
-                      href="/create-service"
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium"
-                    >
-                      Create First Service
+                  <div className="text-center" style={{ padding: 'var(--space-3xl) 0' }}>
+                    <div style={{ fontSize: '3rem', marginBottom: 'var(--space-lg)' }}>📋</div>
+                    <h3 style={{ marginBottom: 'var(--space-md)' }}>No services yet</h3>
+                    <p className="text-muted" style={{ marginBottom: 'var(--space-xl)' }}>Create your first service to get started</p>
+                    <Link href="/create-service" style={{ textDecoration: 'none' }}>
+                      <button className="btn-primary" style={{ 
+                        width: 'auto', 
+                        padding: 'var(--space-lg) var(--space-xl)'
+                      }}>
+                        Create First Service
+                      </button>
                     </Link>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid-responsive">
                     {userServices.map((service) => (
-                      <div key={service.id} className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex items-center">
-                            <span className="text-2xl mr-3">{getSlotCategoryEmoji(service.category)}</span>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h4 className="font-semibold text-lg text-gray-900">{service.title}</h4>
-                                <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                                  service.is_active 
-                                    ? 'bg-green-100 text-green-800' 
-                                    : 'bg-red-100 text-red-800'
-                                }`}>
+                      <div key={service.id} className="card" style={{ transition: 'all 0.2s ease' }}>
+                        <div className="flex-between" style={{ marginBottom: 'var(--space-lg)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                            <span style={{ fontSize: '1.5rem', marginRight: 'var(--space-md)' }}>
+                              {getSlotCategoryEmoji(service.category)}
+                            </span>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: 'var(--space-sm)', 
+                                marginBottom: 'var(--space-xs)'
+                              }}>
+                                <h4 style={{ fontSize: '1.125rem', fontWeight: '600' }}>{service.title}</h4>
+                                <span style={{
+                                  fontSize: '0.75rem',
+                                  padding: 'var(--space-xs) var(--space-sm)',
+                                  borderRadius: 'var(--radius-full)',
+                                  fontWeight: '500',
+                                  backgroundColor: service.is_active ? 'var(--success)' : 'var(--error)',
+                                  color: 'white'
+                                }}>
                                   {service.is_active ? 'Active' : 'Inactive'}
                                 </span>
                               </div>
-                              <p className="text-gray-600 text-sm">{service.description}</p>
+                              <p className="text-muted" style={{ fontSize: '0.875rem' }}>{service.description}</p>
                             </div>
                           </div>
-                          <div className="flex gap-2">
+                          <div style={{ display: 'flex', gap: 'var(--space-xs)' }}>
                             <button
                               onClick={() => handleToggleServiceStatus(service.id, service.is_active)}
-                              className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
-                                service.is_active 
-                                  ? 'bg-green-100 text-green-700 hover:bg-red-100 hover:text-red-700' 
-                                  : 'bg-red-100 text-red-700 hover:bg-green-100 hover:text-green-700'
-                              }`}
+                              style={{
+                                padding: 'var(--space-xs) var(--space-sm)',
+                                fontSize: '0.75rem',
+                                fontWeight: '500',
+                                borderRadius: 'var(--radius-full)',
+                                transition: 'all 0.2s ease',
+                                border: 'none',
+                                cursor: 'pointer',
+                                backgroundColor: service.is_active ? 'var(--bg-secondary)' : 'var(--accent-light)',
+                                color: service.is_active ? 'var(--text-secondary)' : 'var(--accent-primary)'
+                              }}
                               title={service.is_active ? 'Click to deactivate service' : 'Click to activate service'}
                             >
                               {service.is_active ? 'Deactivate' : 'Activate'}
                             </button>
                             <button
                               onClick={() => router.push(`/edit-service/${service.id}`)}
-                              className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                              style={{
+                                padding: 'var(--space-xs)',
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                color: 'var(--text-tertiary)',
+                                transition: 'color 0.2s ease'
+                              }}
                               title="Edit service"
                             >
-                              <Edit className="w-4 h-4" />
+                              <Edit size={16} />
                             </button>
                             <button
                               onClick={() => handleDeleteService(service.id)}
-                              className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                              style={{
+                                padding: 'var(--space-xs)',
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                color: 'var(--text-tertiary)',
+                                transition: 'color 0.2s ease'
+                              }}
                               title="Delete service"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 size={16} />
                             </button>
                           </div>
                         </div>
 
-                        <div className="space-y-2 text-sm text-gray-600 mb-4">
-                          <div className="flex items-center">
-                            <Calendar className="w-4 h-4 mr-2" />
+                        <div className="space-y-sm" style={{ marginBottom: 'var(--space-lg)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                            <Calendar size={16} style={{ marginRight: 'var(--space-sm)' }} />
                             <span>{Object.values(service.availabilitySlots).reduce((total, slots) => total + slots.length, 0)} availability slots</span>
                           </div>
-                          <div className="flex items-center">
-                            <Clock className="w-4 h-4 mr-2" />
+                          <div style={{ display: 'flex', alignItems: 'center', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                            <Clock size={16} style={{ marginRight: 'var(--space-sm)' }} />
                             <span>{service.duration} minutes per session</span>
                           </div>
-                          <div className="flex items-center">
-                            <span className="text-lg mr-2">{getLocationIcon(service.location)}</span>
-                            <span className="capitalize">{service.location}</span>
+                          <div style={{ display: 'flex', alignItems: 'center', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                            <span style={{ fontSize: '1.125rem', marginRight: 'var(--space-sm)' }}>{getLocationIcon(service.location)}</span>
+                            <span style={{ textTransform: 'capitalize' }}>{service.location}</span>
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-between">
-                          <span className="text-lg font-semibold text-green-600">{formatPrice(service.price)}</span>
+                        <div style={{ fontSize: '1.125rem', fontWeight: '600', color: 'var(--success)' }}>
+                          {formatPrice(service.price)}
                         </div>
                       </div>
                     ))}
@@ -602,55 +758,94 @@ export default function DashboardPage() {
             )}
 
             {activeTab === 'bookings' && (
-              <div className="space-y-6">
-                <h3 className="text-xl font-semibold text-gray-900">Incoming Booking Requests</h3>
+              <div className="space-y-xl">
+                <h3 style={{ fontSize: '1.25rem', fontWeight: '600' }}>Incoming Booking Requests</h3>
 
                 {loading ? (
-                  <div className="text-center py-12">
-                    <div className="text-gray-500">Loading booking requests...</div>
+                  <div className="text-center" style={{ padding: 'var(--space-3xl) 0' }}>
+                    <div style={{ 
+                      width: '32px', 
+                      height: '32px', 
+                      border: '3px solid var(--border-light)', 
+                      borderTop: '3px solid var(--accent-primary)',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite',
+                      margin: '0 auto var(--space-md)'
+                    }}></div>
+                    <div className="text-muted">Loading booking requests...</div>
                   </div>
                 ) : incomingRequests.length === 0 ? (
-                  <div className="text-center py-12">
-                    <div className="text-gray-400 text-lg mb-2">No incoming requests</div>
-                    <p className="text-gray-500">New booking requests will appear here</p>
+                  <div className="text-center" style={{ padding: 'var(--space-3xl) 0' }}>
+                    <div style={{ fontSize: '3rem', marginBottom: 'var(--space-lg)' }}>📬</div>
+                    <h3 style={{ marginBottom: 'var(--space-md)' }}>No incoming requests</h3>
+                    <p className="text-muted">New booking requests will appear here</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-lg">
                     {incomingRequests.map((booking) => (
-                      <div key={booking.id} className="border border-gray-200 rounded-xl p-6">
-                        <div className="flex justify-between items-start mb-4">
+                      <div key={booking.id} className="card">
+                        <div className="flex-between" style={{ marginBottom: 'var(--space-lg)' }}>
                           <div>
-                            <h4 className="font-semibold text-lg text-gray-900 mb-1">{booking.service.title}</h4>
-                            <p className="text-gray-600">Request from {booking.requester.displayName}</p>
-                            <p className="text-sm text-gray-500">{booking.service.duration} min • {booking.service.location} • ${booking.service.price}</p>
+                            <h4 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: 'var(--space-xs)' }}>
+                              {booking.service.title}
+                            </h4>
+                            <p className="text-muted" style={{ marginBottom: 'var(--space-xs)' }}>
+                              Request from {booking.requester.displayName}
+                            </p>
+                            <p className="text-small">
+                              {booking.service.duration} min • {booking.service.location} • ${booking.service.price}
+                            </p>
                           </div>
-                          <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-                            booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                            booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                            'bg-red-100 text-red-800'
-                          }`}>
+                          <div style={{
+                            padding: 'var(--space-sm) var(--space-md)',
+                            borderRadius: 'var(--radius-full)',
+                            fontSize: '0.875rem',
+                            fontWeight: '500',
+                            backgroundColor: 
+                              booking.status === 'pending' ? 'var(--warning)' :
+                              booking.status === 'confirmed' ? 'var(--success)' :
+                              'var(--error)',
+                            color: 'white'
+                          }}>
                             {booking.status}
                           </div>
                         </div>
 
-                        <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-                          <p className="text-sm text-gray-700 italic">"{booking.message}"</p>
+                        <div className="card" style={{ 
+                          backgroundColor: 'var(--bg-secondary)', 
+                          padding: 'var(--space-lg)',
+                          marginBottom: 'var(--space-lg)'
+                        }}>
+                          <p style={{ fontSize: '0.875rem', fontStyle: 'italic', color: 'var(--text-secondary)' }}>
+                            "{booking.message}"
+                          </p>
                         </div>
 
                         {booking.status === 'pending' && (
-                          <div className="flex gap-3">
+                          <div style={{ display: 'flex', gap: 'var(--space-md)' }}>
                             <button
                               onClick={() => handleBookingResponse(booking.id, 'confirmed')}
-                              className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
+                              className="btn-primary"
+                              style={{ 
+                                backgroundColor: 'var(--success)',
+                                flex: 1,
+                                padding: 'var(--space-lg)'
+                              }}
                             >
-                              <Check className="w-4 h-4" />
+                              <Check size={16} />
                               Accept
                             </button>
                             <button
                               onClick={() => handleBookingResponse(booking.id, 'declined')}
-                              className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
+                              className="btn-secondary"
+                              style={{ 
+                                borderColor: 'var(--error)',
+                                color: 'var(--error)',
+                                flex: 1,
+                                padding: 'var(--space-lg)'
+                              }}
                             >
-                              <X className="w-4 h-4" />
+                              <X size={16} />
                               Decline
                             </button>
                           </div>
@@ -663,44 +858,71 @@ export default function DashboardPage() {
             )}
 
             {activeTab === 'requests' && (
-              <div className="space-y-6">
-                <h3 className="text-xl font-semibold text-gray-900">My Booking Requests</h3>
+              <div className="space-y-xl">
+                <h3 style={{ fontSize: '1.25rem', fontWeight: '600' }}>My Booking Requests</h3>
 
                 {loading ? (
-                  <div className="text-center py-12">
-                    <div className="text-gray-500">Loading your requests...</div>
+                  <div className="text-center" style={{ padding: 'var(--space-3xl) 0' }}>
+                    <div style={{ 
+                      width: '32px', 
+                      height: '32px', 
+                      border: '3px solid var(--border-light)', 
+                      borderTop: '3px solid var(--accent-primary)',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite',
+                      margin: '0 auto var(--space-md)'
+                    }}></div>
+                    <div className="text-muted">Loading your requests...</div>
                   </div>
                 ) : myRequests.length === 0 ? (
-                  <div className="text-center py-12">
-                    <div className="text-gray-400 text-lg mb-2">No requests sent</div>
-                    <p className="text-gray-500">
-                      <Link href="/discover" className="text-blue-600 hover:text-blue-700 underline">
+                  <div className="text-center" style={{ padding: 'var(--space-3xl) 0' }}>
+                    <div style={{ fontSize: '3rem', marginBottom: 'var(--space-lg)' }}>📋</div>
+                    <h3 style={{ marginBottom: 'var(--space-md)' }}>No requests sent</h3>
+                    <p className="text-muted" style={{ marginBottom: 'var(--space-xl)' }}>
+                      <Link href="/discover" className="link-purple">
                         Browse services
                       </Link>
                       {' '}to send your first booking request
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-lg">
                     {myRequests.map((booking) => (
-                      <div key={booking.id} className="border border-gray-200 rounded-xl p-6">
-                        <div className="flex justify-between items-start mb-4">
+                      <div key={booking.id} className="card">
+                        <div className="flex-between" style={{ marginBottom: 'var(--space-lg)' }}>
                           <div>
-                            <h4 className="font-semibold text-lg text-gray-900 mb-1">{booking.service.title}</h4>
-                            <p className="text-gray-600">with Service Provider</p>
-                            <p className="text-sm text-gray-500">{booking.service.duration} min • {booking.service.location} • ${booking.service.price}</p>
+                            <h4 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: 'var(--space-xs)' }}>
+                              {booking.service.title}
+                            </h4>
+                            <p className="text-muted" style={{ marginBottom: 'var(--space-xs)' }}>
+                              with Service Provider
+                            </p>
+                            <p className="text-small">
+                              {booking.service.duration} min • {booking.service.location} • ${booking.service.price}
+                            </p>
                           </div>
-                          <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-                            booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                            booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                            'bg-red-100 text-red-800'
-                          }`}>
+                          <div style={{
+                            padding: 'var(--space-sm) var(--space-md)',
+                            borderRadius: 'var(--radius-full)',
+                            fontSize: '0.875rem',
+                            fontWeight: '500',
+                            backgroundColor: 
+                              booking.status === 'pending' ? 'var(--warning)' :
+                              booking.status === 'confirmed' ? 'var(--success)' :
+                              'var(--error)',
+                            color: 'white'
+                          }}>
                             {booking.status}
                           </div>
                         </div>
 
-                        <div className="p-4 bg-gray-50 rounded-lg">
-                          <p className="text-sm text-gray-700 italic">"{booking.message}"</p>
+                        <div className="card" style={{ 
+                          backgroundColor: 'var(--bg-secondary)', 
+                          padding: 'var(--space-lg)'
+                        }}>
+                          <p style={{ fontSize: '0.875rem', fontStyle: 'italic', color: 'var(--text-secondary)' }}>
+                            "{booking.message}"
+                          </p>
                         </div>
                       </div>
                     ))}
@@ -710,50 +932,88 @@ export default function DashboardPage() {
             )}
 
             {activeTab === 'profile' && (
-              <div className="space-y-6">
-                <h3 className="text-xl font-semibold text-gray-900">Profile Settings</h3>
+              <div className="space-y-xl">
+                <h3 style={{ fontSize: '1.25rem', fontWeight: '600' }}>Profile Settings</h3>
                 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="grid-2">
                   {/* Profile Form */}
-                  <div className="space-y-6">
+                  <div className="space-y-xl">
                     {/* Display Name */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label style={{ 
+                        display: 'block', 
+                        fontSize: '0.875rem', 
+                        fontWeight: '500', 
+                        color: 'var(--text-primary)',
+                        marginBottom: 'var(--space-sm)'
+                      }}>
                         Display Name
                       </label>
                       <input
                         type="text"
                         value={profileData.displayName}
                         onChange={(e) => setProfileData(prev => ({ ...prev, displayName: e.target.value }))}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="input-field"
                         placeholder="Your display name"
                       />
                     </div>
 
                     {/* Location */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label style={{ 
+                        display: 'block', 
+                        fontSize: '0.875rem', 
+                        fontWeight: '500', 
+                        color: 'var(--text-primary)',
+                        marginBottom: 'var(--space-sm)'
+                      }}>
                         Location
                       </label>
                       <input
                         type="text"
                         value={profileData.location}
                         onChange={(e) => setProfileData(prev => ({ ...prev, location: e.target.value }))}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="input-field"
                         placeholder="e.g., San Francisco, CA"
                       />
                     </div>
 
                     {/* Bio with Markdown Support */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label style={{ 
+                        display: 'block', 
+                        fontSize: '0.875rem', 
+                        fontWeight: '500', 
+                        color: 'var(--text-primary)',
+                        marginBottom: 'var(--space-sm)'
+                      }}>
                         About Me (Bio)
                       </label>
                       <textarea
                         value={profileData.bio}
                         onChange={(e) => setProfileData(prev => ({ ...prev, bio: e.target.value }))}
                         rows={8}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none font-mono text-sm"
+                        style={{
+                          width: '100%',
+                          padding: 'var(--space-lg) var(--space-lg)',
+                          border: '1px solid var(--border-light)',
+                          borderRadius: 'var(--radius-lg)',
+                          background: 'var(--bg-primary)',
+                          color: 'var(--text-primary)',
+                          fontSize: '0.875rem',
+                          fontFamily: 'monospace',
+                          resize: 'none',
+                          outline: 'none',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.borderColor = 'var(--accent-primary)';
+                          e.target.style.boxShadow = '0 0 0 3px var(--accent-light)';
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.borderColor = 'var(--border-light)';
+                          e.target.style.boxShadow = 'none';
+                        }}
                         placeholder="Tell potential clients about yourself...
 
 You can use basic markdown:
@@ -764,18 +1024,30 @@ You can use basic markdown:
 - - Bullet points"
                         maxLength={1000}
                       />
-                      <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        fontSize: '0.75rem', 
+                        color: 'var(--text-tertiary)',
+                        marginTop: 'var(--space-xs)'
+                      }}>
                         <span>Supports basic Markdown formatting</span>
                         <span>{profileData.bio.length}/1000</span>
                       </div>
                     </div>
 
                     {/* Save Button */}
-                    <div className="flex justify-end">
+                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                       <button
                         onClick={handleUpdateProfile}
                         disabled={profileLoading}
-                        className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="btn-primary"
+                        style={{ 
+                          width: 'auto',
+                          padding: 'var(--space-lg) var(--space-xl)',
+                          opacity: profileLoading ? '0.5' : '1',
+                          cursor: profileLoading ? 'not-allowed' : 'pointer'
+                        }}
                       >
                         {profileLoading ? 'Saving...' : 'Save Profile'}
                       </button>
@@ -784,21 +1056,36 @@ You can use basic markdown:
 
                   {/* Preview */}
                   <div>
-                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Preview</h4>
-                    <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                      <div className="flex items-center gap-4 mb-4">
+                    <h4 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: 'var(--space-lg)' }}>Preview</h4>
+                    <div className="card" style={{ backgroundColor: 'var(--bg-secondary)' }}>
+                      <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 'var(--space-lg)', 
+                        marginBottom: 'var(--space-lg)'
+                      }}>
                         <img 
-                          src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(profileData.displayName || user.displayName)}&background=3b82f6&color=fff`}
+                          src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(profileData.displayName || user.displayName)}&background=8b5cf6&color=fff`}
                           alt={profileData.displayName || user.displayName}
-                          className="w-16 h-16 rounded-full border-4 border-gray-100"
+                          style={{
+                            width: '64px',
+                            height: '64px',
+                            borderRadius: '50%',
+                            border: '4px solid var(--bg-primary)'
+                          }}
                         />
                         <div>
-                          <h3 className="text-xl font-bold text-gray-900">
+                          <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: 'var(--space-xs)' }}>
                             {profileData.displayName || 'Your Name'}
                           </h3>
                           {profileData.location && (
-                            <div className="flex items-center text-gray-600 text-sm">
-                              <MapPin className="h-4 w-4 mr-1" />
+                            <div style={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              color: 'var(--text-secondary)', 
+                              fontSize: '0.875rem'
+                            }}>
+                              <MapPin size={16} style={{ marginRight: 'var(--space-xs)' }} />
                               {profileData.location}
                             </div>
                           )}
@@ -807,19 +1094,19 @@ You can use basic markdown:
                       
                       {profileData.bio && (
                         <div>
-                          <h4 className="font-semibold text-gray-900 mb-2">About</h4>
-                          <div className="text-gray-700 text-sm space-y-2">
+                          <h4 style={{ fontWeight: '600', marginBottom: 'var(--space-sm)' }}>About</h4>
+                          <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
                             {profileData.bio.split('\n').map((line, index) => {
                               // Basic markdown rendering
                               let processedLine = line
                                 .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                                 .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                                .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">$1</a>')
-                                .replace(/^## (.+)$/g, '<h3 class="text-lg font-semibold text-gray-900 mt-3 mb-1">$1</h3>')
-                                .replace(/^- (.+)$/g, '<li class="ml-4">• $1</li>');
+                                .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color: var(--accent-primary); text-decoration: none;" target="_blank" rel="noopener noreferrer">$1</a>')
+                                .replace(/^## (.+)$/g, '<h3 style="font-size: 1.125rem; font-weight: 600; margin-top: var(--space-md); margin-bottom: var(--space-xs);">$1</h3>')
+                                .replace(/^- (.+)$/g, '<li style="margin-left: var(--space-lg);">• $1</li>');
                               
                               return (
-                                <div key={index} dangerouslySetInnerHTML={{ __html: processedLine || '<br>' }} />
+                                <div key={index} dangerouslySetInnerHTML={{ __html: processedLine || '<br>' }} style={{ marginBottom: 'var(--space-sm)' }} />
                               );
                             })}
                           </div>
@@ -827,7 +1114,7 @@ You can use basic markdown:
                       )}
                     </div>
                     
-                    <div className="mt-4 text-sm text-gray-500">
+                    <div style={{ marginTop: 'var(--space-lg)', fontSize: '0.875rem', color: 'var(--text-tertiary)' }}>
                       <p>This is how your profile will appear to potential clients.</p>
                     </div>
                   </div>

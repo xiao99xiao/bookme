@@ -47,24 +47,24 @@ export function ChatLayout() {
   const activeConversation = conversations.find(c => c.id === activeConversationId)
 
   return (
-    <div className="h-screen flex bg-white">
+    <div style={{ height: '100vh', display: 'flex', background: 'var(--bg-primary)' }}>
       {/* Sidebar - Conversation List */}
-      <div className="w-1/3 border-r border-gray-200 flex flex-col">
+      <div style={{ width: '33.33%', borderRight: '1px solid var(--border-light)', display: 'flex', flexDirection: 'column' }}>
         {/* Header */}
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center gap-3">
-            <MessageCircle className="h-6 w-6 text-blue-600" />
-            <h1 className="text-xl font-semibold text-gray-900">Messages</h1>
+        <div style={{ padding: 'var(--space-lg)', borderBottom: '1px solid var(--border-light)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
+            <MessageCircle size={24} style={{ color: 'var(--accent-primary)' }} />
+            <h1 style={{ fontSize: '1.25rem', fontWeight: '600', color: 'var(--text-primary)' }}>Messages</h1>
           </div>
         </div>
 
         {/* Conversation List */}
-        <div className="flex-1 overflow-y-auto">
+        <div style={{ flex: '1', overflowY: 'auto' }}>
           {conversations.length === 0 ? (
-            <div className="p-6 text-center text-gray-500">
-              <MessageCircle className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-              <p className="text-sm">No conversations yet</p>
-              <p className="text-xs mt-1">Messages will appear when you have confirmed bookings</p>
+            <div style={{ padding: 'var(--space-xl)', textAlign: 'center', color: 'var(--text-secondary)' }}>
+              <MessageCircle size={48} style={{ margin: '0 auto var(--space-md)', color: 'var(--text-light)' }} />
+              <p style={{ fontSize: '0.875rem' }}>No conversations yet</p>
+              <p style={{ fontSize: '0.75rem', marginTop: 'var(--space-xs)' }}>Messages will appear when you have confirmed bookings</p>
             </div>
           ) : (
             <ConversationList 
@@ -78,20 +78,20 @@ export function ChatLayout() {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
+      <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}>
         {activeConversation ? (
           <ChatInterface 
             conversation={activeConversation} 
             currentUserId={user?.id}
           />
         ) : (
-          <div className="flex-1 flex items-center justify-center bg-gray-50">
-            <div className="text-center">
-              <MessageCircle className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+          <div style={{ flex: '1', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-secondary)' }}>
+            <div style={{ textAlign: 'center' }}>
+              <MessageCircle size={64} style={{ margin: '0 auto var(--space-lg)', color: 'var(--text-light)' }} />
+              <h3 style={{ fontSize: '1.125rem', fontWeight: '500', color: 'var(--text-primary)', marginBottom: 'var(--space-sm)' }}>
                 Select a conversation
               </h3>
-              <p className="text-gray-500">
+              <p style={{ color: 'var(--text-secondary)' }}>
                 Choose a conversation from the sidebar to start messaging
               </p>
             </div>
