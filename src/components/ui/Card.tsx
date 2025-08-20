@@ -1,60 +1,79 @@
-import React from 'react';
+import * as React from "react"
 
-interface CardProps {
-  children: React.ReactNode;
-  elevated?: boolean;
-  className?: string;
-  style?: React.CSSProperties;
-}
+import { cn } from "@/lib/utils"
 
-export function Card({ children, elevated = false, className, style }: CardProps) {
-  const cardClass = elevated ? 'card-elevated' : 'card';
-  
-  return (
-    <div className={`${cardClass} ${className || ''}`} style={style}>
-      {children}
-    </div>
-  );
-}
+const Card = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn(
+      "rounded-lg border bg-card text-card-foreground shadow-sm",
+      className
+    )}
+    {...props}
+  />
+))
+Card.displayName = "Card"
 
-interface CardHeaderProps {
-  title: string;
-  subtitle?: string;
-  action?: React.ReactNode;
-}
+const CardHeader = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex flex-col space-y-1.5 p-6", className)}
+    {...props}
+  />
+))
+CardHeader.displayName = "CardHeader"
 
-export function CardHeader({ title, subtitle, action }: CardHeaderProps) {
-  return (
-    <div className="flex-between" style={{ marginBottom: 'var(--space-xl)' }}>
-      <div>
-        <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: subtitle ? 'var(--space-xs)' : 0 }}>
-          {title}
-        </h3>
-        {subtitle && (
-          <p className="text-muted" style={{ fontSize: '0.875rem' }}>{subtitle}</p>
-        )}
-      </div>
-      {action}
-    </div>
-  );
-}
+const CardTitle = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLHeadingElement>
+>(({ className, ...props }, ref) => (
+  <h3
+    ref={ref}
+    className={cn(
+      "text-2xl font-semibold leading-none tracking-tight",
+      className
+    )}
+    {...props}
+  />
+))
+CardTitle.displayName = "CardTitle"
 
-interface CardContentProps {
-  children: React.ReactNode;
-  spacing?: 'sm' | 'md' | 'lg' | 'xl';
-}
+const CardDescription = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLParagraphElement>
+>(({ className, ...props }, ref) => (
+  <p
+    ref={ref}
+    className={cn("text-sm text-muted-foreground", className)}
+    {...props}
+  />
+))
+CardDescription.displayName = "CardDescription"
 
-export function CardContent({ children, spacing = 'lg' }: CardContentProps) {
-  const spacingClass = {
-    sm: 'space-y-sm',
-    md: 'space-y-md', 
-    lg: 'space-y-lg',
-    xl: 'space-y-xl'
-  }[spacing];
+const CardContent = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
+))
+CardContent.displayName = "CardContent"
 
-  return (
-    <div className={spacingClass}>
-      {children}
-    </div>
-  );
-}
+const CardFooter = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex items-center p-6 pt-0", className)}
+    {...props}
+  />
+))
+CardFooter.displayName = "CardFooter"
+
+export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
