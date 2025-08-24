@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { PrivyAuthProvider } from "./contexts/PrivyAuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Index from "./pages/Index";
+import Discover from "./pages/Discover";
 import BookServices from "./pages/BookServices";
 import MyBookings from "./pages/MyBookings";
 import Profile from "./pages/Profile";
@@ -27,6 +28,7 @@ const App = () => (
           <Navigation />
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/discover" element={<Discover />} />
             <Route 
               path="/book-services" 
               element={
