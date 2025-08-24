@@ -4,18 +4,18 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ChevronDown, User, Calendar, LogOut } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/PrivyAuthContext";
 import timeeLogo from "@/assets/timee-logo.jpg";
 
 const Navigation = () => {
   const location = useLocation();
-  const { user, profile, loading, signOut } = useAuth();
+  const { user, profile, ready, authenticated, logout, userId } = useAuth();
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   
-  const isLoggedIn = !!user;
+  const isLoggedIn = authenticated;
   const isAuthPage = location.pathname === "/auth";
-  const userName = profile?.display_name || user?.email?.split('@')[0] || "User";
+  const userName = profile?.display_name || "User";
   
   useEffect(() => {
     const controlNavbar = () => {
@@ -44,7 +44,7 @@ const Navigation = () => {
       return null;
     }
 
-    if (loading) {
+    if (!ready) {
       return (
         <div className="w-8 h-8 bg-muted rounded-full animate-pulse" />
       );
@@ -56,7 +56,7 @@ const Navigation = () => {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center gap-2 h-auto p-2 focus-visible:ring-0 focus-visible:ring-offset-0">
               <Avatar className="w-8 h-8">
-                <AvatarImage src={profile?.avatar || ""} alt={userName} />
+                <AvatarImage src="" alt={userName} />
                 <AvatarFallback className="text-xs">
                   {userName.substring(0, 2).toUpperCase()}
                 </AvatarFallback>
@@ -73,7 +73,7 @@ const Navigation = () => {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link to={`/profile/${user?.id}`} className="flex items-center gap-2">
+              <Link to={`/profile/${userId || ''}`} className="flex items-center gap-2">
                 <User className="w-4 h-4" />
                 View Profile
               </Link>
@@ -86,7 +86,7 @@ const Navigation = () => {
             </DropdownMenuItem>
             <DropdownMenuItem 
               className="flex items-center gap-2 text-destructive cursor-pointer"
-              onClick={signOut}
+              onClick={logout}
             >
               <LogOut className="w-4 h-4" />
               Log out

@@ -13,7 +13,7 @@ import { MapPin, Video, Users, Phone, Plus, Upload, Copy, Check, Loader2, Star }
 import ReactMarkdown from "react-markdown";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/PrivyAuthContext";
 import { ApiClient } from "@/lib/api";
 import { TimeSlotSelector } from "@/components/TimeSlotSelector";
 
@@ -51,7 +51,7 @@ interface Category {
 }
 
 const EditProfile = () => {
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile, userId } = useAuth();
   const [services, setServices] = useState<Service[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -108,10 +108,15 @@ const EditProfile = () => {
     }
   });
 
-  // Load initial data - don't wait for auth context, load immediately
+  // Load initial data - wait for userId to be available
   useEffect(() => {
     const loadData = async () => {
-      console.log('Loading edit profile data...');
+      if (!userId) {
+        console.log('Waiting for userId to be available...');
+        return;
+      }
+      
+      console.log('Loading edit profile data for userId:', userId);
       
       try {
         setLoading(true);
@@ -126,7 +131,7 @@ const EditProfile = () => {
         try {
           console.log('Fetching user services and categories...');
           const [servicesData, categoriesData] = await Promise.all([
-            ApiClient.getUserServices(),
+            ApiClient.getUserServices(userId),
             ApiClient.getCategories()
           ]);
           
@@ -147,9 +152,8 @@ const EditProfile = () => {
       }
     };
 
-    // Load data immediately, don't wait for user context
     loadData();
-  }, []); // Remove user dependency
+  }, [userId]); // Wait for userId to be available
 
   // Update profile form when profile changes
   useEffect(() => {
@@ -167,7 +171,7 @@ const EditProfile = () => {
   const handleProfileUpdate = async (data: any) => {
     setIsUpdatingProfile(true);
     try {
-      await ApiClient.updateUserProfile(data);
+      await ApiClient.updateUserProfile(userId || '', data);
       await refreshProfile();
       toast.success('Profile updated successfully');
     } catch (error) {
@@ -185,7 +189,7 @@ const EditProfile = () => {
     try {
       setUploading(true);
       const uploadResult = await ApiClient.uploadFile(file, 'avatar');
-      await ApiClient.updateUserProfile({ avatar: uploadResult.url });
+      await ApiClient.updateUserProfile(userId || '', { avatar: uploadResult.url });
       await refreshProfile();
       toast.success('Avatar updated successfully');
     } catch (error) {
@@ -252,7 +256,7 @@ const EditProfile = () => {
 
       let savedService;
       if (isAddingService) {
-        savedService = await ApiClient.createService(serviceData);
+        savedService = await ApiClient.createService(userId || '', serviceData);
         toast.success('Service created successfully');
         // Add new service to existing list
         setServices(prevServices => [...prevServices, savedService]);
@@ -279,7 +283,7 @@ const EditProfile = () => {
 
     setIsDeletingService(true);
     try {
-      await ApiClient.deleteService(editingService.id);
+      await ApiClient.deleteService(editingService.id, userId || '');
       // Remove service from existing list instead of refetching all
       setServices(prevServices => 
         prevServices.filter(s => s.id !== editingService.id)

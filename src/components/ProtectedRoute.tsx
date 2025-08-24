@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/PrivyAuthContext';
 import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
@@ -9,10 +9,10 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children, requireAuth = true }: ProtectedRouteProps) => {
-  const { user, loading } = useAuth();
+  const { ready, authenticated } = useAuth();
   const location = useLocation();
 
-  if (loading) {
+  if (!ready) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -23,12 +23,12 @@ const ProtectedRoute = ({ children, requireAuth = true }: ProtectedRouteProps) =
     );
   }
 
-  if (requireAuth && !user) {
+  if (requireAuth && !authenticated) {
     // Redirect to auth page but remember where they wanted to go
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  if (!requireAuth && user) {
+  if (!requireAuth && authenticated) {
     // If user is logged in but trying to access auth page, redirect to discover
     return <Navigate to="/discover" replace />;
   }

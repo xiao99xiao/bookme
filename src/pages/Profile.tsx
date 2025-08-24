@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { MapPin, Clock, DollarSign, Calendar, Phone, Video, Users, X, Star, ArrowLeft, Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/PrivyAuthContext";
 import { ApiClient } from "@/lib/api";
 import BookingTimeSlots from "@/components/BookingTimeSlots";
 import { toast } from "sonner";
@@ -59,7 +59,7 @@ interface UserProfile {
 const Profile = () => {
   const { userId } = useParams<{ userId: string }>();
   const [searchParams] = useSearchParams();
-  const { user: currentUser, profile: currentProfile, loading: authLoading } = useAuth();
+  const { user: currentUser, profile: currentProfile, loading: authLoading, userId: currentUserId } = useAuth();
   
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<Date | null>(null);
@@ -71,12 +71,12 @@ const Profile = () => {
   const [isBooking, setIsBooking] = useState(false);
 
   // Determine which user's profile to show
-  const targetUserId = userId || currentUser?.id;
+  const targetUserId = userId || currentUserId;
   // Dynamic check for own profile that works even during auth loading
-  const isOwnProfile = targetUserId && currentUser?.id && targetUserId === currentUser?.id;
+  const isOwnProfile = targetUserId && currentUserId && targetUserId === currentUserId;
   
   // Debug logging
-  console.log('Profile page params:', { userId, targetUserId, currentUserId: currentUser?.id, isOwnProfile });
+  console.log('Profile page params:', { userId, targetUserId, currentUserId, isOwnProfile });
 
   // Load profile and services data immediately
   useEffect(() => {
@@ -143,11 +143,11 @@ const Profile = () => {
   useEffect(() => {
     console.log('Auth status changed:', { 
       authLoading, 
-      currentUserId: currentUser?.id, 
+      currentUserId, 
       targetUserId, 
-      isOwnProfile: targetUserId === currentUser?.id 
+      isOwnProfile: targetUserId === currentUserId 
     });
-  }, [authLoading, currentUser?.id, targetUserId]);
+  }, [authLoading, currentUserId, targetUserId]);
 
   // Handle service pre-selection from query parameter (from Discover page)
   useEffect(() => {
@@ -182,7 +182,7 @@ const Profile = () => {
   };
 
   const handleBookingSubmit = async () => {
-    if (!selectedService || !selectedTimeSlot || !currentUser || !profile) {
+    if (!selectedService || !selectedTimeSlot || !currentUserId || !profile) {
       toast.error('Please select a time slot');
       return;
     }

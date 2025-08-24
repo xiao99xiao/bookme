@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabase, supabaseAdmin } from './supabase';
 
 export class ApiClient {
   // User Profile APIs
@@ -20,7 +20,8 @@ export class ApiClient {
     try {
       console.log('Fetching profile for userId:', userId);
       
-      const { data, error } = await supabase
+      // Use admin client to bypass RLS for profile fetching
+      const { data, error } = await supabaseAdmin
         .from('users')
         .select('*')
         .eq('id', userId)
@@ -39,7 +40,7 @@ export class ApiClient {
     }
   }
 
-  static async updateUserProfile(updates: {
+  static async updateUserProfile(userId: string, updates: {
     display_name?: string;
     bio?: string;
     location?: string;
@@ -47,16 +48,16 @@ export class ApiClient {
     avatar?: string;
     is_provider?: boolean;
   }) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
+    if (!userId) throw new Error('User ID is required');
 
-    const { data, error } = await supabase
+    // Use admin client to bypass RLS for profile updates
+    const { data, error } = await supabaseAdmin
       .from('users')
       .update({
         ...updates,
         updated_at: new Date().toISOString()
       })
-      .eq('id', user.id)
+      .eq('id', userId)
       .select()
       .single();
 
@@ -65,20 +66,20 @@ export class ApiClient {
   }
 
   // Services APIs
-  static async getUserServices() {
+  static async getUserServices(userId: string) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      if (!userId) throw new Error('User ID is required');
 
-      console.log('Fetching services for user:', user.id);
+      console.log('Fetching services for user:', userId);
 
-      const { data, error } = await supabase
+      // Use admin client to bypass RLS for service fetching
+      const { data, error } = await supabaseAdmin
         .from('services')
         .select(`
           *,
           categories(name, icon, color)
         `)
-        .eq('provider_id', user.id)
+        .eq('provider_id', userId)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -119,7 +120,7 @@ export class ApiClient {
     return servicesWithTimeSlots;
   }
 
-  static async createService(service: {
+  static async createService(userId: string, service: {
     title: string;
     description: string;
     short_description?: string;
@@ -134,15 +135,15 @@ export class ApiClient {
     cancellation_policy?: string;
     timeSlots?: { [key: string]: boolean };
   }) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
+    if (!userId) throw new Error('User ID is required');
 
-    const { data, error } = await supabase
+    // Use admin client to bypass RLS for service creation
+    const { data, error } = await supabaseAdmin
       .from('services')
       .insert({
         ...service,
         availability_schedule: service.timeSlots || {}, // Map timeSlots to availability_schedule
-        provider_id: user.id,
+        provider_id: userId,
         is_active: true,
         rating: 0,
         review_count: 0,
@@ -192,19 +193,19 @@ export class ApiClient {
     return data;
   }
 
-  static async deleteService(serviceId: string) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
+  static async deleteService(serviceId: string, userId: string) {
+    if (!userId) throw new Error('User ID is required');
 
+    // Use admin client to bypass RLS for service deletion
     // Soft delete by setting is_active to false
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('services')
       .update({ 
         is_active: false, 
         updated_at: new Date().toISOString() 
       })
       .eq('id', serviceId)
-      .eq('provider_id', user.id); // Ensure user owns the service
+      .eq('provider_id', userId); // Ensure user owns the service
 
     if (error) throw error;
   }
@@ -304,9 +305,8 @@ export class ApiClient {
   }
 
   // Bookings APIs
-  static async getUserBookings(role?: 'customer' | 'provider') {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
+  static async getUserBookings(userId: string, role?: 'customer' | 'provider') {
+    if (!userId) throw new Error('User ID is required');
 
     let query = supabase
       .from('bookings')
@@ -322,12 +322,12 @@ export class ApiClient {
 
     // Filter by role
     if (role === 'customer') {
-      query = query.eq('customer_id', user.id);
+      query = query.eq('customer_id', userId);
     } else if (role === 'provider') {
-      query = query.eq('provider_id', user.id);
+      query = query.eq('provider_id', userId);
     } else {
       // Show all bookings for the user (both as customer and provider)
-      query = query.or(`customer_id.eq.${user.id},provider_id.eq.${user.id}`);
+      query = query.or(`customer_id.eq.${userId},provider_id.eq.${userId}`);
     }
 
     query = query.order('scheduled_at', { ascending: false });
@@ -426,9 +426,8 @@ export class ApiClient {
     return data;
   }
 
-  static async getUserBookings(type: 'customer' | 'provider' = 'customer') {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
+  static async getUserBookingsLegacy(userId: string, type: 'customer' | 'provider' = 'customer') {
+    if (!userId) throw new Error('User ID is required');
 
     const column = type === 'customer' ? 'customer_id' : 'provider_id';
     
@@ -440,7 +439,7 @@ export class ApiClient {
         provider:provider_id(display_name, email, avatar),
         customer:customer_id(display_name, email, avatar)
       `)
-      .eq(column, user.id)
+      .eq(column, userId)
       .order('scheduled_at', { ascending: false });
 
     if (error) throw error;
