@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Video, CheckCircle, Clock, MapPin, X, Star, Loader2, Phone, Users } from "lucide-react";
 import { format, parseISO, isPast, isFuture } from "date-fns";
 import { toast } from "sonner";
-import { useWeb3Auth } from "@/contexts/Web3AuthContext";
+import { useAuth} from "@/contexts/PrivyAuthContext";
 import { ApiClient } from "@/lib/api";
 
 interface Booking {

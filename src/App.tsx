@@ -8,7 +8,6 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Index from "./pages/Index";
 import BookServices from "./pages/BookServices";
 import MyBookings from "./pages/MyBookings";
-import Discover from "./pages/Discover";
 import Profile from "./pages/Profile";
 import EditProfile from "./pages/EditProfile";
 import Auth from "./pages/Auth";
@@ -28,7 +27,6 @@ const App = () => (
           <Navigation />
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/discover" element={<Discover />} />
             <Route 
               path="/book-services" 
               element={

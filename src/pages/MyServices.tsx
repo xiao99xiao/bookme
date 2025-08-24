@@ -9,9 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { MapPin, Video, Users, Phone, Plus, Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { useWeb3Auth } from '@/contexts/Web3AuthContext';
+import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient } from '@/lib/api';
-import { TimeSlotSelector } from '@/components/TimeSlotSelector';
 
 interface Service {
   id: string;
