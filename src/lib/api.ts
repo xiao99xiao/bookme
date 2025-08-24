@@ -141,14 +141,24 @@ export class ApiClient {
     const { data, error } = await supabaseAdmin
       .from('services')
       .insert({
-        ...service,
+        title: service.title,
+        description: service.description,
+        short_description: service.short_description,
+        price: service.price,
+        duration_minutes: service.duration_minutes,
+        category_id: service.category_id,
+        location: service.location,
+        is_online: service.is_online,
+        images: service.images,
+        tags: service.tags,
+        requirements: service.requirements,
+        cancellation_policy: service.cancellation_policy,
         availability_schedule: service.timeSlots || {}, // Map timeSlots to availability_schedule
         provider_id: userId,
         is_active: true,
         rating: 0,
         review_count: 0,
-        total_bookings: 0,
-        timeSlots: undefined // Remove timeSlots from the insert data
+        total_bookings: 0
       })
       .select()
       .single();
@@ -176,14 +186,29 @@ export class ApiClient {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
+    const updateData: any = {
+      updated_at: new Date().toISOString()
+    };
+    
+    // Only include fields that are defined in updates
+    if (updates.title !== undefined) updateData.title = updates.title;
+    if (updates.description !== undefined) updateData.description = updates.description;
+    if (updates.short_description !== undefined) updateData.short_description = updates.short_description;
+    if (updates.price !== undefined) updateData.price = updates.price;
+    if (updates.duration_minutes !== undefined) updateData.duration_minutes = updates.duration_minutes;
+    if (updates.category_id !== undefined) updateData.category_id = updates.category_id;
+    if (updates.location !== undefined) updateData.location = updates.location;
+    if (updates.is_online !== undefined) updateData.is_online = updates.is_online;
+    if (updates.is_active !== undefined) updateData.is_active = updates.is_active;
+    if (updates.images !== undefined) updateData.images = updates.images;
+    if (updates.tags !== undefined) updateData.tags = updates.tags;
+    if (updates.requirements !== undefined) updateData.requirements = updates.requirements;
+    if (updates.cancellation_policy !== undefined) updateData.cancellation_policy = updates.cancellation_policy;
+    if (updates.timeSlots !== undefined) updateData.availability_schedule = updates.timeSlots;
+    
     const { data, error } = await supabase
       .from('services')
-      .update({
-        ...updates,
-        availability_schedule: updates.timeSlots || {}, // Map timeSlots to availability_schedule
-        updated_at: new Date().toISOString(),
-        timeSlots: undefined // Remove timeSlots from the update data
-      })
+      .update(updateData)
       .eq('id', serviceId)
       .eq('provider_id', user.id) // Ensure user owns the service
       .select()

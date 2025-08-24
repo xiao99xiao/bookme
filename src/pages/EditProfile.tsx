@@ -15,6 +15,8 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/PrivyAuthContext";
 import { ApiClient } from "@/lib/api";
+import { TimeSlotSelector } from "@/components/TimeSlotSelector";
+import CreateServiceModal from "@/components/CreateServiceModal";
 
 interface Service {
   id: string;
@@ -623,240 +625,48 @@ const EditProfile = () => {
         </div>
       </div>
 
-      {/* Service Edit Dialog - Original Design */}
-      <Dialog open={isServiceDialogOpen} onOpenChange={setIsServiceDialogOpen}>
-        <DialogContent className="max-w-[1200px] w-[90vw] max-h-[80vh] p-0 overflow-hidden">
-          <div className="flex flex-col h-full max-h-[80vh]">
-            <DialogHeader className="px-6 py-4 border-b flex-shrink-0">
-              <DialogTitle>
-                {isAddingService ? "Add Service" : "Edit Service"}
-              </DialogTitle>
-            </DialogHeader>
+      {/* Beautiful CreateServiceModal - Restored from git history */}
+      <CreateServiceModal
+        isOpen={isServiceDialogOpen}
+        onClose={() => setIsServiceDialogOpen(false)}
+        onSubmit={async (data) => {
+          try {
+            setIsSavingService(true);
             
-            <Form {...serviceForm}>
-              <form onSubmit={serviceForm.handleSubmit(handleSaveService)} className="flex flex-col flex-1 min-h-0">
-                <div className="flex-1 flex gap-6 px-6 py-4 min-h-0 overflow-hidden">
-                  {/* Left side - Service Details */}
-                  <div className="w-1/2 space-y-6 overflow-y-auto pr-4 min-h-0">
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={serviceForm.control}
-                        name="title"
-                        render={({ field }) => (
-                          <FormItem className="col-span-2">
-                            <FormLabel>Title</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={serviceForm.control}
-                        name="category_id"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Category</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select category" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {categories.map((category) => (
-                                  <SelectItem key={category.id} value={category.id}>
-                                    {category.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={serviceForm.control}
-                        name="is_online"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Service Type</FormLabel>
-                            <Select onValueChange={(value) => field.onChange(value === "true")} defaultValue={field.value ? "true" : "false"}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="true">Online</SelectItem>
-                                <SelectItem value="false">In Person</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={serviceForm.control}
-                        name="price"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Price ($)</FormLabel>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                type="number" 
-                                onChange={(e) => field.onChange(Number(e.target.value))}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={serviceForm.control}
-                        name="duration_minutes"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Duration (minutes)</FormLabel>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                type="number" 
-                                onChange={(e) => field.onChange(Number(e.target.value))}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    
-                    <FormField
-                      control={serviceForm.control}
-                      name="location"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Location (for in-person services)</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="e.g., Downtown Coffee Shop, My Office" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={serviceForm.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Description</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              {...field} 
-                              className="min-h-[120px]"
-                              placeholder="Describe your service..."
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={serviceForm.control}
-                      name="tags"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Tags</FormLabel>
-                          <FormControl>
-                            <Input 
-                              {...field}
-                              placeholder="Enter tags separated by commas (e.g., coaching, wellness, productivity)"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+            // Transform the data format for the API
+            const serviceData = {
+              title: data.title,
+              description: data.description,
+              // category_id is optional - skip it for now since we don't have UUID mapping
+              duration_minutes: data.duration,
+              price: data.price,
+              location: data.location === 'in-person' ? 'In Person' : data.location === 'phone' ? 'Phone' : 'Online',
+              is_online: data.location === 'online',
+              timeSlots: data.timeSlots,
+              is_active: true
+            };
 
-                  {/* Right side - Time Slots */}
-                  <div className="w-1/2 border rounded-lg p-4 overflow-y-auto min-h-0">
-                    <h3 className="text-lg font-medium mb-4">Available Time Slots</h3>
-                    <FormField
-                      control={serviceForm.control}
-                      name="timeSlots"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <TimeSlotSelector
-                              value={field.value || {}}
-                              onChange={field.onChange}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-                
-                <div className="flex justify-between px-6 py-4 border-t bg-background flex-shrink-0">
-                  <div>
-                    {!isAddingService && (
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        onClick={handleDeleteService}
-                        disabled={isDeletingService || isSavingService}
-                      >
-                        {isDeletingService ? (
-                          <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Deleting...
-                          </>
-                        ) : (
-                          'Delete Service'
-                        )}
-                      </Button>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setIsServiceDialogOpen(false)}
-                      disabled={isSavingService || isDeletingService}
-                    >
-                      Cancel
-                    </Button>
-                    <Button 
-                      type="submit"
-                      disabled={isSavingService || isDeletingService}
-                    >
-                      {isSavingService ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          {isAddingService ? "Adding..." : "Saving..."}
-                        </>
-                      ) : (
-                        isAddingService ? "Add Service" : "Save Changes"
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              </form>
-            </Form>
-          </div>
-        </DialogContent>
-    </Dialog>
+            if (isAddingService) {
+              const newService = await ApiClient.createService(userId || '', serviceData);
+              setServices(prev => [newService, ...prev]);
+              toast.success('Service added successfully!');
+            } else if (editingService) {
+              const updatedService = await ApiClient.updateService(editingService.id, serviceData);
+              setServices(prev => prev.map(s => s.id === editingService.id ? updatedService : s));
+              toast.success('Service updated successfully!');
+            }
+            
+            setIsServiceDialogOpen(false);
+            setEditingService(null);
+          } catch (error) {
+            console.error('Service save error:', error);
+            toast.error('Failed to save service. Please try again.');
+          } finally {
+            setIsSavingService(false);
+          }
+        }}
+        isLoading={isSavingService}
+      />
     </>
   );
 };

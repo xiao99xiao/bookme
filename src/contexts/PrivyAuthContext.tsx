@@ -30,6 +30,7 @@ interface PrivyAuthContextType {
   ready: boolean;
   userId: string | null; // UUID for database operations
   privyUserId: string | null; // Original Privy DID
+  needsOnboarding: boolean;
   login: () => void;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -43,6 +44,7 @@ const PrivyAuthContext = createContext<PrivyAuthContextType>({
   ready: false,
   userId: null,
   privyUserId: null,
+  needsOnboarding: false,
   login: () => {},
   logout: async () => {},
   refreshProfile: async () => {},
@@ -93,6 +95,13 @@ export const PrivyAuthProvider = ({ children }: PrivyAuthProviderProps) => {
     
     return user.id?.substring(0, 8) || 'User';
   };
+
+  // Check if user needs onboarding (missing display_name or just has default name based on email)
+  const needsOnboarding = authenticated && profile && !loading && (
+    !profile.display_name || 
+    profile.display_name.trim() === '' ||
+    profile.display_name === getUserDisplayName(privyUser)
+  );
 
   const fetchOrCreateProfile = async (privyId: string) => {
     try {
@@ -241,6 +250,7 @@ export const PrivyAuthProvider = ({ children }: PrivyAuthProviderProps) => {
     }
   }, [ready, authenticated, privyUser?.id]);
 
+
   const value = {
     user: privyUser,
     profile,
@@ -249,6 +259,7 @@ export const PrivyAuthProvider = ({ children }: PrivyAuthProviderProps) => {
     ready,
     userId,
     privyUserId,
+    needsOnboarding,
     login,
     logout,
     refreshProfile,

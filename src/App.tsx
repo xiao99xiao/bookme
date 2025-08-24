@@ -13,8 +13,10 @@ import Profile from "./pages/Profile";
 import EditProfile from "./pages/EditProfile";
 import Auth from "./pages/Auth";
 import AuthCallback from "./pages/AuthCallback";
+import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
 import Navigation from "./components/Navigation";
+import { OnboardingNavigator } from "./components/OnboardingNavigator";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +27,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <OnboardingNavigator />
           <Navigation />
           <Routes>
             <Route path="/" element={<Index />} />
@@ -74,6 +77,14 @@ const App = () => (
               } 
             />
             <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route 
+              path="/onboarding" 
+              element={
+                <ProtectedRoute>
+                  <Onboarding />
+                </ProtectedRoute>
+              } 
+            />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

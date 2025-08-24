@@ -8,6 +8,10 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    watch: {
+      usePolling: false,
+      interval: 100,
+    },
   },
   plugins: [
     react(),
@@ -18,5 +22,8 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', '@privy-io/react-auth', '@supabase/supabase-js'],
   },
 }));
