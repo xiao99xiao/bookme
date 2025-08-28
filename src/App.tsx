@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { PrivyAuthProvider } from "./contexts/PrivyAuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Index from "./pages/Index";
@@ -18,18 +18,26 @@ import NotFound from "./pages/NotFound";
 import Navigation from "./components/Navigation";
 import { OnboardingNavigator } from "./components/OnboardingNavigator";
 
+// Dashboard imports
+import DashboardLayout from "./layouts/DashboardLayout";
+import DashboardProfile from "./pages/dashboard/DashboardProfile";
+import DashboardServices from "./pages/dashboard/DashboardServices";
+import DashboardOrders from "./pages/dashboard/DashboardOrders";
+import DashboardBookings from "./pages/dashboard/DashboardBookings";
+import TestBroadcast from "./pages/TestBroadcast";
+
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <PrivyAuthProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <OnboardingNavigator />
-          <Navigation />
-          <Routes>
+// Component to conditionally render navigation
+function AppContent() {
+  const location = useLocation();
+  const isDashboard = location.pathname.startsWith('/dashboard');
+
+  return (
+    <>
+      <OnboardingNavigator />
+      {!isDashboard && <Navigation />}
+      <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/discover" element={<Discover />} />
             <Route 
@@ -85,9 +93,41 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
+            
+            {/* Dashboard Routes */}
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<DashboardProfile />} />
+              <Route path="profile" element={<DashboardProfile />} />
+              <Route path="services" element={<DashboardServices />} />
+              <Route path="orders" element={<DashboardOrders />} />
+              <Route path="bookings" element={<DashboardBookings />} />
+            </Route>
+            
+            {/* Test Routes */}
+            <Route path="/test-broadcast" element={<TestBroadcast />} />
+            
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+    </>
+  );
+}
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <PrivyAuthProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AppContent />
         </BrowserRouter>
       </PrivyAuthProvider>
     </TooltipProvider>

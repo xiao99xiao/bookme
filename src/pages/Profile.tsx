@@ -200,7 +200,7 @@ const Profile = () => {
         is_online: selectedService.is_online
       };
 
-      const booking = await ApiClient.createBooking(bookingData);
+      const booking = await ApiClient.createBooking(bookingData, currentUserId);
       
       toast.success('Booking request submitted successfully!');
       

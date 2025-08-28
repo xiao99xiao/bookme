@@ -263,6 +263,8 @@ export const PrivyAuthProvider = ({ children }: PrivyAuthProviderProps) => {
     login,
     logout,
     refreshProfile,
+    getUserDisplayName: () => getUserDisplayName(privyUser),
+    getUserEmail: () => getUserEmail(privyUser),
   };
 
   return (

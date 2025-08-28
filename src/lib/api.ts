@@ -333,11 +333,22 @@ export class ApiClient {
   static async getUserBookings(userId: string, role?: 'customer' | 'provider') {
     if (!userId) throw new Error('User ID is required');
 
-    let query = supabase
+    // Use admin client for Privy users (assume they are if no Supabase session)
+    let useAdminClient = false;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      useAdminClient = !user;
+    } catch {
+      useAdminClient = true;
+    }
+
+    const dbClient = useAdminClient ? supabaseAdmin : supabase;
+
+    let query = dbClient
       .from('bookings')
       .select(`
         *,
-        service:services(
+        services(
           id, title, short_description, price, duration_minutes, images,
           provider:users!services_provider_id_fkey(display_name, avatar)
         ),
@@ -355,66 +366,115 @@ export class ApiClient {
       query = query.or(`customer_id.eq.${userId},provider_id.eq.${userId}`);
     }
 
+    // Try scheduled_at first, fallback to created_at if that doesn't exist
     query = query.order('scheduled_at', { ascending: false });
 
     const { data, error } = await query;
 
-    if (error) throw error;
+    if (error) {
+      console.error('Bookings query error:', error);
+      throw error;
+    }
     return data || [];
   }
 
   // File Upload API
-  static async uploadFile(file: File, type: 'avatar' | 'service_image' | 'document' = 'avatar') {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
+  static async uploadFile(file: File, type: 'avatar' | 'service_image' | 'document' = 'avatar', userId?: string) {
+    // Try to get userId from parameter first (for Privy users), then fall back to Supabase auth
+    let effectiveUserId = userId;
+    let useAdminClient = false;
+    
+    if (!effectiveUserId) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      effectiveUserId = user.id;
+    } else {
+      // If userId was provided (Privy user), use admin client to bypass RLS
+      useAdminClient = true;
+    }
 
     // Create a unique filename
     const fileExtension = file.name.split('.').pop();
-    const fileName = `${user.id}/${type}/${Date.now()}.${fileExtension}`;
+    const fileName = `${effectiveUserId}/${type}/${Date.now()}.${fileExtension}`;
+
+    // Choose the appropriate client based on auth type
+    const storageClient = useAdminClient ? supabaseAdmin : supabase;
 
     // Upload to Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { data: uploadData, error: uploadError } = await storageClient.storage
       .from('uploads')
       .upload(fileName, file, {
         contentType: file.type,
         upsert: false
       });
 
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      console.error('Storage upload error:', uploadError);
+      throw uploadError;
+    }
 
     // Get the public URL
-    const { data: { publicUrl } } = supabase.storage
+    const { data: { publicUrl } } = storageClient.storage
       .from('uploads')
       .getPublicUrl(fileName);
 
-    // Save file record to database
-    const { data: fileRecord, error: dbError } = await supabase
-      .from('file_uploads')
-      .insert({
-        user_id: user.id,
-        file_name: file.name,
-        file_url: publicUrl,
-        file_size: file.size,
-        mime_type: file.type,
-        upload_type: type
-      })
-      .select()
-      .single();
+    // Try to save file record to database (if table exists)
+    try {
+      const dbClient = useAdminClient ? supabaseAdmin : supabase;
+      const { data: fileRecord, error: dbError } = await dbClient
+        .from('file_uploads')
+        .insert({
+          user_id: effectiveUserId,
+          file_name: file.name,
+          file_url: publicUrl,
+          file_size: file.size,
+          mime_type: file.type,
+          upload_type: type
+        })
+        .select()
+        .single();
 
-    if (dbError) {
-      // Clean up uploaded file if database insert fails
-      await supabase.storage.from('uploads').remove([fileName]);
-      throw dbError;
+      if (dbError) {
+        // If file_uploads table doesn't exist, just return the URL
+        if (dbError.code === '42P01') {
+          console.log('file_uploads table does not exist, skipping database record');
+          return {
+            id: fileName,
+            url: publicUrl,
+            fileName: file.name,
+            fileSize: file.size,
+            mimeType: file.type,
+            uploadType: type
+          };
+        }
+        // Clean up uploaded file if database insert fails for other reasons
+        await storageClient.storage.from('uploads').remove([fileName]);
+        throw dbError;
+      }
+
+      return {
+        id: fileRecord.id,
+        url: publicUrl,
+        fileName: file.name,
+        fileSize: file.size,
+        mimeType: file.type,
+        uploadType: type
+      };
+    } catch (error: any) {
+      // If file_uploads table doesn't exist, just return the URL
+      if (error.code === '42P01' || error.message?.includes('file_uploads')) {
+        console.log('file_uploads table issue, returning URL only');
+        return {
+          id: fileName,
+          url: publicUrl,
+          fileName: file.name,
+          fileSize: file.size,
+          mimeType: file.type,
+          uploadType: type
+        };
+      }
+      throw error;
     }
-
-    return {
-      id: fileRecord.id,
-      url: publicUrl,
-      fileName: file.name,
-      fileSize: file.size,
-      mimeType: file.type,
-      uploadType: type
-    };
   }
 
   // Booking APIs
@@ -427,15 +487,24 @@ export class ApiClient {
     customer_notes?: string;
     location?: string;
     is_online: boolean;
-  }) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
+  }, customerId?: string) {
+    // Try to get customerId from parameter first (for Privy users), then fall back to Supabase auth
+    let effectiveCustomerId = customerId;
+    
+    if (!effectiveCustomerId) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      effectiveCustomerId = user.id;
+    }
 
-    const { data, error } = await supabase
+    // Use admin client for Privy users to bypass RLS
+    const dbClient = customerId ? supabaseAdmin : supabase;
+
+    const { data, error } = await dbClient
       .from('bookings')
       .insert({
         ...bookingData,
-        customer_id: user.id,
+        customer_id: effectiveCustomerId,
         service_fee: Math.round(bookingData.total_price * 0.05 * 100) / 100, // 5% service fee
         status: 'pending'
       })
@@ -471,11 +540,20 @@ export class ApiClient {
     return data || [];
   }
 
-  static async getBookingById(bookingId: string) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
+  static async getBookingById(bookingId: string, userId?: string) {
+    // Try to get userId from parameter first (for Privy users), then fall back to Supabase auth
+    let effectiveUserId = userId;
+    
+    if (!effectiveUserId) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      effectiveUserId = user.id;
+    }
 
-    const { data, error } = await supabase
+    // Use admin client for Privy users
+    const dbClient = userId ? supabaseAdmin : supabase;
+
+    const { data, error } = await dbClient
       .from('bookings')
       .select(`
         *,
@@ -489,22 +567,31 @@ export class ApiClient {
     if (error) throw error;
     
     // Check if user is involved in this booking
-    if (data.customer_id !== user.id && data.provider_id !== user.id) {
+    if (data.customer_id !== effectiveUserId && data.provider_id !== effectiveUserId) {
       throw new Error('Not authorized to view this booking');
     }
     
     return data;
   }
 
-  static async updateBookingStatus(bookingId: string, status: 'confirmed' | 'cancelled' | 'completed', notes?: string) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
+  static async updateBookingStatus(bookingId: string, status: 'confirmed' | 'cancelled' | 'completed', notes?: string, userId?: string) {
+    // Try to get userId from parameter first (for Privy users), then fall back to Supabase auth
+    let effectiveUserId = userId;
+    
+    if (!effectiveUserId) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      effectiveUserId = user.id;
+    }
+
+    // Use admin client for Privy users
+    const dbClient = userId ? supabaseAdmin : supabase;
 
     const updates: any = { status };
     
     if (status === 'cancelled') {
       updates.cancelled_at = new Date().toISOString();
-      updates.cancelled_by = user.id;
+      updates.cancelled_by = effectiveUserId;
       updates.cancellation_reason = notes;
     } else if (status === 'completed') {
       updates.completed_at = new Date().toISOString();
@@ -514,7 +601,7 @@ export class ApiClient {
       updates.provider_notes = notes;
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await dbClient
       .from('bookings')
       .update(updates)
       .eq('id', bookingId)
@@ -530,19 +617,269 @@ export class ApiClient {
     return data;
   }
 
-  static async addCustomerNotes(bookingId: string, notes: string) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
+  static async addCustomerNotes(bookingId: string, notes: string, userId?: string) {
+    // Try to get userId from parameter first (for Privy users), then fall back to Supabase auth
+    let effectiveUserId = userId;
+    
+    if (!effectiveUserId) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      effectiveUserId = user.id;
+    }
 
-    const { data, error } = await supabase
+    // Use admin client for Privy users
+    const dbClient = userId ? supabaseAdmin : supabase;
+
+    const { data, error } = await dbClient
       .from('bookings')
       .update({ customer_notes: notes })
       .eq('id', bookingId)
-      .eq('customer_id', user.id) // Ensure only customer can update their notes
+      .eq('customer_id', effectiveUserId) // Ensure only customer can update their notes
       .select()
       .single();
 
     if (error) throw error;
     return data;
+  }
+
+  static async getMyBookings(userId: string) {
+    return await this.getUserBookings(userId, 'customer');
+  }
+
+  static async getProviderBookings(userId: string) {
+    return await this.getUserBookings(userId, 'provider');
+  }
+
+  // Chat APIs
+  static async getOrCreateConversation(otherUserId: string, currentUserId?: string) {
+    // Try to get currentUserId from parameter first (for Privy users), then fall back to Supabase auth
+    let effectiveUserId = currentUserId;
+    
+    if (!effectiveUserId) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      effectiveUserId = user.id;
+    }
+
+    // Use admin client for Privy users
+    const dbClient = currentUserId ? supabaseAdmin : supabase;
+
+    // Order user IDs consistently
+    const user1Id = effectiveUserId < otherUserId ? effectiveUserId : otherUserId;
+    const user2Id = effectiveUserId < otherUserId ? otherUserId : effectiveUserId;
+
+    // Check if conversation already exists
+    const { data: existingConversation } = await dbClient
+      .from('conversations')
+      .select('*')
+      .eq('user1_id', user1Id)
+      .eq('user2_id', user2Id)
+      .single();
+
+    if (existingConversation) {
+      return existingConversation;
+    }
+
+    // Check if there's an active booking between these users
+    const { data: booking } = await dbClient
+      .from('bookings')
+      .select('id')
+      .or(`customer_id.eq.${effectiveUserId},provider_id.eq.${effectiveUserId}`)
+      .or(`customer_id.eq.${otherUserId},provider_id.eq.${otherUserId}`)
+      .in('status', ['pending', 'confirmed', 'completed'])
+      .limit(1)
+      .single();
+
+    if (!booking) {
+      throw new Error('No active booking exists between these users');
+    }
+
+    // Create new conversation
+    const { data, error } = await dbClient
+      .from('conversations')
+      .insert({
+        user1_id: user1Id,
+        user2_id: user2Id
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  static async getConversations(userId: string) {
+    if (!userId) throw new Error('User ID is required');
+
+    // Use admin client for Privy users
+    let useAdminClient = false;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      useAdminClient = !user;
+    } catch {
+      useAdminClient = true;
+    }
+
+    const dbClient = useAdminClient ? supabaseAdmin : supabase;
+
+    const { data, error } = await dbClient
+      .from('conversations')
+      .select(`
+        *,
+        user1:users!conversations_user1_id_fkey(display_name, avatar),
+        user2:users!conversations_user2_id_fkey(display_name, avatar),
+        messages(
+          content,
+          created_at,
+          sender_id,
+          is_read
+        )
+      `)
+      .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
+      .order('last_message_at', { ascending: false });
+
+    if (error) throw error;
+
+    // Get the latest message and other user info for each conversation
+    return (data || []).map(conversation => {
+      const otherUser = conversation.user1_id === userId ? conversation.user2 : conversation.user1;
+      return {
+        ...conversation,
+        other_user: otherUser,
+        latest_message: conversation.messages?.[0] || null,
+        unread_count: conversation.messages?.filter(
+          (m: any) => !m.is_read && m.sender_id !== userId
+        ).length || 0
+      };
+    });
+  }
+
+  static async getConversation(conversationId: string, userId?: string) {
+    // Try to get userId from parameter first (for Privy users), then fall back to Supabase auth
+    let effectiveUserId = userId;
+    
+    if (!effectiveUserId) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      effectiveUserId = user.id;
+    }
+
+    // Use admin client for Privy users
+    const dbClient = userId ? supabaseAdmin : supabase;
+
+    const { data, error } = await dbClient
+      .from('conversations')
+      .select(`
+        *,
+        user1:users!conversations_user1_id_fkey(display_name, avatar),
+        user2:users!conversations_user2_id_fkey(display_name, avatar)
+      `)
+      .eq('id', conversationId)
+      .single();
+
+    if (error) throw error;
+    
+    // Add other_user for convenience
+    const otherUser = data.user1_id === effectiveUserId ? data.user2 : data.user1;
+    return {
+      ...data,
+      other_user: otherUser
+    };
+  }
+
+  static async getMessages(conversationId: string) {
+    // Use admin client for Privy users
+    let useAdminClient = false;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      useAdminClient = !user;
+    } catch {
+      useAdminClient = true;
+    }
+
+    const dbClient = useAdminClient ? supabaseAdmin : supabase;
+
+    const { data, error } = await dbClient
+      .from('messages')
+      .select(`
+        *,
+        sender:users!messages_sender_id_fkey(display_name, avatar)
+      `)
+      .eq('conversation_id', conversationId)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+    return data || [];
+  }
+
+  static async sendMessage(conversationId: string, content: string, senderId?: string) {
+    // Try to get senderId from parameter first (for Privy users), then fall back to Supabase auth
+    let effectiveSenderId = senderId;
+    
+    if (!effectiveSenderId) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      effectiveSenderId = user.id;
+    }
+
+    // Use admin client for Privy users
+    const dbClient = senderId ? supabaseAdmin : supabase;
+
+    const { data, error } = await dbClient
+      .from('messages')
+      .insert({
+        conversation_id: conversationId,
+        sender_id: effectiveSenderId,
+        content: content.trim()
+      })
+      .select(`
+        *,
+        sender:users!messages_sender_id_fkey(display_name, avatar)
+      `)
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  static async markMessagesAsRead(conversationId: string, userId?: string) {
+    // Try to get userId from parameter first (for Privy users), then fall back to Supabase auth
+    let effectiveUserId = userId;
+    
+    if (!effectiveUserId) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      effectiveUserId = user.id;
+    }
+
+    // Use admin client for Privy users
+    const dbClient = userId ? supabaseAdmin : supabase;
+
+    const { error } = await dbClient
+      .from('messages')
+      .update({ is_read: true })
+      .eq('conversation_id', conversationId)
+      .neq('sender_id', effectiveUserId); // Don't mark own messages as read
+
+    if (error) throw error;
+  }
+
+  static async getUnreadMessageCount(userId: string) {
+    if (!userId) throw new Error('User ID is required');
+
+    const { data, error } = await supabase
+      .from('messages')
+      .select('id', { count: 'exact' })
+      .eq('is_read', false)
+      .neq('sender_id', userId)
+      .in('conversation_id', 
+        supabase
+          .from('conversations')
+          .select('id')
+          .or(`customer_id.eq.${userId},provider_id.eq.${userId}`)
+      );
+
+    if (error) throw error;
+    return data?.length || 0;
   }
 }

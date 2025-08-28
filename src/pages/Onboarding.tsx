@@ -45,9 +45,14 @@ const Onboarding = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    if (!userId) {
+      toast.error('Please wait for authentication to complete');
+      return;
+    }
+
     try {
       setAvatarUploading(true);
-      const uploadResult = await ApiClient.uploadFile(file, 'avatar');
+      const uploadResult = await ApiClient.uploadFile(file, 'avatar', userId);
       setFormData(prev => ({ ...prev, avatar: uploadResult.url }));
       toast.success('Avatar uploaded successfully');
     } catch (error) {

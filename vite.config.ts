@@ -12,6 +12,14 @@ export default defineConfig(({ mode }) => ({
       usePolling: false,
       interval: 100,
     },
+    hmr: {
+      clientPort: 443,
+    },
+    allowedHosts: [
+      '.trycloudflare.com', // Allow all Cloudflare tunnel domains
+      'localhost',
+      '.localhost',
+    ],
   },
   plugins: [
     react(),

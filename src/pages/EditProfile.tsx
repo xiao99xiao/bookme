@@ -189,7 +189,7 @@ const EditProfile = () => {
 
     try {
       setUploading(true);
-      const uploadResult = await ApiClient.uploadFile(file, 'avatar');
+      const uploadResult = await ApiClient.uploadFile(file, 'avatar', userId);
       await ApiClient.updateUserProfile(userId || '', { avatar: uploadResult.url });
       await refreshProfile();
       toast.success('Avatar updated successfully');
