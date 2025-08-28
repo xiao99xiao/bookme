@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { Calendar, Clock, MapPin, User, DollarSign, CheckCircle, XCircle, AlertCircle, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
@@ -9,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient } from '@/lib/api';
 import ChatModal from '@/components/ChatModal';
+import AddToCalendar from '@/components/AddToCalendar';
 
 interface Booking {
   id: string;
@@ -41,19 +43,22 @@ interface Booking {
 
 export default function DashboardBookings() {
   const { userId } = useAuth();
+  const navigate = useNavigate();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('upcoming');
+  const [activeTab, setActiveTab] = useState('all');
   const [chatModal, setChatModal] = useState<{
     isOpen: boolean;
     otherUserId: string;
     otherUserName: string;
     otherUserAvatar?: string;
+    isReadOnly?: boolean;
   }>({
     isOpen: false,
     otherUserId: '',
     otherUserName: '',
-    otherUserAvatar: undefined
+    otherUserAvatar: undefined,
+    isReadOnly: false
   });
 
   useEffect(() => {
@@ -96,7 +101,8 @@ export default function DashboardBookings() {
       isOpen: true,
       otherUserId: booking.provider_id,
       otherUserName: booking.provider?.display_name || 'Provider',
-      otherUserAvatar: booking.provider?.avatar
+      otherUserAvatar: booking.provider?.avatar,
+      isReadOnly: booking.status === 'cancelled'
     });
   };
 
@@ -105,8 +111,13 @@ export default function DashboardBookings() {
       isOpen: false,
       otherUserId: '',
       otherUserName: '',
-      otherUserAvatar: undefined
+      otherUserAvatar: undefined,
+      isReadOnly: false
     });
+  };
+
+  const handleViewProviderProfile = (providerId: string) => {
+    navigate(`/profile/${providerId}`);
   };
 
   const getStatusColor = (status: string) => {
@@ -139,6 +150,13 @@ export default function DashboardBookings() {
     }
   };
 
+  const isBookingOverdue = (booking: Booking) => {
+    const now = new Date();
+    const scheduledEnd = new Date(booking.scheduled_at);
+    scheduledEnd.setMinutes(scheduledEnd.getMinutes() + booking.duration_minutes);
+    return now > scheduledEnd && (booking.status === 'confirmed' || booking.status === 'pending');
+  };
+
   const filteredBookings = bookings.filter(booking => {
     const bookingDateTime = new Date(booking.scheduled_at);
     const now = new Date();
@@ -163,7 +181,7 @@ export default function DashboardBookings() {
         <h1 className="text-2xl font-semibold text-gray-900 mb-2">My Bookings</h1>
         <p className="text-gray-600 mb-8">Services you have booked from other providers</p>
         
-        <Tabs defaultValue="upcoming" value={activeTab} onValueChange={setActiveTab}>
+        <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="all">All</TabsTrigger>
             <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
@@ -197,6 +215,14 @@ export default function DashboardBookings() {
                               <span>{booking.status}</span>
                             </span>
                           </Badge>
+                          {isBookingOverdue(booking) && (
+                            <Badge className="bg-red-100 text-red-800">
+                              <span className="flex items-center space-x-1">
+                                <AlertCircle className="w-4 h-4" />
+                                <span>OVERDUE</span>
+                              </span>
+                            </Badge>
+                          )}
                           <span className="text-sm text-gray-500">
                             Booked {format(new Date(booking.created_at), 'MMM dd, yyyy')}
                           </span>
@@ -210,7 +236,12 @@ export default function DashboardBookings() {
                           <div className="space-y-2">
                             <div className="flex items-center text-gray-600">
                               <User className="w-4 h-4 mr-2" />
-                              Provider: {booking.provider?.display_name || 'Provider'}
+                              Provider: <button 
+                                onClick={() => handleViewProviderProfile(booking.provider_id)}
+                                className="text-blue-600 hover:text-blue-800 hover:underline font-medium ml-1"
+                              >
+                                {booking.provider?.display_name || 'Provider'}
+                              </button>
                             </div>
                             <div className="flex items-center text-gray-600">
                               <Calendar className="w-4 h-4 mr-2" />
@@ -222,17 +253,9 @@ export default function DashboardBookings() {
                             </div>
                           </div>
                           <div className="space-y-2">
-                            <div className="flex items-center text-gray-600">
-                              <DollarSign className="w-4 h-4 mr-2" />
-                              Service: ${(booking.total_price - booking.service_fee).toFixed(2)}
-                            </div>
-                            <div className="flex items-center text-gray-600">
-                              <DollarSign className="w-4 h-4 mr-2" />
-                              Fee: ${booking.service_fee.toFixed(2)}
-                            </div>
                             <div className="flex items-center font-medium">
                               <DollarSign className="w-4 h-4 mr-2" />
-                              Total: ${booking.total_price.toFixed(2)}
+                              Total Paid: ${booking.total_price.toFixed(2)}
                             </div>
                           </div>
                         </div>
@@ -244,18 +267,38 @@ export default function DashboardBookings() {
                             </p>
                           </div>
                         )}
+
+                        {isBookingOverdue(booking) && (
+                          <div className="mt-4 p-3 bg-orange-50 border-l-4 border-orange-400 rounded-lg">
+                            <p className="text-sm text-orange-700">
+                              <span className="font-medium">⏰ Service time has passed</span>
+                              <br />
+                              Please contact the provider to confirm if the service was completed.
+                            </p>
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex flex-col space-y-2 ml-4">
                         {(booking.status === 'confirmed' || booking.status === 'pending') && (
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => handleChatOpen(booking)}
-                          >
-                            <MessageSquare className="w-4 h-4 mr-1" />
-                            Message
-                          </Button>
+                          <>
+                            <AddToCalendar
+                              title={`${booking.services?.title || 'Service'} with ${booking.provider?.display_name || 'Provider'}`}
+                              description={`Booking for ${booking.services?.title}${booking.customer_notes ? `\n\nNotes: ${booking.customer_notes}` : ''}`}
+                              startDate={new Date(booking.scheduled_at)}
+                              endDate={new Date(new Date(booking.scheduled_at).getTime() + booking.duration_minutes * 60000)}
+                              location={booking.location}
+                              isOnline={booking.is_online}
+                            />
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleChatOpen(booking)}
+                            >
+                              <MessageSquare className="w-4 h-4 mr-1" />
+                              Message
+                            </Button>
+                          </>
                         )}
                         
                         {booking.status === 'confirmed' && (
@@ -293,6 +336,17 @@ export default function DashboardBookings() {
                             Cancel Request
                           </Button>
                         )}
+
+                        {booking.status === 'cancelled' && (
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleChatOpen(booking)}
+                          >
+                            <MessageSquare className="w-4 h-4 mr-1" />
+                            View Chat
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -310,6 +364,7 @@ export default function DashboardBookings() {
         otherUserId={chatModal.otherUserId}
         otherUserName={chatModal.otherUserName}
         otherUserAvatar={chatModal.otherUserAvatar}
+        isReadOnly={chatModal.isReadOnly}
       />
     </div>
   );

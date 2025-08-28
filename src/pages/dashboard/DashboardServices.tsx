@@ -303,7 +303,7 @@ export default function DashboardServices() {
               </div>
 
               {/* Services Section - Exact match to Profile.tsx */}
-              {profile?.is_provider && (
+              {(profile?.is_provider || services.length > 0) && (
                 <div>
                   <div className="mb-6">
                     <h2 className="text-lg font-medium text-foreground mb-1">Services</h2>

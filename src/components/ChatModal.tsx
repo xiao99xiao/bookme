@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { format } from 'date-fns';
-import { X, Send, MessageSquare, Loader2, Wifi, WifiOff, RefreshCw } from 'lucide-react';
+import { X, Send, MessageSquare, Loader2, Wifi, WifiOff, RefreshCw, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -38,6 +38,7 @@ interface ChatModalProps {
   otherUserId: string;
   otherUserName: string;
   otherUserAvatar?: string;
+  isReadOnly?: boolean;
 }
 
 // Broadcast message payload type
@@ -53,7 +54,8 @@ export default function ChatModal({
   onClose, 
   otherUserId, 
   otherUserName, 
-  otherUserAvatar 
+  otherUserAvatar,
+  isReadOnly = false
 }: ChatModalProps) {
   const { userId } = useAuth();
   const [conversation, setConversation] = useState<Conversation | null>(null);
@@ -62,27 +64,113 @@ export default function ChatModal({
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'error'>('connecting');
+  const [loadingOlderMessages, setLoadingOlderMessages] = useState(false);
+  const [hasMoreMessages, setHasMoreMessages] = useState(true);
+  const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
   
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
-  const lastMessageTimestampRef = useRef<number>(0);
   const messageIdsRef = useRef<Set<string>>(new Set());
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const initialLoadRef = useRef(true);
 
-  // Auto-scroll to bottom when messages change
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  // Auto-scroll to bottom when appropriate
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
+    if (shouldScrollToBottom) {
+      messagesEndRef.current?.scrollIntoView({ behavior });
+    }
+  }, [shouldScrollToBottom]);
+
+  // Check if user is near bottom of chat
+  const isNearBottom = useCallback(() => {
+    if (!messagesContainerRef.current) return true;
+    
+    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+    const threshold = 150; // pixels from bottom
+    return scrollHeight - scrollTop - clientHeight < threshold;
   }, []);
 
+  // Handle scroll events
+  const handleScroll = useCallback(() => {
+    if (!messagesContainerRef.current) return;
+    
+    const { scrollTop } = messagesContainerRef.current;
+    
+    // Check if user scrolled to top (for loading older messages)
+    if (scrollTop < 100 && !loadingOlderMessages && hasMoreMessages) {
+      loadOlderMessages();
+    }
+    
+    // Update shouldScrollToBottom based on user's scroll position
+    setShouldScrollToBottom(isNearBottom());
+  }, [loadingOlderMessages, hasMoreMessages, isNearBottom]);
+
+  // Load older messages when scrolling to top
+  const loadOlderMessages = async () => {
+    if (!conversation || messages.length === 0 || loadingOlderMessages) return;
+    
+    setLoadingOlderMessages(true);
+    
+    try {
+      const oldestMessage = messages[0];
+      console.log('🔄 Loading older messages before:', oldestMessage.created_at);
+      
+      const olderMessages = await ApiClient.getMessages(
+        conversation.id, 
+        30, 
+        oldestMessage.created_at
+      );
+      
+      if (olderMessages.length === 0) {
+        setHasMoreMessages(false);
+        console.log('📝 No more older messages');
+      } else {
+        // Store current scroll position
+        const container = messagesContainerRef.current;
+        const currentScrollHeight = container?.scrollHeight || 0;
+        
+        // Add older messages to the beginning
+        setMessages(prev => [...olderMessages, ...prev]);
+        
+        // Update message IDs for deduplication
+        olderMessages.forEach(msg => messageIdsRef.current.add(msg.id));
+        
+        // Restore scroll position (maintain current view)
+        setTimeout(() => {
+          if (container) {
+            const newScrollHeight = container.scrollHeight;
+            const scrollDiff = newScrollHeight - currentScrollHeight;
+            container.scrollTop = scrollDiff;
+          }
+        }, 0);
+        
+        console.log(`✅ Loaded ${olderMessages.length} older messages`);
+      }
+    } catch (error) {
+      console.error('❌ Failed to load older messages:', error);
+      toast.error('Failed to load older messages');
+    } finally {
+      setLoadingOlderMessages(false);
+    }
+  };
+
   useEffect(() => {
-    scrollToBottom();
+    if (!initialLoadRef.current) {
+      scrollToBottom();
+    }
   }, [messages, scrollToBottom]);
 
   // Initialize chat when modal opens
   useEffect(() => {
     if (isOpen && otherUserId) {
       console.log('🚀 Initializing chat modal...');
+      initialLoadRef.current = true;
+      setShouldScrollToBottom(true);
+      setHasMoreMessages(true);
+      setMessages([]);
+      messageIdsRef.current.clear();
       initializeChat();
     }
     
@@ -106,6 +194,15 @@ export default function ChatModal({
     };
   }, [conversation?.id, isOpen]);
 
+  // Add scroll event listener
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (container) {
+      container.addEventListener('scroll', handleScroll);
+      return () => container.removeEventListener('scroll', handleScroll);
+    }
+  }, [handleScroll]);
+
   const cleanupChannel = () => {
     if (channelRef.current) {
       console.log('🔌 Cleaning up broadcast channel...');
@@ -120,7 +217,7 @@ export default function ChatModal({
   };
 
   const setupBroadcastChannel = () => {
-    if (!conversation) return;
+    if (!conversation || isReadOnly) return;
 
     // Clean up existing channel if any
     cleanupChannel();
@@ -169,21 +266,45 @@ export default function ChatModal({
           return;
         }
 
-        // Fetch fresh messages to ensure consistency
-        await refreshMessages();
+        // If user is near bottom, we'll scroll to new message
+        const wasNearBottom = isNearBottom();
+        
+        // Fetch the latest messages to get the new message with sender info
+        try {
+          const latestMessages = await ApiClient.getMessages(conversation.id, 30);
+          const newMessage = latestMessages.find(msg => msg.id === broadcastData.messageId);
+          
+          if (newMessage && !messageIdsRef.current.has(newMessage.id)) {
+            setMessages(prev => {
+              // Add new message and keep only recent ones to avoid memory issues
+              const updated = [...prev, newMessage];
+              messageIdsRef.current.add(newMessage.id);
+              
+              // Keep last 100 messages in memory to prevent performance issues
+              if (updated.length > 100) {
+                const removed = updated.slice(0, updated.length - 100);
+                removed.forEach(msg => messageIdsRef.current.delete(msg.id));
+                return updated.slice(updated.length - 100);
+              }
+              
+              return updated;
+            });
+            
+            // Only auto-scroll if user was already near bottom
+            if (wasNearBottom) {
+              setShouldScrollToBottom(true);
+            }
+            
+            console.log('✅ Added real-time message to UI');
+          }
+        } catch (error) {
+          console.error('❌ Failed to fetch new message:', error);
+        }
         
         // Mark messages as read if from other user
         if (broadcastData.senderId !== userId) {
           await ApiClient.markMessagesAsRead(conversation.id, userId);
         }
-      })
-      .on('broadcast', { event: 'typing' }, (payload) => {
-        // Future feature: show typing indicator
-        console.log('⌨️ User is typing...', payload);
-      })
-      .on('broadcast', { event: 'message-read' }, (payload) => {
-        // Future feature: show read receipts
-        console.log('👁️ Message read:', payload);
       })
       .subscribe((status) => {
         console.log('📊 Channel subscription status:', status);
@@ -244,12 +365,25 @@ export default function ChatModal({
       console.log('✅ Conversation loaded:', conv);
       setConversation(conv);
       
-      // Load messages
-      await refreshMessages(conv.id);
+      // Load initial messages (latest 30)
+      const initialMessages = await ApiClient.getMessages(conv.id, 30);
+      console.log(`✅ Loaded ${initialMessages.length} initial messages`);
+      
+      setMessages(initialMessages);
+      messageIdsRef.current = new Set(initialMessages.map(m => m.id));
+      
+      // Set hasMoreMessages based on whether we got a full page
+      setHasMoreMessages(initialMessages.length === 30);
       
       // Mark messages as read
       await ApiClient.markMessagesAsRead(conv.id, userId);
       console.log('✅ Messages marked as read');
+      
+      // Scroll to bottom after initial load
+      setTimeout(() => {
+        scrollToBottom('auto');
+        initialLoadRef.current = false;
+      }, 100);
       
     } catch (error) {
       console.error('❌ Failed to initialize chat:', error);
@@ -257,24 +391,6 @@ export default function ChatModal({
       setConnectionStatus('error');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const refreshMessages = async (conversationId?: string) => {
-    const convId = conversationId || conversation?.id;
-    if (!convId) return;
-
-    try {
-      console.log('🔄 Refreshing messages...');
-      const msgs = await ApiClient.getMessages(convId);
-      
-      // Update message IDs set for deduplication
-      messageIdsRef.current = new Set(msgs.map(m => m.id));
-      
-      setMessages(msgs);
-      console.log(`✅ Loaded ${msgs.length} messages`);
-    } catch (error) {
-      console.error('❌ Failed to refresh messages:', error);
     }
   };
 
@@ -290,6 +406,9 @@ export default function ChatModal({
       setSending(true);
       
       console.log('📤 Sending message...');
+      
+      // Always scroll to bottom when sending a message
+      setShouldScrollToBottom(true);
       
       // Add optimistic message immediately
       const optimisticMessage: Message = {
@@ -353,8 +472,18 @@ export default function ChatModal({
   };
 
   const handleManualRefresh = async () => {
-    await refreshMessages();
-    toast.success('Messages refreshed');
+    if (!conversation) return;
+    
+    try {
+      const latestMessages = await ApiClient.getMessages(conversation.id, 30);
+      setMessages(latestMessages);
+      messageIdsRef.current = new Set(latestMessages.map(m => m.id));
+      setShouldScrollToBottom(true);
+      scrollToBottom('auto');
+      toast.success('Messages refreshed');
+    } catch (error) {
+      toast.error('Failed to refresh messages');
+    }
   };
 
   // Render connection status icon
@@ -412,6 +541,7 @@ export default function ChatModal({
               size="icon"
               onClick={handleManualRefresh}
               title="Refresh messages"
+              disabled={loading}
             >
               <RefreshCw className="h-4 w-4" />
             </Button>
@@ -422,7 +552,30 @@ export default function ChatModal({
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div 
+          ref={messagesContainerRef}
+          className="flex-1 overflow-y-auto p-4 space-y-4 relative"
+          style={{ scrollBehavior: shouldScrollToBottom ? 'smooth' : 'auto' }}
+        >
+          {/* Load older messages indicator */}
+          {loadingOlderMessages && (
+            <div className="flex justify-center py-2">
+              <div className="flex items-center space-x-2 text-sm text-gray-500">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Loading older messages...</span>
+              </div>
+            </div>
+          )}
+          
+          {/* No more messages indicator */}
+          {!hasMoreMessages && messages.length > 0 && (
+            <div className="flex justify-center py-2">
+              <div className="text-xs text-gray-400 bg-gray-50 px-3 py-1 rounded-full">
+                Beginning of conversation
+              </div>
+            </div>
+          )}
+
           {loading ? (
             <div className="flex items-center justify-center h-full">
               <Loader2 className="h-6 w-6 animate-spin" />
@@ -465,35 +618,60 @@ export default function ChatModal({
           )}
         </div>
 
-        {/* Message Input */}
-        <form onSubmit={handleSendMessage} className="p-4 border-t">
-          <div className="flex space-x-2">
-            <Input
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder={connectionStatus === 'connected' ? "Type your message..." : "Connecting..."}
-              className="flex-1"
-              disabled={sending || connectionStatus === 'error'}
-              maxLength={1000}
-            />
-            <Button 
-              type="submit" 
-              disabled={!newMessage.trim() || sending || connectionStatus === 'error'}
-              variant={connectionStatus === 'connected' ? 'default' : 'secondary'}
+        {/* Scroll to bottom button */}
+        {!shouldScrollToBottom && messages.length > 0 && (
+          <div className="absolute bottom-20 right-8">
+            <Button
+              variant="outline"
+              size="icon"
+              className="rounded-full shadow-lg bg-white hover:bg-gray-50"
+              onClick={() => {
+                setShouldScrollToBottom(true);
+                scrollToBottom();
+              }}
             >
-              {sending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
+              <ChevronUp className="h-4 w-4 transform rotate-180" />
             </Button>
           </div>
-          {connectionStatus === 'error' && (
-            <p className="text-xs text-red-500 mt-1">
-              Connection lost. Messages will be saved but may not appear instantly.
+        )}
+
+        {/* Message Input */}
+        {isReadOnly ? (
+          <div className="p-4 border-t bg-gray-50">
+            <p className="text-sm text-gray-500 text-center">
+              This chat is read-only. The booking has been cancelled.
             </p>
-          )}
-        </form>
+          </div>
+        ) : (
+          <form onSubmit={handleSendMessage} className="p-4 border-t">
+            <div className="flex space-x-2">
+              <Input
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder={connectionStatus === 'connected' ? "Type your message..." : "Connecting..."}
+                className="flex-1"
+                disabled={sending || connectionStatus === 'error'}
+                maxLength={1000}
+              />
+              <Button 
+                type="submit" 
+                disabled={!newMessage.trim() || sending || connectionStatus === 'error'}
+                variant={connectionStatus === 'connected' ? 'default' : 'secondary'}
+              >
+                {sending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+            {connectionStatus === 'error' && (
+              <p className="text-xs text-red-500 mt-1">
+                Connection lost. Messages will be saved but may not appear instantly.
+              </p>
+            )}
+          </form>
+        )}
       </div>
     </div>
   );

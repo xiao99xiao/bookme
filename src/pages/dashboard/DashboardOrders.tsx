@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Calendar, Clock, MapPin, User, DollarSign, CheckCircle, XCircle, AlertCircle, MessageSquare } from 'lucide-react';
+import { Calendar, Clock, User, DollarSign, CheckCircle, XCircle, AlertCircle, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient } from '@/lib/api';
 import ChatModal from '@/components/ChatModal';
+import AddToCalendar from '@/components/AddToCalendar';
 
 interface Booking {
   id: string;
@@ -43,17 +43,19 @@ export default function DashboardOrders() {
   const { userId } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('pending');
+  const [activeTab, setActiveTab] = useState('all');
   const [chatModal, setChatModal] = useState<{
     isOpen: boolean;
     otherUserId: string;
     otherUserName: string;
     otherUserAvatar?: string;
+    isReadOnly?: boolean;
   }>({
     isOpen: false,
     otherUserId: '',
     otherUserName: '',
-    otherUserAvatar: undefined
+    otherUserAvatar: undefined,
+    isReadOnly: false
   });
 
   useEffect(() => {
@@ -96,7 +98,8 @@ export default function DashboardOrders() {
       isOpen: true,
       otherUserId: booking.customer_id,
       otherUserName: booking.customer?.display_name || 'Customer',
-      otherUserAvatar: booking.customer?.avatar
+      otherUserAvatar: booking.customer?.avatar,
+      isReadOnly: booking.status === 'cancelled'
     });
   };
 
@@ -105,7 +108,8 @@ export default function DashboardOrders() {
       isOpen: false,
       otherUserId: '',
       otherUserName: '',
-      otherUserAvatar: undefined
+      otherUserAvatar: undefined,
+      isReadOnly: false
     });
   };
 
@@ -139,6 +143,13 @@ export default function DashboardOrders() {
     }
   };
 
+  const isBookingOverdue = (booking: Booking) => {
+    const now = new Date();
+    const scheduledEnd = new Date(booking.scheduled_at);
+    scheduledEnd.setMinutes(scheduledEnd.getMinutes() + booking.duration_minutes);
+    return now > scheduledEnd && (booking.status === 'confirmed' || booking.status === 'pending');
+  };
+
   const filteredBookings = bookings.filter(booking => {
     if (activeTab === 'all') return true;
     return booking.status === activeTab;
@@ -151,7 +162,7 @@ export default function DashboardOrders() {
         <h1 className="text-2xl font-semibold text-gray-900 mb-2">Incoming Orders</h1>
         <p className="text-gray-600 mb-8">Manage bookings from your customers</p>
         
-        <Tabs defaultValue="pending" value={activeTab} onValueChange={setActiveTab}>
+        <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="all">All</TabsTrigger>
             <TabsTrigger value="pending">Pending</TabsTrigger>
@@ -181,6 +192,14 @@ export default function DashboardOrders() {
                               <span>{booking.status}</span>
                             </span>
                           </Badge>
+                          {isBookingOverdue(booking) && (
+                            <Badge className="bg-red-100 text-red-800">
+                              <span className="flex items-center space-x-1">
+                                <AlertCircle className="w-4 h-4" />
+                                <span>OVERDUE</span>
+                              </span>
+                            </Badge>
+                          )}
                           <span className="text-sm text-gray-500">
                             Booked {format(new Date(booking.created_at), 'MMM dd, yyyy')}
                           </span>
@@ -212,7 +231,7 @@ export default function DashboardOrders() {
                             </div>
                             <div className="flex items-center text-gray-600">
                               <DollarSign className="w-4 h-4 mr-2" />
-                              Your earnings: ${(booking.total_price - booking.service_fee).toFixed(2)}
+                              Your earnings: ${(booking.total_price - (booking.service_fee || 0)).toFixed(2)}
                             </div>
                           </div>
                         </div>
@@ -224,18 +243,38 @@ export default function DashboardOrders() {
                             </p>
                           </div>
                         )}
+
+                        {isBookingOverdue(booking) && (
+                          <div className="mt-4 p-3 bg-red-50 border-l-4 border-red-400 rounded-lg">
+                            <p className="text-sm text-red-700">
+                              <span className="font-medium">⚠️ This booking is overdue!</span>
+                              <br />
+                              The scheduled time has passed. Please mark as completed or contact the customer.
+                            </p>
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex flex-col space-y-2 ml-4">
                         {(booking.status === 'confirmed' || booking.status === 'pending') && (
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => handleChatOpen(booking)}
-                          >
-                            <MessageSquare className="w-4 h-4 mr-1" />
-                            Message
-                          </Button>
+                          <>
+                            <AddToCalendar
+                              title={`${booking.services?.title || 'Service'} - ${booking.customer?.display_name || 'Customer'}`}
+                              description={`Service booking with ${booking.customer?.display_name}${booking.customer_notes ? `\n\nCustomer notes: ${booking.customer_notes}` : ''}`}
+                              startDate={new Date(booking.scheduled_at)}
+                              endDate={new Date(new Date(booking.scheduled_at).getTime() + booking.duration_minutes * 60000)}
+                              location={booking.location}
+                              isOnline={booking.is_online}
+                            />
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleChatOpen(booking)}
+                            >
+                              <MessageSquare className="w-4 h-4 mr-1" />
+                              Message
+                            </Button>
+                          </>
                         )}
                         
                         {booking.status === 'pending' && (
@@ -275,6 +314,17 @@ export default function DashboardOrders() {
                             Message
                           </Button>
                         )}
+
+                        {booking.status === 'cancelled' && (
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleChatOpen(booking)}
+                          >
+                            <MessageSquare className="w-4 h-4 mr-1" />
+                            View Chat
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -292,6 +342,7 @@ export default function DashboardOrders() {
         otherUserId={chatModal.otherUserId}
         otherUserName={chatModal.otherUserName}
         otherUserAvatar={chatModal.otherUserAvatar}
+        isReadOnly={chatModal.isReadOnly}
       />
     </div>
   );

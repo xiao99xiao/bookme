@@ -1,4 +1,5 @@
 import { supabase, supabaseAdmin } from './supabase';
+import { calculatePlatformFee } from './config';
 
 export class ApiClient {
   // User Profile APIs
@@ -164,6 +165,13 @@ export class ApiClient {
       .single();
 
     if (error) throw error;
+
+    // After successfully creating a service, ensure the user is marked as a provider
+    await supabaseAdmin
+      .from('users')
+      .update({ is_provider: true })
+      .eq('id', userId);
+
     return data;
   }
 
@@ -505,7 +513,7 @@ export class ApiClient {
       .insert({
         ...bookingData,
         customer_id: effectiveCustomerId,
-        service_fee: Math.round(bookingData.total_price * 0.05 * 100) / 100, // 5% service fee
+        service_fee: calculatePlatformFee(bookingData.total_price),
         status: 'pending'
       })
       .select(`
@@ -787,7 +795,7 @@ export class ApiClient {
     };
   }
 
-  static async getMessages(conversationId: string) {
+  static async getMessages(conversationId: string, limit: number = 30, before?: string) {
     // Use admin client for Privy users
     let useAdminClient = false;
     try {
@@ -799,17 +807,27 @@ export class ApiClient {
 
     const dbClient = useAdminClient ? supabaseAdmin : supabase;
 
-    const { data, error } = await dbClient
+    let query = dbClient
       .from('messages')
       .select(`
         *,
         sender:users!messages_sender_id_fkey(display_name, avatar)
       `)
       .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: true });
+      .order('created_at', { ascending: false }) // Get newest first for pagination
+      .limit(limit);
+
+    // If before timestamp is provided, get messages before that time
+    if (before) {
+      query = query.lt('created_at', before);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
-    return data || [];
+    
+    // Reverse to show chronological order (oldest to newest)
+    return (data || []).reverse();
   }
 
   static async sendMessage(conversationId: string, content: string, senderId?: string) {
