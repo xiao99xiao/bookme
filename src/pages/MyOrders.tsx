@@ -242,7 +242,7 @@ export default function MyOrders() {
               </>
             )}
             
-            {order.status === 'confirmed' && isUpcoming && (
+            {order.status === 'confirmed' && !isUpcoming && (
               <Button
                 onClick={() => handleStatusUpdate(order.id, 'completed')}
                 disabled={actionLoading === order.id}

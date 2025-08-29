@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient } from '@/lib/api';
 import ChatModal from '@/components/ChatModal';
 import AddToCalendar from '@/components/AddToCalendar';
+import MeetingLinkDisplay from '@/components/MeetingLinkDisplay';
 
 interface Booking {
   id: string;
@@ -23,6 +24,9 @@ interface Booking {
   customer_notes?: string; // Changed from notes
   location?: string;
   is_online?: boolean;
+  meeting_link?: string;
+  meeting_platform?: string;
+  meeting_id?: string;
   created_at: string;
   services?: {
     id: string;
@@ -150,6 +154,12 @@ export default function DashboardOrders() {
     return now > scheduledEnd && (booking.status === 'confirmed' || booking.status === 'pending');
   };
 
+  const hasBookingTimeStarted = (booking: Booking) => {
+    const now = new Date();
+    const scheduledStart = new Date(booking.scheduled_at);
+    return now >= scheduledStart;
+  };
+
   const filteredBookings = bookings.filter(booking => {
     if (activeTab === 'all') return true;
     return booking.status === activeTab;
@@ -244,6 +254,16 @@ export default function DashboardOrders() {
                           </div>
                         )}
 
+                        {booking.meeting_link && booking.status === 'confirmed' && (
+                          <div className="mt-4">
+                            <MeetingLinkDisplay
+                              meetingLink={booking.meeting_link}
+                              meetingPlatform={booking.meeting_platform}
+                              scheduledAt={booking.scheduled_at}
+                            />
+                          </div>
+                        )}
+
                         {isBookingOverdue(booking) && (
                           <div className="mt-4 p-3 bg-red-50 border-l-4 border-red-400 rounded-lg">
                             <p className="text-sm text-red-700">
@@ -258,14 +278,16 @@ export default function DashboardOrders() {
                       <div className="flex flex-col space-y-2 ml-4">
                         {(booking.status === 'confirmed' || booking.status === 'pending') && (
                           <>
-                            <AddToCalendar
-                              title={`${booking.services?.title || 'Service'} - ${booking.customer?.display_name || 'Customer'}`}
-                              description={`Service booking with ${booking.customer?.display_name}${booking.customer_notes ? `\n\nCustomer notes: ${booking.customer_notes}` : ''}`}
-                              startDate={new Date(booking.scheduled_at)}
-                              endDate={new Date(new Date(booking.scheduled_at).getTime() + booking.duration_minutes * 60000)}
-                              location={booking.location}
-                              isOnline={booking.is_online}
-                            />
+                            {booking.status === 'confirmed' && (
+                              <AddToCalendar
+                                title={`${booking.services?.title || 'Service'} - ${booking.customer?.display_name || 'Customer'}`}
+                                description={`Service booking with ${booking.customer?.display_name}${booking.customer_notes ? `\n\nCustomer notes: ${booking.customer_notes}` : ''}`}
+                                startDate={new Date(booking.scheduled_at)}
+                                endDate={new Date(new Date(booking.scheduled_at).getTime() + booking.duration_minutes * 60000)}
+                                location={booking.location}
+                                isOnline={booking.is_online}
+                              />
+                            )}
                             <Button 
                               size="sm" 
                               variant="outline"
@@ -295,7 +317,7 @@ export default function DashboardOrders() {
                           </div>
                         )}
 
-                        {booking.status === 'confirmed' && (
+                        {booking.status === 'confirmed' && hasBookingTimeStarted(booking) && (
                           <Button
                             size="sm"
                             onClick={() => handleUpdateStatus(booking.id, 'completed')}

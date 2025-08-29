@@ -1,12 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { X, Clock, DollarSign, MapPin, Tag, FileText } from 'lucide-react';
+import { X, Clock, DollarSign, MapPin, Tag, FileText, Video, AlertCircle } from 'lucide-react';
 import { z } from 'zod';
 import { getLocationIcon } from '@/lib/utils';
 import { TimeSlotSelector } from './TimeSlotSelector';
+import { GoogleMeetIcon, ZoomIcon, TeamsIcon } from '@/components/icons/MeetingPlatformIcons';
+import { ApiClient } from '@/lib/api';
+import { useAuth } from '@/contexts/PrivyAuthContext';
+import { toast } from 'sonner';
 
 // Updated schema for service with weekly schedule
 const serviceSchema = z.object({
@@ -15,6 +19,7 @@ const serviceSchema = z.object({
   duration: z.number().min(15).max(480), // 15 minutes to 8 hours
   price: z.number().min(0).max(10000),
   location: z.enum(['online', 'phone', 'in-person']),
+  meeting_platform: z.enum(['google_meet', 'zoom', 'teams']).optional(),
 });
 
 type ServiceFormData = z.infer<typeof serviceSchema>;
@@ -32,8 +37,17 @@ const locations = [
   { value: 'in-person', label: 'In-Person', icon: '📍' },
 ];
 
+const meetingPlatforms = [
+  { value: 'google_meet', label: 'Google Meet', icon: GoogleMeetIcon },
+  { value: 'zoom', label: 'Zoom', icon: ZoomIcon, disabled: true },
+  { value: 'teams', label: 'Microsoft Teams', icon: TeamsIcon, disabled: true },
+];
+
 export default function CreateServiceModal({ isOpen, onClose, onSubmit, isLoading = false }: CreateServiceModalProps) {
+  const { userId } = useAuth();
   const [timeSlots, setTimeSlots] = useState<{ [key: string]: boolean }>({});
+  const [userIntegrations, setUserIntegrations] = useState<any[]>([]);
+  const [loadingIntegrations, setLoadingIntegrations] = useState(false);
   
   const form = useForm<ServiceFormData>({
     resolver: zodResolver(serviceSchema),
@@ -43,13 +57,47 @@ export default function CreateServiceModal({ isOpen, onClose, onSubmit, isLoadin
       duration: 60,
       price: 50,
       location: 'online',
+      meeting_platform: 'google_meet',
     },
   });
+
+  const watchLocation = form.watch('location');
+
+  // Load user's meeting integrations
+  useEffect(() => {
+    if (isOpen && userId) {
+      loadUserIntegrations();
+    }
+  }, [isOpen, userId]);
+
+  const loadUserIntegrations = async () => {
+    try {
+      setLoadingIntegrations(true);
+      const integrations = await ApiClient.getMeetingIntegrations(userId || undefined);
+      setUserIntegrations(integrations);
+    } catch (error) {
+      console.error('Failed to load integrations:', error);
+    } finally {
+      setLoadingIntegrations(false);
+    }
+  };
+
+  const hasIntegration = (platform: string) => {
+    return userIntegrations.some(i => i.platform === platform && i.is_active);
+  };
 
   const handleSubmit = async (data: ServiceFormData) => {
     if (Object.keys(timeSlots).length === 0) {
       alert('Please select at least one time slot');
       return;
+    }
+
+    // Check if online service has meeting platform
+    if (data.location === 'online' && data.meeting_platform) {
+      if (!hasIntegration(data.meeting_platform)) {
+        toast.error(`Please connect ${meetingPlatforms.find(p => p.value === data.meeting_platform)?.label} in Integrations first`);
+        return;
+      }
     }
     
     try {
@@ -149,6 +197,62 @@ export default function CreateServiceModal({ isOpen, onClose, onSubmit, isLoadin
                 </div>
               </div>
 
+              {/* Meeting Platform - Only show for online services */}
+              {watchLocation === 'online' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <Video className="inline w-4 h-4 mr-1" />
+                    Meeting Platform
+                  </label>
+                  <div className="space-y-2">
+                    {meetingPlatforms.map((platform) => {
+                      const IconComponent = platform.icon;
+                      const isConnected = hasIntegration(platform.value);
+                      const isSelected = form.watch('meeting_platform') === platform.value;
+                      
+                      return (
+                        <label
+                          key={platform.value}
+                          className={`flex items-center p-3 border rounded-xl cursor-pointer transition-colors ${
+                            platform.disabled ? 'opacity-50 cursor-not-allowed' : 
+                            isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            {...form.register('meeting_platform')}
+                            value={platform.value}
+                            disabled={platform.disabled}
+                            className="sr-only"
+                          />
+                          <IconComponent className="w-5 h-5 mr-3" />
+                          <span className="flex-1 font-medium">{platform.label}</span>
+                          {platform.disabled ? (
+                            <span className="text-xs text-gray-500">Coming soon</span>
+                          ) : isConnected ? (
+                            <span className="text-xs text-green-600">Connected</span>
+                          ) : (
+                            <span className="text-xs text-amber-600">Not connected</span>
+                          )}
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {watchLocation === 'online' && form.watch('meeting_platform') && !hasIntegration(form.watch('meeting_platform')!) && (
+                    <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start">
+                      <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 mr-2 flex-shrink-0" />
+                      <div className="text-sm text-amber-800">
+                        <p className="font-medium">Integration Required</p>
+                        <p className="mt-1">You need to connect {meetingPlatforms.find(p => p.value === form.watch('meeting_platform'))?.label} in your Integrations before creating this service.</p>
+                        <a href="/dashboard/integrations" className="inline-block mt-2 text-amber-700 hover:text-amber-900 underline">
+                          Go to Integrations →
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Duration & Price */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -206,11 +310,6 @@ export default function CreateServiceModal({ isOpen, onClose, onSubmit, isLoadin
                       <span>{form.watch('duration')} min • {getLocationIcon(form.watch('location'))} {form.watch('location')}</span>
                       <span className="font-semibold text-green-600">${form.watch('price')}</span>
                     </div>
-                    {getTotalSlots() > 0 && (
-                      <div className="mt-2 text-xs text-blue-600">
-                        {getTotalSlots()} time slots selected
-                      </div>
-                    )}
                   </div>
                 </div>
               )}

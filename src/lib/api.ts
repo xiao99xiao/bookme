@@ -1,5 +1,6 @@
 import { supabase, supabaseAdmin } from './supabase';
 import { calculatePlatformFee } from './config';
+import { generateMeetingLinkForBooking, deleteMeetingForBooking } from './meeting-generation';
 
 export class ApiClient {
   // User Profile APIs
@@ -130,6 +131,7 @@ export class ApiClient {
     category_id?: string;
     location?: string;
     is_online: boolean;
+    meeting_platform?: string;
     images?: string[];
     tags?: string[];
     requirements?: string;
@@ -150,6 +152,7 @@ export class ApiClient {
         category_id: service.category_id,
         location: service.location,
         is_online: service.is_online,
+        meeting_platform: service.meeting_platform,
         images: service.images,
         tags: service.tags,
         requirements: service.requirements,
@@ -622,6 +625,25 @@ export class ApiClient {
       .single();
 
     if (error) throw error;
+
+    // Handle meeting generation/deletion based on status
+    if (status === 'confirmed') {
+      // Generate meeting link for confirmed bookings
+      try {
+        await generateMeetingLinkForBooking(bookingId);
+      } catch (meetingError) {
+        console.error('Failed to generate meeting link:', meetingError);
+        // Don't fail the booking confirmation if meeting generation fails
+      }
+    } else if (status === 'cancelled') {
+      // Delete meeting for cancelled bookings
+      try {
+        await deleteMeetingForBooking(bookingId);
+      } catch (meetingError) {
+        console.error('Failed to delete meeting:', meetingError);
+      }
+    }
+
     return data;
   }
 

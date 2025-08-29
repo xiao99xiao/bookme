@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient } from '@/lib/api';
 import ChatModal from '@/components/ChatModal';
 import AddToCalendar from '@/components/AddToCalendar';
+import MeetingLinkDisplay from '@/components/MeetingLinkDisplay';
 
 interface Booking {
   id: string;
@@ -25,6 +26,9 @@ interface Booking {
   customer_notes?: string; // Changed from notes
   location?: string;
   is_online?: boolean;
+  meeting_link?: string;
+  meeting_platform?: string;
+  meeting_id?: string;
   created_at: string;
   services?: {
     id: string;
@@ -268,6 +272,16 @@ export default function DashboardBookings() {
                           </div>
                         )}
 
+                        {booking.meeting_link && booking.status === 'confirmed' && (
+                          <div className="mt-4">
+                            <MeetingLinkDisplay
+                              meetingLink={booking.meeting_link}
+                              meetingPlatform={booking.meeting_platform}
+                              scheduledAt={booking.scheduled_at}
+                            />
+                          </div>
+                        )}
+
                         {isBookingOverdue(booking) && (
                           <div className="mt-4 p-3 bg-orange-50 border-l-4 border-orange-400 rounded-lg">
                             <p className="text-sm text-orange-700">
@@ -282,14 +296,16 @@ export default function DashboardBookings() {
                       <div className="flex flex-col space-y-2 ml-4">
                         {(booking.status === 'confirmed' || booking.status === 'pending') && (
                           <>
-                            <AddToCalendar
-                              title={`${booking.services?.title || 'Service'} with ${booking.provider?.display_name || 'Provider'}`}
-                              description={`Booking for ${booking.services?.title}${booking.customer_notes ? `\n\nNotes: ${booking.customer_notes}` : ''}`}
-                              startDate={new Date(booking.scheduled_at)}
-                              endDate={new Date(new Date(booking.scheduled_at).getTime() + booking.duration_minutes * 60000)}
-                              location={booking.location}
-                              isOnline={booking.is_online}
-                            />
+                            {booking.status === 'confirmed' && (
+                              <AddToCalendar
+                                title={`${booking.services?.title || 'Service'} with ${booking.provider?.display_name || 'Provider'}`}
+                                description={`Booking for ${booking.services?.title}${booking.customer_notes ? `\n\nNotes: ${booking.customer_notes}` : ''}`}
+                                startDate={new Date(booking.scheduled_at)}
+                                endDate={new Date(new Date(booking.scheduled_at).getTime() + booking.duration_minutes * 60000)}
+                                location={booking.location}
+                                isOnline={booking.is_online}
+                              />
+                            )}
                             <Button 
                               size="sm" 
                               variant="outline"

@@ -29,6 +29,7 @@ interface Service {
   category_id?: string;
   location?: string;
   is_online: boolean;
+  meeting_platform?: string;
   is_active: boolean;
   timeSlots?: { [key: string]: boolean };
   created_at: string;
@@ -114,6 +115,7 @@ export default function DashboardServices() {
         price: data.price,
         location: data.location === 'in-person' ? 'In Person' : data.location === 'phone' ? 'Phone' : 'Online',
         is_online: data.location === 'online',
+        meeting_platform: data.location === 'online' ? data.meeting_platform : null,
         timeSlots: data.timeSlots,
         is_active: true
       };
