@@ -165,17 +165,18 @@ export class GoogleCalendar {
     startTime: Date;
     endTime: Date;
     attendees?: string[];
+    timeZone?: string;
   }): Promise<any> {
     const event = {
       summary: eventData.summary,
       description: eventData.description,
       start: {
         dateTime: eventData.startTime.toISOString(),
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        timeZone: eventData.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone
       },
       end: {
         dateTime: eventData.endTime.toISOString(),
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        timeZone: eventData.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone
       },
       attendees: eventData.attendees?.map(email => ({ email })),
       conferenceData: {

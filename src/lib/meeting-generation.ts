@@ -25,7 +25,7 @@ export async function generateMeetingLinkForBooking(bookingId: string): Promise<
   try {
     console.log('Generating meeting link for booking:', bookingId);
 
-    // 1. Get booking details with service and customer info
+    // 1. Get booking details with service and customer info  
     const { data: booking, error: bookingError } = await supabaseAdmin
       .from('bookings')
       .select(`
@@ -38,6 +38,9 @@ export async function generateMeetingLinkForBooking(bookingId: string): Promise<
         customers:users!bookings_customer_id_fkey(
           display_name,
           email
+        ),
+        providers:users!bookings_provider_id_fkey(
+          timezone
         )
       `)
       .eq('id', bookingId)
@@ -89,12 +92,16 @@ export async function generateMeetingLinkForBooking(bookingId: string): Promise<
       const startTime = new Date(booking.scheduled_at);
       const endTime = new Date(startTime.getTime() + booking.duration_minutes * 60000);
       
+      // Get provider's timezone
+      const providerTimezone = booking.providers?.timezone || 'UTC';
+      
       const result = await calendar.createMeetingEvent({
         summary: `${booking.services.title} - Meeting`,
         description: `Meeting for ${booking.services.title}\nCustomer: ${booking.customers?.display_name || 'Customer'}`,
         startTime,
         endTime,
-        attendees: booking.customers?.email ? [booking.customers.email] : []
+        attendees: booking.customers?.email ? [booking.customers.email] : [],
+        timeZone: providerTimezone
       });
 
       meetingLink = result.meetLink;

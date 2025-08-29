@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/PrivyAuthContext";
 import { ApiClient } from "@/lib/api";
 import BookingTimeSlots from "@/components/BookingTimeSlots";
 import { toast } from "sonner";
+import { getBrowserTimezone } from "@/lib/timezone";
 
 interface Service {
   id: string;
@@ -112,7 +113,9 @@ const Profile = () => {
 
           console.log('Fetching services for user:', targetUserId);
           // Fetch services for the target user
-          const servicesData = await ApiClient.getUserServicesById(targetUserId);
+          // Get viewer's timezone to properly display service time slots
+          const viewerTimezone = profile?.timezone || getBrowserTimezone();
+          const servicesData = await ApiClient.getUserServicesById(targetUserId, viewerTimezone);
           console.log('Services fetched:', servicesData?.length || 0, 'services');
           setServices(servicesData);
           

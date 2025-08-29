@@ -10,9 +10,11 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Camera, Globe, Mail, Phone, MapPin, Calendar, Star, Video, Users, Copy, Check, ExternalLink } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2, Camera, Globe, Mail, Phone, MapPin, Calendar, Star, Video, Users, Copy, Check, ExternalLink, Clock } from 'lucide-react';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient } from '@/lib/api';
+import { getBrowserTimezone } from '@/lib/timezone';
 
 const profileSchema = z.object({
   display_name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -20,9 +22,39 @@ const profileSchema = z.object({
   phone: z.string().optional(),
   location: z.string().optional(),
   website: z.string().url('Invalid URL').optional().or(z.literal('')),
+  timezone: z.string().optional(),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
+
+const COMMON_TIMEZONES = [
+  { value: 'UTC', label: 'UTC (Coordinated Universal Time)' },
+  { value: 'America/New_York', label: 'Eastern Time (New York)' },
+  { value: 'America/Chicago', label: 'Central Time (Chicago)' },
+  { value: 'America/Denver', label: 'Mountain Time (Denver)' },
+  { value: 'America/Los_Angeles', label: 'Pacific Time (Los Angeles)' },
+  { value: 'America/Phoenix', label: 'Arizona Time (Phoenix)' },
+  { value: 'America/Anchorage', label: 'Alaska Time (Anchorage)' },
+  { value: 'Pacific/Honolulu', label: 'Hawaii Time (Honolulu)' },
+  { value: 'America/Toronto', label: 'Eastern Time (Toronto)' },
+  { value: 'America/Vancouver', label: 'Pacific Time (Vancouver)' },
+  { value: 'Europe/London', label: 'GMT (London)' },
+  { value: 'Europe/Paris', label: 'CET (Paris)' },
+  { value: 'Europe/Berlin', label: 'CET (Berlin)' },
+  { value: 'Europe/Rome', label: 'CET (Rome)' },
+  { value: 'Europe/Madrid', label: 'CET (Madrid)' },
+  { value: 'Europe/Moscow', label: 'MSK (Moscow)' },
+  { value: 'Asia/Tokyo', label: 'JST (Tokyo)' },
+  { value: 'Asia/Shanghai', label: 'CST (Shanghai)' },
+  { value: 'Asia/Hong_Kong', label: 'HKT (Hong Kong)' },
+  { value: 'Asia/Singapore', label: 'SGT (Singapore)' },
+  { value: 'Asia/Dubai', label: 'GST (Dubai)' },
+  { value: 'Asia/Kolkata', label: 'IST (Mumbai)' },
+  { value: 'Australia/Sydney', label: 'AEDT (Sydney)' },
+  { value: 'Australia/Melbourne', label: 'AEDT (Melbourne)' },
+  { value: 'Australia/Perth', label: 'AWST (Perth)' },
+  { value: 'Pacific/Auckland', label: 'NZDT (Auckland)' },
+];
 
 export default function DashboardProfile() {
   const { user, profile, refreshProfile, getUserDisplayName, getUserEmail, userId } = useAuth();
@@ -42,6 +74,7 @@ export default function DashboardProfile() {
       phone: '',
       location: '',
       website: '',
+      timezone: '',
     },
   });
 
@@ -53,10 +86,25 @@ export default function DashboardProfile() {
         phone: profile.phone || '',
         location: profile.location || '',
         website: profile.website || '',
+        timezone: profile.timezone || getBrowserTimezone(),
       });
       setAvatarUrl(profile.avatar || '');
+      
+      // If user doesn't have a timezone set, automatically update their profile with browser timezone
+      if (!profile.timezone && userId) {
+        const browserTimezone = getBrowserTimezone();
+        // Silently update the user's timezone in the background
+        ApiClient.updateProfile({ timezone: browserTimezone })
+          .then(() => {
+            console.log('Auto-set user timezone to:', browserTimezone);
+            refreshProfile(); // Refresh to get updated profile
+          })
+          .catch(error => {
+            console.error('Failed to auto-set timezone:', error);
+          });
+      }
     }
-  }, [profile, form]);
+  }, [profile, form, userId, refreshProfile]);
 
   useEffect(() => {
     if (userId) {
@@ -292,6 +340,33 @@ export default function DashboardProfile() {
                     {form.formState.errors.website.message}
                   </p>
                 )}
+              </div>
+
+              <hr className="border-gray-200" />
+
+              <div>
+                <Label htmlFor="timezone" className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  Timezone
+                </Label>
+                <Select
+                  value={form.watch('timezone')}
+                  onValueChange={(value) => form.setValue('timezone', value)}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select your timezone" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {COMMON_TIMEZONES.map((tz) => (
+                      <SelectItem key={tz.value} value={tz.value}>
+                        {tz.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  This helps display accurate times for your services and bookings
+                </p>
               </div>
 
               <hr className="border-gray-200" />

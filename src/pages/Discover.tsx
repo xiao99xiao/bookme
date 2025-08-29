@@ -9,6 +9,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star, MapPin, Clock, Video, MessageCircle, Search, Filter, Users, Phone, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ApiClient } from "@/lib/api";
+import { useAuth } from "@/contexts/PrivyAuthContext";
+import { getBrowserTimezone } from "@/lib/timezone";
 
 interface Service {
   id: string;
@@ -51,6 +53,7 @@ interface Category {
 
 const Discover = () => {
   const navigate = useNavigate();
+  const { profile } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [services, setServices] = useState<Service[]>([]);
@@ -81,9 +84,12 @@ const Discover = () => {
     const loadServices = async () => {
       try {
         setLoading(true);
+        // Get viewer's timezone to properly display service time slots
+        const viewerTimezone = profile?.timezone || getBrowserTimezone();
         const servicesData = await ApiClient.getServices({
           search: searchTerm || undefined,
           category: selectedCategory === "all" ? undefined : selectedCategory,
+          viewerTimezone,
           sortBy: 'created_at',
           sortOrder: 'desc',
           limit: 50

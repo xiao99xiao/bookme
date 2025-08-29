@@ -1,6 +1,7 @@
 import { supabase, supabaseAdmin } from './supabase';
 import { calculatePlatformFee } from './config';
 import { generateMeetingLinkForBooking, deleteMeetingForBooking } from './meeting-generation';
+import { convertTimeSlotsTimezone, getBrowserTimezone } from './timezone';
 
 export class ApiClient {
   // User Profile APIs
@@ -48,6 +49,8 @@ export class ApiClient {
     location?: string;
     phone?: string;
     avatar?: string;
+    website?: string;
+    timezone?: string;
     is_provider?: boolean;
   }) {
     if (!userId) throw new Error('User ID is required');
@@ -65,6 +68,29 @@ export class ApiClient {
 
     if (error) throw error;
     return data;
+  }
+
+  // Helper method for profile updates (used by DashboardProfile)
+  static async updateProfile(updates: {
+    display_name?: string;
+    bio?: string;
+    location?: string;
+    phone?: string;
+    website?: string;
+    timezone?: string;
+    avatar?: string;
+    is_provider?: boolean;
+  }, userId?: string) {
+    // Try to get userId from parameter first (for Privy users), then fall back to Supabase auth
+    let effectiveUserId = userId;
+    
+    if (!effectiveUserId) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      effectiveUserId = user.id;
+    }
+
+    return this.updateUserProfile(effectiveUserId, updates);
   }
 
   // Services APIs
@@ -102,7 +128,7 @@ export class ApiClient {
     }
   }
 
-  static async getUserServicesById(userId: string) {
+  static async getUserServicesById(userId: string, viewerTimezone?: string) {
     const { data, error } = await supabase
       .from('services')
       .select(`
@@ -114,11 +140,30 @@ export class ApiClient {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
+    
+    // Get viewer's timezone (fallback to browser timezone if not provided)
+    const viewerTz = viewerTimezone || getBrowserTimezone();
+    
     // Map availability_schedule back to timeSlots for frontend compatibility
-    const servicesWithTimeSlots = (data || []).map(service => ({
-      ...service,
-      timeSlots: service.availability_schedule || {}
-    }));
+    // and convert timezone if needed
+    const servicesWithTimeSlots = (data || []).map(service => {
+      let timeSlots = service.availability_schedule || {};
+      
+      // Convert timezone if service timezone differs from viewer timezone
+      if (service.service_timezone && service.service_timezone !== viewerTz) {
+        try {
+          timeSlots = convertTimeSlotsTimezone(timeSlots, service.service_timezone, viewerTz);
+        } catch (error) {
+          console.error('Error converting timezone for service:', service.id, error);
+          // Fallback to original slots if conversion fails
+        }
+      }
+      
+      return {
+        ...service,
+        timeSlots
+      };
+    });
     return servicesWithTimeSlots;
   }
 
@@ -140,6 +185,18 @@ export class ApiClient {
   }) {
     if (!userId) throw new Error('User ID is required');
 
+    // Get user's timezone first
+    const { data: userData, error: userError } = await supabaseAdmin
+      .from('users')
+      .select('timezone')
+      .eq('id', userId)
+      .single();
+
+    if (userError) throw userError;
+    
+    // Use user's timezone or default to UTC
+    const userTimezone = userData?.timezone || 'UTC';
+
     // Use admin client to bypass RLS for service creation
     const { data, error } = await supabaseAdmin
       .from('services')
@@ -158,6 +215,7 @@ export class ApiClient {
         requirements: service.requirements,
         cancellation_policy: service.cancellation_policy,
         availability_schedule: service.timeSlots || {}, // Map timeSlots to availability_schedule
+        service_timezone: userTimezone, // Store the provider's timezone
         provider_id: userId,
         is_active: true,
         rating: 0,
@@ -279,6 +337,7 @@ export class ApiClient {
     sortOrder?: 'asc' | 'desc';
     page?: number;
     limit?: number;
+    viewerTimezone?: string;
   }) {
     let query = supabase
       .from('services')
@@ -324,11 +383,31 @@ export class ApiClient {
     const { data, error, count } = await query;
 
     if (error) throw error;
+    
+    // Get viewer's timezone (fallback to browser timezone if not provided)
+    const viewerTz = params?.viewerTimezone || getBrowserTimezone();
+    
     // Map availability_schedule back to timeSlots for frontend compatibility
-    const servicesWithTimeSlots = (data || []).map(service => ({
-      ...service,
-      timeSlots: service.availability_schedule || {}
-    }));
+    // and convert timezone if needed
+    const servicesWithTimeSlots = (data || []).map(service => {
+      let timeSlots = service.availability_schedule || {};
+      
+      // Convert timezone if service timezone differs from viewer timezone
+      if (service.service_timezone && service.service_timezone !== viewerTz) {
+        try {
+          timeSlots = convertTimeSlotsTimezone(timeSlots, service.service_timezone, viewerTz);
+        } catch (error) {
+          console.error('Error converting timezone for service:', service.id, error);
+          // Fallback to original slots if conversion fails
+        }
+      }
+      
+      return {
+        ...service,
+        timeSlots
+      };
+    });
+    
     return {
       services: servicesWithTimeSlots,
       pagination: {

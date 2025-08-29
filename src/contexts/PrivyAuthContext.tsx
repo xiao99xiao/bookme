@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { usePrivy } from '@privy-io/react-auth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { ensureUuid, privyDidToUuid, isPrivyDid } from '@/lib/id-mapping';
+import { getBrowserTimezone } from '@/lib/timezone';
 
 interface UserProfile {
   id: string;
@@ -11,6 +12,7 @@ interface UserProfile {
   location: string | null;
   avatar: string | null;
   phone: string | null;
+  timezone: string | null;
   is_verified: boolean;
   rating: number;
   review_count: number;
@@ -158,7 +160,10 @@ export const PrivyAuthProvider = ({ children }: PrivyAuthProviderProps) => {
         throw new Error('No email found for user');
       }
 
-      console.log('Creating profile for:', { uuid, email, displayName });
+      // Detect user's timezone automatically
+      const userTimezone = getBrowserTimezone();
+      
+      console.log('Creating profile for:', { uuid, email, displayName, timezone: userTimezone });
 
       // Use admin client to bypass RLS for user creation
       const { data, error } = await supabaseAdmin
@@ -171,6 +176,7 @@ export const PrivyAuthProvider = ({ children }: PrivyAuthProviderProps) => {
           location: null,
           avatar: null,
           phone: null,
+          timezone: userTimezone, // Automatically set timezone from browser
           is_verified: false,
           rating: 0,
           review_count: 0,

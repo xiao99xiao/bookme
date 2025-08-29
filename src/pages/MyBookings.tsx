@@ -11,6 +11,7 @@ import { format, parseISO, isPast, isFuture } from "date-fns";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/PrivyAuthContext";
 import { ApiClient } from "@/lib/api";
+import { formatDateInTimezone, getBrowserTimezone, convertDateTimezone } from '@/lib/timezone';
 
 interface Booking {
   id: string;
@@ -55,7 +56,7 @@ interface Booking {
 }
 
 const MyBookings = () => {
-  const { user, userId } = useAuth();
+  const { user, userId, profile } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [providerBookings, setProviderBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,6 +64,37 @@ const MyBookings = () => {
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [cancelReason, setCancelReason] = useState('');
+  
+  // Get user's timezone for proper date display
+  const userTimezone = profile?.timezone || getBrowserTimezone();
+
+  // Auto-set timezone for existing users who don't have one
+  useEffect(() => {
+    if (profile && !profile.timezone && userId) {
+      const browserTimezone = getBrowserTimezone();
+      ApiClient.updateProfile({ timezone: browserTimezone })
+        .then(() => {
+          console.log('Auto-set user timezone to:', browserTimezone);
+        })
+        .catch(error => {
+          console.error('Failed to auto-set timezone:', error);
+        });
+    }
+  }, [profile, userId]);
+
+  // Helper function to format booking date in user's timezone
+  const formatBookingDate = (dateString: string, formatString: string) => {
+    const date = parseISO(dateString);
+    return formatDateInTimezone(date, userTimezone, {
+      year: 'numeric',
+      month: formatString.includes('MMM') ? 'short' : 'numeric',
+      day: 'numeric',
+      hour: formatString.includes('h') ? 'numeric' : undefined,
+      minute: formatString.includes('m') ? '2-digit' : undefined,
+      hour12: formatString.includes('a'),
+      weekday: formatString.includes('EEEE') ? 'long' : undefined
+    });
+  };
 
   // Load bookings data
   useEffect(() => {
@@ -142,6 +174,9 @@ const MyBookings = () => {
   const renderBookingCard = (booking: Booking, isProvider: boolean) => {
     const otherUser = isProvider ? booking.customer : booking.provider;
     const scheduledDate = parseISO(booking.scheduled_at);
+    
+    // For past/future comparison, we can use the UTC time since the comparison
+    // is relative to now and both are in the same timezone context
     const isUpcoming = isFuture(scheduledDate);
     const isPassed = isPast(scheduledDate);
 
@@ -171,7 +206,14 @@ const MyBookings = () => {
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Clock className="h-4 w-4" />
-                {format(scheduledDate, 'MMM d, yyyy • h:mm a')}
+                {formatDateInTimezone(scheduledDate, userTimezone, {
+                  month: 'short',
+                  day: 'numeric', 
+                  year: 'numeric',
+                  hour: 'numeric',
+                  minute: '2-digit',
+                  hour12: true
+                }).replace(',', ' •')}
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 {getLocationIcon(booking.is_online, !!booking.location)}
@@ -326,8 +368,19 @@ const MyBookings = () => {
                   </div>
                   <div>
                     <h4 className="font-medium mb-2">Date & Time</h4>
-                    <p>{format(parseISO(selectedBooking.scheduled_at), 'EEEE, MMMM d, yyyy')}</p>
-                    <p className="text-sm text-muted-foreground">{format(parseISO(selectedBooking.scheduled_at), 'h:mm a')} ({selectedBooking.duration_minutes} min)</p>
+                    <p>{formatDateInTimezone(parseISO(selectedBooking.scheduled_at), userTimezone, {
+                      weekday: 'long',
+                      month: 'long',
+                      day: 'numeric',
+                      year: 'numeric'
+                    })}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {formatDateInTimezone(parseISO(selectedBooking.scheduled_at), userTimezone, {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                      })} ({selectedBooking.duration_minutes} min)
+                    </p>
                   </div>
                   <div>
                     <h4 className="font-medium mb-2">Location</h4>
