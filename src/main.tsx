@@ -2,6 +2,7 @@ import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 import { PrivyProvider } from '@privy-io/react-auth'
+import { SmartWalletsProvider } from '@privy-io/react-auth/smart-wallets'
 import { base, baseSepolia } from 'viem/chains'
 
 createRoot(document.getElementById("root")!).render(
@@ -11,7 +12,7 @@ createRoot(document.getElementById("root")!).render(
       appearance: {
         theme: 'light'
       },
-      defaultChain: base,
+      defaultChain: import.meta.env.MODE === 'production' ? base : baseSepolia,
       supportedChains: [base, baseSepolia],
       embeddedWallets: {
         ethereum: {
@@ -20,6 +21,8 @@ createRoot(document.getElementById("root")!).render(
       }
     }}
   >
-    <App />
+    <SmartWalletsProvider>
+      <App />
+    </SmartWalletsProvider>
   </PrivyProvider>
 );

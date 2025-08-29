@@ -22,6 +22,7 @@ import DashboardProfile from "./pages/dashboard/DashboardProfile";
 import DashboardServices from "./pages/dashboard/DashboardServices";
 import DashboardOrders from "./pages/dashboard/DashboardOrders";
 import DashboardBookings from "./pages/dashboard/DashboardBookings";
+import DashboardBalance from "./pages/dashboard/DashboardBalance";
 import DashboardIntegrations from "./pages/dashboard/DashboardIntegrations";
 import IntegrationsCallback from "./pages/dashboard/IntegrationsCallback";
 import TestBroadcast from "./pages/TestBroadcast";
@@ -92,6 +93,7 @@ function AppContent() {
               <Route path="services" element={<DashboardServices />} />
               <Route path="orders" element={<DashboardOrders />} />
               <Route path="bookings" element={<DashboardBookings />} />
+              <Route path="balance" element={<DashboardBalance />} />
               <Route path="integrations" element={<DashboardIntegrations />} />
               <Route path="integrations/callback" element={<IntegrationsCallback />} />
             </Route>

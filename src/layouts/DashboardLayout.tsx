@@ -12,7 +12,8 @@ import {
   ChevronRight,
   ExternalLink,
   Copy,
-  Check
+  Check,
+  Wallet
 } from 'lucide-react';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -43,6 +44,12 @@ const sidebarItems = [
     icon: Calendar,
     path: '/dashboard/bookings',
     description: 'Services you have booked'
+  },
+  {
+    label: 'Balance',
+    icon: Wallet,
+    path: '/dashboard/balance',
+    description: 'View your wallet balance'
   },
   {
     label: 'Integrations',
