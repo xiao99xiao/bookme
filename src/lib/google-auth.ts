@@ -132,10 +132,15 @@ export class GoogleAuth {
     });
     
     if (!response.ok) {
-      throw new Error('Failed to refresh token');
+      const errorText = await response.text();
+      console.error('Token refresh failed with status:', response.status);
+      console.error('Token refresh error response:', errorText);
+      throw new Error(`Failed to refresh token: ${response.status} - ${errorText}`);
     }
     
-    return response.json();
+    const result = await response.json();
+    console.log('Token refresh response:', result);
+    return result;
   }
   
   /**

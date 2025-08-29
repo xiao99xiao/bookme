@@ -174,11 +174,14 @@ const MyBookings = () => {
   const renderBookingCard = (booking: Booking, isProvider: boolean) => {
     const otherUser = isProvider ? booking.customer : booking.provider;
     const scheduledDate = parseISO(booking.scheduled_at);
+    const scheduledEndDate = new Date(scheduledDate.getTime() + booking.duration_minutes * 60000);
     
     // For past/future comparison, we can use the UTC time since the comparison
     // is relative to now and both are in the same timezone context
     const isUpcoming = isFuture(scheduledDate);
     const isPassed = isPast(scheduledDate);
+    const isCompletelyPassed = isPast(scheduledEndDate); // Entire booking duration has passed
+    
 
     return (
       <Card key={booking.id} className="mb-4">
@@ -262,29 +265,38 @@ const MyBookings = () => {
               </>
             )}
 
-            {booking.status === 'confirmed' && isPassed && (
-              <Button
-                size="sm"
-                onClick={() => handleStatusUpdate(booking.id, 'completed')}
-                disabled={actionLoading === booking.id}
-              >
-                {actionLoading === booking.id ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Mark Complete'}
-              </Button>
-            )}
+            {(() => {
+              const showMarkComplete = booking.status === 'confirmed' && isPassed;
+              const showCancel = (booking.status === 'pending' || booking.status === 'confirmed') && !isPassed;
+              
+              return (
+                <>
+                  {showMarkComplete && (
+                    <Button
+                      size="sm"
+                      onClick={() => handleStatusUpdate(booking.id, 'completed')}
+                      disabled={actionLoading === booking.id}
+                    >
+                      {actionLoading === booking.id ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Mark Complete'}
+                    </Button>
+                  )}
 
-            {(booking.status === 'pending' || booking.status === 'confirmed') && isUpcoming && (
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => {
-                  setSelectedBooking(booking);
-                  setCancelReason('');
-                }}
-                disabled={actionLoading === booking.id}
-              >
-                Cancel
-              </Button>
-            )}
+                  {showCancel && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedBooking(booking);
+                        setCancelReason('');
+                      }}
+                      disabled={actionLoading === booking.id}
+                    >
+                      Cancel
+                    </Button>
+                  )}
+                </>
+              );
+            })()}
           </div>
         </CardContent>
       </Card>

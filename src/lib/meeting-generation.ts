@@ -118,7 +118,13 @@ export async function generateMeetingLinkForBooking(bookingId: string): Promise<
         try {
           // Refresh the access token
           const refreshResult = await GoogleAuth.refreshToken(integration.refresh_token);
+          console.log('Token refresh result:', refreshResult);
           console.log('Token refresh successful:', { hasNewToken: !!refreshResult.access_token });
+          
+          if (!refreshResult.access_token) {
+            console.error('Refresh token response missing access_token:', refreshResult);
+            return null;
+          }
           
           // Update the integration with new token
           const { error: updateError } = await supabaseAdmin
@@ -139,10 +145,11 @@ export async function generateMeetingLinkForBooking(bookingId: string): Promise<
           
           // Use the new access token
           accessToken = refreshResult.access_token;
-          console.log('Successfully refreshed and updated access token');
+          console.log('Successfully refreshed and updated access token. New token length:', accessToken.length);
           
         } catch (refreshError) {
           console.error('Failed to refresh access token:', refreshError);
+          console.error('Refresh error details:', refreshError);
           return null;
         }
       } else {
@@ -150,6 +157,8 @@ export async function generateMeetingLinkForBooking(bookingId: string): Promise<
       }
 
       // Create Google Calendar event with Meet
+      console.log('About to create GoogleCalendar instance with token. Token length:', accessToken?.length || 'undefined');
+      console.log('Token preview (first 50 chars):', accessToken?.substring(0, 50) || 'undefined');
       const calendar = new GoogleCalendar(accessToken);
       
       const startTime = new Date(booking.scheduled_at);
@@ -158,17 +167,82 @@ export async function generateMeetingLinkForBooking(bookingId: string): Promise<
       // Get provider's timezone
       const providerTimezone = booking.providers?.timezone || 'UTC';
       
-      const result = await calendar.createMeetingEvent({
-        summary: `${booking.services.title} - Meeting`,
-        description: `Meeting for ${booking.services.title}\nCustomer: ${booking.customers?.display_name || 'Customer'}`,
-        startTime,
-        endTime,
-        attendees: booking.customers?.email ? [booking.customers.email] : [],
-        timeZone: providerTimezone
-      });
+      try {
+        const result = await calendar.createMeetingEvent({
+          summary: `${booking.services.title} - Meeting`,
+          description: `Meeting for ${booking.services.title}\nCustomer: ${booking.customers?.display_name || 'Customer'}`,
+          startTime,
+          endTime,
+          attendees: booking.customers?.email ? [booking.customers.email] : [],
+          timeZone: providerTimezone
+        });
 
-      meetingLink = result.meetLink;
-      meetingId = result.eventId;
+        meetingLink = result.meetLink;
+        meetingId = result.eventId;
+      } catch (createError) {
+        console.log('Calendar event creation failed:', createError);
+        
+        // If we get a 401 error, the token is invalid - try refreshing it
+        if (createError.message && createError.message.includes('401')) {
+          console.log('Got 401 error - token is invalid, attempting refresh...');
+          
+          if (!integration.refresh_token) {
+            console.error('No refresh token available for retry - cannot refresh access token');
+            throw createError;
+          }
+          
+          try {
+            // Refresh the access token
+            const refreshResult = await GoogleAuth.refreshToken(integration.refresh_token);
+            console.log('Token refresh for retry result:', refreshResult);
+            
+            if (!refreshResult.access_token) {
+              console.error('Refresh token response missing access_token on retry:', refreshResult);
+              throw createError;
+            }
+            
+            // Update the integration with new token
+            const { error: updateError } = await supabaseAdmin
+              .from('user_meeting_integrations')
+              .update({
+                access_token: refreshResult.access_token,
+                expires_at: refreshResult.expires_in ? 
+                  new Date(Date.now() + refreshResult.expires_in * 1000).toISOString() :
+                  new Date(Date.now() + 3600 * 1000).toISOString(), // Default 1 hour if not provided
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', integration.id);
+              
+            if (updateError) {
+              console.error('Failed to update integration with refreshed token on retry:', updateError);
+              throw createError;
+            }
+            
+            // Retry with refreshed token
+            console.log('Retrying calendar event creation with refreshed token...');
+            const newCalendar = new GoogleCalendar(refreshResult.access_token);
+            
+            const retryResult = await newCalendar.createMeetingEvent({
+              summary: `${booking.services.title} - Meeting`,
+              description: `Meeting for ${booking.services.title}\nCustomer: ${booking.customers?.display_name || 'Customer'}`,
+              startTime,
+              endTime,
+              attendees: booking.customers?.email ? [booking.customers.email] : [],
+              timeZone: providerTimezone
+            });
+
+            meetingLink = retryResult.meetLink;
+            meetingId = retryResult.eventId;
+            console.log('Successfully created meeting after token refresh!');
+          } catch (refreshError) {
+            console.error('Failed to refresh token and retry meeting creation:', refreshError);
+            throw createError;
+          }
+        } else {
+          // Some other error - re-throw it
+          throw createError;
+        }
+      }
     }
 
     // 5. Update booking with meeting information

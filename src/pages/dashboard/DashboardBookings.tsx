@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { format } from 'date-fns';
+import { format, isPast, isFuture } from 'date-fns';
 import { Calendar, Clock, MapPin, User, DollarSign, CheckCircle, XCircle, AlertCircle, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -97,6 +97,22 @@ export default function DashboardBookings() {
     } catch (error) {
       console.error('Failed to cancel booking:', error);
       toast.error('Failed to cancel booking');
+    }
+  };
+
+  const handleCompleteBooking = async (bookingId: string) => {
+    try {
+      await ApiClient.updateBookingStatus(
+        bookingId, 
+        'completed',
+        undefined, // no notes
+        userId // pass userId for Privy users
+      );
+      toast.success('Booking marked as completed');
+      loadBookings();
+    } catch (error) {
+      console.error('Failed to complete booking:', error);
+      toast.error('Failed to complete booking');
     }
   };
 
@@ -317,15 +333,28 @@ export default function DashboardBookings() {
                           </>
                         )}
                         
-                        {booking.status === 'confirmed' && (
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleCancelBooking(booking.id)}
-                          >
-                            Cancel
-                          </Button>
-                        )}
+                        {booking.status === 'confirmed' && (() => {
+                          // Check if booking start time has arrived
+                          const bookingStartTime = new Date(booking.scheduled_at);
+                          const hasStarted = isPast(bookingStartTime);
+                          
+                          return hasStarted ? (
+                            <Button
+                              size="sm"
+                              onClick={() => handleCompleteBooking(booking.id)}
+                            >
+                              Mark Complete
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleCancelBooking(booking.id)}
+                            >
+                              Cancel
+                            </Button>
+                          );
+                        })()}
                         
                         {booking.status === 'completed' && (
                           <>

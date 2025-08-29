@@ -317,14 +317,6 @@ export default function DashboardOrders() {
                           </div>
                         )}
 
-                        {booking.status === 'confirmed' && hasBookingTimeStarted(booking) && (
-                          <Button
-                            size="sm"
-                            onClick={() => handleUpdateStatus(booking.id, 'completed')}
-                          >
-                            Mark Complete
-                          </Button>
-                        )}
 
                         {booking.status === 'completed' && (
                           <Button 
