@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Loader2, Camera, Globe, Mail, Phone, MapPin, Calendar, Star, Video, Users, Copy, Check, ExternalLink, Clock } from 'lucide-react';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient } from '@/lib/api';
-import { getBrowserTimezone } from '@/lib/timezone';
+import { getBrowserTimezone, getTimezoneOffset } from '@/lib/timezone';
 
 const profileSchema = z.object({
   display_name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -27,34 +27,46 @@ const profileSchema = z.object({
 
 type ProfileFormData = z.infer<typeof profileSchema>;
 
-const COMMON_TIMEZONES = [
-  { value: 'UTC', label: 'UTC (Coordinated Universal Time)' },
-  { value: 'America/New_York', label: 'Eastern Time (New York)' },
-  { value: 'America/Chicago', label: 'Central Time (Chicago)' },
-  { value: 'America/Denver', label: 'Mountain Time (Denver)' },
-  { value: 'America/Los_Angeles', label: 'Pacific Time (Los Angeles)' },
-  { value: 'America/Phoenix', label: 'Arizona Time (Phoenix)' },
-  { value: 'America/Anchorage', label: 'Alaska Time (Anchorage)' },
-  { value: 'Pacific/Honolulu', label: 'Hawaii Time (Honolulu)' },
-  { value: 'America/Toronto', label: 'Eastern Time (Toronto)' },
-  { value: 'America/Vancouver', label: 'Pacific Time (Vancouver)' },
-  { value: 'Europe/London', label: 'GMT (London)' },
-  { value: 'Europe/Paris', label: 'CET (Paris)' },
-  { value: 'Europe/Berlin', label: 'CET (Berlin)' },
-  { value: 'Europe/Rome', label: 'CET (Rome)' },
-  { value: 'Europe/Madrid', label: 'CET (Madrid)' },
-  { value: 'Europe/Moscow', label: 'MSK (Moscow)' },
-  { value: 'Asia/Tokyo', label: 'JST (Tokyo)' },
-  { value: 'Asia/Shanghai', label: 'CST (Shanghai)' },
-  { value: 'Asia/Hong_Kong', label: 'HKT (Hong Kong)' },
-  { value: 'Asia/Singapore', label: 'SGT (Singapore)' },
-  { value: 'Asia/Dubai', label: 'GST (Dubai)' },
-  { value: 'Asia/Kolkata', label: 'IST (Mumbai)' },
-  { value: 'Australia/Sydney', label: 'AEDT (Sydney)' },
-  { value: 'Australia/Melbourne', label: 'AEDT (Melbourne)' },
-  { value: 'Australia/Perth', label: 'AWST (Perth)' },
-  { value: 'Pacific/Auckland', label: 'NZDT (Auckland)' },
+// Base timezone data with city names
+const TIMEZONE_BASE_DATA = [
+  { value: 'UTC', city: 'UTC (Coordinated Universal Time)' },
+  { value: 'America/New_York', city: 'New York' },
+  { value: 'America/Chicago', city: 'Chicago' },
+  { value: 'America/Denver', city: 'Denver' },
+  { value: 'America/Los_Angeles', city: 'Los Angeles' },
+  { value: 'America/Phoenix', city: 'Phoenix' },
+  { value: 'America/Anchorage', city: 'Anchorage' },
+  { value: 'Pacific/Honolulu', city: 'Honolulu' },
+  { value: 'America/Toronto', city: 'Toronto' },
+  { value: 'America/Vancouver', city: 'Vancouver' },
+  { value: 'Europe/London', city: 'London' },
+  { value: 'Europe/Paris', city: 'Paris' },
+  { value: 'Europe/Berlin', city: 'Berlin' },
+  { value: 'Europe/Rome', city: 'Rome' },
+  { value: 'Europe/Madrid', city: 'Madrid' },
+  { value: 'Europe/Moscow', city: 'Moscow' },
+  { value: 'Asia/Tokyo', city: 'Tokyo' },
+  { value: 'Asia/Shanghai', city: 'Shanghai' },
+  { value: 'Asia/Hong_Kong', city: 'Hong Kong' },
+  { value: 'Asia/Singapore', city: 'Singapore' },
+  { value: 'Asia/Dubai', city: 'Dubai' },
+  { value: 'Asia/Kolkata', city: 'Mumbai' },
+  { value: 'Australia/Sydney', city: 'Sydney' },
+  { value: 'Australia/Melbourne', city: 'Melbourne' },
+  { value: 'Australia/Perth', city: 'Perth' },
+  { value: 'Pacific/Auckland', city: 'Auckland' },
 ];
+
+// Generate timezone list with dynamic GMT offsets
+const generateTimezoneList = () => {
+  return TIMEZONE_BASE_DATA.map(tz => {
+    const offset = getTimezoneOffset(tz.value);
+    return {
+      value: tz.value,
+      label: `${offset} - ${tz.city}`
+    };
+  });
+};
 
 export default function DashboardProfile() {
   const { user, profile, refreshProfile, getUserDisplayName, getUserEmail, userId } = useAuth();
@@ -63,6 +75,7 @@ export default function DashboardProfile() {
   const [avatarUrl, setAvatarUrl] = useState<string>('');
   const [services, setServices] = useState<any[]>([]);
   const [profileLinkCopied, setProfileLinkCopied] = useState(false);
+  const [timezoneList, setTimezoneList] = useState(generateTimezoneList());
   
   const profileUrl = `${window.location.origin}/profile/${userId}`;
 
@@ -357,7 +370,7 @@ export default function DashboardProfile() {
                     <SelectValue placeholder="Select your timezone" />
                   </SelectTrigger>
                   <SelectContent>
-                    {COMMON_TIMEZONES.map((tz) => (
+                    {timezoneList.map((tz) => (
                       <SelectItem key={tz.value} value={tz.value}>
                         {tz.label}
                       </SelectItem>

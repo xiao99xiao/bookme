@@ -140,22 +140,44 @@ export function formatDateInTimezone(
 
 /**
  * Get timezone offset in hours for display purposes
- * @param timezone Timezone identifier
- * @returns Offset string like "GMT+5" or "GMT-3"
+ * @param timezone Timezone identifier  
+ * @returns Offset string like "GMT+8" or "GMT-5"
  */
 export function getTimezoneOffset(timezone: string): string {
   try {
     const now = new Date();
-    const utc = new Date(now.toLocaleString('en-US', { timeZone: 'UTC' }));
-    const local = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
     
-    const offsetMs = local.getTime() - utc.getTime();
-    const offsetHours = offsetMs / (1000 * 60 * 60);
+    // Use Intl.DateTimeFormat to get the offset
+    const formatter = new Intl.DateTimeFormat('en', {
+      timeZone: timezone,
+      timeZoneName: 'longOffset'
+    });
     
-    if (offsetHours === 0) return 'GMT';
-    if (offsetHours > 0) return `GMT+${offsetHours}`;
-    return `GMT${offsetHours}`;
+    const parts = formatter.formatToParts(now);
+    const offsetPart = parts.find(part => part.type === 'timeZoneName');
+    
+    if (offsetPart && offsetPart.value) {
+      // The value will be like "GMT+08:00" or "GMT-05:00"
+      let offset = offsetPart.value;
+      
+      // Simplify the format to "GMT+8" instead of "GMT+08:00"
+      if (offset.includes(':00')) {
+        offset = offset.replace(':00', '');
+      }
+      if (offset.includes('+0')) {
+        offset = offset.replace('+0', '+');
+      }
+      if (offset.includes('-0')) {
+        offset = offset.replace('-0', '-');
+      }
+      
+      return offset;
+    }
+    
+    // Fallback for older browsers or unsupported timezones
+    return 'GMT+0';
   } catch (error) {
-    return 'GMT';
+    console.warn('Could not get timezone offset for:', timezone, error);
+    return 'GMT+0';
   }
 }
