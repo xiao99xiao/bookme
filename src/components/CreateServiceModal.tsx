@@ -29,6 +29,17 @@ interface CreateServiceModalProps {
   onClose: () => void;
   onSubmit: (data: ServiceFormData & { timeSlots: { [key: string]: boolean } }) => Promise<void>;
   isLoading?: boolean;
+  editingService?: {
+    id: string;
+    title: string;
+    description: string;
+    price: number;
+    duration_minutes: number;
+    location?: string;
+    is_online: boolean;
+    meeting_platform?: string;
+    timeSlots?: { [key: string]: boolean };
+  } | null;
 }
 
 const locations = [
@@ -43,7 +54,7 @@ const meetingPlatforms = [
   { value: 'teams', label: 'Microsoft Teams', icon: TeamsIcon, disabled: true },
 ];
 
-export default function CreateServiceModal({ isOpen, onClose, onSubmit, isLoading = false }: CreateServiceModalProps) {
+export default function CreateServiceModal({ isOpen, onClose, onSubmit, isLoading = false, editingService }: CreateServiceModalProps) {
   const { userId } = useAuth();
   const [timeSlots, setTimeSlots] = useState<{ [key: string]: boolean }>({});
   const [userIntegrations, setUserIntegrations] = useState<any[]>([]);
@@ -69,6 +80,32 @@ export default function CreateServiceModal({ isOpen, onClose, onSubmit, isLoadin
       loadUserIntegrations();
     }
   }, [isOpen, userId]);
+
+  // Populate form when editing an existing service
+  useEffect(() => {
+    if (editingService && isOpen) {
+      form.reset({
+        title: editingService.title,
+        description: editingService.description,
+        duration: editingService.duration_minutes,
+        price: editingService.price,
+        location: editingService.is_online ? 'online' : (editingService.location as 'online' | 'phone' | 'in-person' || 'online'),
+        meeting_platform: editingService.meeting_platform as 'google_meet' | 'zoom' | 'teams' | undefined,
+      });
+      setTimeSlots(editingService.timeSlots || {});
+    } else if (!editingService && isOpen) {
+      // Reset form for new service
+      form.reset({
+        title: '',
+        description: '',
+        duration: 60,
+        price: 50,
+        location: 'online',
+        meeting_platform: 'google_meet',
+      });
+      setTimeSlots({});
+    }
+  }, [editingService, isOpen, form]);
 
   const loadUserIntegrations = async () => {
     try {
@@ -122,7 +159,7 @@ export default function CreateServiceModal({ isOpen, onClose, onSubmit, isLoadin
         {/* Header - Fixed */}
         <div className="flex-shrink-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-semibold text-gray-900">Create New Service</h2>
+            <h2 className="text-2xl font-semibold text-gray-900">{editingService ? 'Edit Service' : 'Create New Service'}</h2>
             <button
               onClick={onClose}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -340,7 +377,8 @@ export default function CreateServiceModal({ isOpen, onClose, onSubmit, isLoadin
               disabled={isLoading || !form.formState.isValid || getTotalSlots() === 0}
               className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-3 px-6 rounded-xl font-medium transition-colors"
             >
-              {isLoading ? 'Creating...' : `Create Service (${getTotalSlots()} slots)`}
+              {isLoading ? (editingService ? 'Updating...' : 'Creating...') : 
+               editingService ? `Update Service (${getTotalSlots()} slots)` : `Create Service (${getTotalSlots()} slots)`}
             </button>
           </div>
         </form>

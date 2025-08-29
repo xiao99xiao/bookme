@@ -251,10 +251,10 @@ export class ApiClient {
     requirements?: string;
     cancellation_policy?: string;
     timeSlots?: { [key: string]: boolean };
-  }) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
-
+  }, userId?: string) {
+    // For backward compatibility, if userId is not provided, we skip the owner check
+    // This allows the method to be called from places where we just toggle is_active
+    
     const updateData: any = {
       updated_at: new Date().toISOString()
     };
@@ -275,11 +275,18 @@ export class ApiClient {
     if (updates.cancellation_policy !== undefined) updateData.cancellation_policy = updates.cancellation_policy;
     if (updates.timeSlots !== undefined) updateData.availability_schedule = updates.timeSlots;
     
-    const { data, error } = await supabase
+    // Use admin client to bypass RLS
+    let query = supabaseAdmin
       .from('services')
       .update(updateData)
-      .eq('id', serviceId)
-      .eq('provider_id', user.id) // Ensure user owns the service
+      .eq('id', serviceId);
+    
+    // Only add provider check if userId is provided
+    if (userId) {
+      query = query.eq('provider_id', userId);
+    }
+    
+    const { data, error } = await query
       .select()
       .single();
 

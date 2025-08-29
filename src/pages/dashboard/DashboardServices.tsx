@@ -79,7 +79,7 @@ export default function DashboardServices() {
     try {
       const updatedService = await ApiClient.updateService(service.id, {
         is_active: !service.is_active,
-      });
+      }, userId!);
       setServices(prev => 
         prev.map(s => s.id === service.id ? updatedService : s)
       );
@@ -121,7 +121,7 @@ export default function DashboardServices() {
       };
 
       if (editingService) {
-        const updatedService = await ApiClient.updateService(editingService.id, serviceData);
+        const updatedService = await ApiClient.updateService(editingService.id, serviceData, userId!);
         setServices(prev => 
           prev.map(s => s.id === editingService.id ? updatedService : s)
         );
@@ -376,6 +376,7 @@ export default function DashboardServices() {
         }}
         onSubmit={handleSaveService}
         isLoading={isSavingService}
+        editingService={editingService}
       />
 
       {/* Delete Confirmation Dialog */}

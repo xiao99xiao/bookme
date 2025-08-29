@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { usePrivy, useWallets } from '@privy-io/react-auth';
+import { usePrivy, useWallets, useFundWallet } from '@privy-io/react-auth';
 import { useSmartWallets } from '@privy-io/react-auth/smart-wallets';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { Copy, Wallet, RefreshCw, ExternalLink } from 'lucide-react';
+import { Copy, Wallet, RefreshCw, ExternalLink, Plus, CreditCard } from 'lucide-react';
 import { createPublicClient, http, formatUnits, type Address } from 'viem';
 import { base, baseSepolia } from 'viem/chains';
 import { useAuth } from '@/contexts/PrivyAuthContext';
@@ -44,12 +44,21 @@ export default function DashboardBalance() {
   const { wallets, ready: walletsReady } = useWallets();
   const { client: smartWalletClient } = useSmartWallets();
   const { authenticated, loading: authLoading } = useAuth();
+  const { fundWallet } = useFundWallet({
+    onUserExited: ({ balance, address }) => {
+      // Refresh balances after funding flow exits
+      if (walletInfo?.address === address) {
+        fetchBalances();
+      }
+    }
+  });
   
   const [walletInfo, setWalletInfo] = useState<WalletInfo | null>(null);
   const [usdcBalance, setUsdcBalance] = useState<TokenBalance | null>(null);
   const [nativeBalance, setNativeBalance] = useState<string>('0');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [fundingInProgress, setFundingInProgress] = useState(false);
   
   const isProduction = import.meta.env.MODE === 'production';
   const chain = isProduction ? base : baseSepolia;
@@ -170,6 +179,35 @@ export default function DashboardBalance() {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
+  const handleFundUSDC = async () => {
+    if (!walletInfo?.address) {
+      toast.error('No wallet address found');
+      return;
+    }
+
+    try {
+      setFundingInProgress(true);
+      await fundWallet(walletInfo.address, {
+        chain,
+        asset: 'USDC',
+        amount: '10', // Default to $10 USDC
+        defaultFundingMethod: 'card',
+        card: {
+          preferredProvider: 'moonpay' // or 'coinbase'
+        },
+        uiConfig: {
+          receiveFundsTitle: 'Fund Your Wallet with USDC',
+          receiveFundsSubtitle: `Add USDC to your wallet on ${chain.name} to start using the platform.`
+        }
+      });
+    } catch (error) {
+      console.error('Funding error:', error);
+      toast.error('Failed to initiate funding');
+    } finally {
+      setFundingInProgress(false);
+    }
+  };
+
   const getWalletTypeBadge = (type: WalletInfo['type']) => {
     switch (type) {
       case 'smart_wallet':
@@ -288,39 +326,62 @@ export default function DashboardBalance() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">USDC Balance</CardTitle>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={fetchBalances}
-                disabled={refreshing}
-              >
-                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={fetchBalances}
+                  disabled={refreshing}
+                >
+                  <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              <div className="text-3xl font-bold">
-                {usdcBalance ? (
-                  <>
-                    {parseFloat(usdcBalance.formatted).toLocaleString('en-US', {
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <div className="text-3xl font-bold">
+                  {usdcBalance ? (
+                    <>
+                      {parseFloat(usdcBalance.formatted).toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 6
+                      })}
+                      <span className="text-lg text-gray-500 ml-2">USDC</span>
+                    </>
+                  ) : (
+                    <span className="text-gray-400">0.00 USDC</span>
+                  )}
+                </div>
+                {usdcBalance && parseFloat(usdcBalance.formatted) > 0 && (
+                  <p className="text-sm text-gray-500">
+                    ≈ ${parseFloat(usdcBalance.formatted).toLocaleString('en-US', {
                       minimumFractionDigits: 2,
-                      maximumFractionDigits: 6
-                    })}
-                    <span className="text-lg text-gray-500 ml-2">USDC</span>
-                  </>
-                ) : (
-                  <span className="text-gray-400">0.00 USDC</span>
+                      maximumFractionDigits: 2
+                    })} USD
+                  </p>
                 )}
               </div>
-              {usdcBalance && parseFloat(usdcBalance.formatted) > 0 && (
-                <p className="text-sm text-gray-500">
-                  ≈ ${parseFloat(usdcBalance.formatted).toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                  })} USD
-                </p>
-              )}
+              
+              <Button
+                onClick={handleFundUSDC}
+                disabled={fundingInProgress || !walletInfo}
+                className="w-full"
+                variant={parseFloat(usdcBalance?.formatted || '0') === 0 ? 'default' : 'outline'}
+              >
+                {fundingInProgress ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Fund USDC
+                  </>
+                )}
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -349,6 +410,47 @@ export default function DashboardBalance() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Quick Actions for empty balance */}
+      {parseFloat(usdcBalance?.formatted || '0') === 0 && (
+        <Card className="mt-6 border-blue-200 bg-blue-50/50">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center">
+              <CreditCard className="w-5 h-5 mr-2 text-blue-600" />
+              Get Started with USDC
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-600 mb-4">
+              You'll need USDC to book services on the platform. Fund your wallet to get started!
+            </p>
+            <div className="grid gap-3 md:grid-cols-2">
+              <Button 
+                onClick={handleFundUSDC}
+                disabled={fundingInProgress}
+                className="w-full"
+                size="lg"
+              >
+                <CreditCard className="w-4 h-4 mr-2" />
+                Buy USDC with Card
+              </Button>
+              <Button 
+                variant="outline" 
+                size="lg"
+                onClick={() => {
+                  if (walletInfo?.address) {
+                    navigator.clipboard.writeText(walletInfo.address);
+                    toast.success('Address copied! Send USDC from another wallet.');
+                  }
+                }}
+              >
+                <Copy className="w-4 h-4 mr-2" />
+                Copy Address to Receive
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Info Section */}
       <Card className="mt-6">
