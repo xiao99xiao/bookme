@@ -900,4 +900,54 @@ export class ApiClient {
     if (error) throw error;
     return data?.length || 0;
   }
+
+  // Meeting Integration APIs
+  static async getMeetingIntegrations(userId?: string) {
+    // For Privy users, we need userId passed in
+    if (!userId) {
+      // Try to get from Supabase auth if not provided (fallback for non-Privy users)
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User ID required');
+      userId = user.id;
+    }
+
+    // Always use admin client for meeting integrations to bypass RLS
+    const { data, error } = await supabaseAdmin
+      .from('user_meeting_integrations')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  }
+
+  static async getMeetingOAuthUrl(platform: string) {
+    // This will be implemented when we add the backend OAuth endpoints
+    // For now, return a placeholder
+    return {
+      authUrl: `${window.location.origin}/api/auth/${platform}/connect`
+    };
+  }
+
+  static async deleteMeetingIntegration(integrationId: string) {
+    // Use admin client for Privy users
+    let useAdminClient = false;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      useAdminClient = !user;
+    } catch {
+      useAdminClient = true;
+    }
+
+    const dbClient = useAdminClient ? supabaseAdmin : supabase;
+
+    const { error } = await dbClient
+      .from('user_meeting_integrations')
+      .update({ is_active: false })
+      .eq('id', integrationId);
+
+    if (error) throw error;
+  }
 }

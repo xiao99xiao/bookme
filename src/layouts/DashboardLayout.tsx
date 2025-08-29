@@ -4,7 +4,8 @@ import {
   User, 
   Briefcase, 
   ShoppingBag, 
-  Calendar, 
+  Calendar,
+  Settings, 
   LogOut,
   Menu,
   X,
@@ -42,6 +43,12 @@ const sidebarItems = [
     icon: Calendar,
     path: '/dashboard/bookings',
     description: 'Services you have booked'
+  },
+  {
+    label: 'Integrations',
+    icon: Settings,
+    path: '/dashboard/integrations',
+    description: 'Connect meeting platforms'
   }
 ];
 
