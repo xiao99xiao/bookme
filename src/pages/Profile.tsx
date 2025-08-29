@@ -5,14 +5,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { MapPin, Clock, DollarSign, Calendar, Phone, Video, Users, X, Star, ArrowLeft, Loader2 } from "lucide-react";
+import { MapPin, Clock, DollarSign, Calendar, Phone, Video, Users, X, Star, ArrowLeft, Loader2, MessageSquare } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/PrivyAuthContext";
 import { ApiClient } from "@/lib/api";
 import BookingTimeSlots from "@/components/BookingTimeSlots";
+import StarRating from "@/components/StarRating";
 import { toast } from "sonner";
 import { getBrowserTimezone } from "@/lib/timezone";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 interface Service {
   id: string;
@@ -57,6 +59,25 @@ interface UserProfile {
   updated_at: string;
 }
 
+interface Review {
+  id: string;
+  booking_id: string;
+  reviewer_id: string;
+  reviewee_id: string;
+  service_id: string;
+  rating: number;
+  comment: string;
+  is_public: boolean;
+  created_at: string;
+  services?: {
+    title: string;
+  };
+  reviewer?: {
+    display_name: string;
+    avatar: string;
+  };
+}
+
 const Profile = () => {
   const { userId } = useParams<{ userId: string }>();
   const [searchParams] = useSearchParams();
@@ -66,6 +87,7 @@ const Profile = () => {
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<Date | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [services, setServices] = useState<Service[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [customerNotes, setCustomerNotes] = useState('');
@@ -118,6 +140,14 @@ const Profile = () => {
           const servicesData = await ApiClient.getUserServicesById(targetUserId, viewerTimezone);
           console.log('Services fetched:', servicesData?.length || 0, 'services');
           setServices(servicesData);
+          
+          // Fetch reviews for the provider
+          if (profileData.is_provider) {
+            console.log('Fetching reviews for provider:', targetUserId);
+            const reviewsData = await ApiClient.getProviderReviews(targetUserId);
+            console.log('Reviews fetched:', reviewsData?.length || 0, 'reviews');
+            setReviews(reviewsData);
+          }
           
           clearTimeout(loadTimeout);
         } catch (apiError) {
@@ -274,10 +304,10 @@ const Profile = () => {
                     <span>{profile.location}</span>
                   </div>
                 )}
-                <div className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground">
-                  <Star className="h-3.5 w-3.5 fill-current" />
+                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                  <StarRating value={profile.rating} readonly size="sm" />
                   <span className="font-medium">{profile.rating.toFixed(1)}</span>
-                  <span>({profile.review_count} reviews)</span>
+                  <span>({profile.review_count} {profile.review_count === 1 ? 'review' : 'reviews'})</span>
                 </div>
               </div>
               
@@ -347,6 +377,58 @@ const Profile = () => {
                     <p>{isOwnProfile ? "You haven't created any services yet." : "No services available."}</p>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Reviews Section */}
+            {profile?.is_provider && reviews.length > 0 && (
+              <div className="mt-12">
+                <div className="mb-6">
+                  <h2 className="text-lg font-medium text-foreground mb-1">Reviews</h2>
+                  <p className="text-sm text-muted-foreground">
+                    What customers are saying
+                  </p>
+                </div>
+                
+                <div className="space-y-4">
+                  {reviews.map((review) => (
+                    <Card key={review.id} className="hover:bg-muted/50 transition-colors">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-10 w-10">
+                              <AvatarImage src={review.reviewer?.avatar} />
+                              <AvatarFallback>
+                                {review.reviewer?.display_name?.charAt(0) || 'U'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium text-sm">
+                                {review.reviewer?.display_name || 'Anonymous'}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {review.services?.title}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end">
+                            <StarRating value={review.rating} readonly size="sm" />
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {new Date(review.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      {review.comment && (
+                        <CardContent className="pt-0">
+                          <p className="text-sm text-muted-foreground leading-relaxed">
+                            {review.comment}
+                          </p>
+                        </CardContent>
+                      )}
+                    </Card>
+                  ))}
+                </div>
               </div>
             )}
           </div>

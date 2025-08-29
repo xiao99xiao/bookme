@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, isPast, isFuture } from 'date-fns';
-import { Calendar, Clock, MapPin, User, DollarSign, CheckCircle, XCircle, AlertCircle, MessageSquare } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, DollarSign, CheckCircle, XCircle, AlertCircle, MessageSquare, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +12,7 @@ import { ApiClient } from '@/lib/api';
 import ChatModal from '@/components/ChatModal';
 import AddToCalendar from '@/components/AddToCalendar';
 import MeetingLinkDisplay from '@/components/MeetingLinkDisplay';
+import ReviewDialog from '@/components/ReviewDialog';
 
 interface Booking {
   id: string;
@@ -64,6 +65,13 @@ export default function DashboardBookings() {
     otherUserAvatar: undefined,
     isReadOnly: false
   });
+  const [reviewDialog, setReviewDialog] = useState<{
+    isOpen: boolean;
+    booking: Booking | null;
+  }>({
+    isOpen: false,
+    booking: null
+  });
 
   useEffect(() => {
     if (userId) {
@@ -102,6 +110,7 @@ export default function DashboardBookings() {
 
   const handleCompleteBooking = async (bookingId: string) => {
     try {
+      // First mark the booking as completed
       await ApiClient.updateBookingStatus(
         bookingId, 
         'completed',
@@ -109,10 +118,43 @@ export default function DashboardBookings() {
         userId // pass userId for Privy users
       );
       toast.success('Booking marked as completed');
+      
+      // Find the booking to show in review dialog
+      const booking = bookings.find(b => b.id === bookingId);
+      if (booking) {
+        // Open the review dialog
+        setReviewDialog({
+          isOpen: true,
+          booking
+        });
+      }
+      
       loadBookings();
     } catch (error) {
       console.error('Failed to complete booking:', error);
       toast.error('Failed to complete booking');
+    }
+  };
+
+  const handleSubmitReview = async (rating: number, comment: string) => {
+    if (!reviewDialog.booking || !userId) return;
+    
+    try {
+      await ApiClient.submitReview(
+        reviewDialog.booking.id,
+        rating,
+        comment,
+        userId
+      );
+      
+      // Close the review dialog
+      setReviewDialog({
+        isOpen: false,
+        booking: null
+      });
+    } catch (error) {
+      console.error('Failed to submit review:', error);
+      throw error; // Let the ReviewDialog handle the error display
     }
   };
 
@@ -366,7 +408,12 @@ export default function DashboardBookings() {
                               <MessageSquare className="w-4 h-4 mr-1" />
                               Message
                             </Button>
-                            <Button size="sm" variant="outline">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => setReviewDialog({ isOpen: true, booking })}
+                            >
+                              <Star className="w-4 h-4 mr-1" />
                               Leave Review
                             </Button>
                           </>
@@ -411,6 +458,16 @@ export default function DashboardBookings() {
         otherUserAvatar={chatModal.otherUserAvatar}
         isReadOnly={chatModal.isReadOnly}
       />
+      
+      {/* Review Dialog */}
+      {reviewDialog.booking && (
+        <ReviewDialog
+          isOpen={reviewDialog.isOpen}
+          onClose={() => setReviewDialog({ isOpen: false, booking: null })}
+          booking={reviewDialog.booking}
+          onSubmit={handleSubmitReview}
+        />
+      )}
     </div>
   );
 }

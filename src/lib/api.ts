@@ -1054,4 +1054,131 @@ export class ApiClient {
 
     if (error) throw error;
   }
+
+  // Review Methods
+  static async submitReview(bookingId: string, rating: number, comment: string, userId: string) {
+    // Get booking details first
+    const { data: booking, error: bookingError } = await supabaseAdmin
+      .from('bookings')
+      .select('*, services(*)')
+      .eq('id', bookingId)
+      .single();
+
+    if (bookingError || !booking) {
+      throw new Error('Booking not found');
+    }
+
+    // Check if review already exists
+    const { data: existingReview } = await supabaseAdmin
+      .from('reviews')
+      .select('id')
+      .eq('booking_id', bookingId)
+      .single();
+
+    if (existingReview) {
+      throw new Error('Review already exists for this booking');
+    }
+
+    // Create the review
+    const { data: review, error: reviewError } = await supabaseAdmin
+      .from('reviews')
+      .insert({
+        booking_id: bookingId,
+        reviewer_id: userId,
+        reviewee_id: booking.provider_id,
+        service_id: booking.service_id,
+        rating,
+        comment: comment || null,
+        is_public: true
+      })
+      .select()
+      .single();
+
+    if (reviewError) {
+      console.error('Failed to create review:', reviewError);
+      throw reviewError;
+    }
+
+    // Update provider's average rating and review count
+    const { data: providerReviews, error: providerReviewsError } = await supabaseAdmin
+      .from('reviews')
+      .select('rating')
+      .eq('reviewee_id', booking.provider_id);
+
+    if (!providerReviewsError && providerReviews) {
+      const avgRating = providerReviews.reduce((sum, r) => sum + r.rating, 0) / providerReviews.length;
+      
+      await supabaseAdmin
+        .from('users')
+        .update({
+          rating: avgRating,
+          review_count: providerReviews.length
+        })
+        .eq('id', booking.provider_id);
+    }
+
+    // Update service's average rating and review count
+    const { data: serviceReviews, error: serviceReviewsError } = await supabaseAdmin
+      .from('reviews')
+      .select('rating')
+      .eq('service_id', booking.service_id);
+
+    if (!serviceReviewsError && serviceReviews) {
+      const avgRating = serviceReviews.reduce((sum, r) => sum + r.rating, 0) / serviceReviews.length;
+      
+      await supabaseAdmin
+        .from('services')
+        .update({
+          rating: avgRating,
+          review_count: serviceReviews.length
+        })
+        .eq('id', booking.service_id);
+    }
+
+    return review;
+  }
+
+  static async getReviewByBooking(bookingId: string) {
+    const { data, error } = await supabaseAdmin
+      .from('reviews')
+      .select('*')
+      .eq('booking_id', bookingId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+      throw error;
+    }
+
+    return data;
+  }
+
+  static async getProviderReviews(providerId: string) {
+    const { data, error } = await supabaseAdmin
+      .from('reviews')
+      .select(`
+        *,
+        services:service_id(title),
+        reviewer:reviewer_id(display_name, avatar)
+      `)
+      .eq('reviewee_id', providerId)
+      .eq('is_public', true)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  }
+
+  static async getProviderStats(providerId: string) {
+    const { data: user, error } = await supabaseAdmin
+      .from('users')
+      .select('rating, review_count')
+      .eq('id', providerId)
+      .single();
+
+    if (error) throw error;
+    return {
+      rating: user?.rating || 0,
+      reviewCount: user?.review_count || 0
+    };
+  }
 }
