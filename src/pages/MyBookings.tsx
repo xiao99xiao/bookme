@@ -72,7 +72,7 @@ const MyBookings = () => {
   useEffect(() => {
     if (profile && !profile.timezone && userId) {
       const browserTimezone = getBrowserTimezone();
-      ApiClient.updateProfile({ timezone: browserTimezone })
+      ApiClient.updateProfile({ timezone: browserTimezone }, userId)
         .then(() => {
           console.log('Auto-set user timezone to:', browserTimezone);
         })

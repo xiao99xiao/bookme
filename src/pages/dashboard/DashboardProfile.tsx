@@ -107,7 +107,7 @@ export default function DashboardProfile() {
       if (!profile.timezone && userId) {
         const browserTimezone = getBrowserTimezone();
         // Silently update the user's timezone in the background
-        ApiClient.updateProfile({ timezone: browserTimezone })
+        ApiClient.updateProfile({ timezone: browserTimezone }, userId)
           .then(() => {
             console.log('Auto-set user timezone to:', browserTimezone);
             refreshProfile(); // Refresh to get updated profile
@@ -146,7 +146,7 @@ export default function DashboardProfile() {
       // Update profile with new avatar
       await ApiClient.updateProfile({
         avatar: uploadedFile.url,
-      });
+      }, userId);
       
       await refreshProfile();
       toast.success('Avatar updated successfully');
@@ -177,7 +177,7 @@ export default function DashboardProfile() {
       await ApiClient.updateProfile({
         ...data,
         website: data.website || undefined,
-      });
+      }, userId);
       await refreshProfile();
       toast.success('Profile updated successfully');
     } catch (error) {
