@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ChevronDown, User, Calendar, LogOut } from "lucide-react";
+import { ChevronDown, LayoutDashboard, LogOut } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/PrivyAuthContext";
 import timeeLogo from "@/assets/timee-logo.jpg";
@@ -68,20 +68,8 @@ const Navigation = () => {
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem asChild>
               <Link to="/dashboard" className="flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
+                <LayoutDashboard className="w-4 h-4" />
                 Dashboard
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/dashboard/bookings" className="flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                My Bookings
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/dashboard/profile" className="flex items-center gap-2">
-                <User className="w-4 h-4" />
-                Edit Profile
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem 
