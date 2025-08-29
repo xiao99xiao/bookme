@@ -1075,28 +1075,47 @@ export class ApiClient {
       .eq('booking_id', bookingId)
       .single();
 
+    let review;
+    
     if (existingReview) {
-      throw new Error('Review already exists for this booking');
-    }
+      // Update existing review
+      const { data: updatedReview, error: updateError } = await supabaseAdmin
+        .from('reviews')
+        .update({
+          rating,
+          comment: comment || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existingReview.id)
+        .select()
+        .single();
 
-    // Create the review
-    const { data: review, error: reviewError } = await supabaseAdmin
-      .from('reviews')
-      .insert({
-        booking_id: bookingId,
-        reviewer_id: userId,
-        reviewee_id: booking.provider_id,
-        service_id: booking.service_id,
-        rating,
-        comment: comment || null,
-        is_public: true
-      })
-      .select()
-      .single();
+      if (updateError) {
+        console.error('Failed to update review:', updateError);
+        throw updateError;
+      }
+      review = updatedReview;
+    } else {
+      // Create new review
+      const { data: newReview, error: reviewError } = await supabaseAdmin
+        .from('reviews')
+        .insert({
+          booking_id: bookingId,
+          reviewer_id: userId,
+          reviewee_id: booking.provider_id,
+          service_id: booking.service_id,
+          rating,
+          comment: comment || null,
+          is_public: true
+        })
+        .select()
+        .single();
 
-    if (reviewError) {
-      console.error('Failed to create review:', reviewError);
-      throw reviewError;
+      if (reviewError) {
+        console.error('Failed to create review:', reviewError);
+        throw reviewError;
+      }
+      review = newReview;
     }
 
     // Update provider's average rating and review count

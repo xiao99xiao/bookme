@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -19,6 +19,10 @@ interface ReviewDialogProps {
       display_name: string;
     };
   };
+  existingReview?: {
+    rating: number;
+    comment: string;
+  } | null;
   onSubmit: (rating: number, comment: string) => Promise<void>;
 }
 
@@ -26,11 +30,24 @@ export default function ReviewDialog({
   isOpen, 
   onClose, 
   booking, 
+  existingReview,
   onSubmit 
 }: ReviewDialogProps) {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Load existing review data when dialog opens
+  useEffect(() => {
+    if (isOpen && existingReview) {
+      setRating(existingReview.rating);
+      setComment(existingReview.comment || '');
+    } else if (isOpen && !existingReview) {
+      // Reset to defaults for new review
+      setRating(5);
+      setComment('');
+    }
+  }, [isOpen, existingReview]);
   
   const maxCommentLength = 2000;
   const remainingChars = maxCommentLength - comment.length;
@@ -44,14 +61,14 @@ export default function ReviewDialog({
     setIsSubmitting(true);
     try {
       await onSubmit(rating, comment.trim());
-      toast.success('Thank you for your review!');
+      toast.success(existingReview ? 'Review updated successfully!' : 'Thank you for your review!');
       onClose();
       // Reset form
       setRating(5);
       setComment('');
     } catch (error) {
       console.error('Failed to submit review:', error);
-      toast.error('Failed to submit review. Please try again.');
+      toast.error(`Failed to ${existingReview ? 'update' : 'submit'} review. Please try again.`);
     } finally {
       setIsSubmitting(false);
     }
@@ -68,10 +85,14 @@ export default function ReviewDialog({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>How was your experience?</DialogTitle>
+          <DialogTitle>
+            {existingReview ? 'Update your review' : 'How was your experience?'}
+          </DialogTitle>
           <DialogDescription>
-            Rate your experience with {booking.provider?.display_name || 'the provider'} 
-            for {booking.services?.title || 'this service'}
+            {existingReview 
+              ? `Update your review for ${booking.provider?.display_name || 'the provider'} - ${booking.services?.title || 'this service'}`
+              : `Rate your experience with ${booking.provider?.display_name || 'the provider'} for ${booking.services?.title || 'this service'}`
+            }
           </DialogDescription>
         </DialogHeader>
         
@@ -126,7 +147,10 @@ export default function ReviewDialog({
             onClick={handleSubmit}
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Submitting...' : 'Submit Review'}
+            {isSubmitting 
+              ? (existingReview ? 'Updating...' : 'Submitting...') 
+              : (existingReview ? 'Update Review' : 'Submit Review')
+            }
           </Button>
         </div>
       </DialogContent>

@@ -68,10 +68,13 @@ export default function DashboardBookings() {
   const [reviewDialog, setReviewDialog] = useState<{
     isOpen: boolean;
     booking: Booking | null;
+    existingReview: { rating: number; comment: string } | null;
   }>({
     isOpen: false,
-    booking: null
+    booking: null,
+    existingReview: null
   });
+  const [bookingReviews, setBookingReviews] = useState<Record<string, { rating: number; comment: string }>>({});
 
   useEffect(() => {
     if (userId) {
@@ -84,6 +87,31 @@ export default function DashboardBookings() {
       setLoading(true);
       const bookingsData = await ApiClient.getMyBookings(userId!);
       setBookings(bookingsData);
+      
+      // Load existing reviews for completed bookings
+      const completedBookings = bookingsData.filter(b => b.status === 'completed');
+      const reviewPromises = completedBookings.map(async (booking) => {
+        try {
+          const review = await ApiClient.getReviewByBooking(booking.id);
+          return { bookingId: booking.id, review };
+        } catch (error) {
+          return { bookingId: booking.id, review: null };
+        }
+      });
+      
+      const reviewResults = await Promise.all(reviewPromises);
+      const reviewsMap: Record<string, { rating: number; comment: string }> = {};
+      
+      reviewResults.forEach(({ bookingId, review }) => {
+        if (review) {
+          reviewsMap[bookingId] = {
+            rating: review.rating,
+            comment: review.comment || ''
+          };
+        }
+      });
+      
+      setBookingReviews(reviewsMap);
     } catch (error) {
       console.error('Failed to load bookings:', error);
       toast.error('Failed to load bookings');
@@ -122,10 +150,11 @@ export default function DashboardBookings() {
       // Find the booking to show in review dialog
       const booking = bookings.find(b => b.id === bookingId);
       if (booking) {
-        // Open the review dialog
+        // Open the review dialog (for new review after completion)
         setReviewDialog({
           isOpen: true,
-          booking
+          booking,
+          existingReview: null
         });
       }
       
@@ -147,10 +176,17 @@ export default function DashboardBookings() {
         userId
       );
       
+      // Update the local reviews cache
+      setBookingReviews(prev => ({
+        ...prev,
+        [reviewDialog.booking!.id]: { rating, comment }
+      }));
+      
       // Close the review dialog
       setReviewDialog({
         isOpen: false,
-        booking: null
+        booking: null,
+        existingReview: null
       });
     } catch (error) {
       console.error('Failed to submit review:', error);
@@ -411,10 +447,17 @@ export default function DashboardBookings() {
                             <Button 
                               size="sm" 
                               variant="outline"
-                              onClick={() => setReviewDialog({ isOpen: true, booking })}
+                              onClick={() => {
+                                const existingReview = bookingReviews[booking.id] || null;
+                                setReviewDialog({ 
+                                  isOpen: true, 
+                                  booking,
+                                  existingReview
+                                });
+                              }}
                             >
                               <Star className="w-4 h-4 mr-1" />
-                              Leave Review
+                              {bookingReviews[booking.id] ? 'Edit Review' : 'Leave Review'}
                             </Button>
                           </>
                         )}
@@ -463,8 +506,9 @@ export default function DashboardBookings() {
       {reviewDialog.booking && (
         <ReviewDialog
           isOpen={reviewDialog.isOpen}
-          onClose={() => setReviewDialog({ isOpen: false, booking: null })}
+          onClose={() => setReviewDialog({ isOpen: false, booking: null, existingReview: null })}
           booking={reviewDialog.booking}
+          existingReview={reviewDialog.existingReview}
           onSubmit={handleSubmitReview}
         />
       )}
