@@ -124,7 +124,7 @@ const MyBookings = () => {
   const handleStatusUpdate = async (bookingId: string, status: 'confirmed' | 'cancelled' | 'completed', notes?: string) => {
     setActionLoading(bookingId);
     try {
-      await ApiClient.updateBookingStatus(bookingId, status, notes);
+      await ApiClient.updateBookingStatus(bookingId, status, notes, userId || undefined);
       
       // Reload bookings
       const [customerBookings, providerBookings] = await Promise.all([

@@ -708,10 +708,13 @@ export class ApiClient {
     // Handle meeting generation/deletion based on status
     if (status === 'confirmed') {
       // Generate meeting link for confirmed bookings
+      console.log('Booking confirmed, attempting to generate meeting link for:', bookingId);
       try {
-        await generateMeetingLinkForBooking(bookingId);
+        const meetingLink = await generateMeetingLinkForBooking(bookingId);
+        console.log('Meeting generation result:', meetingLink);
       } catch (meetingError) {
         console.error('Failed to generate meeting link:', meetingError);
+        console.error('Meeting error details:', meetingError);
         // Don't fail the booking confirmation if meeting generation fails
       }
     } else if (status === 'cancelled') {
