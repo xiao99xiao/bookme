@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { MapPin, Clock, DollarSign, Calendar, Phone, Video, Users, X, Star, ArrowLeft, Loader2, MessageSquare } from "lucide-react";
+import { MapPin, Clock, DollarSign, Calendar, Phone, Video, Users, X, Star, ArrowLeft, Loader2, MessageSquare, ChevronDown } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/PrivyAuthContext";
@@ -88,6 +88,7 @@ const Profile = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewsDisplayCount, setReviewsDisplayCount] = useState(5);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [customerNotes, setCustomerNotes] = useState('');
@@ -386,12 +387,12 @@ const Profile = () => {
                 <div className="mb-6">
                   <h2 className="text-lg font-medium text-foreground mb-1">Reviews</h2>
                   <p className="text-sm text-muted-foreground">
-                    What customers are saying
+                    What customers are saying ({reviews.length} {reviews.length === 1 ? 'review' : 'reviews'})
                   </p>
                 </div>
                 
                 <div className="space-y-4">
-                  {reviews.map((review) => (
+                  {reviews.slice(0, reviewsDisplayCount).map((review) => (
                     <Card key={review.id} className="hover:bg-muted/50 transition-colors">
                       <CardHeader className="pb-3">
                         <div className="flex items-start justify-between">
@@ -429,6 +430,21 @@ const Profile = () => {
                     </Card>
                   ))}
                 </div>
+                
+                {/* Load More Button */}
+                {reviews.length > reviewsDisplayCount && (
+                  <div className="mt-6 text-center">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setReviewsDisplayCount(prev => prev + 5)}
+                      className="gap-2"
+                    >
+                      <span>Load more reviews</span>
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </div>

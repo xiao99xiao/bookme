@@ -1170,6 +1170,11 @@ export class ApiClient {
 
     return data;
   }
+  
+  // Alias for consistency
+  static async getBookingReview(bookingId: string, userId?: string) {
+    return ApiClient.getReviewByBooking(bookingId);
+  }
 
   static async getProviderReviews(providerId: string) {
     const { data, error } = await supabaseAdmin

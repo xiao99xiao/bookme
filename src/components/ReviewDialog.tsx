@@ -20,12 +20,16 @@ interface ReviewDialogProps {
     provider?: {
       display_name: string;
     };
+    customer?: {
+      display_name: string;
+    };
   };
   existingReview?: {
     rating: number;
     comment: string;
   } | null;
   onSubmit: (rating: number, comment: string) => Promise<void>;
+  forceReadOnly?: boolean; // For providers viewing customer reviews
 }
 
 export default function ReviewDialog({ 
@@ -33,7 +37,8 @@ export default function ReviewDialog({
   onClose, 
   booking, 
   existingReview,
-  onSubmit 
+  onSubmit,
+  forceReadOnly = false
 }: ReviewDialogProps) {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
@@ -51,7 +56,7 @@ export default function ReviewDialog({
     return now <= sevenDaysAfterBooking;
   };
 
-  const isReadOnly = existingReview && !canEditReview();
+  const isReadOnly = forceReadOnly || (existingReview && !canEditReview());
 
   // Load existing review data when dialog opens
   useEffect(() => {
@@ -102,21 +107,27 @@ export default function ReviewDialog({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
-            {isReadOnly 
-              ? 'Your review' 
-              : (existingReview ? 'Update your review' : 'How was your experience?')
+            {forceReadOnly 
+              ? 'Customer Review' 
+              : (isReadOnly 
+                  ? 'Your review' 
+                  : (existingReview ? 'Update your review' : 'How was your experience?')
+                )
             }
           </DialogTitle>
           <DialogDescription>
-            {isReadOnly 
-              ? `Your review for ${booking.provider?.display_name || 'the provider'} - ${booking.services?.title || 'this service'}`
-              : (existingReview 
-                  ? `Update your review for ${booking.provider?.display_name || 'the provider'} - ${booking.services?.title || 'this service'}`
-                  : `Rate your experience with ${booking.provider?.display_name || 'the provider'} for ${booking.services?.title || 'this service'}`
+            {forceReadOnly
+              ? `Review from ${booking.customer?.display_name || 'customer'} for ${booking.services?.title || 'this service'}`
+              : (isReadOnly 
+                  ? `Your review for ${booking.provider?.display_name || 'the provider'} - ${booking.services?.title || 'this service'}`
+                  : (existingReview 
+                      ? `Update your review for ${booking.provider?.display_name || 'the provider'} - ${booking.services?.title || 'this service'}`
+                      : `Rate your experience with ${booking.provider?.display_name || 'the provider'} for ${booking.services?.title || 'this service'}`
+                    )
                 )
             }
           </DialogDescription>
-          {isReadOnly && (
+          {isReadOnly && !forceReadOnly && (
             <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-md">
               <p className="text-sm text-amber-800">
                 ⏰ Reviews can only be edited within 7 days of the service completion. You can view your review below.
@@ -129,7 +140,10 @@ export default function ReviewDialog({
           {/* Star Rating */}
           <div className="flex flex-col items-center space-y-2">
             <p className="text-sm text-muted-foreground">
-              {isReadOnly ? 'Your rating' : 'Rate your experience'}
+              {forceReadOnly 
+                ? 'Customer rating' 
+                : (isReadOnly ? 'Your rating' : 'Rate your experience')
+              }
             </p>
             <StarRating 
               value={rating} 
@@ -149,7 +163,10 @@ export default function ReviewDialog({
           {/* Comment */}
           <div className="space-y-2">
             <label htmlFor="comment" className="text-sm font-medium">
-              {isReadOnly ? 'Your comments' : 'Share your experience (optional)'}
+              {forceReadOnly 
+                ? 'Customer comments' 
+                : (isReadOnly ? 'Your comments' : 'Share your experience (optional)')
+              }
             </label>
             <Textarea
               id="comment"

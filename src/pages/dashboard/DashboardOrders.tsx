@@ -10,6 +10,8 @@ import { ApiClient } from '@/lib/api';
 import ChatModal from '@/components/ChatModal';
 import AddToCalendar from '@/components/AddToCalendar';
 import MeetingLinkDisplay from '@/components/MeetingLinkDisplay';
+import ReviewDialog from '@/components/ReviewDialog';
+import StarRating from '@/components/StarRating';
 
 interface Booking {
   id: string;
@@ -61,6 +63,16 @@ export default function DashboardOrders() {
     otherUserAvatar: undefined,
     isReadOnly: false
   });
+  const [bookingReviews, setBookingReviews] = useState<Record<string, any>>({});
+  const [reviewDialog, setReviewDialog] = useState<{
+    isOpen: boolean;
+    booking: Booking | null;
+    existingReview: any | null;
+  }>({
+    isOpen: false,
+    booking: null,
+    existingReview: null
+  });
 
   useEffect(() => {
     if (userId) {
@@ -73,6 +85,24 @@ export default function DashboardOrders() {
       setLoading(true);
       const bookingsData = await ApiClient.getProviderBookings(userId!);
       setBookings(bookingsData);
+      
+      // Load reviews for completed bookings
+      const completedBookings = bookingsData.filter(b => b.status === 'completed');
+      const reviewsMap: Record<string, any> = {};
+      
+      for (const booking of completedBookings) {
+        try {
+          const review = await ApiClient.getBookingReview(booking.id, userId!);
+          if (review) {
+            reviewsMap[booking.id] = review;
+          }
+        } catch (error) {
+          // No review exists for this booking, which is fine
+          console.log(`No review for booking ${booking.id}`);
+        }
+      }
+      
+      setBookingReviews(reviewsMap);
     } catch (error) {
       console.error('Failed to load bookings:', error);
       toast.error('Failed to load incoming orders');
@@ -273,6 +303,52 @@ export default function DashboardOrders() {
                             </p>
                           </div>
                         )}
+
+                        {/* Customer Review Section */}
+                        {booking.status === 'completed' && bookingReviews[booking.id] && (
+                          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div className="flex items-center justify-between mb-3">
+                              <h4 className="text-sm font-semibold text-blue-900">Customer Review</h4>
+                              <div className="flex items-center gap-2">
+                                <StarRating 
+                                  value={bookingReviews[booking.id].rating} 
+                                  readonly 
+                                  size="sm" 
+                                />
+                                <span className="text-sm font-medium text-blue-800">
+                                  {bookingReviews[booking.id].rating}/5
+                                </span>
+                              </div>
+                            </div>
+                            {bookingReviews[booking.id].comment && bookingReviews[booking.id].comment.trim() && (
+                              <div className="mt-2">
+                                <p className="text-sm text-blue-800 leading-relaxed">
+                                  "{bookingReviews[booking.id].comment.length > 150 
+                                    ? `${bookingReviews[booking.id].comment.substring(0, 150)}...` 
+                                    : bookingReviews[booking.id].comment}"
+                                </p>
+                                {bookingReviews[booking.id].comment.length > 150 && (
+                                  <button
+                                    onClick={() => {
+                                      const existingReview = bookingReviews[booking.id];
+                                      setReviewDialog({ 
+                                        isOpen: true, 
+                                        booking,
+                                        existingReview
+                                      });
+                                    }}
+                                    className="text-xs text-blue-600 hover:text-blue-800 mt-1"
+                                  >
+                                    Read full review
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                            {(!bookingReviews[booking.id].comment || !bookingReviews[booking.id].comment.trim()) && (
+                              <p className="text-sm text-blue-600 italic">No written comments provided</p>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex flex-col space-y-2 ml-4">
@@ -358,6 +434,21 @@ export default function DashboardOrders() {
         otherUserAvatar={chatModal.otherUserAvatar}
         isReadOnly={chatModal.isReadOnly}
       />
+      
+      {/* Review Dialog - Read Only for Providers */}
+      {reviewDialog.booking && (
+        <ReviewDialog
+          isOpen={reviewDialog.isOpen}
+          onClose={() => setReviewDialog({ isOpen: false, booking: null, existingReview: null })}
+          booking={reviewDialog.booking}
+          existingReview={reviewDialog.existingReview}
+          forceReadOnly={true}
+          onSubmit={async () => {
+            // Providers can't submit reviews from this view - this is read-only
+            throw new Error('Providers cannot submit reviews from incoming orders');
+          }}
+        />
+      )}
     </div>
   );
 }
