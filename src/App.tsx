@@ -8,9 +8,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Index from "./pages/Index";
 import Discover from "./pages/Discover";
 import BookServices from "./pages/BookServices";
-import MyBookings from "./pages/MyBookings";
 import Profile from "./pages/Profile";
-import EditProfile from "./pages/EditProfile";
 import Auth from "./pages/Auth";
 import AuthCallback from "./pages/AuthCallback";
 import Onboarding from "./pages/Onboarding";
@@ -51,14 +49,6 @@ function AppContent() {
               } 
             />
             <Route 
-              path="/my-bookings" 
-              element={
-                <ProtectedRoute>
-                  <MyBookings />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
               path="/profile" 
               element={
                 <ProtectedRoute>
@@ -69,14 +59,6 @@ function AppContent() {
             <Route 
               path="/profile/:userId" 
               element={<Profile />} 
-            />
-            <Route 
-              path="/edit-profile" 
-              element={
-                <ProtectedRoute>
-                  <EditProfile />
-                </ProtectedRoute>
-              } 
             />
             <Route 
               path="/auth" 

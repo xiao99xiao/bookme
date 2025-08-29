@@ -67,19 +67,19 @@ const Navigation = () => {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem asChild>
-              <Link to="/my-bookings" className="flex items-center gap-2">
+              <Link to="/dashboard" className="flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
-                Manage Bookings
+                Dashboard
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link to={`/profile/${userId || ''}`} className="flex items-center gap-2">
-                <User className="w-4 h-4" />
-                View Profile
+              <Link to="/dashboard/bookings" className="flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                My Bookings
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link to="/edit-profile" className="flex items-center gap-2">
+              <Link to="/dashboard/profile" className="flex items-center gap-2">
                 <User className="w-4 h-4" />
                 Edit Profile
               </Link>
