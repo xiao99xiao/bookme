@@ -12,6 +12,8 @@ interface ReviewDialogProps {
     id: string;
     service_id: string;
     provider_id: string;
+    scheduled_at: string;
+    duration_minutes: number;
     services?: {
       title: string;
     };
@@ -36,6 +38,20 @@ export default function ReviewDialog({
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Check if review can be edited (within 7 days of booking end time)
+  const canEditReview = (): boolean => {
+    const now = new Date();
+    const bookingEndTime = new Date(booking.scheduled_at);
+    bookingEndTime.setMinutes(bookingEndTime.getMinutes() + booking.duration_minutes);
+    
+    const sevenDaysAfterBooking = new Date(bookingEndTime);
+    sevenDaysAfterBooking.setDate(sevenDaysAfterBooking.getDate() + 7);
+    
+    return now <= sevenDaysAfterBooking;
+  };
+
+  const isReadOnly = existingReview && !canEditReview();
 
   // Load existing review data when dialog opens
   useEffect(() => {
@@ -86,23 +102,39 @@ export default function ReviewDialog({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
-            {existingReview ? 'Update your review' : 'How was your experience?'}
+            {isReadOnly 
+              ? 'Your review' 
+              : (existingReview ? 'Update your review' : 'How was your experience?')
+            }
           </DialogTitle>
           <DialogDescription>
-            {existingReview 
-              ? `Update your review for ${booking.provider?.display_name || 'the provider'} - ${booking.services?.title || 'this service'}`
-              : `Rate your experience with ${booking.provider?.display_name || 'the provider'} for ${booking.services?.title || 'this service'}`
+            {isReadOnly 
+              ? `Your review for ${booking.provider?.display_name || 'the provider'} - ${booking.services?.title || 'this service'}`
+              : (existingReview 
+                  ? `Update your review for ${booking.provider?.display_name || 'the provider'} - ${booking.services?.title || 'this service'}`
+                  : `Rate your experience with ${booking.provider?.display_name || 'the provider'} for ${booking.services?.title || 'this service'}`
+                )
             }
           </DialogDescription>
+          {isReadOnly && (
+            <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-md">
+              <p className="text-sm text-amber-800">
+                ⏰ Reviews can only be edited within 7 days of the service completion. You can view your review below.
+              </p>
+            </div>
+          )}
         </DialogHeader>
         
         <div className="space-y-6 py-4">
           {/* Star Rating */}
           <div className="flex flex-col items-center space-y-2">
-            <p className="text-sm text-muted-foreground">Rate your experience</p>
+            <p className="text-sm text-muted-foreground">
+              {isReadOnly ? 'Your rating' : 'Rate your experience'}
+            </p>
             <StarRating 
               value={rating} 
-              onChange={setRating} 
+              onChange={isReadOnly ? undefined : setRating} 
+              readonly={isReadOnly}
               size="lg"
             />
             <p className="text-sm font-medium">
@@ -117,41 +149,52 @@ export default function ReviewDialog({
           {/* Comment */}
           <div className="space-y-2">
             <label htmlFor="comment" className="text-sm font-medium">
-              Share your experience (optional)
+              {isReadOnly ? 'Your comments' : 'Share your experience (optional)'}
             </label>
             <Textarea
               id="comment"
-              placeholder="Tell us about your experience with this service..."
+              placeholder={isReadOnly ? 'No comments provided' : 'Tell us about your experience with this service...'}
               value={comment}
-              onChange={(e) => setComment(e.target.value)}
+              onChange={isReadOnly ? undefined : (e) => setComment(e.target.value)}
               maxLength={maxCommentLength}
               rows={4}
               className="resize-none"
+              readOnly={isReadOnly}
             />
-            <p className={`text-xs text-right ${remainingChars < 100 ? 'text-destructive' : 'text-muted-foreground'}`}>
-              {remainingChars} characters remaining
-            </p>
+            {!isReadOnly && (
+              <p className={`text-xs text-right ${remainingChars < 100 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                {remainingChars} characters remaining
+              </p>
+            )}
           </div>
         </div>
 
         {/* Actions */}
-        <div className="flex justify-between gap-3">
-          <Button
-            variant="ghost"
-            onClick={handleSkip}
-            disabled={isSubmitting}
-          >
-            Skip
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-          >
-            {isSubmitting 
-              ? (existingReview ? 'Updating...' : 'Submitting...') 
-              : (existingReview ? 'Update Review' : 'Submit Review')
-            }
-          </Button>
+        <div className="flex justify-end gap-3">
+          {isReadOnly ? (
+            <Button onClick={handleSkip}>
+              Close
+            </Button>
+          ) : (
+            <>
+              <Button
+                variant="ghost"
+                onClick={handleSkip}
+                disabled={isSubmitting}
+              >
+                Skip
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+              >
+                {isSubmitting 
+                  ? (existingReview ? 'Updating...' : 'Submitting...') 
+                  : (existingReview ? 'Update Review' : 'Submit Review')
+                }
+              </Button>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>

@@ -214,6 +214,18 @@ export default function DashboardBookings() {
     });
   };
 
+  // Check if review can be edited (within 7 days of booking end time)
+  const canEditReview = (booking: Booking): boolean => {
+    const now = new Date();
+    const bookingEndTime = new Date(booking.scheduled_at);
+    bookingEndTime.setMinutes(bookingEndTime.getMinutes() + booking.duration_minutes);
+    
+    const sevenDaysAfterBooking = new Date(bookingEndTime);
+    sevenDaysAfterBooking.setDate(sevenDaysAfterBooking.getDate() + 7);
+    
+    return now <= sevenDaysAfterBooking;
+  };
+
   const handleViewProviderProfile = (providerId: string) => {
     navigate(`/profile/${providerId}`);
   };
@@ -455,9 +467,13 @@ export default function DashboardBookings() {
                                   existingReview
                                 });
                               }}
+                              disabled={bookingReviews[booking.id] && !canEditReview(booking)}
                             >
                               <Star className="w-4 h-4 mr-1" />
-                              {bookingReviews[booking.id] ? 'Edit Review' : 'Leave Review'}
+                              {bookingReviews[booking.id] 
+                                ? (canEditReview(booking) ? 'Edit Review' : 'View Review')
+                                : 'Leave Review'
+                              }
                             </Button>
                           </>
                         )}
