@@ -93,13 +93,18 @@ export default function DashboardProfile() {
 
   useEffect(() => {
     if (profile) {
+      // Ensure the timezone value exists in our list, fallback to browser timezone if not
+      const profileTimezone = profile.timezone || getBrowserTimezone();
+      const timezoneExists = TIMEZONE_BASE_DATA.some(tz => tz.value === profileTimezone);
+      const finalTimezone = timezoneExists ? profileTimezone : getBrowserTimezone();
+      
       form.reset({
         display_name: profile.display_name || '',
         bio: profile.bio || '',
         phone: profile.phone || '',
         location: profile.location || '',
         website: profile.website || '',
-        timezone: profile.timezone || getBrowserTimezone(),
+        timezone: finalTimezone,
       });
       setAvatarUrl(profile.avatar || '');
       
@@ -117,7 +122,7 @@ export default function DashboardProfile() {
           });
       }
     }
-  }, [profile, form, userId, refreshProfile]);
+  }, [profile, userId, refreshProfile]); // Removed form from dependencies to avoid infinite loop
 
   useEffect(() => {
     if (userId) {
@@ -363,11 +368,18 @@ export default function DashboardProfile() {
                   Timezone
                 </Label>
                 <Select
-                  value={form.watch('timezone')}
-                  onValueChange={(value) => form.setValue('timezone', value)}
+                  value={form.watch('timezone') || ''}
+                  onValueChange={(value) => {
+                    form.setValue('timezone', value);
+                    form.trigger('timezone'); // Trigger validation
+                  }}
                 >
                   <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select your timezone" />
+                    <SelectValue placeholder="Select your timezone">
+                      {form.watch('timezone') ? 
+                        timezoneList.find(tz => tz.value === form.watch('timezone'))?.label || form.watch('timezone')
+                        : "Select your timezone"}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {timezoneList.map((tz) => (
