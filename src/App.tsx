@@ -25,7 +25,6 @@ import DashboardBookings from "./pages/dashboard/DashboardBookings";
 import DashboardBalance from "./pages/dashboard/DashboardBalance";
 import DashboardIntegrations from "./pages/dashboard/DashboardIntegrations";
 import IntegrationsCallback from "./pages/dashboard/IntegrationsCallback";
-import TestBroadcast from "./pages/TestBroadcast";
 import { DevTokenHelper } from "./components/DevTokenHelper";
 
 const queryClient = new QueryClient();
@@ -100,9 +99,6 @@ function AppContent() {
               <Route path="integrations" element={<DashboardIntegrations />} />
               <Route path="integrations/callback" element={<IntegrationsCallback />} />
             </Route>
-            
-            {/* Test Routes */}
-            <Route path="/test-broadcast" element={<TestBroadcast />} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
