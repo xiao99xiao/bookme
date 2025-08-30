@@ -122,8 +122,12 @@ export class ApiClient {
   }
 
   // Service methods
-  static async getUserServices(userId: string): Promise<Service[]> {
+  static async getUserServices(userId?: string): Promise<Service[]> {
     this.ensureInitialized()
+    // If no userId provided, get current user's services
+    if (!userId) {
+      return this.backendApi.getServices({ provider_id: 'current' })
+    }
     return this.backendApi.getUserServices(userId)
   }
 
@@ -131,6 +135,11 @@ export class ApiClient {
     this.ensureInitialized()
     // Note: timezone parameter was for local time conversion, backend handles this now
     return this.backendApi.getUserServices(userId)
+  }
+
+  static async getServices(filters?: any): Promise<Service[]> {
+    this.ensureInitialized()
+    return this.backendApi.getServices(filters || {})
   }
 
   static async getServiceById(serviceId: string): Promise<Service | null> {
@@ -154,17 +163,29 @@ export class ApiClient {
     return this.backendApi.getServices({ is_active: true })
   }
 
-  static async createService(userId: string, service: Omit<Service, 'id' | 'provider_id'>): Promise<Service> {
+  static async createService(userIdOrService: string | any, service?: Omit<Service, 'id' | 'provider_id'>): Promise<Service> {
     this.ensureInitialized()
-    return this.backendApi.createService(service)
+    // Handle both signatures: createService(userId, service) and createService(service)
+    if (typeof userIdOrService === 'string') {
+      // Old signature with userId
+      return this.backendApi.createService(service!)
+    }
+    // New signature without userId
+    return this.backendApi.createService(userIdOrService)
   }
 
-  static async updateService(serviceId: string, userId: string, updates: Partial<Service>): Promise<Service> {
+  static async updateService(serviceId: string, userIdOrUpdates: string | Partial<Service>, updates?: Partial<Service>): Promise<Service> {
     this.ensureInitialized()
-    return this.backendApi.updateService(serviceId, updates)
+    // Handle both signatures: updateService(id, userId, updates) and updateService(id, updates)
+    if (typeof userIdOrUpdates === 'string' && updates) {
+      // Old signature with userId
+      return this.backendApi.updateService(serviceId, updates)
+    }
+    // New signature without userId
+    return this.backendApi.updateService(serviceId, userIdOrUpdates as Partial<Service>)
   }
 
-  static async deleteService(serviceId: string, userId: string): Promise<void> {
+  static async deleteService(serviceId: string, userId?: string): Promise<void> {
     this.ensureInitialized()
     return this.backendApi.deleteService(serviceId)
   }
@@ -190,14 +211,29 @@ export class ApiClient {
     return this.backendApi.createBooking(bookingData)
   }
 
-  static async getUserBookings(userId: string, role?: 'customer' | 'provider'): Promise<Booking[]> {
+  static async getUserBookings(userIdOrRole?: string, role?: 'customer' | 'provider'): Promise<Booking[]> {
     this.ensureInitialized()
-    return this.backendApi.getUserBookings(userId, role)
+    // Handle different call signatures
+    if (!userIdOrRole) {
+      // No params - get current user's bookings
+      return this.backendApi.getUserBookings('current')
+    }
+    if (userIdOrRole === 'customer' || userIdOrRole === 'provider') {
+      // Role only - get current user's bookings with role
+      return this.backendApi.getUserBookings('current', userIdOrRole as 'customer' | 'provider')
+    }
+    // UserId and optional role
+    return this.backendApi.getUserBookings(userIdOrRole, role)
   }
 
   static async getProviderBookings(userId: string): Promise<Booking[]> {
     this.ensureInitialized()
     return this.backendApi.getUserBookings(userId, 'provider')
+  }
+
+  static async getMyBookings(userId: string): Promise<Booking[]> {
+    this.ensureInitialized()
+    return this.backendApi.getUserBookings(userId, 'customer')
   }
 
   static async getBookingById(bookingId: string): Promise<Booking | null> {
@@ -209,12 +245,18 @@ export class ApiClient {
 
   static async updateBookingStatus(
     bookingId: string,
-    userId: string,
-    status: string,
+    statusOrUserId: string,
+    statusOrAdditionalData?: string | any,
     additionalData?: any
   ): Promise<Booking> {
     this.ensureInitialized()
-    return this.backendApi.updateBooking(bookingId, { status, ...additionalData })
+    // Handle both signatures: (id, userId, status, data) and (id, status, data)
+    if (statusOrAdditionalData && typeof statusOrAdditionalData === 'string') {
+      // Old signature with userId
+      return this.backendApi.updateBooking(bookingId, { status: statusOrAdditionalData, ...additionalData })
+    }
+    // New signature without userId
+    return this.backendApi.updateBooking(bookingId, { status: statusOrUserId, ...statusOrAdditionalData })
   }
 
   static async cancelBooking(bookingId: string, userId: string, reason?: string): Promise<Booking> {
@@ -313,9 +355,40 @@ export class ApiClient {
     return this.backendApi.getIntegrations()
   }
 
-  static async disconnectMeetingIntegration(integrationId: string, userId: string): Promise<void> {
+  static async getMeetingIntegrations(userId?: string): Promise<any[]> {
+    this.ensureInitialized()
+    // userId parameter was for filtering, backend handles this based on auth
+    return this.backendApi.getIntegrations()
+  }
+
+  static async disconnectMeetingIntegration(integrationId: string, userId?: string): Promise<void> {
     this.ensureInitialized()
     return this.backendApi.disconnectIntegration(integrationId)
+  }
+
+  static async deleteMeetingIntegration(integrationId: string): Promise<void> {
+    this.ensureInitialized()
+    return this.backendApi.disconnectIntegration(integrationId)
+  }
+
+  static async getMeetingOAuthUrl(platform: string): Promise<{ url: string }> {
+    this.ensureInitialized()
+    // This needs to be implemented in backend or handled client-side
+    // For now, return the Google OAuth URL if it's Google Meet
+    if (platform === 'google_meet') {
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
+      const redirectUri = `${window.location.origin}/dashboard/integrations/callback`
+      const scope = 'https://www.googleapis.com/auth/calendar.events'
+      const url = `https://accounts.google.com/o/oauth2/v2/auth?` +
+        `client_id=${clientId}&` +
+        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+        `response_type=code&` +
+        `scope=${encodeURIComponent(scope)}&` +
+        `access_type=offline&` +
+        `prompt=consent`
+      return { url }
+    }
+    throw new Error(`OAuth URL for ${platform} not implemented`)
   }
 
   static async generateMeetingLink(bookingId: string): Promise<string | null> {
