@@ -77,6 +77,17 @@ export function setupWebSocket(server) {
 
     // Join user's personal room
     socket.join(`user:${userId}`)
+    
+    // Handle conversation subscriptions
+    socket.on('subscribe_conversation', ({ conversationId }) => {
+      console.log(`User ${userId} subscribing to conversation ${conversationId}`)
+      socket.join(`conversation:${conversationId}`)
+    })
+    
+    socket.on('unsubscribe_conversation', ({ conversationId }) => {
+      console.log(`User ${userId} unsubscribing from conversation ${conversationId}`)
+      socket.leave(`conversation:${conversationId}`)
+    })
 
     // Subscribe to user's conversations
     subscribeToUserConversations(socket, userId)
@@ -92,7 +103,7 @@ export function setupWebSocket(server) {
         // Verify user is part of conversation
         const { data: conversation, error: convError } = await supabaseAdmin
           .from('conversations')
-          .select('customer_id, provider_id')
+          .select('user1_id, user2_id')
           .eq('id', conversationId)
           .single()
 
@@ -101,7 +112,7 @@ export function setupWebSocket(server) {
           return
         }
 
-        if (conversation.customer_id !== userId && conversation.provider_id !== userId) {
+        if (conversation.user1_id !== userId && conversation.user2_id !== userId) {
           socket.emit('error', { message: 'Unauthorized' })
           return
         }
@@ -115,10 +126,7 @@ export function setupWebSocket(server) {
             content,
             is_read: false
           })
-          .select(`
-            *,
-            sender:users!sender_id(id, display_name, avatar_url)
-          `)
+          .select('*')
           .single()
 
         if (error) {
@@ -126,23 +134,36 @@ export function setupWebSocket(server) {
           socket.emit('error', { message: 'Failed to send message' })
           return
         }
+        
+        // Fetch sender details
+        const { data: sender } = await supabaseAdmin
+          .from('users')
+          .select('id, display_name, avatar_url')
+          .eq('id', userId)
+          .single()
+        
+        // Add sender info to message
+        const messageWithSender = { ...message, sender }
 
         // Update conversation last activity
         await supabaseAdmin
           .from('conversations')
-          .update({ updated_at: new Date().toISOString() })
+          .update({ last_message_at: new Date().toISOString() })
           .eq('id', conversationId)
 
         // Emit to both users in conversation
-        const recipientId = conversation.customer_id === userId 
-          ? conversation.provider_id 
-          : conversation.customer_id
+        const recipientId = conversation.user1_id === userId 
+          ? conversation.user2_id 
+          : conversation.user1_id
 
         // Send to sender
-        socket.emit('message_sent', message)
+        socket.emit('message_sent', messageWithSender)
         
-        // Send to recipient
-        io.to(`user:${recipientId}`).emit('new_message', message)
+        // Send to recipient if online
+        io.to(`user:${recipientId}`).emit('new_message', messageWithSender)
+        
+        // Also broadcast to conversation room
+        io.to(`conversation:${conversationId}`).emit('new_message', messageWithSender)
 
       } catch (error) {
         console.error('Send message error:', error)

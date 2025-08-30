@@ -4,8 +4,7 @@ import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { GoogleAuth } from '@/lib/google-auth';
 import { useAuth } from '@/contexts/PrivyAuthContext';
-import { supabase } from '@/lib/supabase';
-import { BackendAPI } from '@/lib/backend-api';
+import ApiClient from '@/lib/api-migration';
 
 export default function IntegrationsCallback() {
   const navigate = useNavigate();
@@ -54,9 +53,8 @@ export default function IntegrationsCallback() {
         
         console.log('Integration expiration:', expiresAt || 'Never (has refresh token)');
 
-        // Save the integration to the database
-        const integrationData = {
-          user_id: userId,
+        // Save the integration via backend API
+        await ApiClient.saveIntegration({
           platform: 'google_meet',
           access_token: authResult.access_token,
           refresh_token: authResult.refresh_token || null,
@@ -64,22 +62,7 @@ export default function IntegrationsCallback() {
           scope: authResult.scope ? authResult.scope.split(' ') : [],
           platform_user_id: authResult.userInfo.id,
           platform_user_email: authResult.userInfo.email,
-          is_active: true
-        };
-
-        // TODO: This should be moved to a backend endpoint
-        // For now, we'll use the regular supabase client
-        // The backend should handle OAuth token storage securely
-        const { error: dbError } = await supabase
-          .from('user_meeting_integrations')
-          .upsert(integrationData, {
-            onConflict: 'user_id,platform'
-          });
-
-        if (dbError) {
-          // Try to proceed anyway - backend may need to handle this
-          console.error('Failed to save integration:', dbError);
-        }
+        });
 
         setStatus('success');
         setMessage('Google Meet integration successful!');

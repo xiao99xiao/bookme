@@ -166,6 +166,21 @@ export class BackendAPI {
     return this.request('/api/integrations');
   }
 
+  async saveIntegration(integrationData: {
+    platform: string;
+    access_token: string;
+    refresh_token?: string | null;
+    expires_at?: string | null;
+    scope?: string[];
+    platform_user_id?: string;
+    platform_user_email?: string;
+  }): Promise<any> {
+    return this.request('/api/integrations', {
+      method: 'POST',
+      body: JSON.stringify(integrationData),
+    });
+  }
+
   async disconnectIntegration(integrationId: string): Promise<void> {
     await this.request(`/api/integrations/${integrationId}`, {
       method: 'DELETE',
@@ -185,16 +200,48 @@ export class BackendAPI {
     });
   }
 
+  // Chat/Messaging
+  async getOrCreateConversation(otherUserId: string): Promise<any> {
+    return this.request('/api/conversations', {
+      method: 'POST',
+      body: JSON.stringify({ otherUserId }),
+    });
+  }
+
+  async getMessages(conversationId: string, limit: number = 30, before?: string): Promise<any[]> {
+    const params = new URLSearchParams({ limit: limit.toString() });
+    if (before) params.append('before', before);
+    return this.request(`/api/messages/${conversationId}?${params}`);
+  }
+
+  async sendMessage(conversationId: string, content: string): Promise<any> {
+    return this.request('/api/messages', {
+      method: 'POST',
+      body: JSON.stringify({ conversationId, content }),
+    });
+  }
+
+  async markMessagesAsRead(conversationId: string): Promise<void> {
+    await this.request(`/api/conversations/${conversationId}/read`, {
+      method: 'PUT',
+    });
+  }
+
   // File Upload
   async uploadFile(file: File, bucket: string = 'avatars'): Promise<{ url: string; path: string }> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('bucket', bucket);
 
-    const response = await fetch(`${this.baseUrl}/api/upload`, {
+    const token = await this.getAccessToken();
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
+
+    const response = await fetch(`${BACKEND_URL}/api/upload`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${await this.getAccessToken()}`,
+        'Authorization': `Bearer ${token}`,
       },
       body: formData,
     });

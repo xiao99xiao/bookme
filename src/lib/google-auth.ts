@@ -7,7 +7,8 @@ const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 // You need to set these in your environment variables
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 const CLIENT_SECRET = import.meta.env.VITE_GOOGLE_CLIENT_SECRET || ''; // Note: This should ideally be in a backend
-const REDIRECT_URI = `${window.location.origin}/dashboard/integrations/callback`;
+// Don't evaluate window.location at module load time
+const getRedirectUri = () => `${window.location.origin}/dashboard/integrations/callback`;
 
 // Scopes needed for Google Calendar/Meet
 const SCOPES = [
@@ -31,7 +32,7 @@ export class GoogleAuth {
     // Build the OAuth URL
     const params = new URLSearchParams({
       client_id: CLIENT_ID,
-      redirect_uri: REDIRECT_URI,
+      redirect_uri: getRedirectUri(),
       response_type: 'code',
       scope: SCOPES.join(' '),
       state: state,
@@ -76,7 +77,7 @@ export class GoogleAuth {
       code: code,
       client_id: CLIENT_ID,
       client_secret: CLIENT_SECRET, // This should be done server-side in production
-      redirect_uri: REDIRECT_URI,
+      redirect_uri: getRedirectUri(),
       grant_type: 'authorization_code'
     });
     

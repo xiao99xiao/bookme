@@ -140,13 +140,15 @@ class WebSocketManager {
   on(event: string, callback: (data: any) => void) {
     if (!this.listeners.has(event)) {
       this.listeners.set(event, new Set())
+      
+      // Register the event with the socket if it's not already registered
+      if (this.socket && !this.socket.hasListeners(event)) {
+        this.socket.on(event, (data) => {
+          this.emitToListeners(event, data)
+        })
+      }
     }
     this.listeners.get(event)!.add(callback)
-
-    // Also register with socket if connected
-    if (this.socket?.connected && !['new_message', 'message_sent', 'messages_marked_read', 'booking_updated', 'new_booking', 'conversation_updated', 'error'].includes(event)) {
-      this.socket.on(event, callback)
-    }
 
     // Return unsubscribe function
     return () => this.off(event, callback)
@@ -260,9 +262,10 @@ export function useWebSocket() {
     sendMessage,
     markAsRead,
     subscribe,
-    emit: websocketManager.emit,
-    on: websocketManager.on,
-    off: websocketManager.off,
+    emit: websocketManager.emit.bind(websocketManager),
+    on: websocketManager.on.bind(websocketManager),
+    off: websocketManager.off.bind(websocketManager),
+    socket: websocketManager.socket,
   }
 }
 

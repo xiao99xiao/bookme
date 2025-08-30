@@ -361,6 +361,19 @@ export class ApiClient {
     return this.backendApi.getIntegrations()
   }
 
+  static async saveIntegration(integrationData: {
+    platform: string
+    access_token: string
+    refresh_token?: string | null
+    expires_at?: string | null
+    scope?: string[]
+    platform_user_id?: string
+    platform_user_email?: string
+  }): Promise<any> {
+    this.ensureInitialized()
+    return this.backendApi.saveIntegration(integrationData)
+  }
+
   static async disconnectMeetingIntegration(integrationId: string, userId?: string): Promise<void> {
     this.ensureInitialized()
     return this.backendApi.disconnectIntegration(integrationId)
@@ -373,20 +386,14 @@ export class ApiClient {
 
   static async getMeetingOAuthUrl(platform: string): Promise<{ url: string }> {
     this.ensureInitialized()
-    // This needs to be implemented in backend or handled client-side
-    // For now, return the Google OAuth URL if it's Google Meet
+    // Use the GoogleAuth class for Google Meet OAuth
     if (platform === 'google_meet') {
-      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
-      const redirectUri = `${window.location.origin}/dashboard/integrations/callback`
-      const scope = 'https://www.googleapis.com/auth/calendar.events'
-      const url = `https://accounts.google.com/o/oauth2/v2/auth?` +
-        `client_id=${clientId}&` +
-        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-        `response_type=code&` +
-        `scope=${encodeURIComponent(scope)}&` +
-        `access_type=offline&` +
-        `prompt=consent`
-      return { url }
+      // Import GoogleAuth dynamically to avoid module-level issues
+      const { GoogleAuth } = await import('./google-auth')
+      // This will use the getRedirectUri() function which evaluates at runtime
+      GoogleAuth.initiateOAuth()
+      // Return a dummy URL since initiateOAuth handles the redirect
+      return { url: 'initiating' }
     }
     throw new Error(`OAuth URL for ${platform} not implemented`)
   }
@@ -400,6 +407,30 @@ export class ApiClient {
   static async deleteMeeting(bookingId: string): Promise<void> {
     this.ensureInitialized()
     return this.backendApi.deleteMeeting(bookingId)
+  }
+
+  // Chat/Messaging methods
+  static async getOrCreateConversation(otherUserId: string, currentUserId?: string): Promise<any> {
+    this.ensureInitialized()
+    // currentUserId is not needed as backend gets it from auth
+    return this.backendApi.getOrCreateConversation(otherUserId)
+  }
+
+  static async getMessages(conversationId: string, limit: number = 30, before?: string): Promise<any[]> {
+    this.ensureInitialized()
+    return this.backendApi.getMessages(conversationId, limit, before)
+  }
+
+  static async sendMessage(conversationId: string, content: string, senderId?: string): Promise<any> {
+    this.ensureInitialized()
+    // senderId is not needed as backend gets it from auth
+    return this.backendApi.sendMessage(conversationId, content)
+  }
+
+  static async markMessagesAsRead(conversationId: string, userId?: string): Promise<void> {
+    this.ensureInitialized()
+    // userId is not needed as backend gets it from auth
+    return this.backendApi.markMessagesAsRead(conversationId)
   }
 
   // File upload
