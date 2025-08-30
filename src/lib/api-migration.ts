@@ -116,9 +116,20 @@ export class ApiClient {
     return this.backendApi.updateUserProfile(updates)
   }
 
+  static async updateProfile(updates: Partial<User>, userId?: string): Promise<User> {
+    this.ensureInitialized()
+    return this.backendApi.updateUserProfile(updates)
+  }
+
   // Service methods
   static async getUserServices(userId: string): Promise<Service[]> {
     this.ensureInitialized()
+    return this.backendApi.getUserServices(userId)
+  }
+
+  static async getUserServicesById(userId: string, timezone?: string): Promise<Service[]> {
+    this.ensureInitialized()
+    // Note: timezone parameter was for local time conversion, backend handles this now
     return this.backendApi.getUserServices(userId)
   }
 
@@ -161,13 +172,20 @@ export class ApiClient {
   // Booking methods
   static async createBooking(booking: {
     serviceId: string
-    customerId: string
+    customerId?: string
     scheduledAt: string
     customerNotes?: string
     location?: string
     isOnline?: boolean
-  }): Promise<Booking> {
+  } | any, userId?: string): Promise<Booking> {
     this.ensureInitialized()
+    // Handle both old signatures
+    if (typeof userId === 'string') {
+      // Old signature: createBooking(bookingData, userId)
+      const { customerId, ...bookingData } = booking
+      return this.backendApi.createBooking(bookingData)
+    }
+    // New signature
     const { customerId, ...bookingData } = booking
     return this.backendApi.createBooking(bookingData)
   }
@@ -175,6 +193,11 @@ export class ApiClient {
   static async getUserBookings(userId: string, role?: 'customer' | 'provider'): Promise<Booking[]> {
     this.ensureInitialized()
     return this.backendApi.getUserBookings(userId, role)
+  }
+
+  static async getProviderBookings(userId: string): Promise<Booking[]> {
+    this.ensureInitialized()
+    return this.backendApi.getUserBookings(userId, 'provider')
   }
 
   static async getBookingById(bookingId: string): Promise<Booking | null> {
@@ -233,6 +256,11 @@ export class ApiClient {
     return this.backendApi.getMessages(conversationId, { limit, before })
   }
 
+  static async getMessages(conversationId: string, limit?: number, before?: string): Promise<any[]> {
+    this.ensureInitialized()
+    return this.backendApi.getMessages(conversationId, { limit, before })
+  }
+
   static async sendMessage(conversationId: string, senderId: string, content: string): Promise<any> {
     this.ensureInitialized()
     return this.backendApi.sendMessage(conversationId, content)
@@ -267,6 +295,12 @@ export class ApiClient {
     return this.backendApi.getReviewByBooking(bookingId)
   }
 
+  static async getBookingReview(bookingId: string, userId?: string): Promise<any | null> {
+    this.ensureInitialized()
+    // userId parameter was for access control, backend handles this now
+    return this.backendApi.getReviewByBooking(bookingId)
+  }
+
   static async getProviderReviews(providerId: string): Promise<any[]> {
     this.ensureInitialized()
     // This needs to be implemented in backend
@@ -296,8 +330,9 @@ export class ApiClient {
   }
 
   // File upload
-  static async uploadFile(file: File, bucket: string = 'avatars'): Promise<{ url: string; path: string }> {
+  static async uploadFile(file: File, bucket: string = 'avatars', userId?: string): Promise<{ url: string; path: string }> {
     this.ensureInitialized()
+    // userId parameter was for path generation, backend handles this now
     return this.backendApi.uploadFile(file, bucket)
   }
 }

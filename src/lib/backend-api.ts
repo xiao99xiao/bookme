@@ -54,6 +54,29 @@ export class BackendAPI {
     return this.request(`/api/services/user/${userId}`);
   }
 
+  async getServiceById(serviceId: string): Promise<any> {
+    return this.request(`/api/services/${serviceId}`);
+  }
+
+  async searchServices(params: any): Promise<any[]> {
+    const queryParams = new URLSearchParams(params).toString();
+    return this.request(`/api/services/search?${queryParams}`);
+  }
+
+  async createService(serviceData: any): Promise<any> {
+    return this.request('/api/services', {
+      method: 'POST',
+      body: JSON.stringify(serviceData),
+    });
+  }
+
+  async updateService(serviceId: string, updates: any): Promise<any> {
+    return this.request('/api/services', {
+      method: 'POST',
+      body: JSON.stringify({ id: serviceId, ...updates }),
+    });
+  }
+
   async createOrUpdateService(serviceData: any): Promise<any> {
     return this.request('/api/services', {
       method: 'POST',
@@ -87,8 +110,99 @@ export class BackendAPI {
     });
   }
 
+  async cancelBooking(bookingId: string, reason?: string): Promise<any> {
+    return this.request(`/api/bookings/${bookingId}/cancel`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
+  }
+
+  async completeBooking(bookingId: string): Promise<any> {
+    return this.request(`/api/bookings/${bookingId}/complete`, {
+      method: 'POST',
+    });
+  }
+
   // Categories
   async getCategories(): Promise<any[]> {
     return this.request('/api/categories');
+  }
+
+  // Conversations & Messages
+  async getConversations(): Promise<any[]> {
+    return this.request('/api/conversations');
+  }
+
+  async getConversation(conversationId: string): Promise<any> {
+    return this.request(`/api/conversations/${conversationId}`);
+  }
+
+  async sendMessage(conversationId: string, content: string): Promise<any> {
+    return this.request('/api/messages', {
+      method: 'POST',
+      body: JSON.stringify({ conversationId, content }),
+    });
+  }
+
+  async getMessages(conversationId: string, params?: { limit?: number; before?: string }): Promise<any[]> {
+    const queryParams = params ? new URLSearchParams(params as any).toString() : '';
+    return this.request(`/api/messages/${conversationId}${queryParams ? `?${queryParams}` : ''}`);
+  }
+
+  // Reviews
+  async createReview(bookingId: string, rating: number, comment: string): Promise<any> {
+    return this.request('/api/reviews', {
+      method: 'POST',
+      body: JSON.stringify({ bookingId, rating, comment }),
+    });
+  }
+
+  async getReviewByBooking(bookingId: string): Promise<any> {
+    return this.request(`/api/reviews/${bookingId}`);
+  }
+
+  // Meeting Integrations
+  async getIntegrations(): Promise<any[]> {
+    return this.request('/api/integrations');
+  }
+
+  async disconnectIntegration(integrationId: string): Promise<void> {
+    await this.request(`/api/integrations/${integrationId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async generateMeetingLink(bookingId: string): Promise<any> {
+    return this.request('/api/meeting/generate', {
+      method: 'POST',
+      body: JSON.stringify({ bookingId }),
+    });
+  }
+
+  async deleteMeeting(bookingId: string): Promise<void> {
+    await this.request(`/api/meeting/${bookingId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // File Upload
+  async uploadFile(file: File, bucket: string = 'avatars'): Promise<{ url: string; path: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('bucket', bucket);
+
+    const response = await fetch(`${this.baseUrl}/api/upload`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${await this.getAccessToken()}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Upload failed: ${response.statusText}`);
+    }
+
+    return response.json();
   }
 }
