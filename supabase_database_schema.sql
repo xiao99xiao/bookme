@@ -1,65 +1,215 @@
--- Complete Database Setup for BookMe Application
--- Run this in your Supabase SQL Editor to ensure all policies are correct
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
 
--- First, drop existing conflicting policies if they exist
-DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON users;
-DROP POLICY IF EXISTS "Public profiles are viewable" ON users;
-DROP POLICY IF EXISTS "Users can view their own profile" ON users;
-
--- Create comprehensive user policies
-CREATE POLICY "Anyone can view user profiles" ON users 
-  FOR SELECT USING (true);
-
-CREATE POLICY "Users can create their own profile" ON users 
-  FOR INSERT WITH CHECK (auth.uid() = id);
-
-CREATE POLICY "Users can update their own profile" ON users 
-  FOR UPDATE USING (auth.uid() = id);
-
--- Ensure categories table exists and is populated
-INSERT INTO categories (name, description, icon, color) VALUES
-  ('Web Development', 'Website and web application development', '💻', '#3B82F6'),
-  ('Graphic Design', 'Logo, branding, and visual design services', '🎨', '#EF4444'),
-  ('Content Writing', 'Blog posts, copywriting, and content creation', '✍️', '#10B981'),
-  ('Digital Marketing', 'SEO, social media, and online marketing', '📈', '#F59E0B'),
-  ('Photography', 'Portrait, event, and product photography', '📸', '#8B5CF6'),
-  ('Video Editing', 'Video production and post-production services', '🎬', '#EC4899'),
-  ('Consulting', 'Business, strategy, and professional consulting', '🤝', '#06B6D4'),
-  ('Tutoring', 'Educational and skill-based tutoring', '📚', '#84CC16'),
-  ('Fitness Training', 'Personal training and fitness coaching', '💪', '#F97316'),
-  ('Music Lessons', 'Musical instrument and vocal training', '🎵', '#6366F1')
-ON CONFLICT (name) DO NOTHING;
-
--- Create a function to automatically create user profiles when auth users sign up
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
-BEGIN
-  INSERT INTO public.users (id, email, display_name)
-  VALUES (
-    NEW.id,
-    NEW.email,
-    COALESCE(NEW.raw_user_meta_data->>'display_name', NEW.raw_user_meta_data->>'full_name', split_part(NEW.email, '@', 1))
-  );
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Create trigger to automatically create profiles
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
-
--- Grant necessary permissions
-GRANT USAGE ON SCHEMA public TO anon, authenticated;
-GRANT ALL ON public.users TO anon, authenticated;
-GRANT ALL ON public.services TO anon, authenticated;
-GRANT ALL ON public.categories TO anon, authenticated;
-GRANT ALL ON public.bookings TO anon, authenticated;
-GRANT ALL ON public.reviews TO anon, authenticated;
-GRANT ALL ON public.conversations TO anon, authenticated;
-GRANT ALL ON public.messages TO anon, authenticated;
-GRANT ALL ON public.notifications TO anon, authenticated;
-GRANT ALL ON public.user_favorites TO anon, authenticated;
-GRANT ALL ON public.provider_availability TO anon, authenticated;
-GRANT ALL ON public.file_uploads TO anon, authenticated;
+CREATE TABLE public.bookings (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  service_id uuid NOT NULL,
+  customer_id uuid NOT NULL,
+  provider_id uuid NOT NULL,
+  status text NOT NULL DEFAULT 'pending'::text CHECK (status = ANY (ARRAY['pending'::text, 'confirmed'::text, 'in_progress'::text, 'completed'::text, 'cancelled'::text, 'refunded'::text])),
+  scheduled_at timestamp with time zone NOT NULL,
+  duration_minutes integer NOT NULL,
+  total_price numeric NOT NULL,
+  service_fee numeric NOT NULL DEFAULT 0.00,
+  customer_notes text,
+  provider_notes text,
+  location text,
+  is_online boolean DEFAULT false,
+  meeting_link text,
+  cancellation_reason text,
+  cancelled_by uuid,
+  cancelled_at timestamp with time zone,
+  completed_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+  meeting_platform character varying,
+  meeting_id text,
+  meeting_settings jsonb DEFAULT '{}'::jsonb,
+  CONSTRAINT bookings_pkey PRIMARY KEY (id),
+  CONSTRAINT bookings_provider_id_fkey FOREIGN KEY (provider_id) REFERENCES public.users(id),
+  CONSTRAINT bookings_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id),
+  CONSTRAINT bookings_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.users(id),
+  CONSTRAINT bookings_cancelled_by_fkey FOREIGN KEY (cancelled_by) REFERENCES public.users(id)
+);
+CREATE TABLE public.categories (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name text NOT NULL UNIQUE,
+  description text,
+  icon text,
+  color text,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT categories_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.conversations (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user1_id uuid,
+  user2_id uuid,
+  last_message_at timestamp with time zone DEFAULT now(),
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT conversations_pkey PRIMARY KEY (id),
+  CONSTRAINT conversations_user2_id_fkey FOREIGN KEY (user2_id) REFERENCES public.users(id),
+  CONSTRAINT conversations_user1_id_fkey FOREIGN KEY (user1_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.file_uploads (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL,
+  file_name text NOT NULL,
+  file_url text NOT NULL,
+  file_size integer,
+  mime_type text,
+  upload_type text CHECK (upload_type = ANY (ARRAY['avatar'::text, 'service_image'::text, 'message_attachment'::text, 'document'::text])),
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT file_uploads_pkey PRIMARY KEY (id),
+  CONSTRAINT file_uploads_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.messages (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  conversation_id uuid,
+  sender_id uuid,
+  content text NOT NULL,
+  is_read boolean DEFAULT false,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT messages_pkey PRIMARY KEY (id),
+  CONSTRAINT messages_conversation_id_fkey FOREIGN KEY (conversation_id) REFERENCES public.conversations(id),
+  CONSTRAINT messages_sender_id_fkey FOREIGN KEY (sender_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.notifications (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL,
+  type text NOT NULL CHECK (type = ANY (ARRAY['booking_request'::text, 'booking_confirmed'::text, 'booking_cancelled'::text, 'payment_received'::text, 'new_review'::text, 'message'::text, 'reminder'::text])),
+  title text NOT NULL,
+  content text NOT NULL,
+  data jsonb,
+  is_read boolean DEFAULT false,
+  read_at timestamp without time zone,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT notifications_pkey PRIMARY KEY (id),
+  CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.payments (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  booking_id uuid NOT NULL UNIQUE,
+  customer_id uuid NOT NULL,
+  provider_id uuid NOT NULL,
+  amount numeric NOT NULL,
+  service_fee numeric NOT NULL DEFAULT 0.00,
+  status text NOT NULL DEFAULT 'pending'::text CHECK (status = ANY (ARRAY['pending'::text, 'processing'::text, 'held'::text, 'released'::text, 'refunded'::text, 'failed'::text])),
+  payment_method_id text,
+  payment_intent_id text,
+  held_at timestamp without time zone,
+  released_at timestamp without time zone,
+  refunded_at timestamp without time zone,
+  refund_reason text,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT payments_pkey PRIMARY KEY (id),
+  CONSTRAINT payments_provider_id_fkey FOREIGN KEY (provider_id) REFERENCES public.users(id),
+  CONSTRAINT payments_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES public.bookings(id),
+  CONSTRAINT payments_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.provider_availability (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  provider_id uuid NOT NULL,
+  day_of_week integer NOT NULL CHECK (day_of_week >= 0 AND day_of_week <= 6),
+  start_time time without time zone NOT NULL,
+  end_time time without time zone NOT NULL,
+  is_available boolean DEFAULT true,
+  timezone text DEFAULT 'UTC'::text,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT provider_availability_pkey PRIMARY KEY (id),
+  CONSTRAINT provider_availability_provider_id_fkey FOREIGN KEY (provider_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.reviews (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  booking_id uuid NOT NULL UNIQUE,
+  reviewer_id uuid NOT NULL,
+  reviewee_id uuid NOT NULL,
+  service_id uuid NOT NULL,
+  rating integer NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  comment text,
+  is_public boolean DEFAULT true,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT reviews_pkey PRIMARY KEY (id),
+  CONSTRAINT reviews_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES public.bookings(id),
+  CONSTRAINT reviews_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id),
+  CONSTRAINT reviews_reviewee_id_fkey FOREIGN KEY (reviewee_id) REFERENCES public.users(id),
+  CONSTRAINT reviews_reviewer_id_fkey FOREIGN KEY (reviewer_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.services (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  provider_id uuid NOT NULL,
+  category_id uuid,
+  title text NOT NULL,
+  description text NOT NULL,
+  short_description text,
+  price numeric NOT NULL,
+  duration_minutes integer NOT NULL,
+  location text,
+  is_online boolean DEFAULT false,
+  is_active boolean DEFAULT true,
+  rating numeric DEFAULT 0.00,
+  review_count integer DEFAULT 0,
+  total_bookings integer DEFAULT 0,
+  images ARRAY,
+  tags ARRAY,
+  availability_schedule jsonb,
+  requirements text,
+  cancellation_policy text,
+  created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+  meeting_platform character varying CHECK (meeting_platform::text = ANY (ARRAY['google_meet'::character varying, 'zoom'::character varying, 'teams'::character varying]::text[])),
+  meeting_settings jsonb DEFAULT '{}'::jsonb,
+  service_timezone text DEFAULT 'UTC'::text,
+  CONSTRAINT services_pkey PRIMARY KEY (id),
+  CONSTRAINT services_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories(id),
+  CONSTRAINT services_provider_id_fkey FOREIGN KEY (provider_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.user_favorites (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL,
+  service_id uuid NOT NULL,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT user_favorites_pkey PRIMARY KEY (id),
+  CONSTRAINT user_favorites_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id),
+  CONSTRAINT user_favorites_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.user_meeting_integrations (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  platform character varying NOT NULL CHECK (platform::text = ANY (ARRAY['google_meet'::character varying, 'zoom'::character varying, 'teams'::character varying]::text[])),
+  access_token text NOT NULL,
+  refresh_token text,
+  expires_at timestamp with time zone,
+  scope ARRAY,
+  platform_user_id text,
+  platform_user_email text,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT user_meeting_integrations_pkey PRIMARY KEY (id),
+  CONSTRAINT user_meeting_integrations_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.users (
+  id uuid NOT NULL,
+  email text NOT NULL UNIQUE,
+  display_name text,
+  bio text,
+  location text,
+  avatar text,
+  phone text,
+  is_verified boolean DEFAULT false,
+  rating numeric DEFAULT 0.00,
+  review_count integer DEFAULT 0,
+  total_earnings numeric DEFAULT 0.00,
+  total_spent numeric DEFAULT 0.00,
+  is_provider boolean DEFAULT false,
+  provider_verified_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+  timezone text DEFAULT 'UTC'::text,
+  CONSTRAINT users_pkey PRIMARY KEY (id)
+);

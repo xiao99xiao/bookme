@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Privy Token Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        .token { background: #f0f0f0; padding: 10px; word-break: break-all; }
+        button { padding: 10px 20px; margin: 10px; cursor: pointer; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Privy Token Helper</h1>
+    
+    <p>To get your Privy token:</p>
+    <ol>
+        <li>Go to your app: <a href="http://localhost:8080" target="_blank">http://localhost:8080</a></li>
+        <li>Make sure you're logged in</li>
+        <li>Look for the "Dev Token Helper" box in the bottom-right corner</li>
+        <li>Click "Get Privy Access Token"</li>
+        <li>Check the browser console (F12 → Console tab)</li>
+    </ol>
+    
+    <h2>What you're seeing:</h2>
+    <p>The token you found (starting with eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9) is a <strong>Supabase service token</strong>, not a Privy token.</p>
+    
+    <p>A Privy token should:</p>
+    <ul>
+        <li>Come from the usePrivy() hook's getAccessToken() method</li>
+        <li>Be generated when you log in via Privy (email/social/wallet)</li>
+        <li>Be different from Supabase tokens</li>
+    </ul>
+    
+    <h2>Quick Debug:</h2>
+    <p>Run this in your app's console to check Privy status:</p>
+    <pre class="token">
+// Check if Privy is loaded
+console.log('Privy available?', typeof window.Privy !== 'undefined');
+
+// Check localStorage for Privy data
+const privyKeys = Object.keys(localStorage).filter(k => k.includes('privy'));
+console.log('Privy localStorage keys:', privyKeys);
+
+// Check sessionStorage too
+const privySessionKeys = Object.keys(sessionStorage).filter(k => k.includes('privy'));
+console.log('Privy sessionStorage keys:', privySessionKeys);
+    </pre>
+</body>
+</html>

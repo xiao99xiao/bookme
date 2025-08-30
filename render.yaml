@@ -1,0 +1,44 @@
+# Render Blueprint - Deploy both frontend and backend from same repo
+# This file tells Render how to deploy your services
+
+services:
+  # Backend API Service
+  - type: web
+    name: bookme-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: VITE_SUPABASE_URL
+        sync: false # Set in dashboard
+      - key: VITE_SUPABASE_SERVICE_ROLE_KEY
+        sync: false # Set in dashboard
+      - key: VITE_PRIVY_APP_ID
+        sync: false # Set in dashboard
+      - key: PRIVY_APP_SECRET
+        sync: false # Set in dashboard
+    
+  # Frontend Static Site
+  - type: web
+    name: bookme-frontend
+    runtime: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+    envVars:
+      - key: VITE_SUPABASE_URL
+        sync: false # Set in dashboard
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false # Set in dashboard
+      - key: VITE_SUPABASE_SERVICE_ROLE_KEY
+        sync: false # Set in dashboard
+      - key: VITE_PRIVY_APP_ID
+        sync: false # Set in dashboard
+      - key: VITE_BACKEND_URL
+        sync: false # Will be the backend service URL

@@ -26,6 +26,7 @@ import DashboardBalance from "./pages/dashboard/DashboardBalance";
 import DashboardIntegrations from "./pages/dashboard/DashboardIntegrations";
 import IntegrationsCallback from "./pages/dashboard/IntegrationsCallback";
 import TestBroadcast from "./pages/TestBroadcast";
+import { DevTokenHelper } from "./components/DevTokenHelper";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,8 @@ function AppContent() {
     <>
       <OnboardingNavigator />
       {!isDashboard && <Navigation />}
+      {/* Dev helper - remove in production */}
+      {process.env.NODE_ENV === 'development' && <DevTokenHelper />}
       <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/discover" element={<Discover />} />
