@@ -80,16 +80,15 @@ export default function ChatModal({
     
     return () => {
       // Clean up WebSocket listeners when modal closes
-      if (conversation) {
-        off('new_message', () => {});
+      if (conversation && connected) {
         emit('unsubscribe_conversation', { conversationId: conversation.id });
       }
     };
-  }, [isOpen, userId, otherUserId]);
+  }, [isOpen, userId, otherUserId]); // Don't include conversation or connected in deps to avoid loops
 
   // Set up WebSocket listeners for real-time messages
   useEffect(() => {
-    if (!conversation || isReadOnly) return;
+    if (!conversation || isReadOnly || !connected) return;
 
     const handleNewMessage = (data: Message) => {
       console.log('📨 New message received:', data);
@@ -131,23 +130,20 @@ export default function ChatModal({
     console.log('🔌 Setting up WebSocket listeners for conversation:', conversation.id);
     
     // Subscribe to conversation
-    if (connected) {
-      emit('subscribe_conversation', { conversationId: conversation.id });
-      console.log('✅ Subscribed to conversation:', conversation.id);
-    }
+    emit('subscribe_conversation', { conversationId: conversation.id });
+    console.log('✅ Subscribed to conversation:', conversation.id);
     
-    // Always listen for messages
+    // Listen for messages
     const unsubscribe = on('new_message', handleNewMessage);
 
     return () => {
+      console.log('🔌 Cleaning up WebSocket listeners for conversation:', conversation.id);
       if (typeof unsubscribe === 'function') {
         unsubscribe();
       }
-      if (connected) {
-        emit('unsubscribe_conversation', { conversationId: conversation.id });
-      }
+      emit('unsubscribe_conversation', { conversationId: conversation.id });
     };
-  }, [conversation, userId, isReadOnly, connected, emit, on]);
+  }, [conversation?.id, userId, isReadOnly]); // Only depend on stable values
 
   // Update connection status based on WebSocket state
   useEffect(() => {

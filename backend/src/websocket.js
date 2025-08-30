@@ -38,6 +38,9 @@ export function setupWebSocket(server) {
       origin: [
         'http://localhost:8080',
         'http://localhost:5173',
+        'https://localhost:8443',
+        'https://192.168.0.10:8443',
+        /^https:\/\/192\.168\.\d+\.\d+:8443$/, // Allow any local IP on port 8443
         'https://roulette-phenomenon-airfare-claire.trycloudflare.com',
         /https:\/\/.*\.trycloudflare\.com$/
       ],

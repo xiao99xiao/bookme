@@ -37,6 +37,7 @@ class WebSocketManager {
         reconnection: true,
         reconnectionAttempts: 5,
         reconnectionDelay: 1000,
+        rejectUnauthorized: false, // Accept self-signed certificates in development
       })
 
       // Connection event handlers
