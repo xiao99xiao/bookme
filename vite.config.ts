@@ -41,7 +41,7 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": process.cwd().endsWith('/src') 
-        ? path.resolve(process.cwd(), "../src")
+        ? process.cwd()  // If already in src, use it directly
         : path.resolve(process.cwd(), "./src"),
     },
   },
