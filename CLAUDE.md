@@ -9,8 +9,17 @@ BookMe is a peer-to-peer booking platform where users can offer services and boo
 
 ### Development
 ```bash
-# Start development server on port 8080
+# Start frontend development server on port 8080
 VITE_DEV_PORT=8080 npm run dev
+
+# Start backend development server on port 4001
+cd backend && PORT=4001 npm run dev
+
+# Expose frontend with SSL via Cloudflare Tunnel
+npx cloudflared tunnel --url http://localhost:8080
+
+# Expose backend with SSL via Cloudflare Tunnel
+npx cloudflared tunnel --url http://localhost:4001
 
 # Build for production
 npm run build
@@ -42,13 +51,21 @@ ps aux | grep vite | grep -v grep
 
 ## Architecture Overview
 
+### Backend Service (Hono)
+The app now includes a **backend service** at `/backend` for secure Privy token validation:
+- **Framework**: Hono (lightweight Node.js server)
+- **Purpose**: Validates Privy tokens and performs secure database operations
+- **Port**: 4001 (development)
+- **Auth Flow**: Frontend sends Privy token → Backend validates → Backend uses Supabase service role
+
 ### Authentication System
 The app uses a **dual authentication approach**:
 - **Privy**: Primary authentication for user identity (stored as DID format: `did:privy:xxx`)
-- **Supabase**: Database operations with admin client bypassing RLS
+- **Backend**: Validates Privy tokens and handles all database operations
+- **Supabase**: Database only (not for auth) - backend uses service role key
 - **ID Mapping**: Privy DIDs are converted to UUIDs for database operations via `src/lib/id-mapping.ts`
 
-Critical pattern: When making API calls, always pass `userId` (UUID) explicitly rather than relying on Supabase auth.
+Critical pattern: Frontend sends Privy token to backend, which validates and performs secure operations.
 
 ### Core Components Structure
 
@@ -114,13 +131,19 @@ static async methodName(userId: string, data: any) {
 4. **vite.config.ts**: Node polyfills configuration for crypto operations
 
 ## Environment Variables
-Required in `.env`:
+Required in `.env.local`:
 ```
+# Frontend variables (VITE_ prefix for browser access)
 VITE_SUPABASE_URL=
 VITE_SUPABASE_ANON_KEY=
 VITE_PRIVY_APP_ID=
 VITE_GOOGLE_CLIENT_ID=
 VITE_GOOGLE_CLIENT_SECRET=
+VITE_BACKEND_URL=  # Backend URL (use Cloudflare tunnel URL for SSL in dev)
+
+# Backend-only variables (in .env.local)
+PRIVY_APP_SECRET=
+VITE_SUPABASE_SERVICE_ROLE_KEY=
 ```
 
 ## Development Gotchas
@@ -146,6 +169,8 @@ VITE_GOOGLE_CLIENT_SECRET=
 - Forms use react-hook-form with zod validation
 
 ## Testing Access
-- Local: http://localhost:8080
-- Cloudflare Tunnel: Use `npx cloudflared tunnel` for public access
-- Network URLs vary by local network configuration
+- Frontend Local: http://localhost:8080
+- Backend Local: http://localhost:4001
+- Frontend with SSL: Run `npx cloudflared tunnel --url http://localhost:8080`
+- Backend with SSL: Run `npx cloudflared tunnel --url http://localhost:4001`
+- Both services get unique `https://*.trycloudflare.com` URLs for development with SSL
