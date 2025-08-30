@@ -39,11 +39,12 @@ export default defineConfig(({ mode }) => ({
     componentTagger(),
   ].filter(Boolean),
   resolve: {
-    alias: {
-      "@": process.cwd().endsWith('/src') 
-        ? process.cwd()  // If already in src, use it directly
-        : path.resolve(process.cwd(), "./src"),
-    },
+    alias: [
+      {
+        find: '@',
+        replacement: path.resolve(__dirname, './src')
+      }
+    ]
   },
   optimizeDeps: {
     include: [
