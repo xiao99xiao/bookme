@@ -5,6 +5,8 @@ import { fileURLToPath, URL } from "url";
 import { componentTagger } from "lovable-tagger";
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
@@ -38,7 +40,9 @@ export default defineConfig(({ mode }) => ({
   ].filter(Boolean),
   resolve: {
     alias: {
-      "@": path.resolve(process.cwd(), "src"),
+      "@": process.cwd().endsWith('/src') 
+        ? path.resolve(process.cwd(), "../src")
+        : path.resolve(process.cwd(), "./src"),
     },
   },
   optimizeDeps: {
