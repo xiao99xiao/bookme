@@ -25,10 +25,6 @@ import DashboardBookings from "./pages/dashboard/DashboardBookings";
 import DashboardBalance from "./pages/dashboard/DashboardBalance";
 import DashboardIntegrations from "./pages/dashboard/DashboardIntegrations";
 import IntegrationsCallback from "./pages/dashboard/IntegrationsCallback";
-import DashboardTest from "./pages/dashboard/DashboardTest";
-import DashboardBackendTest from "./pages/dashboard/DashboardBackendTest";
-import DashboardDebug from "./pages/dashboard/DashboardDebug";
-import { DevTokenHelper } from "./components/DevTokenHelper";
 
 const queryClient = new QueryClient();
 
@@ -41,8 +37,6 @@ function AppContent() {
     <>
       <OnboardingNavigator />
       {!isDashboard && <Navigation />}
-      {/* Dev helper - remove in production */}
-      {process.env.NODE_ENV === 'development' && <DevTokenHelper />}
       <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/discover" element={<Discover />} />
@@ -101,9 +95,6 @@ function AppContent() {
               <Route path="balance" element={<DashboardBalance />} />
               <Route path="integrations" element={<DashboardIntegrations />} />
               <Route path="integrations/callback" element={<IntegrationsCallback />} />
-              <Route path="test" element={<DashboardTest />} />
-              <Route path="backend-test" element={<DashboardBackendTest />} />
-              <Route path="debug" element={<DashboardDebug />} />
             </Route>
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
