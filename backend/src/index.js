@@ -6,6 +6,8 @@ import { createClient } from '@supabase/supabase-js'
 import { v5 as uuidv5 } from 'uuid'
 import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv'
+import { createServer } from 'http'
+import { setupWebSocket } from './websocket.js'
 
 // Load environment variables
 dotenv.config({ path: '../.env.local' })
@@ -1257,14 +1259,20 @@ app.delete('/api/integrations/:id', verifyPrivyAuth, async (c) => {
   }
 })
 
-// Start server
+// Start server with WebSocket support
 const port = process.env.PORT || 4000
 console.log(`🚀 Server starting on port ${port}...`)
 
-serve({
+// Create HTTP server
+const server = serve({
   fetch: app.fetch,
   port: port,
+  createServer: createServer,
 }, (info) => {
   console.log(`✅ Server running at http://localhost:${info.port}`)
   console.log(`📝 Health check: http://localhost:${info.port}/health`)
+  console.log(`🔌 WebSocket server ready`)
 })
+
+// Setup WebSocket server
+const io = setupWebSocket(server)
