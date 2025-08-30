@@ -1,6 +1,6 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useMemo } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
-import { supabaseAdmin } from '@/lib/supabase';
+import { BackendAPI } from '@/lib/backend-api';
 import { ensureUuid, privyDidToUuid, isPrivyDid } from '@/lib/id-mapping';
 import { getBrowserTimezone } from '@/lib/timezone';
 
@@ -65,9 +65,12 @@ interface PrivyAuthProviderProps {
 }
 
 export const PrivyAuthProvider = ({ children }: PrivyAuthProviderProps) => {
-  const { user: privyUser, ready, authenticated, login, logout: privyLogout } = usePrivy();
+  const { user: privyUser, ready, authenticated, login, logout: privyLogout, getAccessToken } = usePrivy();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Create backend API instance with getAccessToken
+  const backendApi = useMemo(() => new BackendAPI(getAccessToken), [getAccessToken]);
   
   // Generate UUID from Privy DID for database operations
   const privyUserId = privyUser?.id || null;
@@ -109,119 +112,37 @@ export const PrivyAuthProvider = ({ children }: PrivyAuthProviderProps) => {
     try {
       console.log('=== FETCH/CREATE PROFILE START ===');
       console.log('Privy ID:', privyId);
-      console.log('Converting Privy DID to UUID...');
       
-      const uuid = ensureUuid(privyId);
-      console.log('Mapped UUID:', uuid);
-      console.log('Admin client config:', !!supabaseAdmin);
+      // Don't store token - let Privy handle it internally
+      // Just fetch or create profile through backend
+      console.log('Fetching profile from backend...');
+      const profileData = await backendApi.getUserProfile();
       
-      // First try to fetch existing profile (using admin client to bypass RLS)
-      console.log('Attempting to fetch profile with admin client...');
-      const { data, error } = await supabaseAdmin
-        .from('users')
-        .select('*')
-        .eq('id', uuid)
-        .single();
-
-      if (data) {
-        console.log('Profile found:', data);
-        setProfile(data);
-        return;
-      }
-
-      // If profile doesn't exist (PGRST116), create it
-      if (error?.code === 'PGRST116') {
-        console.log('Profile not found, creating new profile...');
-        await createProfile(uuid);
-        return;
-      }
-
-      if (error) {
-        console.error('Profile fetch error:', error);
-        setProfile(null);
+      if (profileData) {
+        console.log('Profile found:', profileData);
+        setProfile(profileData);
         return;
       }
     } catch (error) {
       console.error('fetchOrCreateProfile failed:', error);
+      // Profile will be created by backend on first request
       setProfile(null);
     }
   };
 
-  const createProfile = async (uuid: string) => {
-    try {
-      if (!privyUser) {
-        throw new Error('No Privy user found');
-      }
-
-      const email = getUserEmail(privyUser);
-      const displayName = getUserDisplayName(privyUser);
-
-      if (!email) {
-        throw new Error('No email found for user');
-      }
-
-      // Detect user's timezone automatically
-      const userTimezone = getBrowserTimezone();
-      
-      console.log('Creating profile for:', { uuid, email, displayName, timezone: userTimezone });
-
-      // Use admin client to bypass RLS for user creation
-      const { data, error } = await supabaseAdmin
-        .from('users')
-        .insert({
-          id: uuid,
-          email: email,
-          display_name: displayName,
-          bio: null,
-          location: null,
-          avatar: null,
-          phone: null,
-          timezone: userTimezone, // Automatically set timezone from browser
-          is_verified: false,
-          rating: 0,
-          review_count: 0,
-          total_earnings: 0,
-          total_spent: 0,
-          is_provider: false,
-          provider_verified_at: null
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Profile creation error:', error);
-        
-        // If it's a duplicate key error, try to fetch the existing profile
-        if (error.code === '23505') {
-          console.log('Profile already exists, fetching existing profile...');
-          const { data: existingData, error: fetchError } = await supabaseAdmin
-            .from('users')
-            .select('*')
-            .eq('id', uuid)
-            .single();
-            
-          if (!fetchError && existingData) {
-            console.log('Found existing profile:', existingData);
-            setProfile(existingData);
-            return;
-          }
-        }
-        
-        setProfile(null);
-        return;
-      }
-
-      console.log('Profile created successfully:', data);
-      setProfile(data);
-    } catch (error) {
-      console.error('Error creating profile:', error);
-      setProfile(null);
-    }
-  };
-
+  // Profile refresh function
   const refreshProfile = async () => {
-    if (privyUser?.id) {
-      await fetchOrCreateProfile(privyUser.id);
+    if (!privyUserId) return;
+    
+    try {
+      // Don't store token - let Privy handle it
+      const profileData = await backendApi.getUserProfile();
+      if (profileData) {
+        setProfile(profileData);
+      }
+    } catch (error) {
+      console.error('Error refreshing profile:', error);
+      setProfile(null);
     }
   };
 

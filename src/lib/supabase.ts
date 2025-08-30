@@ -5,23 +5,10 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY!
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-// Create a client for admin operations (bypasses RLS)
-// Note: In production, this should be handled server-side
-const supabaseServiceKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
-console.log('Service key available:', !!supabaseServiceKey);
-console.log('Service key length:', supabaseServiceKey?.length || 0);
-
-if (!supabaseServiceKey || supabaseServiceKey === 'not-set') {
-  console.error('⚠️ VITE_SUPABASE_SERVICE_ROLE_KEY not found in environment variables');
-  console.error('Available env vars:', Object.keys(import.meta.env).filter(key => key.includes('SUPABASE')));
-}
-
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey || supabaseAnonKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  }
-})
+// DEPRECATED: Admin client removed for security
+// All admin operations now go through the backend API
+// See src/lib/api-client.ts for the new API client
+export const supabaseAdmin = null as any; // Temporarily keep to avoid breaking imports
 
 // Database types for TypeScript
 export interface Database {

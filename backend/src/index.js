@@ -4,6 +4,7 @@ import { cors } from 'hono/cors'
 import { PrivyClient } from '@privy-io/server-auth'
 import { createClient } from '@supabase/supabase-js'
 import { v5 as uuidv5 } from 'uuid'
+import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv'
 
 // Load environment variables
@@ -14,14 +15,23 @@ const app = new Hono()
 
 // Enable CORS for your frontend
 app.use('*', cors({
-  origin: ['http://localhost:8080', 'http://localhost:5173'],
+  origin: [
+    'http://localhost:8080', 
+    'http://localhost:5173',
+    'https://roulette-phenomenon-airfare-claire.trycloudflare.com',
+    /https:\/\/.*\.trycloudflare\.com$/ // Allow any Cloudflare tunnel
+  ],
   credentials: true,
 }))
+
+// Debug: Check if env vars are loaded
+console.log('Privy App ID:', process.env.VITE_PRIVY_APP_ID ? 'Set' : 'Not set');
+console.log('Privy App Secret:', process.env.PRIVY_APP_SECRET ? 'Set' : 'Not set');
 
 // Initialize clients
 const privyClient = new PrivyClient(
   process.env.VITE_PRIVY_APP_ID,
-  process.env.PRIVY_APP_SECRET // You'll need to add this to .env.local
+  process.env.PRIVY_APP_SECRET
 )
 
 const supabaseAdmin = createClient(
@@ -72,6 +82,98 @@ app.get('/health', (c) => {
     status: 'ok',
     timestamp: new Date().toISOString()
   })
+})
+
+// Generate Supabase-compatible JWT token
+app.post('/api/auth/token', async (c) => {
+  try {
+    const authHeader = c.req.header('Authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return c.json({ error: 'Missing authorization header' }, 401)
+    }
+    
+    const privyToken = authHeader.substring(7)
+    const privyUser = await privyClient.verifyAuthToken(privyToken)
+    
+    if (!privyUser) {
+      return c.json({ error: 'Invalid token' }, 401)
+    }
+    
+    // Convert Privy DID to UUID
+    const userId = privyDidToUuid(privyUser.userId)
+    
+    // Get or create user profile
+    const { data: user } = await supabaseAdmin
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single()
+    
+    if (!user) {
+      // Create user if doesn't exist
+      const emailAccount = privyUser.linkedAccounts?.find(acc => acc.type === 'email')
+      const email = emailAccount?.address || `${privyUser.userId}@privy.user`
+      
+      await supabaseAdmin
+        .from('users')
+        .insert({
+          id: userId,
+          email: email,
+          display_name: email.split('@')[0],
+          timezone: 'UTC',
+          is_verified: false,
+          rating: 0,
+          review_count: 0,
+          total_earnings: 0,
+          total_spent: 0,
+          is_provider: false
+        })
+    }
+    
+    // Create Supabase-compatible JWT with all required claims
+    const jwtSecret = process.env.SUPABASE_JWT_SECRET;
+    
+    if (!jwtSecret) {
+      console.error('SUPABASE_JWT_SECRET not found in environment variables');
+      return c.json({ error: 'JWT secret not configured' }, 500)
+    }
+    
+    // Generate a session ID for this JWT
+    const sessionId = `${userId}-${Date.now()}`
+    
+    const supabaseJWT = jwt.sign(
+      {
+        sub: userId, // This becomes auth.uid() in RLS policies
+        aud: 'authenticated',
+        role: 'authenticated',
+        email: user?.email || `${privyUser.userId}@privy.user`,
+        phone: null,
+        app_metadata: {
+          provider: 'privy',
+          providers: ['privy']
+        },
+        user_metadata: {
+          privy_id: privyUser.userId
+        },
+        aal: 'aal1', // Authentication assurance level
+        amr: [{ method: 'privy', timestamp: Math.floor(Date.now() / 1000) }], // Authentication methods reference
+        session_id: sessionId,
+        iss: process.env.VITE_SUPABASE_URL + '/auth/v1',
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24) // 24 hours
+      },
+      jwtSecret
+    )
+    
+    return c.json({ 
+      token: supabaseJWT,
+      user_id: userId,
+      expires_in: 86400 // 24 hours in seconds
+    })
+  } catch (error) {
+    console.error('Token generation error:', error)
+    return c.json({ error: 'Failed to generate token' }, 500)
+  }
 })
 
 // Get or create user profile
@@ -255,6 +357,207 @@ app.patch('/api/profile', verifyPrivyAuth, async (c) => {
     return c.json(data)
   } catch (error) {
     console.error('Profile update error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Get user's services
+app.get('/api/services/user/:userId', verifyPrivyAuth, async (c) => {
+  try {
+    const userId = c.get('userId')
+    const targetUserId = c.req.param('userId')
+    
+    const { data, error } = await supabaseAdmin
+      .from('services')
+      .select('*')
+      .eq('provider_id', targetUserId)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+    
+    if (error) {
+      console.error('Services fetch error:', error)
+      return c.json({ error: 'Failed to fetch services' }, 500)
+    }
+    
+    return c.json(data || [])
+  } catch (error) {
+    console.error('Services error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Create or update service
+app.post('/api/services', verifyPrivyAuth, async (c) => {
+  try {
+    const userId = c.get('userId')
+    const body = await c.req.json()
+    
+    // Remove any fields that don't exist in the database
+    delete body.time_slots // Remove if accidentally sent
+    
+    // Ensure provider_id matches authenticated user
+    const serviceData = {
+      ...body,
+      provider_id: userId
+    }
+    
+    if (body.id) {
+      // Update existing service
+      const { data, error } = await supabaseAdmin
+        .from('services')
+        .update(serviceData)
+        .eq('id', body.id)
+        .eq('provider_id', userId) // Ensure user owns the service
+        .select()
+        .single()
+      
+      if (error) {
+        console.error('Service update error:', error)
+        return c.json({ error: 'Failed to update service' }, 500)
+      }
+      
+      return c.json(data)
+    } else {
+      // Create new service
+      const { data, error } = await supabaseAdmin
+        .from('services')
+        .insert(serviceData)
+        .select()
+        .single()
+      
+      if (error) {
+        console.error('Service creation error:', error)
+        return c.json({ error: 'Failed to create service' }, 500)
+      }
+      
+      return c.json(data)
+    }
+  } catch (error) {
+    console.error('Service error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Delete service
+app.delete('/api/services/:serviceId', verifyPrivyAuth, async (c) => {
+  try {
+    const userId = c.get('userId')
+    const serviceId = c.req.param('serviceId')
+    
+    const { error } = await supabaseAdmin
+      .from('services')
+      .delete()
+      .eq('id', serviceId)
+      .eq('provider_id', userId) // Ensure user owns the service
+    
+    if (error) {
+      console.error('Service deletion error:', error)
+      return c.json({ error: 'Failed to delete service' }, 500)
+    }
+    
+    return c.json({ success: true })
+  } catch (error) {
+    console.error('Service deletion error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Get user's bookings
+app.get('/api/bookings/user/:userId', verifyPrivyAuth, async (c) => {
+  try {
+    const userId = c.get('userId')
+    const targetUserId = c.req.param('userId')
+    const { role } = c.req.query()
+    
+    let query = supabaseAdmin
+      .from('bookings')
+      .select(`
+        *,
+        service:services(*),
+        customer:users!customer_id(*),
+        provider:users!provider_id(*)
+      `)
+    
+    if (role === 'customer') {
+      query = query.eq('customer_id', targetUserId)
+    } else if (role === 'provider') {
+      query = query.eq('provider_id', targetUserId)
+    } else {
+      // Get both
+      query = query.or(`customer_id.eq.${targetUserId},provider_id.eq.${targetUserId}`)
+    }
+    
+    const { data, error } = await query.order('created_at', { ascending: false })
+    
+    if (error) {
+      console.error('Bookings fetch error:', error)
+      return c.json({ error: 'Failed to fetch bookings' }, 500)
+    }
+    
+    return c.json(data || [])
+  } catch (error) {
+    console.error('Bookings error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Update booking status
+app.patch('/api/bookings/:bookingId', verifyPrivyAuth, async (c) => {
+  try {
+    const userId = c.get('userId')
+    const bookingId = c.req.param('bookingId')
+    const updates = await c.req.json()
+    
+    // Verify user is either customer or provider
+    const { data: booking, error: fetchError } = await supabaseAdmin
+      .from('bookings')
+      .select('*')
+      .eq('id', bookingId)
+      .single()
+    
+    if (fetchError || !booking) {
+      return c.json({ error: 'Booking not found' }, 404)
+    }
+    
+    if (booking.customer_id !== userId && booking.provider_id !== userId) {
+      return c.json({ error: 'Unauthorized' }, 403)
+    }
+    
+    const { data, error } = await supabaseAdmin
+      .from('bookings')
+      .update(updates)
+      .eq('id', bookingId)
+      .select()
+      .single()
+    
+    if (error) {
+      console.error('Booking update error:', error)
+      return c.json({ error: 'Failed to update booking' }, 500)
+    }
+    
+    return c.json(data)
+  } catch (error) {
+    console.error('Booking update error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Get categories
+app.get('/api/categories', async (c) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('categories')
+      .select('*')
+      .order('name')
+    
+    if (error) {
+      console.error('Categories fetch error:', error)
+      return c.json({ error: 'Failed to fetch categories' }, 500)
+    }
+    
+    return c.json(data || [])
+  } catch (error) {
+    console.error('Categories error:', error)
     return c.json({ error: 'Internal server error' }, 500)
   }
 })
