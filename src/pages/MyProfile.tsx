@@ -10,7 +10,7 @@ import { Upload, Copy, Check, Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/PrivyAuthContext';
-import { ApiClient } from '@/lib/api';
+import { ApiClient } from '@/lib/api-migration';
 
 export default function MyProfile() {
   const { user, profile, refreshProfile, userId } = useAuth();

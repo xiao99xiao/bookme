@@ -10,7 +10,7 @@ import { MapPin, Video, Users, Phone, Plus, Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/PrivyAuthContext';
-import { ApiClient } from '@/lib/api';
+import { ApiClient } from '@/lib/api-migration';
 import { TimeSlotSelector } from '@/components/TimeSlotSelector';
 
 interface Service {

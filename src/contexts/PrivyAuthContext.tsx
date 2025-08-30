@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useMemo } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { BackendAPI } from '@/lib/backend-api';
+import { ApiClient } from '@/lib/api-migration';
 import { ensureUuid, privyDidToUuid, isPrivyDid } from '@/lib/id-mapping';
 import { getBrowserTimezone } from '@/lib/timezone';
 
@@ -71,6 +72,11 @@ export const PrivyAuthProvider = ({ children }: PrivyAuthProviderProps) => {
   
   // Create backend API instance with getAccessToken
   const backendApi = useMemo(() => new BackendAPI(getAccessToken), [getAccessToken]);
+  
+  // Initialize ApiClient compatibility layer
+  useEffect(() => {
+    ApiClient.initialize(getAccessToken);
+  }, [getAccessToken]);
   
   // Generate UUID from Privy DID for database operations
   const privyUserId = privyUser?.id || null;

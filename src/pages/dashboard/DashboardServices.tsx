@@ -16,7 +16,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/contexts/PrivyAuthContext';
-import { ApiClient } from '@/lib/api';
+import { ApiClient } from '@/lib/api-migration';
 import CreateServiceModal from '@/components/CreateServiceModal';
 
 interface Service {

@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Camera, Globe, Mail, Phone, MapPin, Calendar, Star, Video, Users, Copy, Check, ExternalLink, Clock } from 'lucide-react';
 import { useAuth } from '@/contexts/PrivyAuthContext';
-import { ApiClient } from '@/lib/api';
+import { ApiClient } from '@/lib/api-migration';
 import { getBrowserTimezone, getTimezoneOffset } from '@/lib/timezone';
 
 const profileSchema = z.object({

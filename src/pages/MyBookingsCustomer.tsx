@@ -9,7 +9,7 @@ import { Video, Clock, MapPin, X, Star, Loader2, Phone, Users, MessageCircle } f
 import { format, parseISO, isPast, isFuture } from "date-fns";
 import { toast } from "sonner";
 import { useAuth} from "@/contexts/PrivyAuthContext";
-import { ApiClient } from "@/lib/api";
+import { ApiClient } from "@/lib/api-migration";
 
 interface Booking {
   id: string;

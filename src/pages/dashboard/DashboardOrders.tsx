@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/PrivyAuthContext';
-import { ApiClient } from '@/lib/api';
+import { ApiClient } from '@/lib/api-migration';
 import ChatModal from '@/components/ChatModal';
 import AddToCalendar from '@/components/AddToCalendar';
 import MeetingLinkDisplay from '@/components/MeetingLinkDisplay';

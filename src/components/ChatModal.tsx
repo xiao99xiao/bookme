@@ -5,10 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/PrivyAuthContext';
-import { ApiClient } from '@/lib/api';
-import { supabase } from '@/lib/supabase';
+import { ApiClient } from '@/lib/api-migration';
+import { useWebSocket } from '@/lib/websocket';
 import { toast } from 'sonner';
-import type { RealtimeChannel } from '@supabase/supabase-js';
 
 interface Message {
   id: string;

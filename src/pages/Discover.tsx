@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star, MapPin, Clock, Video, MessageCircle, Search, Filter, Users, Phone, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { ApiClient } from "@/lib/api";
+import { ApiClient } from "@/lib/api-migration";
 import { useAuth } from "@/contexts/PrivyAuthContext";
 import { getBrowserTimezone } from "@/lib/timezone";
 

@@ -9,7 +9,7 @@ import { MapPin, Clock, DollarSign, Calendar, Phone, Video, Users, X, Star, Arro
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/PrivyAuthContext";
-import { ApiClient } from "@/lib/api";
+import { ApiClient } from "@/lib/api-migration";
 import BookingTimeSlots from "@/components/BookingTimeSlots";
 import StarRating from "@/components/StarRating";
 import { toast } from "sonner";

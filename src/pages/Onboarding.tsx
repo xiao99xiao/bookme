@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { Upload, ArrowRight, ArrowLeft, MapPin, User, FileText, Briefcase, Search, Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/PrivyAuthContext";
-import { ApiClient } from "@/lib/api";
+import { ApiClient } from "@/lib/api-migration";
 
 const Onboarding = () => {
   const navigate = useNavigate();

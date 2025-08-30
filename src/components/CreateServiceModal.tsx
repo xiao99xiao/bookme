@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { getLocationIcon } from '@/lib/utils';
 import { TimeSlotSelector } from './TimeSlotSelector';
 import { GoogleMeetIcon, ZoomIcon, TeamsIcon } from '@/components/icons/MeetingPlatformIcons';
-import { ApiClient } from '@/lib/api';
+import { ApiClient } from '@/lib/api-migration';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { toast } from 'sonner';
 
