@@ -38,7 +38,7 @@ export default defineConfig(({ mode }) => ({
   ].filter(Boolean),
   resolve: {
     alias: {
-      "@": fileURLToPath(new URL("./src", import.meta.url)),
+      "@": path.resolve(process.cwd(), "src"),
     },
   },
   optimizeDeps: {
