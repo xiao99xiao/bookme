@@ -25,6 +25,7 @@ services:
   - type: web
     name: bookme-frontend
     runtime: static
+    rootDir: .
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
     headers:
