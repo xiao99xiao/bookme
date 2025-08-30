@@ -5,6 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:ssl": "VITE_HTTPS=true vite",
+    "dev:backend": "cd backend && npm run dev:ssl",
+    "dev:all": "npm run setup:ssl && concurrently \"npm run dev:ssl\" \"npm run dev:backend\"",
+    "setup:ssl": "chmod +x setup-ssl.sh && ./setup-ssl.sh",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
@@ -81,6 +85,7 @@
     "@vitejs/plugin-react-swc": "^3.11.0",
     "autoprefixer": "^10.4.21",
     "buffer": "^6.0.3",
+    "concurrently": "^9.2.1",
     "eslint": "^9.32.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",

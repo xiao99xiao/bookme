@@ -86,14 +86,24 @@ const Discover = () => {
         setLoading(true);
         // Get viewer's timezone to properly display service time slots
         const viewerTimezone = profile?.timezone || getBrowserTimezone();
-        const servicesData = await ApiClient.getServices({
-          search: searchTerm || undefined,
-          category: selectedCategory === "all" ? undefined : selectedCategory,
+        const filters: any = {
           viewerTimezone,
           sortBy: 'created_at',
           sortOrder: 'desc',
           limit: 50
-        });
+        };
+        
+        // Only add search if it has a value
+        if (searchTerm && searchTerm.trim()) {
+          filters.search = searchTerm.trim();
+        }
+        
+        // Only add category if it's not "all"
+        if (selectedCategory && selectedCategory !== "all") {
+          filters.category = selectedCategory;
+        }
+        
+        const servicesData = await ApiClient.getServices(filters);
         
         setServices(servicesData.services);
         setError(null);
@@ -221,22 +231,22 @@ const Discover = () => {
                     <CardHeader className="pb-4">
                       <div className="flex items-start gap-3 mb-3">
                         <Avatar className="w-12 h-12">
-                          <AvatarImage src={service.users?.avatar || ""} />
+                          <AvatarImage src={service.provider?.avatar || service.users?.avatar || ""} />
                           <AvatarFallback>
-                            {service.users?.display_name?.charAt(0) || "U"}
+                            {(service.provider?.display_name || service.users?.display_name || "U").charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
                           <p className="font-semibold text-sm">
-                            {service.users?.display_name || "Unknown Provider"}
+                            {service.provider?.display_name || service.users?.display_name || "Unknown Provider"}
                           </p>
                           <div className="flex items-center gap-1 mt-1">
                             <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                             <span className="text-sm font-medium">
-                              {service.users?.rating.toFixed(1) || "0.0"}
+                              {(service.provider?.rating || service.users?.rating || 0).toFixed(1)}
                             </span>
                             <span className="text-xs text-muted-foreground">
-                              ({service.users?.review_count || 0})
+                              ({service.provider?.review_count || service.users?.review_count || 0})
                             </span>
                           </div>
                           {service.location && (

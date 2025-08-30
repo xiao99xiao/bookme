@@ -4,7 +4,9 @@
   "type": "module",
   "scripts": {
     "dev": "node src/check-env.js && node --watch src/index.js",
-    "start": "node src/check-env.js && node src/index.js"
+    "dev:ssl": "node src/check-env.js && PORT=4443 node --watch src/https-server.js",
+    "start": "node src/check-env.js && node src/index.js",
+    "start:ssl": "node src/check-env.js && PORT=4443 node src/https-server.js"
   },
   "dependencies": {
     "@hono/node-server": "^1.14.0",

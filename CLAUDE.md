@@ -9,16 +9,22 @@ BookMe is a peer-to-peer booking platform where users can offer services and boo
 
 ### Development
 ```bash
-# Start frontend development server on port 8080
-VITE_DEV_PORT=8080 npm run dev
+# SSL Setup (one-time, generates certificates for local IP)
+npm run setup:ssl
 
-# Start backend development server on port 4001
-cd backend && PORT=4001 npm run dev
+# Start BOTH frontend and backend with HTTPS
+npm run dev:all
 
-# Expose frontend with SSL via Cloudflare Tunnel
+# Or run them separately with HTTPS:
+npm run dev:ssl       # Frontend with HTTPS on port 8443
+npm run dev:backend   # Backend with HTTPS on port 4443
+
+# Legacy HTTP development (original setup)
+VITE_DEV_PORT=8080 npm run dev              # Frontend on port 8080
+cd backend && PORT=4001 npm run dev         # Backend on port 4001
+
+# Cloudflare Tunnel (alternative for SSL)
 npx cloudflared tunnel --url http://localhost:8080
-
-# Expose backend with SSL via Cloudflare Tunnel
 npx cloudflared tunnel --url http://localhost:4001
 
 # Build for production
@@ -169,8 +175,17 @@ VITE_SUPABASE_SERVICE_ROLE_KEY=
 - Forms use react-hook-form with zod validation
 
 ## Testing Access
+
+### With SSL (Recommended - after running `npm run setup:ssl`)
+- Frontend: https://<YOUR-LOCAL-IP>:8443 (e.g., https://192.168.0.10:8443)
+- Backend: https://<YOUR-LOCAL-IP>:4443 (e.g., https://192.168.0.10:4443)
+- Access from any device on your network using the same URLs
+
+### Without SSL (Legacy)
 - Frontend Local: http://localhost:8080
 - Backend Local: http://localhost:4001
-- Frontend with SSL: Run `npx cloudflared tunnel --url http://localhost:8080`
-- Backend with SSL: Run `npx cloudflared tunnel --url http://localhost:4001`
+
+### With Cloudflare Tunnel (Alternative SSL)
+- Frontend: Run `npx cloudflared tunnel --url http://localhost:8080`
+- Backend: Run `npx cloudflared tunnel --url http://localhost:4001`
 - Both services get unique `https://*.trycloudflare.com` URLs for development with SSL

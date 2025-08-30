@@ -10,13 +10,17 @@ export default defineConfig(({ mode }) => ({
   base: '/',
   server: {
     host: "::",
-    port: 8080,
+    port: process.env.VITE_HTTPS === 'true' ? 8443 : 8080,
+    https: process.env.VITE_HTTPS === 'true' ? {
+      cert: './certs/cert.pem',
+      key: './certs/key.pem'
+    } : undefined,
     watch: {
       usePolling: false,
       interval: 100,
     },
     hmr: {
-      clientPort: 443,
+      clientPort: process.env.VITE_HTTPS === 'true' ? 8443 : 443,
     },
     allowedHosts: [
       '.trycloudflare.com', // Allow all Cloudflare tunnel domains

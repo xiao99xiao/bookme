@@ -81,17 +81,23 @@ export interface Booking {
 export class ApiClient {
   private static backendApi: BackendAPI
   private static initialized = false
+  private static isInitialized = false
 
   static initialize(getAccessToken: () => Promise<string | null>) {
     if (!this.initialized) {
       this.backendApi = new BackendAPI(getAccessToken)
       this.initialized = true
+      this.isInitialized = true
     }
   }
 
   private static ensureInitialized() {
     if (!this.backendApi) {
-      throw new Error('ApiClient not initialized. Call ApiClient.initialize() first.')
+      // For public endpoints that don't require auth, initialize with no token
+      console.warn('ApiClient not initialized. Using public access mode.')
+      this.backendApi = new BackendAPI(async () => null)
+      this.initialized = true
+      this.isInitialized = true
     }
   }
 
@@ -137,9 +143,15 @@ export class ApiClient {
     return this.backendApi.getUserServices(userId)
   }
 
-  static async getServices(filters?: any): Promise<Service[]> {
+  static async getServices(filters?: any): Promise<any> {
     this.ensureInitialized()
-    return this.backendApi.getServices(filters || {})
+    // Use public endpoint for discovery
+    const params = new URLSearchParams(filters || {});
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://192.168.0.10:4443'}/api/services/public?${params}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch services');
+    }
+    return response.json();
   }
 
   static async getServiceById(serviceId: string): Promise<Service | null> {

@@ -7,17 +7,26 @@ export class BackendAPI {
   private async request(endpoint: string, options: RequestInit = {}) {
     const token = await this.getAccessToken();
     
-    if (!token) {
+    // For public endpoints, don't require token
+    const isPublicEndpoint = endpoint.includes('/public') || endpoint.includes('/categories');
+    
+    if (!token && !isPublicEndpoint) {
       throw new Error('Not authenticated');
+    }
+
+    const headers: any = {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    };
+
+    // Only add Authorization header if we have a token
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
 
     const response = await fetch(`${BACKEND_URL}${endpoint}`, {
       ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-        ...options.headers,
-      },
+      headers,
     });
 
     if (!response.ok) {

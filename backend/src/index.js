@@ -20,6 +20,9 @@ app.use('*', cors({
   origin: [
     'http://localhost:8080', 
     'http://localhost:5173',
+    'https://localhost:8443',
+    'https://192.168.0.10:8443',
+    /^https:\/\/192\.168\.\d+\.\d+:8443$/, // Allow any local IP on port 8443
     'https://roulette-phenomenon-airfare-claire.trycloudflare.com',
     /https:\/\/.*\.trycloudflare\.com$/ // Allow any Cloudflare tunnel
   ],
@@ -544,7 +547,7 @@ app.patch('/api/bookings/:bookingId', verifyPrivyAuth, async (c) => {
   }
 })
 
-// Get categories
+// Get categories (public)
 app.get('/api/categories', async (c) => {
   try {
     const { data, error } = await supabaseAdmin
@@ -560,6 +563,50 @@ app.get('/api/categories', async (c) => {
     return c.json(data || [])
   } catch (error) {
     console.error('Categories error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Get public services for discovery (no auth required)
+app.get('/api/services/public', async (c) => {
+  try {
+    const { search, category, minPrice, maxPrice, location } = c.req.query()
+    
+    let query = supabaseAdmin
+      .from('services')
+      .select(`
+        *,
+        provider:users!provider_id(display_name, avatar, rating, review_count)
+      `)
+      .eq('is_active', true)
+    
+    // Only apply filters if they have valid values
+    if (search && search !== 'undefined' && search.trim()) {
+      query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`)
+    }
+    if (category && category !== 'undefined' && category !== 'all') {
+      query = query.eq('category_id', category)
+    }
+    if (minPrice && minPrice !== 'undefined') {
+      query = query.gte('price', parseFloat(minPrice))
+    }
+    if (maxPrice && maxPrice !== 'undefined') {
+      query = query.lte('price', parseFloat(maxPrice))
+    }
+    if (location && location !== 'undefined' && location.trim()) {
+      query = query.ilike('location', `%${location}%`)
+    }
+    
+    const { data, error } = await query.order('created_at', { ascending: false })
+    
+    if (error) {
+      console.error('Public services fetch error:', error)
+      return c.json({ error: 'Failed to fetch services' }, 500)
+    }
+    
+    return c.json({ services: data || [] })
+  } catch (error) {
+    console.error('Public services error:', error)
     return c.json({ error: 'Internal server error' }, 500)
   }
 })
@@ -599,7 +646,7 @@ app.get('/api/services/search', verifyPrivyAuth, async (c) => {
       .from('services')
       .select(`
         *,
-        provider:users!provider_id(display_name, avatar_url, rating, review_count)
+        provider:users!provider_id(display_name, avatar, rating, review_count)
       `)
       .eq('is_active', true)
     
@@ -755,8 +802,8 @@ app.get('/api/conversations', verifyPrivyAuth, async (c) => {
       .from('conversations')
       .select(`
         *,
-        customer:users!customer_id(id, display_name, avatar_url),
-        provider:users!provider_id(id, display_name, avatar_url),
+        customer:users!customer_id(id, display_name, avatar),
+        provider:users!provider_id(id, display_name, avatar),
         booking:bookings!booking_id(id, service_id, status),
         last_message:messages(content, created_at, sender_id)
       `)
@@ -938,7 +985,7 @@ app.post('/api/messages', verifyPrivyAuth, async (c) => {
     // Fetch sender details to return with message
     const { data: sender } = await supabaseAdmin
       .from('users')
-      .select('id, display_name, avatar_url')
+      .select('id, display_name, avatar')
       .eq('id', userId)
       .single()
     
@@ -995,7 +1042,7 @@ app.get('/api/messages/:conversationId', verifyPrivyAuth, async (c) => {
       const senderIds = [...new Set(messages.map(m => m.sender_id))]
       const { data: senders } = await supabaseAdmin
         .from('users')
-        .select('id, display_name, avatar_url')
+        .select('id, display_name, avatar')
         .in('id', senderIds)
       
       // Map sender details to messages
@@ -1164,14 +1211,14 @@ app.get('/api/reviews/:bookingId', verifyPrivyAuth, async (c) => {
       // Fetch reviewer details
       const { data: reviewer } = await supabaseAdmin
         .from('users')
-        .select('display_name, avatar_url')
+        .select('display_name, avatar')
         .eq('id', review.reviewer_id)
         .single()
       
       // Fetch reviewee details
       const { data: reviewee } = await supabaseAdmin
         .from('users')
-        .select('display_name, avatar_url')
+        .select('display_name, avatar')
         .eq('id', review.reviewee_id)
         .single()
       
@@ -1473,20 +1520,26 @@ app.delete('/api/integrations/:id', verifyPrivyAuth, async (c) => {
   }
 })
 
-// Start server with WebSocket support
-const port = process.env.PORT || 4000
-console.log(`🚀 Server starting on port ${port}...`)
+// Export app for use in HTTPS server
+export default app
 
-// Create HTTP server
-const server = serve({
-  fetch: app.fetch,
-  port: port,
-  createServer: createServer,
-}, (info) => {
-  console.log(`✅ Server running at http://localhost:${info.port}`)
-  console.log(`📝 Health check: http://localhost:${info.port}/health`)
-  console.log(`🔌 WebSocket server ready`)
-})
+// Only start server if this file is run directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+  // Start server with WebSocket support
+  const port = process.env.PORT || 4000
+  console.log(`🚀 Server starting on port ${port}...`)
 
-// Setup WebSocket server
-const io = setupWebSocket(server)
+  // Create HTTP server
+  const server = serve({
+    fetch: app.fetch,
+    port: port,
+    createServer: createServer,
+  }, (info) => {
+    console.log(`✅ Server running at http://localhost:${info.port}`)
+    console.log(`📝 Health check: http://localhost:${info.port}/health`)
+    console.log(`🔌 WebSocket server ready`)
+  })
+
+  // Setup WebSocket server
+  const io = setupWebSocket(server)
+}
