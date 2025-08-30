@@ -562,6 +562,701 @@ app.get('/api/categories', async (c) => {
   }
 })
 
+// Get single service by ID
+app.get('/api/services/:id', verifyPrivyAuth, async (c) => {
+  try {
+    const serviceId = c.req.param('id')
+    
+    const { data, error } = await supabaseAdmin
+      .from('services')
+      .select(`
+        *,
+        provider:users!provider_id(*)
+      `)
+      .eq('id', serviceId)
+      .single()
+    
+    if (error) {
+      console.error('Service fetch error:', error)
+      return c.json({ error: 'Service not found' }, 404)
+    }
+    
+    return c.json(data)
+  } catch (error) {
+    console.error('Service error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Search services
+app.get('/api/services/search', verifyPrivyAuth, async (c) => {
+  try {
+    const { query, category, minPrice, maxPrice, location } = c.req.query()
+    
+    let dbQuery = supabaseAdmin
+      .from('services')
+      .select(`
+        *,
+        provider:users!provider_id(display_name, avatar_url, rating, review_count)
+      `)
+      .eq('is_active', true)
+    
+    if (query) {
+      dbQuery = dbQuery.or(`title.ilike.%${query}%,description.ilike.%${query}%`)
+    }
+    if (category) {
+      dbQuery = dbQuery.eq('category_id', category)
+    }
+    if (minPrice) {
+      dbQuery = dbQuery.gte('price', parseFloat(minPrice))
+    }
+    if (maxPrice) {
+      dbQuery = dbQuery.lte('price', parseFloat(maxPrice))
+    }
+    if (location) {
+      dbQuery = dbQuery.ilike('location', `%${location}%`)
+    }
+    
+    const { data, error } = await dbQuery.order('created_at', { ascending: false })
+    
+    if (error) {
+      console.error('Search error:', error)
+      return c.json({ error: 'Search failed' }, 500)
+    }
+    
+    return c.json(data || [])
+  } catch (error) {
+    console.error('Search error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Cancel booking
+app.post('/api/bookings/:id/cancel', verifyPrivyAuth, async (c) => {
+  try {
+    const userId = c.get('userId')
+    const bookingId = c.req.param('id')
+    const { reason } = await c.req.json()
+    
+    // Verify user is part of the booking
+    const { data: booking, error: fetchError } = await supabaseAdmin
+      .from('bookings')
+      .select('*')
+      .eq('id', bookingId)
+      .single()
+    
+    if (fetchError || !booking) {
+      return c.json({ error: 'Booking not found' }, 404)
+    }
+    
+    if (booking.customer_id !== userId && booking.provider_id !== userId) {
+      return c.json({ error: 'Unauthorized' }, 403)
+    }
+    
+    // Update booking status
+    const { data, error } = await supabaseAdmin
+      .from('bookings')
+      .update({
+        status: 'cancelled',
+        cancelled_at: new Date().toISOString(),
+        cancellation_reason: reason || null,
+        cancelled_by: userId
+      })
+      .eq('id', bookingId)
+      .select()
+      .single()
+    
+    if (error) {
+      console.error('Booking cancel error:', error)
+      return c.json({ error: 'Failed to cancel booking' }, 500)
+    }
+    
+    // TODO: Delete meeting if exists (requires meeting module)
+    
+    return c.json(data)
+  } catch (error) {
+    console.error('Booking cancel error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Complete booking
+app.post('/api/bookings/:id/complete', verifyPrivyAuth, async (c) => {
+  try {
+    const userId = c.get('userId')
+    const bookingId = c.req.param('id')
+    
+    // Verify user is the provider
+    const { data: booking, error: fetchError } = await supabaseAdmin
+      .from('bookings')
+      .select('*')
+      .eq('id', bookingId)
+      .single()
+    
+    if (fetchError || !booking) {
+      return c.json({ error: 'Booking not found' }, 404)
+    }
+    
+    if (booking.provider_id !== userId) {
+      return c.json({ error: 'Only provider can complete booking' }, 403)
+    }
+    
+    if (booking.status !== 'confirmed') {
+      return c.json({ error: 'Only confirmed bookings can be completed' }, 400)
+    }
+    
+    // Update booking status
+    const { data, error } = await supabaseAdmin
+      .from('bookings')
+      .update({
+        status: 'completed',
+        completed_at: new Date().toISOString()
+      })
+      .eq('id', bookingId)
+      .select()
+      .single()
+    
+    if (error) {
+      console.error('Booking complete error:', error)
+      return c.json({ error: 'Failed to complete booking' }, 500)
+    }
+    
+    // Update provider earnings
+    await supabaseAdmin
+      .from('users')
+      .update({
+        total_earnings: supabaseAdmin.raw('total_earnings + ?', [booking.total_price - booking.service_fee])
+      })
+      .eq('id', booking.provider_id)
+    
+    // Update customer spending
+    await supabaseAdmin
+      .from('users')
+      .update({
+        total_spent: supabaseAdmin.raw('total_spent + ?', [booking.total_price])
+      })
+      .eq('id', booking.customer_id)
+    
+    return c.json(data)
+  } catch (error) {
+    console.error('Booking complete error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Get conversations
+app.get('/api/conversations', verifyPrivyAuth, async (c) => {
+  try {
+    const userId = c.get('userId')
+    
+    const { data, error } = await supabaseAdmin
+      .from('conversations')
+      .select(`
+        *,
+        customer:users!customer_id(id, display_name, avatar_url),
+        provider:users!provider_id(id, display_name, avatar_url),
+        booking:bookings!booking_id(id, service_id, status),
+        last_message:messages(content, created_at, sender_id)
+      `)
+      .or(`customer_id.eq.${userId},provider_id.eq.${userId}`)
+      .eq('is_active', true)
+      .order('updated_at', { ascending: false })
+    
+    if (error) {
+      console.error('Conversations fetch error:', error)
+      return c.json({ error: 'Failed to fetch conversations' }, 500)
+    }
+    
+    return c.json(data || [])
+  } catch (error) {
+    console.error('Conversations error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Get single conversation
+app.get('/api/conversations/:id', verifyPrivyAuth, async (c) => {
+  try {
+    const userId = c.get('userId')
+    const conversationId = c.req.param('id')
+    
+    const { data, error } = await supabaseAdmin
+      .from('conversations')
+      .select(`
+        *,
+        customer:users!customer_id(*),
+        provider:users!provider_id(*),
+        booking:bookings!booking_id(*)
+      `)
+      .eq('id', conversationId)
+      .single()
+    
+    if (error || !data) {
+      return c.json({ error: 'Conversation not found' }, 404)
+    }
+    
+    // Verify user is part of conversation
+    if (data.customer_id !== userId && data.provider_id !== userId) {
+      return c.json({ error: 'Unauthorized' }, 403)
+    }
+    
+    return c.json(data)
+  } catch (error) {
+    console.error('Conversation error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Send message
+app.post('/api/messages', verifyPrivyAuth, async (c) => {
+  try {
+    const userId = c.get('userId')
+    const { conversationId, content } = await c.req.json()
+    
+    // Verify user is part of conversation
+    const { data: conversation, error: convError } = await supabaseAdmin
+      .from('conversations')
+      .select('customer_id, provider_id')
+      .eq('id', conversationId)
+      .single()
+    
+    if (convError || !conversation) {
+      return c.json({ error: 'Conversation not found' }, 404)
+    }
+    
+    if (conversation.customer_id !== userId && conversation.provider_id !== userId) {
+      return c.json({ error: 'Unauthorized' }, 403)
+    }
+    
+    // Create message
+    const { data, error } = await supabaseAdmin
+      .from('messages')
+      .insert({
+        conversation_id: conversationId,
+        sender_id: userId,
+        content,
+        is_read: false
+      })
+      .select()
+      .single()
+    
+    if (error) {
+      console.error('Message send error:', error)
+      return c.json({ error: 'Failed to send message' }, 500)
+    }
+    
+    // Update conversation last activity
+    await supabaseAdmin
+      .from('conversations')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('id', conversationId)
+    
+    return c.json(data)
+  } catch (error) {
+    console.error('Message error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Get messages for conversation
+app.get('/api/messages/:conversationId', verifyPrivyAuth, async (c) => {
+  try {
+    const userId = c.get('userId')
+    const conversationId = c.req.param('conversationId')
+    const { limit = 50, before } = c.req.query()
+    
+    // Verify user is part of conversation
+    const { data: conversation, error: convError } = await supabaseAdmin
+      .from('conversations')
+      .select('customer_id, provider_id')
+      .eq('id', conversationId)
+      .single()
+    
+    if (convError || !conversation) {
+      return c.json({ error: 'Conversation not found' }, 404)
+    }
+    
+    if (conversation.customer_id !== userId && conversation.provider_id !== userId) {
+      return c.json({ error: 'Unauthorized' }, 403)
+    }
+    
+    // Fetch messages
+    let query = supabaseAdmin
+      .from('messages')
+      .select(`
+        *,
+        sender:users!sender_id(id, display_name, avatar_url)
+      `)
+      .eq('conversation_id', conversationId)
+      .order('created_at', { ascending: false })
+      .limit(parseInt(limit))
+    
+    if (before) {
+      query = query.lt('created_at', before)
+    }
+    
+    const { data, error } = await query
+    
+    if (error) {
+      console.error('Messages fetch error:', error)
+      return c.json({ error: 'Failed to fetch messages' }, 500)
+    }
+    
+    // Mark messages as read
+    await supabaseAdmin
+      .from('messages')
+      .update({ is_read: true })
+      .eq('conversation_id', conversationId)
+      .neq('sender_id', userId)
+    
+    return c.json(data || [])
+  } catch (error) {
+    console.error('Messages error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Create or update review
+app.post('/api/reviews', verifyPrivyAuth, async (c) => {
+  try {
+    const userId = c.get('userId')
+    const { bookingId, rating, comment } = await c.req.json()
+    
+    // Validate booking and check if user can review
+    const { data: booking, error: bookingError } = await supabaseAdmin
+      .from('bookings')
+      .select('*')
+      .eq('id', bookingId)
+      .single()
+    
+    if (bookingError || !booking) {
+      return c.json({ error: 'Booking not found' }, 404)
+    }
+    
+    if (booking.customer_id !== userId) {
+      return c.json({ error: 'Only customer can review' }, 403)
+    }
+    
+    if (booking.status !== 'completed') {
+      return c.json({ error: 'Can only review completed bookings' }, 400)
+    }
+    
+    // Check if within 7-day review window
+    const completedDate = new Date(booking.completed_at)
+    const daysSinceCompletion = Math.floor((Date.now() - completedDate.getTime()) / (1000 * 60 * 60 * 24))
+    
+    if (daysSinceCompletion > 7) {
+      return c.json({ error: 'Review window has expired (7 days)' }, 400)
+    }
+    
+    // Check if review exists
+    const { data: existingReview } = await supabaseAdmin
+      .from('reviews')
+      .select('id')
+      .eq('booking_id', bookingId)
+      .single()
+    
+    let review
+    if (existingReview) {
+      // Update existing review
+      const { data, error } = await supabaseAdmin
+        .from('reviews')
+        .update({
+          rating,
+          comment,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existingReview.id)
+        .select()
+        .single()
+      
+      if (error) {
+        console.error('Review update error:', error)
+        return c.json({ error: 'Failed to update review' }, 500)
+      }
+      review = data
+    } else {
+      // Create new review
+      const { data, error } = await supabaseAdmin
+        .from('reviews')
+        .insert({
+          booking_id: bookingId,
+          service_id: booking.service_id,
+          reviewer_id: userId,
+          reviewee_id: booking.provider_id,
+          rating,
+          comment
+        })
+        .select()
+        .single()
+      
+      if (error) {
+        console.error('Review create error:', error)
+        return c.json({ error: 'Failed to create review' }, 500)
+      }
+      review = data
+    }
+    
+    // Update provider rating
+    const { data: providerReviews } = await supabaseAdmin
+      .from('reviews')
+      .select('rating')
+      .eq('reviewee_id', booking.provider_id)
+    
+    if (providerReviews && providerReviews.length > 0) {
+      const avgRating = providerReviews.reduce((sum, r) => sum + r.rating, 0) / providerReviews.length
+      
+      await supabaseAdmin
+        .from('users')
+        .update({
+          rating: avgRating,
+          review_count: providerReviews.length
+        })
+        .eq('id', booking.provider_id)
+    }
+    
+    // Update service rating
+    const { data: serviceReviews } = await supabaseAdmin
+      .from('reviews')
+      .select('rating')
+      .eq('service_id', booking.service_id)
+    
+    if (serviceReviews && serviceReviews.length > 0) {
+      const avgRating = serviceReviews.reduce((sum, r) => sum + r.rating, 0) / serviceReviews.length
+      
+      await supabaseAdmin
+        .from('services')
+        .update({
+          rating: avgRating,
+          review_count: serviceReviews.length
+        })
+        .eq('id', booking.service_id)
+    }
+    
+    return c.json(review)
+  } catch (error) {
+    console.error('Review error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Get review for booking
+app.get('/api/reviews/:bookingId', verifyPrivyAuth, async (c) => {
+  try {
+    const bookingId = c.req.param('bookingId')
+    
+    const { data, error } = await supabaseAdmin
+      .from('reviews')
+      .select(`
+        *,
+        reviewer:users!reviewer_id(display_name, avatar_url),
+        reviewee:users!reviewee_id(display_name, avatar_url)
+      `)
+      .eq('booking_id', bookingId)
+      .single()
+    
+    if (error) {
+      // Review might not exist yet
+      if (error.code === 'PGRST116') {
+        return c.json(null)
+      }
+      console.error('Review fetch error:', error)
+      return c.json({ error: 'Failed to fetch review' }, 500)
+    }
+    
+    return c.json(data)
+  } catch (error) {
+    console.error('Review error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Generate meeting link
+app.post('/api/meeting/generate', verifyPrivyAuth, async (c) => {
+  try {
+    const userId = c.get('userId')
+    const { bookingId } = await c.req.json()
+    
+    // Import meeting generation module
+    const { generateMeetingLinkForBooking } = await import('./meeting-generation.js')
+    
+    // Verify user is the provider
+    const { data: booking, error } = await supabaseAdmin
+      .from('bookings')
+      .select('provider_id')
+      .eq('id', bookingId)
+      .single()
+    
+    if (error || !booking) {
+      return c.json({ error: 'Booking not found' }, 404)
+    }
+    
+    if (booking.provider_id !== userId) {
+      return c.json({ error: 'Only provider can generate meeting link' }, 403)
+    }
+    
+    // Generate meeting link
+    const meetingLink = await generateMeetingLinkForBooking(bookingId)
+    
+    if (!meetingLink) {
+      return c.json({ error: 'Failed to generate meeting link' }, 500)
+    }
+    
+    return c.json({ meetingLink })
+  } catch (error) {
+    console.error('Meeting generation error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Delete meeting
+app.delete('/api/meeting/:bookingId', verifyPrivyAuth, async (c) => {
+  try {
+    const userId = c.get('userId')
+    const bookingId = c.req.param('bookingId')
+    
+    // Import meeting generation module
+    const { deleteMeetingForBooking } = await import('./meeting-generation.js')
+    
+    // Verify user is part of booking
+    const { data: booking, error } = await supabaseAdmin
+      .from('bookings')
+      .select('customer_id, provider_id')
+      .eq('id', bookingId)
+      .single()
+    
+    if (error || !booking) {
+      return c.json({ error: 'Booking not found' }, 404)
+    }
+    
+    if (booking.customer_id !== userId && booking.provider_id !== userId) {
+      return c.json({ error: 'Unauthorized' }, 403)
+    }
+    
+    // Delete meeting
+    await deleteMeetingForBooking(bookingId)
+    
+    return c.json({ success: true })
+  } catch (error) {
+    console.error('Meeting deletion error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// File upload endpoint
+app.post('/api/upload', verifyPrivyAuth, async (c) => {
+  try {
+    const userId = c.get('userId')
+    const formData = await c.req.formData()
+    const file = formData.get('file')
+    const bucket = formData.get('bucket') || 'avatars'
+    
+    if (!file || !(file instanceof File)) {
+      return c.json({ error: 'No file provided' }, 400)
+    }
+    
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      return c.json({ error: 'Invalid file type. Only images are allowed.' }, 400)
+    }
+    
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      return c.json({ error: 'File too large. Maximum size is 5MB.' }, 400)
+    }
+    
+    // Generate unique filename
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${userId}-${Date.now()}.${fileExt}`
+    const filePath = `${userId}/${fileName}`
+    
+    // Upload to Supabase Storage
+    const arrayBuffer = await file.arrayBuffer()
+    const { data, error } = await supabaseAdmin
+      .storage
+      .from(bucket)
+      .upload(filePath, arrayBuffer, {
+        contentType: file.type,
+        upsert: true
+      })
+    
+    if (error) {
+      console.error('Upload error:', error)
+      return c.json({ error: 'Failed to upload file' }, 500)
+    }
+    
+    // Get public URL
+    const { data: { publicUrl } } = supabaseAdmin
+      .storage
+      .from(bucket)
+      .getPublicUrl(filePath)
+    
+    return c.json({
+      url: publicUrl,
+      path: filePath,
+      bucket
+    })
+  } catch (error) {
+    console.error('Upload error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Get user meeting integrations
+app.get('/api/integrations', verifyPrivyAuth, async (c) => {
+  try {
+    const userId = c.get('userId')
+    
+    const { data, error } = await supabaseAdmin
+      .from('user_meeting_integrations')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+    
+    if (error) {
+      console.error('Integrations fetch error:', error)
+      return c.json({ error: 'Failed to fetch integrations' }, 500)
+    }
+    
+    // Remove sensitive data before sending
+    const sanitized = data?.map(integration => ({
+      ...integration,
+      access_token: undefined,
+      refresh_token: undefined
+    }))
+    
+    return c.json(sanitized || [])
+  } catch (error) {
+    console.error('Integrations error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Disconnect integration
+app.delete('/api/integrations/:id', verifyPrivyAuth, async (c) => {
+  try {
+    const userId = c.get('userId')
+    const integrationId = c.req.param('id')
+    
+    const { error } = await supabaseAdmin
+      .from('user_meeting_integrations')
+      .update({ is_active: false })
+      .eq('id', integrationId)
+      .eq('user_id', userId)
+    
+    if (error) {
+      console.error('Integration disconnect error:', error)
+      return c.json({ error: 'Failed to disconnect integration' }, 500)
+    }
+    
+    return c.json({ success: true })
+  } catch (error) {
+    console.error('Integration error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
 // Start server
 const port = process.env.PORT || 4000
 console.log(`🚀 Server starting on port ${port}...`)
