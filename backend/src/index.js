@@ -798,25 +798,72 @@ app.get('/api/conversations', verifyPrivyAuth, async (c) => {
   try {
     const userId = c.get('userId')
     
-    const { data, error } = await supabaseAdmin
+    // First, try to get conversations with the current structure
+    // Note: We need to fetch conversations without the foreign key relationships first
+    const { data: conversations, error } = await supabaseAdmin
       .from('conversations')
       .select(`
-        *,
-        customer:users!customer_id(id, display_name, avatar),
-        provider:users!provider_id(id, display_name, avatar),
-        booking:bookings!booking_id(id, service_id, status),
-        last_message:messages(content, created_at, sender_id)
+        *
       `)
-      .or(`customer_id.eq.${userId},provider_id.eq.${userId}`)
-      .eq('is_active', true)
-      .order('updated_at', { ascending: false })
+      .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
+      .order('created_at', { ascending: false })
     
     if (error) {
       console.error('Conversations fetch error:', error)
       return c.json({ error: 'Failed to fetch conversations' }, 500)
     }
+
+    // Now enrich each conversation with user and message data
+    const enrichedConversations = await Promise.all(
+      (conversations || []).map(async (conv) => {
+        // For user1/user2 structure, get both users
+        let customer = null, provider = null;
+        
+        const { data: user1Data } = await supabaseAdmin
+          .from('users')
+          .select('id, display_name, avatar')
+          .eq('id', conv.user1_id)
+          .single()
+          
+        const { data: user2Data } = await supabaseAdmin
+          .from('users')
+          .select('id, display_name, avatar')
+          .eq('id', conv.user2_id)
+          .single()
+          
+        // Map to customer/provider structure for consistency
+        // The current user is "customer", the other user is "provider"
+        if (conv.user1_id === userId) {
+          customer = user1Data;
+          provider = user2Data;
+        } else {
+          customer = user2Data;
+          provider = user1Data;
+        }
+        
+        // Get booking data if exists (skip for now)
+        let booking = null;
+        
+        // Get last message
+        const { data: lastMessage } = await supabaseAdmin
+          .from('messages')
+          .select('content, created_at, sender_id')
+          .eq('conversation_id', conv.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single()
+        
+        return {
+          ...conv,
+          customer,
+          provider,
+          booking,
+          last_message: lastMessage ? [lastMessage] : []
+        }
+      })
+    )
     
-    return c.json(data || [])
+    return c.json(enrichedConversations)
   } catch (error) {
     console.error('Conversations error:', error)
     return c.json({ error: 'Internal server error' }, 500)

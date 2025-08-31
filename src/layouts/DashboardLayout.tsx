@@ -13,7 +13,8 @@ import {
   ExternalLink,
   Copy,
   Check,
-  Wallet
+  Wallet,
+  MessageSquare
 } from 'lucide-react';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -44,6 +45,12 @@ const sidebarItems = [
     icon: Calendar,
     path: '/dashboard/bookings',
     description: 'Services you have booked'
+  },
+  {
+    label: 'Messages',
+    icon: MessageSquare,
+    path: '/dashboard/messages',
+    description: 'Chat with customers and providers'
   },
   {
     label: 'Balance',
