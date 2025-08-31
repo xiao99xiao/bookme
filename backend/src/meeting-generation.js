@@ -6,7 +6,7 @@ dotenv.config({ path: '../.env.local' })
 
 const supabaseAdmin = createClient(
   process.env.VITE_SUPABASE_URL,
-  process.env.VITE_SUPABASE_SERVICE_ROLE_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
 // Google OAuth helper
@@ -17,7 +17,7 @@ class GoogleAuth {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         client_id: process.env.VITE_GOOGLE_CLIENT_ID,
-        client_secret: process.env.VITE_GOOGLE_CLIENT_SECRET,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET,
         refresh_token: refreshToken,
         grant_type: 'refresh_token'
       })

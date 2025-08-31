@@ -41,7 +41,7 @@ const privyClient = new PrivyClient(
 
 const supabaseAdmin = createClient(
   process.env.VITE_SUPABASE_URL,
-  process.env.VITE_SUPABASE_SERVICE_ROLE_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
 // UUID namespace - same as frontend

@@ -61,7 +61,7 @@ ps aux | grep vite | grep -v grep
 The app now includes a **backend service** at `/backend` for secure Privy token validation:
 - **Framework**: Hono (lightweight Node.js server)
 - **Purpose**: Validates Privy tokens and performs secure database operations
-- **Port**: 4001 (development)
+- **Ports**: 4001 (HTTP), 4443 (HTTPS with SSL)
 - **Auth Flow**: Frontend sends Privy token → Backend validates → Backend uses Supabase service role
 
 ### Authentication System
@@ -149,15 +149,30 @@ VITE_BACKEND_URL=  # Backend URL (use Cloudflare tunnel URL for SSL in dev)
 
 # Backend-only variables (in .env.local)
 PRIVY_APP_SECRET=
-VITE_SUPABASE_SERVICE_ROLE_KEY=
+SUPABASE_SERVICE_ROLE_KEY=  # Note: NO VITE_ prefix (backend only!)
+
+# SSL Development (set when using SSL)
+VITE_HTTPS=true
+VITE_BACKEND_URL=https://192.168.0.10:4443  # Your local IP with HTTPS
 ```
 
 ## Development Gotchas
 
-### Authentication
+### SSL Setup
+- Run `npm run setup:ssl` once to generate certificates for your local IP
+- Certificates are stored in `/certs/` and work across all devices on your network
+- Use `npm run dev:all` for the complete SSL development environment
+- Access via https://YOUR-LOCAL-IP:8443 from any device on your network
+
+### Authentication  
 - Never use `supabase.auth.getUser()` - we use Privy for auth
 - Always pass `userId` to API methods explicitly
 - Use `ensureUuid()` to convert Privy DIDs to database UUIDs
+
+### Environment Variables Security
+- **CRITICAL**: Never use `VITE_` prefix for sensitive keys like service role keys
+- `VITE_` prefixed variables are exposed to the browser and public
+- Backend-only secrets use no prefix (e.g., `SUPABASE_SERVICE_ROLE_KEY`)
 
 ### Smart Wallets
 - Requires Buffer polyfill (configured in vite.config.ts)

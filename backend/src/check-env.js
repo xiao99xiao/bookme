@@ -9,7 +9,7 @@ if (existsSync('../.env.local')) {
 // Check required environment variables
 const required = [
   'VITE_SUPABASE_URL',
-  'VITE_SUPABASE_SERVICE_ROLE_KEY', 
+  'SUPABASE_SERVICE_ROLE_KEY', 
   'VITE_PRIVY_APP_ID',
   'PRIVY_APP_SECRET'
 ]
