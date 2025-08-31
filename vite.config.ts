@@ -28,6 +28,16 @@ export default defineConfig(({ mode }) => ({
       '.localhost',
     ],
   },
+  preview: {
+    host: '0.0.0.0',
+    port: process.env.PORT ? parseInt(process.env.PORT) : 4173,
+    allowedHosts: [
+      '.up.railway.app', // Allow all Railway domains
+      '.trycloudflare.com', // Allow all Cloudflare tunnel domains
+      'localhost',
+      '.localhost',
+    ],
+  },
   plugins: [
     react(),
     nodePolyfills({
