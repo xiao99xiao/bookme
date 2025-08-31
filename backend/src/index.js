@@ -621,6 +621,84 @@ app.get('/api/categories', async (c) => {
   }
 })
 
+// Get public user profile (no auth required)
+app.get('/api/profile/public/:userId', async (c) => {
+  try {
+    const userId = c.req.param('userId')
+    
+    const { data, error } = await supabaseAdmin
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single()
+    
+    if (error) {
+      console.error('Public profile fetch error:', error)
+      return c.json({ error: 'Profile not found' }, 404)
+    }
+    
+    return c.json(data)
+  } catch (error) {
+    console.error('Public profile error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Get public user services (no auth required)
+app.get('/api/services/public/user/:userId', async (c) => {
+  try {
+    const userId = c.req.param('userId')
+    
+    const { data, error } = await supabaseAdmin
+      .from('services')
+      .select(`
+        *,
+        categories(name, icon, color)
+      `)
+      .eq('provider_id', userId)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+    
+    if (error) {
+      console.error('Public services fetch error:', error)
+      return c.json({ error: 'Failed to fetch services' }, 500)
+    }
+    
+    return c.json(data || [])
+  } catch (error) {
+    console.error('Public services error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Get public provider reviews (no auth required)
+app.get('/api/reviews/public/provider/:providerId', async (c) => {
+  try {
+    const providerId = c.req.param('providerId')
+    
+    const { data, error } = await supabaseAdmin
+      .from('reviews')
+      .select(`
+        *,
+        services(title),
+        reviewer:users!reviewer_id(display_name, avatar)
+      `)
+      .eq('reviewee_id', providerId)
+      .eq('is_public', true)
+      .order('created_at', { ascending: false })
+    
+    if (error) {
+      console.error('Public reviews fetch error:', error)
+      return c.json({ error: 'Failed to fetch reviews' }, 500)
+    }
+    
+    return c.json(data || [])
+  } catch (error) {
+    console.error('Public reviews error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
 // Get public services for discovery (no auth required)
 app.get('/api/services/public', async (c) => {
   try {

@@ -109,7 +109,15 @@ export class ApiClient {
 
   static async getUserProfileById(userId: string): Promise<User | null> {
     this.ensureInitialized()
-    return this.backendApi.getUserProfileById(userId)
+    // Use public endpoint for viewing user profiles (no auth required)
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://192.168.0.10:4443'}/api/profile/public/${userId}`)
+    if (!response.ok) {
+      if (response.status === 404) {
+        return null
+      }
+      throw new Error('Failed to fetch profile')
+    }
+    return response.json()
   }
 
   static async getUserProfile(userId: string): Promise<User | null> {
@@ -139,8 +147,12 @@ export class ApiClient {
 
   static async getUserServicesById(userId: string, timezone?: string): Promise<Service[]> {
     this.ensureInitialized()
-    // Note: timezone parameter was for local time conversion, backend handles this now
-    return this.backendApi.getUserServices(userId)
+    // Use public endpoint for viewing user services (no auth required)
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://192.168.0.10:4443'}/api/services/public/user/${userId}`)
+    if (!response.ok) {
+      throw new Error('Failed to fetch services')
+    }
+    return response.json()
   }
 
   static async getServices(filters?: any): Promise<any> {
@@ -357,8 +369,13 @@ export class ApiClient {
 
   static async getProviderReviews(providerId: string): Promise<any[]> {
     this.ensureInitialized()
-    // This needs to be implemented in backend
-    return []
+    // Use public endpoint for viewing provider reviews (no auth required)
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://192.168.0.10:4443'}/api/reviews/public/provider/${providerId}`)
+    if (!response.ok) {
+      console.warn('Failed to fetch reviews, returning empty array')
+      return []
+    }
+    return response.json()
   }
 
   // Meeting integration methods

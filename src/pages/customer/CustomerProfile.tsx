@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Camera, Globe, Mail, Phone, MapPin, Calendar, Star, Video, Users, Copy, Check, ExternalLink, Clock } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient } from '@/lib/api-migration';
 import { getBrowserTimezone, getTimezoneOffset } from '@/lib/timezone';
@@ -450,7 +451,7 @@ export default function CustomerProfile() {
                 
                 {form.watch('bio') && (
                   <div className="prose prose-sm max-w-none text-muted-foreground leading-relaxed">
-                    <p>{form.watch('bio')}</p>
+                    <ReactMarkdown>{form.watch('bio')}</ReactMarkdown>
                   </div>
                 )}
               </div>
