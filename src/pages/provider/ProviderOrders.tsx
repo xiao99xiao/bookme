@@ -44,6 +44,21 @@ interface Booking {
     email: string;
     avatar?: string;
   };
+  reviews?: {
+    id: string;
+    rating: number;
+    comment: string;
+    created_at: string;
+    updated_at: string;
+    reviewer?: {
+      display_name: string;
+      avatar?: string;
+    };
+    reviewee?: {
+      display_name: string;
+      avatar?: string;
+    };
+  }[];
 }
 
 export default function ProviderOrders() {
@@ -87,21 +102,24 @@ export default function ProviderOrders() {
       const bookingsData = await ApiClient.getProviderBookings(userId!);
       setBookings(bookingsData);
       
-      // Load reviews for completed bookings
-      const completedBookings = bookingsData.filter(b => b.status === 'completed');
+      // Extract reviews from bookings data (now included in the query)
       const reviewsMap: Record<string, any> = {};
       
-      for (const booking of completedBookings) {
-        try {
-          const review = await ApiClient.getBookingReview(booking.id, userId!);
-          if (review) {
-            reviewsMap[booking.id] = review;
-          }
-        } catch (error) {
-          // No review exists for this booking, which is fine
-          console.log(`No review for booking ${booking.id}`);
+      bookingsData.forEach((booking) => {
+        // Reviews are now included as an array in the booking object
+        if (booking.reviews && booking.reviews.length > 0) {
+          const review = booking.reviews[0]; // Should only be one review per booking
+          reviewsMap[booking.id] = {
+            id: review.id,
+            rating: review.rating,
+            comment: review.comment || '',
+            created_at: review.created_at,
+            updated_at: review.updated_at,
+            reviewer: review.reviewer,
+            reviewee: review.reviewee
+          };
         }
-      }
+      });
       
       setBookingReviews(reviewsMap);
     } catch (error) {
