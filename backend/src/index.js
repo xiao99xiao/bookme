@@ -115,34 +115,32 @@ app.post('/api/auth/token', async (c) => {
     // Convert Privy DID to UUID
     const userId = privyDidToUuid(privyUser.userId)
     
-    // UPSERT: Get or create user profile in single query
-    const emailAccount = privyUser.linkedAccounts?.find(acc => acc.type === 'email')
-    const email = emailAccount?.address || `${privyUser.userId}@privy.user`
-    
-    const { data: user, error: userError } = await supabaseAdmin
+    // Get or create user profile
+    const { data: user } = await supabaseAdmin
       .from('users')
-      .upsert({
-        id: userId,
-        email: email,
-        display_name: email.split('@')[0],
-        timezone: 'UTC',
-        is_verified: false,
-        rating: 0,
-        review_count: 0,
-        total_earnings: 0,
-        total_spent: 0,
-        is_provider: false,
-        created_at: new Date().toISOString()
-      }, {
-        onConflict: 'id',
-        ignoreDuplicates: false
-      })
-      .select()
+      .select('*')
+      .eq('id', userId)
       .single()
     
-    if (userError) {
-      console.error('User upsert error:', userError)
-      return c.json({ error: 'Failed to get or create user' }, 500)
+    if (!user) {
+      // Create user if doesn't exist
+      const emailAccount = privyUser.linkedAccounts?.find(acc => acc.type === 'email')
+      const email = emailAccount?.address || `${privyUser.userId}@privy.user`
+      
+      await supabaseAdmin
+        .from('users')
+        .insert({
+          id: userId,
+          email: email,
+          display_name: email.split('@')[0],
+          timezone: 'UTC',
+          is_verified: false,
+          rating: 0,
+          review_count: 0,
+          total_earnings: 0,
+          total_spent: 0,
+          is_provider: false
+        })
     }
     
     // Create Supabase-compatible JWT with all required claims
@@ -197,13 +195,24 @@ app.get('/api/profile', verifyPrivyAuth, async (c) => {
     const userId = c.get('userId')
     const privyUser = c.get('privyUser')
     
-    // UPSERT: Insert user if not exists, otherwise return existing
+    // Check if user exists
+    const { data: existingUser, error: fetchError } = await supabaseAdmin
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single()
+    
+    if (existingUser) {
+      return c.json(existingUser)
+    }
+    
+    // Create new user if doesn't exist
     const emailAccount = privyUser.linkedAccounts?.find(acc => acc.type === 'email')
     const email = emailAccount?.address || `${privyUser.userId}@privy.user`
     
-    const { data: user, error } = await supabaseAdmin
+    const { data: newUser, error: createError } = await supabaseAdmin
       .from('users')
-      .upsert({
+      .insert({
         id: userId,
         email: email,
         display_name: email.split('@')[0],
@@ -213,21 +222,17 @@ app.get('/api/profile', verifyPrivyAuth, async (c) => {
         review_count: 0,
         total_earnings: 0,
         total_spent: 0,
-        is_provider: false,
-        created_at: new Date().toISOString()
-      }, {
-        onConflict: 'id',
-        ignoreDuplicates: false // Return existing record if it exists
+        is_provider: false
       })
       .select()
       .single()
     
-    if (error) {
-      console.error('User upsert error:', error)
-      return c.json({ error: 'Failed to get or create user profile' }, 500)
+    if (createError) {
+      console.error('Create user error:', createError)
+      return c.json({ error: 'Failed to create user' }, 500)
     }
     
-    return c.json(user)
+    return c.json(newUser)
   } catch (error) {
     console.error('Profile error:', error)
     return c.json({ error: 'Internal server error' }, 500)
