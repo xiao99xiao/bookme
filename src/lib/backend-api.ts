@@ -5,29 +5,12 @@ export class BackendAPI {
   constructor(private getAccessToken: () => Promise<string | null>) {}
 
   private async request(endpoint: string, options: RequestInit = {}) {
-    let token;
-    try {
-      token = await this.getAccessToken();
-      console.log('getAccessToken() result:', token);
-    } catch (error) {
-      console.error('Error getting access token:', error);
-      token = null;
-    }
-    
-    // Debug logging
-    console.log('BackendAPI request to:', endpoint);
-    console.log('Token present:', !!token);
-    console.log('Token type:', typeof token);
-    if (token) {
-      console.log('Token starts with:', token.substring(0, 20) + '...');
-    }
+    const token = await this.getAccessToken();
     
     // For public endpoints, don't require token
     const isPublicEndpoint = endpoint.includes('/public') || endpoint.includes('/categories');
     
     if (!token && !isPublicEndpoint) {
-      console.error('No token available for authenticated endpoint:', endpoint);
-      console.error('getAccessToken function:', this.getAccessToken);
       throw new Error('Not authenticated');
     }
 

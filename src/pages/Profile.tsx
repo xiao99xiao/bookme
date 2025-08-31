@@ -223,11 +223,6 @@ const Profile = () => {
 
     setIsBooking(true);
     try {
-      // Debug logging
-      console.log('Creating booking with user ID:', currentUserId);
-      console.log('Current user object:', currentUser);
-      console.log('Auth loading status:', authLoading);
-      
       const bookingData = {
         service_id: selectedService.id,
         provider_id: profile.id,

@@ -271,20 +271,16 @@ app.post('/api/bookings', verifyPrivyAuth, async (c) => {
     const startTime = Date.now()
     const userId = c.get('userId')
     const body = await c.req.json()
-    console.log('📝 Booking request received:', { userId, body })
     const { service_id: serviceId, scheduled_at: scheduledAt, customer_notes: customerNotes, location, is_online: isOnline } = body
     
     // First, get the service
-    console.log('🔍 Looking up service:', serviceId)
     const { data: service, error: serviceError } = await supabaseAdmin
       .from('services')
       .select('*')
       .eq('id', serviceId)
       .single()
     
-    console.log('📊 Service lookup result:', { service: !!service, error: serviceError })
     if (serviceError || !service) {
-      console.error('❌ Service lookup error:', serviceError)
       return c.json({ error: 'Service not found' }, 404)
     }
     
@@ -299,7 +295,6 @@ app.post('/api/bookings', verifyPrivyAuth, async (c) => {
       .in('status', ['pending', 'confirmed'])
     
     if (bookingError) {
-      console.error('Booking conflict check error:', bookingError)
       // Continue anyway - don't fail the booking for this
     }
     

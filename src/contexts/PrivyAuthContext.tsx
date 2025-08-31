@@ -70,46 +70,28 @@ export const PrivyAuthProvider = ({ children }: PrivyAuthProviderProps) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   
-  // Create debug wrapper for getAccessToken
-  const debugGetAccessToken = useCallback(async () => {
-    console.log('debugGetAccessToken called');
-    console.log('Privy authenticated:', authenticated);
-    console.log('Privy ready:', ready);
-    console.log('Privy user:', !!privyUser);
-    
+  // Wrapper for getAccessToken to ensure proper state checking
+  const wrappedGetAccessToken = useCallback(async () => {
     // Check if Privy is ready and user is authenticated
-    if (!ready) {
-      console.warn('Privy not ready yet, returning null');
-      return null;
-    }
-    
-    if (!authenticated) {
-      console.warn('User not authenticated, returning null');
+    if (!ready || !authenticated) {
       return null;
     }
     
     try {
       const token = await getAccessToken();
-      console.log('Privy getAccessToken returned:', !!token, typeof token);
-      if (token) {
-        console.log('Token preview:', token.substring(0, 30) + '...');
-      } else {
-        console.error('getAccessToken returned null despite being authenticated and ready');
-      }
       return token;
     } catch (error) {
-      console.error('Privy getAccessToken error:', error);
       return null;
     }
-  }, [getAccessToken, authenticated, ready, privyUser]);
+  }, [getAccessToken, authenticated, ready]);
 
-  // Create backend API instance with debug wrapper
-  const backendApi = useMemo(() => new BackendAPI(debugGetAccessToken), [debugGetAccessToken]);
+  // Create backend API instance with wrapper
+  const backendApi = useMemo(() => new BackendAPI(wrappedGetAccessToken), [wrappedGetAccessToken]);
   
   // Initialize ApiClient compatibility layer
   useEffect(() => {
-    ApiClient.initialize(debugGetAccessToken);
-  }, [debugGetAccessToken]);
+    ApiClient.initialize(wrappedGetAccessToken);
+  }, [wrappedGetAccessToken]);
   
   // Generate UUID from Privy DID for database operations
   const privyUserId = privyUser?.id || null;
