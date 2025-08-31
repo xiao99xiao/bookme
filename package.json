@@ -9,7 +9,7 @@
     "dev:backend": "cd backend && npm run dev:ssl",
     "dev:all": "npm run setup:ssl && concurrently \"npm run dev:ssl\" \"npm run dev:backend\"",
     "setup:ssl": "chmod +x setup-ssl.sh && ./setup-ssl.sh",
-    "build": "vite build",
+    "build": "echo 'Building with VITE_SUPABASE_URL='$VITE_SUPABASE_URL && vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview"
