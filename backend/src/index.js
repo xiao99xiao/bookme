@@ -30,6 +30,11 @@ app.use('*', cors({
     /https:\/\/.*\.timee\.app$/ // Allow all timee.app subdomains
   ],
   credentials: true,
+  // Safari-specific headers
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  exposedHeaders: ['Set-Cookie']
 }))
 
 // Debug: Check if env vars are loaded
