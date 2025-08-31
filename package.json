@@ -12,7 +12,8 @@
     "build": "echo 'Building with VITE_SUPABASE_URL='$VITE_SUPABASE_URL && vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "cd backend && node src/index.js"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
