@@ -25,7 +25,9 @@ app.use('*', cors({
     /^https:\/\/192\.168\.\d+\.\d+:8443$/, // Allow any local IP on port 8443
     'https://roulette-phenomenon-airfare-claire.trycloudflare.com',
     /https:\/\/.*\.trycloudflare\.com$/, // Allow any Cloudflare tunnel
-    /https:\/\/.*\.up\.railway\.app$/ // Allow all Railway domains
+    /https:\/\/.*\.up\.railway\.app$/, // Allow all Railway domains
+    'https://staging.timee.app', // Staging frontend domain
+    /https:\/\/.*\.timee\.app$/ // Allow all timee.app subdomains
   ],
   credentials: true,
 }))
