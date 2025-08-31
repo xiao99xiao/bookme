@@ -37,39 +37,51 @@ Transform the current dashboard-based navigation into a role-based navigation sy
 
 ## 3. Navigation Center Content Logic
 
+### User Mode State
+- **New state**: `userMode` (stored in browser localStorage)
+- **Default value**: Based on user's `is_provider` property
+- **Changeable**: Via Provider Mode/Customer Mode menu items
+- **Persistence**: Stored locally in browser, persists across sessions
+
 ### Not Logged In
 - **Center**: Empty/no content
+- **Mode state**: Does not exist
 
-### Logged In - Customer Pages (/customer/*)
-- **Center Items** with icons:
-  - 📅 Bookings (→ /customer/bookings) - `Calendar` icon
-  - 💬 Messages (→ /customer/messages) - `MessageCircle` icon
-  - 👤 Profile (→ /customer/profile) - `User` icon
+### Logged In - Customer Mode (userMode = 'customer')
+- **Center Items** (no icons on desktop, with icons on mobile):
+  - Bookings (→ /customer/bookings) - `Calendar` icon (mobile only)
+  - Messages (→ /customer/messages) - `MessageCircle` icon (mobile only)
+  - Profile (→ /customer/profile) - `User` icon (mobile only)
 
-### Logged In - Provider Pages (/provider/*)
-- **Center Items** with icons:
-  - 📋 Orders (→ /provider/orders) - `ClipboardList` icon
-  - ⚙️ Services (→ /provider/services) - `Settings` icon
-  - 💬 Messages (→ /provider/messages) - `MessageCircle` icon
-  - 🔗 Integrations (→ /provider/integrations) - `Plug` icon
+### Logged In - Provider Mode (userMode = 'provider')
+- **Center Items** (no icons on desktop, with icons on mobile):
+  - Orders (→ /provider/orders) - `ClipboardList` icon (mobile only)
+  - Services (→ /provider/services) - `Settings` icon (mobile only)
+  - Messages (→ /provider/messages) - `MessageCircle` icon (mobile only)
+  - Integrations (→ /provider/integrations) - `Plug` icon (mobile only)
 
 ## 4. User Avatar Dropdown Menu (Dynamic)
 - **💰 Balance** (→ /balance) - `Wallet` icon
 - **Split line**
-- **🔄 Provider Mode** (→ /provider/orders) - when on /customer/* - `Briefcase` icon
-- **🔄 Customer Mode** (→ /customer/bookings) - when on /provider/* - `User` icon
+- **🔄 Provider Mode** (→ /provider/orders) - shown when userMode = 'customer' - `Briefcase` icon
+- **🔄 Customer Mode** (→ /customer/bookings) - shown when userMode = 'provider' - `User` icon
 - **Split line**
 - **🚪 Logout** - `LogOut` icon
 
 ## 5. User Role Detection & Default Landing
 
 ### User Property Check
-- Check if user has `isProvider` property (or similar) in their profile
-- If property doesn't exist, need to add it to the database schema
+- Check if user has `is_provider` property in their profile
+- Property already exists in database schema
+
+### Mode Initialization
+- **On login**: Set userMode to user's `is_provider` value ('provider' or 'customer')
+- **On page load**: Check localStorage for existing userMode
+- **If no stored mode**: Use user's `is_provider` property as default
 
 ### Default Landing Logic (`/`)
-- **If `isProvider = true`**: Redirect to `/provider/orders`
-- **If `isProvider = false`**: Redirect to `/customer/bookings`
+- **If userMode = 'provider'**: Redirect to `/provider/orders`
+- **If userMode = 'customer'**: Redirect to `/customer/bookings`
 - **If not logged in**: Stay on landing page
 
 ## 6. Required File Changes

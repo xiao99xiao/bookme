@@ -18,29 +18,51 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/PrivyAuthContext";
 import timeeLogo from "@/assets/timee-logo.jpg";
 
+const STORAGE_KEY = 'bookme_user_mode';
+
+type UserMode = 'customer' | 'provider' | null;
+
 const NewNavigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, profile, ready, authenticated, logout, userId } = useAuth();
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [userMode, setUserMode] = useState<UserMode>(null);
   
   const isLoggedIn = authenticated;
   const isAuthPage = location.pathname === "/auth";
   const userName = profile?.display_name || "User";
   
-  // Check current section
-  const isCustomerSection = location.pathname.startsWith('/customer');
-  const isProviderSection = location.pathname.startsWith('/provider');
+  // Initialize user mode on login/profile change
+  useEffect(() => {
+    if (isLoggedIn && profile && ready) {
+      // Check localStorage for existing mode
+      const storedMode = localStorage.getItem(STORAGE_KEY) as UserMode;
+      
+      if (storedMode === 'customer' || storedMode === 'provider') {
+        // Use stored mode if valid
+        setUserMode(storedMode);
+      } else {
+        // Default to user's provider status
+        const defaultMode = profile.is_provider ? 'provider' : 'customer';
+        setUserMode(defaultMode);
+        localStorage.setItem(STORAGE_KEY, defaultMode);
+      }
+    } else if (!isLoggedIn) {
+      // Clear mode when logged out
+      setUserMode(null);
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  }, [isLoggedIn, profile, ready]);
   
+  // Handle scroll visibility
   useEffect(() => {
     const controlNavbar = () => {
       if (typeof window !== 'undefined') {
         if (window.scrollY > lastScrollY && window.scrollY > 100) {
-          // Hide navbar when scrolling down
           setIsVisible(false);
         } else {
-          // Show navbar when scrolling up
           setIsVisible(true);
         }
         setLastScrollY(window.scrollY);
@@ -55,25 +77,54 @@ const NewNavigation = () => {
     }
   }, [lastScrollY]);
 
-  // Handle default landing logic
+  // Handle default landing logic based on user mode
   useEffect(() => {
-    if (isLoggedIn && profile && location.pathname === '/' && ready) {
-      // Redirect based on user's provider status
-      if (profile.is_provider) {
+    if (isLoggedIn && userMode && location.pathname === '/' && ready) {
+      // Redirect based on user mode
+      if (userMode === 'provider') {
         navigate('/provider/orders');
       } else {
         navigate('/customer/bookings');
       }
     }
-  }, [isLoggedIn, profile, location.pathname, navigate, ready]);
+  }, [isLoggedIn, userMode, location.pathname, navigate, ready]);
+
+  // Handle mode switching
+  const handleModeSwitch = () => {
+    if (!userMode) return;
+    
+    const newMode: UserMode = userMode === 'customer' ? 'provider' : 'customer';
+    
+    // Update state
+    setUserMode(newMode);
+    
+    // Save to localStorage
+    localStorage.setItem(STORAGE_KEY, newMode);
+    
+    // Navigate to appropriate landing
+    if (newMode === 'provider') {
+      navigate('/provider/orders');
+    } else {
+      navigate('/customer/bookings');
+    }
+  };
+
+  // Handle logout
+  const handleLogout = async () => {
+    // Clear stored mode
+    localStorage.removeItem(STORAGE_KEY);
+    setUserMode(null);
+    // Call original logout
+    await logout();
+  };
 
   const renderCenterContent = () => {
-    if (!isLoggedIn || !ready) {
+    if (!isLoggedIn || !ready || !userMode) {
       return null;
     }
 
-    // Customer navigation items
-    if (isCustomerSection) {
+    // Navigation items based on user mode
+    if (userMode === 'customer') {
       return (
         <div className="hidden md:flex items-center space-x-8">
           <Link 
@@ -111,7 +162,7 @@ const NewNavigation = () => {
     }
 
     // Provider navigation items
-    if (isProviderSection) {
+    if (userMode === 'provider') {
       return (
         <div className="hidden md:flex items-center space-x-8">
           <Link 
@@ -162,11 +213,11 @@ const NewNavigation = () => {
   };
 
   const renderMobileTabBar = () => {
-    if (!isLoggedIn || !ready || (!isCustomerSection && !isProviderSection)) {
+    if (!isLoggedIn || !ready || !userMode) {
       return null;
     }
 
-    const tabItems = isCustomerSection ? [
+    const tabItems = userMode === 'customer' ? [
       { to: '/customer/bookings', icon: Calendar, label: 'Bookings' },
       { to: '/customer/messages', icon: MessageCircle, label: 'Messages' },
       { to: '/customer/profile', icon: User, label: 'Profile' },
@@ -179,7 +230,7 @@ const NewNavigation = () => {
 
     return (
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
-        <div className="grid grid-cols-3 md:grid-cols-4">
+        <div className={`grid ${userMode === 'customer' ? 'grid-cols-3' : 'grid-cols-4'}`}>
           {tabItems.map(({ to, icon: Icon, label }) => (
             <Link
               key={to}
@@ -210,7 +261,7 @@ const NewNavigation = () => {
       );
     }
     
-    if (isLoggedIn) {
+    if (isLoggedIn && userMode) {
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -233,25 +284,27 @@ const NewNavigation = () => {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            {isCustomerSection ? (
-              <DropdownMenuItem asChild>
-                <Link to="/provider/orders" className="flex items-center gap-2">
-                  <Briefcase className="w-4 h-4" />
-                  Provider Mode
-                </Link>
+            {userMode === 'customer' ? (
+              <DropdownMenuItem 
+                onClick={handleModeSwitch}
+                className="flex items-center gap-2 cursor-pointer"
+              >
+                <Briefcase className="w-4 h-4" />
+                Provider Mode
               </DropdownMenuItem>
-            ) : isProviderSection ? (
-              <DropdownMenuItem asChild>
-                <Link to="/customer/bookings" className="flex items-center gap-2">
-                  <User className="w-4 h-4" />
-                  Customer Mode
-                </Link>
+            ) : (
+              <DropdownMenuItem 
+                onClick={handleModeSwitch}
+                className="flex items-center gap-2 cursor-pointer"
+              >
+                <User className="w-4 h-4" />
+                Customer Mode
               </DropdownMenuItem>
-            ) : null}
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               className="flex items-center gap-2 text-destructive cursor-pointer"
-              onClick={logout}
+              onClick={handleLogout}
             >
               <LogOut className="w-4 h-4" />
               Log out
@@ -299,7 +352,7 @@ const NewNavigation = () => {
       
       {/* Add top padding for fixed navigation and bottom padding for mobile tab bar */}
       <div className="h-16" />
-      {isLoggedIn && (isCustomerSection || isProviderSection) && (
+      {isLoggedIn && userMode && (
         <div className="md:hidden h-16" />
       )}
     </>
