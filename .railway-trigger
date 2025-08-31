@@ -1,0 +1,7 @@
+# Railway Deployment Trigger
+# This file is used to trigger Railway deployments
+# Last triggered: 2025-08-31 21:59:00 UTC
+
+Deployment Configuration:
+- Backend: /backend directory with Node.js
+- Frontend: / directory with Vite build
