@@ -430,6 +430,7 @@ app.post('/api/services', verifyPrivyAuth, async (c) => {
     
     // Remove any fields that don't exist in the database
     delete body.time_slots // Remove if accidentally sent
+    delete body.timeSlots // Remove if accidentally sent (camelCase version)
     
     // Ensure provider_id matches authenticated user
     const serviceData = {
