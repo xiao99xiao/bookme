@@ -271,30 +271,40 @@ app.post('/api/bookings', verifyPrivyAuth, async (c) => {
     const startTime = Date.now()
     const userId = c.get('userId')
     const body = await c.req.json()
-    const { serviceId, scheduledAt, customerNotes, location, isOnline } = body
+    console.log('📝 Booking request received:', { userId, body })
+    const { service_id: serviceId, scheduled_at: scheduledAt, customer_notes: customerNotes, location, is_online: isOnline } = body
     
-    // Combined query: Validate service and check availability in one operation
-    const bookingStart = new Date(scheduledAt)
-    const { data: serviceData, error: serviceError } = await supabaseAdmin
+    // First, get the service
+    console.log('🔍 Looking up service:', serviceId)
+    const { data: service, error: serviceError } = await supabaseAdmin
       .from('services')
-      .select(`
-        *,
-        conflicting_bookings:bookings!service_id(id, status, scheduled_at, duration_minutes)
-      `)
+      .select('*')
       .eq('id', serviceId)
-      .eq('bookings.status', 'pending')
-      .or('bookings.status.eq.confirmed')
       .single()
     
-    if (serviceError || !serviceData) {
+    console.log('📊 Service lookup result:', { service: !!service, error: serviceError })
+    if (serviceError || !service) {
+      console.error('❌ Service lookup error:', serviceError)
       return c.json({ error: 'Service not found' }, 404)
     }
     
-    // Check for time conflicts in the fetched data
-    const service = serviceData
+    // Then check for conflicting bookings separately
+    const bookingStart = new Date(scheduledAt)
     const bookingEnd = new Date(bookingStart.getTime() + service.duration_minutes * 60000)
     
-    const hasConflict = service.conflicting_bookings?.some(booking => {
+    const { data: conflictingBookings, error: bookingError } = await supabaseAdmin
+      .from('bookings')
+      .select('id, scheduled_at, duration_minutes')
+      .eq('service_id', serviceId)
+      .in('status', ['pending', 'confirmed'])
+    
+    if (bookingError) {
+      console.error('Booking conflict check error:', bookingError)
+      // Continue anyway - don't fail the booking for this
+    }
+    
+    // Check for time conflicts
+    const hasConflict = conflictingBookings?.some(booking => {
       const existingStart = new Date(booking.scheduled_at)
       const existingEnd = new Date(existingStart.getTime() + booking.duration_minutes * 60000)
       

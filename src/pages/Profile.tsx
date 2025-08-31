@@ -223,6 +223,11 @@ const Profile = () => {
 
     setIsBooking(true);
     try {
+      // Debug logging
+      console.log('Creating booking with user ID:', currentUserId);
+      console.log('Current user object:', currentUser);
+      console.log('Auth loading status:', authLoading);
+      
       const bookingData = {
         service_id: selectedService.id,
         provider_id: profile.id,
@@ -234,6 +239,7 @@ const Profile = () => {
         is_online: selectedService.is_online
       };
 
+      console.log('Booking data:', bookingData);
       const booking = await ApiClient.createBooking(bookingData, currentUserId);
       
       toast.success('Booking request submitted successfully!');

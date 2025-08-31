@@ -84,14 +84,22 @@ export class ApiClient {
   private static isInitialized = false
 
   static initialize(getAccessToken: () => Promise<string | null>) {
+    console.log('ApiClient.initialize called with function:', getAccessToken.toString().substring(0, 50));
     if (!this.initialized) {
+      console.log('Initializing ApiClient with getAccessToken');
       this.backendApi = new BackendAPI(getAccessToken)
       this.initialized = true
       this.isInitialized = true
+    } else {
+      console.log('ApiClient already initialized, current function:', this.backendApi ? 'exists' : 'missing');
+      // Force reinitialize if the function looks different
+      console.log('Forcing reinitialize with new function');
+      this.backendApi = new BackendAPI(getAccessToken)
     }
   }
 
   private static ensureInitialized() {
+    console.log('ensureInitialized called, backendApi exists:', !!this.backendApi);
     if (!this.backendApi) {
       // For public endpoints that don't require auth, initialize with no token
       console.warn('ApiClient not initialized. Using public access mode.')

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode, useMemo } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useMemo, useCallback } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { BackendAPI } from '@/lib/backend-api';
 import { ApiClient } from '@/lib/api-migration';
@@ -70,13 +70,46 @@ export const PrivyAuthProvider = ({ children }: PrivyAuthProviderProps) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   
-  // Create backend API instance with getAccessToken
-  const backendApi = useMemo(() => new BackendAPI(getAccessToken), [getAccessToken]);
+  // Create debug wrapper for getAccessToken
+  const debugGetAccessToken = useCallback(async () => {
+    console.log('debugGetAccessToken called');
+    console.log('Privy authenticated:', authenticated);
+    console.log('Privy ready:', ready);
+    console.log('Privy user:', !!privyUser);
+    
+    // Check if Privy is ready and user is authenticated
+    if (!ready) {
+      console.warn('Privy not ready yet, returning null');
+      return null;
+    }
+    
+    if (!authenticated) {
+      console.warn('User not authenticated, returning null');
+      return null;
+    }
+    
+    try {
+      const token = await getAccessToken();
+      console.log('Privy getAccessToken returned:', !!token, typeof token);
+      if (token) {
+        console.log('Token preview:', token.substring(0, 30) + '...');
+      } else {
+        console.error('getAccessToken returned null despite being authenticated and ready');
+      }
+      return token;
+    } catch (error) {
+      console.error('Privy getAccessToken error:', error);
+      return null;
+    }
+  }, [getAccessToken, authenticated, ready, privyUser]);
+
+  // Create backend API instance with debug wrapper
+  const backendApi = useMemo(() => new BackendAPI(debugGetAccessToken), [debugGetAccessToken]);
   
   // Initialize ApiClient compatibility layer
   useEffect(() => {
-    ApiClient.initialize(getAccessToken);
-  }, [getAccessToken]);
+    ApiClient.initialize(debugGetAccessToken);
+  }, [debugGetAccessToken]);
   
   // Generate UUID from Privy DID for database operations
   const privyUserId = privyUser?.id || null;
