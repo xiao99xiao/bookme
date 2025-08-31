@@ -24,7 +24,8 @@ app.use('*', cors({
     'https://192.168.0.10:8443',
     /^https:\/\/192\.168\.\d+\.\d+:8443$/, // Allow any local IP on port 8443
     'https://roulette-phenomenon-airfare-claire.trycloudflare.com',
-    /https:\/\/.*\.trycloudflare\.com$/ // Allow any Cloudflare tunnel
+    /https:\/\/.*\.trycloudflare\.com$/, // Allow any Cloudflare tunnel
+    /https:\/\/.*\.up\.railway\.app$/ // Allow all Railway domains
   ],
   credentials: true,
 }))
