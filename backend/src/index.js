@@ -7,7 +7,7 @@ import { v5 as uuidv5 } from 'uuid'
 import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv'
 import { createServer } from 'http'
-import { setupWebSocket } from './websocket.js'
+import { setupWebSocket, getIO } from './websocket.js'
 
 // Load environment variables
 dotenv.config({ path: '../.env.local' })
@@ -989,7 +989,17 @@ app.post('/api/messages', verifyPrivyAuth, async (c) => {
       .eq('id', userId)
       .single()
     
-    return c.json({ ...data, sender })
+    const messageWithSender = { ...data, sender }
+    
+    // Broadcast message via WebSocket to conversation room
+    const io = getIO()
+    if (io) {
+      // Emit ONLY to conversation room (all users subscribed to this conversation)
+      // Don't emit to user rooms as they're already in the conversation room
+      io.to(`conversation:${conversationId}`).emit('new_message', messageWithSender)
+    }
+    
+    return c.json(messageWithSender)
   } catch (error) {
     console.error('Message error:', error)
     return c.json({ error: 'Internal server error' }, 500)

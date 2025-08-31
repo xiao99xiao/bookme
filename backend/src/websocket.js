@@ -32,6 +32,13 @@ function privyDidToUuid(privyDid) {
 // Store active subscriptions
 const activeSubscriptions = new Map()
 
+// Store the io instance globally so it can be accessed from HTTP endpoints
+let ioInstance = null
+
+export function getIO() {
+  return ioInstance
+}
+
 export function setupWebSocket(server) {
   const io = new Server(server, {
     cors: {
@@ -159,13 +166,11 @@ export function setupWebSocket(server) {
           ? conversation.user2_id 
           : conversation.user1_id
 
-        // Send to sender
+        // Send confirmation to sender
         socket.emit('message_sent', messageWithSender)
         
-        // Send to recipient if online
-        io.to(`user:${recipientId}`).emit('new_message', messageWithSender)
-        
-        // Also broadcast to conversation room
+        // Broadcast ONLY to conversation room (everyone subscribed gets it)
+        // Don't send to individual user rooms to avoid duplicates
         io.to(`conversation:${conversationId}`).emit('new_message', messageWithSender)
 
       } catch (error) {
@@ -204,6 +209,9 @@ export function setupWebSocket(server) {
     })
   })
 
+  // Store the io instance globally
+  ioInstance = io
+  
   return io
 }
 
