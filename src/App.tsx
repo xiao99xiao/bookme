@@ -13,10 +13,24 @@ import Auth from "./pages/Auth";
 import AuthCallback from "./pages/AuthCallback";
 import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
-import Navigation from "./components/Navigation";
+import NewNavigation from "./components/NewNavigation";
 import { OnboardingNavigator } from "./components/OnboardingNavigator";
 
-// Dashboard imports
+// Customer pages
+import CustomerBookings from "./pages/customer/CustomerBookings";
+import CustomerProfile from "./pages/customer/CustomerProfile";
+import CustomerMessages from "./pages/customer/CustomerMessages";
+
+// Provider pages
+import ProviderOrders from "./pages/provider/ProviderOrders";
+import ProviderServices from "./pages/provider/ProviderServices";
+import ProviderMessages from "./pages/provider/ProviderMessages";
+import ProviderIntegrations from "./pages/provider/ProviderIntegrations";
+
+// Balance page
+import Balance from "./pages/Balance";
+
+// Dashboard imports (keep for backward compatibility during transition)
 import DashboardLayout from "./layouts/DashboardLayout";
 import DashboardProfile from "./pages/dashboard/DashboardProfile";
 import DashboardServices from "./pages/dashboard/DashboardServices";
@@ -37,7 +51,7 @@ function AppContent() {
   return (
     <>
       <OnboardingNavigator />
-      {!isDashboard && <Navigation />}
+      {!isDashboard && <NewNavigation />}
       <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/discover" element={<Discover />} />
@@ -78,8 +92,86 @@ function AppContent() {
                 </ProtectedRoute>
               } 
             />
+
+            {/* Balance Route */}
+            <Route 
+              path="/balance" 
+              element={
+                <ProtectedRoute>
+                  <Balance />
+                </ProtectedRoute>
+              } 
+            />
             
-            {/* Dashboard Routes */}
+            {/* Customer Routes */}
+            <Route 
+              path="/customer/bookings" 
+              element={
+                <ProtectedRoute>
+                  <CustomerBookings />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/customer/profile" 
+              element={
+                <ProtectedRoute>
+                  <CustomerProfile />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/customer/messages" 
+              element={
+                <ProtectedRoute>
+                  <CustomerMessages />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Provider Routes */}
+            <Route 
+              path="/provider/orders" 
+              element={
+                <ProtectedRoute>
+                  <ProviderOrders />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/provider/services" 
+              element={
+                <ProtectedRoute>
+                  <ProviderServices />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/provider/messages" 
+              element={
+                <ProtectedRoute>
+                  <ProviderMessages />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/provider/integrations" 
+              element={
+                <ProtectedRoute>
+                  <ProviderIntegrations />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/provider/integrations/callback" 
+              element={
+                <ProtectedRoute>
+                  <IntegrationsCallback />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Dashboard Routes (kept for backward compatibility) */}
             <Route
               path="/dashboard"
               element={
