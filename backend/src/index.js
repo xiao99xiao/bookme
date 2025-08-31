@@ -478,6 +478,7 @@ app.delete('/api/services/:serviceId', verifyPrivyAuth, async (c) => {
 // Get user's bookings
 app.get('/api/bookings/user/:userId', verifyPrivyAuth, async (c) => {
   try {
+    const startTime = Date.now()
     const userId = c.get('userId')
     const targetUserId = c.req.param('userId')
     const { role } = c.req.query()
@@ -488,7 +489,16 @@ app.get('/api/bookings/user/:userId', verifyPrivyAuth, async (c) => {
         *,
         service:services(*),
         customer:users!customer_id(*),
-        provider:users!provider_id(*)
+        provider:users!provider_id(*),
+        reviews!booking_id(
+          id,
+          rating,
+          comment,
+          created_at,
+          updated_at,
+          reviewer:users!reviewer_id(display_name, avatar),
+          reviewee:users!reviewee_id(display_name, avatar)
+        )
       `)
     
     if (role === 'customer') {
@@ -506,6 +516,13 @@ app.get('/api/bookings/user/:userId', verifyPrivyAuth, async (c) => {
       console.error('Bookings fetch error:', error)
       return c.json({ error: 'Failed to fetch bookings' }, 500)
     }
+    
+    const endTime = Date.now()
+    const reviewCount = data ? data.reduce((acc, booking) => {
+      const reviews = Array.isArray(booking.reviews) ? booking.reviews.length : 0
+      return acc + reviews
+    }, 0) : 0
+    console.log(`✅ Optimized bookings query: ${endTime - startTime}ms | ${data?.length || 0} bookings | ${reviewCount} reviews | Role: ${role || 'all'}`)
     
     return c.json(data || [])
   } catch (error) {

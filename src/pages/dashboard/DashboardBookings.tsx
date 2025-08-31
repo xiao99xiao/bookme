@@ -44,6 +44,21 @@ interface Booking {
     email: string;
     avatar?: string;
   };
+  reviews?: {
+    id: string;
+    rating: number;
+    comment: string;
+    created_at: string;
+    updated_at: string;
+    reviewer?: {
+      display_name: string;
+      avatar?: string;
+    };
+    reviewee?: {
+      display_name: string;
+      avatar?: string;
+    };
+  }[];
 }
 
 export default function DashboardBookings() {
@@ -88,23 +103,14 @@ export default function DashboardBookings() {
       const bookingsData = await ApiClient.getMyBookings(userId!);
       setBookings(bookingsData);
       
-      // Load existing reviews for completed bookings
-      const completedBookings = bookingsData.filter(b => b.status === 'completed');
-      const reviewPromises = completedBookings.map(async (booking) => {
-        try {
-          const review = await ApiClient.getReviewByBooking(booking.id);
-          return { bookingId: booking.id, review };
-        } catch (error) {
-          return { bookingId: booking.id, review: null };
-        }
-      });
-      
-      const reviewResults = await Promise.all(reviewPromises);
+      // Extract reviews from bookings data (now included in the query)
       const reviewsMap: Record<string, { rating: number; comment: string }> = {};
       
-      reviewResults.forEach(({ bookingId, review }) => {
-        if (review) {
-          reviewsMap[bookingId] = {
+      bookingsData.forEach((booking) => {
+        // Reviews are now included as an array in the booking object
+        if (booking.reviews && booking.reviews.length > 0) {
+          const review = booking.reviews[0]; // Should only be one review per booking
+          reviewsMap[booking.id] = {
             rating: review.rating,
             comment: review.comment || ''
           };
