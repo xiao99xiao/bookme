@@ -258,7 +258,9 @@ export class ApiClient {
   }
 
   static async getMyBookings(userId: string): Promise<Booking[]> {
+    // Ensure we have a backend API instance (this will use fallback if needed)
     this.ensureInitialized()
+    
     return this.backendApi.getUserBookings(userId, 'customer')
   }
 
@@ -322,22 +324,6 @@ export class ApiClient {
   static async getConversationMessages(conversationId: string, limit?: number, before?: string): Promise<any[]> {
     this.ensureInitialized()
     return this.backendApi.getMessages(conversationId, { limit, before })
-  }
-
-  static async getMessages(conversationId: string, limit?: number, before?: string): Promise<any[]> {
-    this.ensureInitialized()
-    return this.backendApi.getMessages(conversationId, { limit, before })
-  }
-
-  static async sendMessage(conversationId: string, senderId: string, content: string): Promise<any> {
-    this.ensureInitialized()
-    return this.backendApi.sendMessage(conversationId, content)
-  }
-
-  static async markMessagesAsRead(conversationId: string, userId: string): Promise<void> {
-    this.ensureInitialized()
-    // This is handled via WebSocket now
-    return Promise.resolve()
   }
 
   static async getUnreadMessageCount(userId: string): Promise<number> {

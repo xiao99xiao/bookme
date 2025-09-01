@@ -88,8 +88,9 @@ export const PrivyAuthProvider = ({ children }: PrivyAuthProviderProps) => {
   // Create backend API instance with wrapper
   const backendApi = useMemo(() => new BackendAPI(wrappedGetAccessToken), [wrappedGetAccessToken]);
   
-  // Initialize ApiClient compatibility layer
-  useEffect(() => {
+  // Initialize ApiClient compatibility layer immediately
+  // This ensures ApiClient is ready before any components try to use it
+  useMemo(() => {
     ApiClient.initialize(wrappedGetAccessToken);
   }, [wrappedGetAccessToken]);
   

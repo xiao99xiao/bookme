@@ -189,6 +189,103 @@ VITE_BACKEND_URL=https://192.168.0.10:4443  # Your local IP with HTTPS
 - Styling with Tailwind CSS
 - Forms use react-hook-form with zod validation
 
+## Case Convention Standards
+
+### Overview
+BookMe follows a **layered approach** to naming conventions, where each layer uses the appropriate convention for its platform:
+
+### Database Layer (PostgreSQL/Supabase)
+- **Convention**: `snake_case` (PostgreSQL standard)
+- **Examples**: `user_id`, `display_name`, `created_at`, `is_active`, `total_earnings`
+- **All database tables and columns follow this pattern consistently**
+
+### Backend API (Hono)
+- **Request/Response Fields**: `snake_case` (matches database)
+- **Variable Names**: `camelCase` (JavaScript standard)
+- **Field Mapping Pattern**:
+```javascript
+// Extract snake_case from request body, assign to camelCase variables
+const { service_id: serviceId, scheduled_at: scheduledAt, customer_notes: customerNotes } = body
+
+// Send snake_case to database
+const bookingData = {
+  service_id: serviceId,
+  customer_id: userId,
+  provider_id: service.provider_id,
+  scheduled_at: scheduledAt,
+  // ...
+}
+```
+
+### Frontend (TypeScript/React)
+- **Component Variables**: `camelCase` (JavaScript/React standard)
+- **API Response Fields**: `snake_case` (matches backend responses)
+- **TypeScript Interfaces**: `snake_case` (matches API responses)
+
+```typescript
+// Interface definitions match API responses
+interface User {
+  display_name: string
+  is_verified: boolean
+  total_earnings: number
+  created_at: string
+}
+
+// Component usage
+const { display_name, is_verified, total_earnings } = user
+```
+
+### Best Practices
+
+#### When Adding New Fields
+1. **Database**: Always use `snake_case`
+2. **Backend**: Map request fields to `camelCase` variables, send `snake_case` to database
+3. **Frontend**: Access `snake_case` fields from API responses directly
+4. **TypeScript**: Define interfaces with `snake_case` to match API responses
+
+#### Field Mapping Pattern (Backend)
+```javascript
+// ✅ Correct: Extract and map field names
+const { snake_case_field: camelCaseVar } = requestBody
+
+// ❌ Wrong: Assume camelCase exists in request
+const { camelCaseField } = requestBody // undefined if frontend sends snake_case
+```
+
+#### Frontend API Consumption
+```typescript
+// ✅ Correct: Access snake_case fields from API responses
+booking.service_id
+user.display_name  
+service.duration_minutes
+
+// ❌ Wrong: Assume camelCase conversion happened
+booking.serviceId // undefined unless explicitly converted
+```
+
+#### Common Field Mappings
+| Database/API | Component Variable | Notes |
+|-------------|-------------------|-------|
+| `service_id` | `serviceId` | Backend maps on extraction |
+| `scheduled_at` | `scheduledAt` | Backend maps on extraction |
+| `customer_notes` | `customerNotes` | Backend maps on extraction |
+| `is_online` | `isOnline` | Backend maps on extraction |
+| `created_at` | Access directly | Frontend uses `item.created_at` |
+| `display_name` | Access directly | Frontend uses `user.display_name` |
+
+### Debugging Field Name Issues
+If you encounter "undefined" field errors:
+1. Check if backend is extracting the correct field names from request body
+2. Verify frontend is sending the expected field names (usually `snake_case`)  
+3. Ensure TypeScript interfaces match actual API response structure
+4. Use browser dev tools to inspect actual API request/response field names
+
+### Why This Pattern Works
+- **Database**: Follows PostgreSQL conventions
+- **Backend**: Maintains JavaScript conventions while properly interfacing with database
+- **Frontend**: TypeScript interfaces provide type safety with actual API response structure
+- **Consistency**: Each layer is internally consistent and correctly interfaces with adjacent layers
+
 ## Testing Access
 
 ### With SSL (Recommended - after running `npm run setup:ssl`)

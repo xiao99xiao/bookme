@@ -92,38 +92,46 @@ export default function CustomerProfile() {
     },
   });
 
+  // Effect to populate form with profile data whenever profile changes or component mounts
   useEffect(() => {
-    if (profile) {
-      // Ensure the timezone value exists in our list, fallback to browser timezone if not
-      const profileTimezone = profile.timezone || getBrowserTimezone();
-      const timezoneExists = TIMEZONE_BASE_DATA.some(tz => tz.value === profileTimezone);
-      const finalTimezone = timezoneExists ? profileTimezone : getBrowserTimezone();
-      
-      form.reset({
-        display_name: profile.display_name || '',
-        bio: profile.bio || '',
-        phone: profile.phone || '',
-        location: profile.location || '',
-        website: profile.website || '',
-        timezone: finalTimezone,
-      });
-      setAvatarUrl(profile.avatar || '');
-      
-      // If user doesn't have a timezone set, automatically update their profile with browser timezone
-      if (!profile.timezone && userId) {
-        const browserTimezone = getBrowserTimezone();
-        // Silently update the user's timezone in the background
-        ApiClient.updateProfile({ timezone: browserTimezone }, userId)
-          .then(() => {
-            console.log('Auto-set user timezone to:', browserTimezone);
-            refreshProfile(); // Refresh to get updated profile
-          })
-          .catch(error => {
-            console.error('Failed to auto-set timezone:', error);
-          });
+    const populateForm = () => {
+      if (profile && userId) {
+        // Ensure the timezone value exists in our list, fallback to browser timezone if not
+        const profileTimezone = profile.timezone || getBrowserTimezone();
+        const timezoneExists = TIMEZONE_BASE_DATA.some(tz => tz.value === profileTimezone);
+        const finalTimezone = timezoneExists ? profileTimezone : getBrowserTimezone();
+        
+        // Always reset form when profile data is available
+        const formData = {
+          display_name: profile.display_name || '',
+          bio: profile.bio || '',
+          phone: profile.phone || '',
+          location: profile.location || '',
+          website: profile.website || '',
+          timezone: finalTimezone,
+        };
+        
+        form.reset(formData);
+        setAvatarUrl(profile.avatar || '');
+        
+        // If user doesn't have a timezone set, automatically update their profile with browser timezone
+        if (!profile.timezone) {
+          const browserTimezone = getBrowserTimezone();
+          // Silently update the user's timezone in the background
+          ApiClient.updateProfile({ timezone: browserTimezone }, userId)
+            .then(() => {
+              refreshProfile(); // Refresh to get updated profile
+            })
+            .catch(error => {
+              console.error('Failed to auto-set timezone:', error);
+            });
+        }
       }
-    }
-  }, [profile, userId, refreshProfile]); // Removed form from dependencies to avoid infinite loop
+    };
+
+    // Populate form immediately if profile is available
+    populateForm();
+  }, [profile, userId, refreshProfile]);
 
   useEffect(() => {
     if (userId) {

@@ -217,19 +217,6 @@ export class BackendAPI {
     });
   }
 
-  async getMessages(conversationId: string, limit: number = 30, before?: string): Promise<any[]> {
-    const params = new URLSearchParams({ limit: limit.toString() });
-    if (before) params.append('before', before);
-    return this.request(`/api/messages/${conversationId}?${params}`);
-  }
-
-  async sendMessage(conversationId: string, content: string): Promise<any> {
-    return this.request('/api/messages', {
-      method: 'POST',
-      body: JSON.stringify({ conversationId, content }),
-    });
-  }
-
   async markMessagesAsRead(conversationId: string): Promise<void> {
     await this.request(`/api/conversations/${conversationId}/read`, {
       method: 'PUT',
