@@ -108,7 +108,7 @@ const Onboarding = () => {
         navigate(`/profile/${fromProfile}`);
       } else if (formData.wantsToProvideService) {
         // User wants to provide services, go to edit profile to create services
-        navigate('/dashboard/profile');
+        navigate('/provider/services');
       } else {
         // User just wants to browse, go to discover page
         navigate('/discover');

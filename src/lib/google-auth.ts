@@ -8,7 +8,7 @@ const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 const CLIENT_SECRET = import.meta.env.VITE_GOOGLE_CLIENT_SECRET || ''; // Note: This should ideally be in a backend
 // Don't evaluate window.location at module load time
-const getRedirectUri = () => `${window.location.origin}/dashboard/integrations/callback`;
+const getRedirectUri = () => `${window.location.origin}/provider/integrations/callback`;
 
 // Scopes needed for Google Calendar/Meet
 const SCOPES = [

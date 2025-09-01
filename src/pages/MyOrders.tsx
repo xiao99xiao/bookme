@@ -325,7 +325,7 @@ export default function MyOrders() {
             <p className="text-muted-foreground mb-4">
               When customers book your services, their orders will appear here.
             </p>
-            <Button variant="outline" onClick={() => window.location.href = '/dashboard/services'}>
+            <Button variant="outline" onClick={() => window.location.href = '/provider/services'}>
               Manage Services
             </Button>
           </div>

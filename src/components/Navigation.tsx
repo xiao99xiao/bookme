@@ -67,9 +67,9 @@ const Navigation = () => {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem asChild>
-              <Link to="/dashboard" className="flex items-center gap-2">
+              <Link to="/customer/profile" className="flex items-center gap-2">
                 <LayoutDashboard className="w-4 h-4" />
-                Dashboard
+                Profile
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem 

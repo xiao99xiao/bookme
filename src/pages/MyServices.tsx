@@ -265,7 +265,7 @@ export default function MyServices() {
             <p className="text-muted-foreground mb-4">
               Enable service provider mode in your profile to start offering services to other users.
             </p>
-            <Button variant="outline" onClick={() => window.location.href = '/dashboard/profile'}>
+            <Button variant="outline" onClick={() => window.location.href = '/customer/profile'}>
               Update Profile Settings
             </Button>
           </div>

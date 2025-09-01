@@ -85,8 +85,8 @@ const AuthCallback = () => {
             }
             
             if (data.session) {
-              console.log('Session manually established, navigating to dashboard');
-              navigate('/dashboard');
+              console.log('Session manually established, navigating to discover');
+              navigate('/discover');
               return;
             } else {
               console.error('No session returned from setSession');
@@ -98,7 +98,7 @@ const AuthCallback = () => {
           // Fallback navigation
           setTimeout(() => {
             console.log('Fallback navigation after error');
-            navigate('/dashboard');
+            navigate('/discover');
           }, 2000);
           
           return;
@@ -118,7 +118,7 @@ const AuthCallback = () => {
         if (session) {
           // Success! Give the auth context time to create/fetch the profile
           setTimeout(() => {
-            navigate('/dashboard');
+            navigate('/discover');
           }, 1000); // Small delay to allow profile creation
         } else {
           setError('No session found. Please try signing in again.');

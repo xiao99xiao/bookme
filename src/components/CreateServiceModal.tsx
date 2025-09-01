@@ -281,7 +281,7 @@ export default function CreateServiceModal({ isOpen, onClose, onSubmit, isLoadin
                       <div className="text-sm text-amber-800">
                         <p className="font-medium">Integration Required</p>
                         <p className="mt-1">You need to connect {meetingPlatforms.find(p => p.value === form.watch('meeting_platform'))?.label} in your Integrations before creating this service.</p>
-                        <a href="/dashboard/integrations" className="inline-block mt-2 text-amber-700 hover:text-amber-900 underline">
+                        <a href="/provider/integrations" className="inline-block mt-2 text-amber-700 hover:text-amber-900 underline">
                           Go to Integrations →
                         </a>
                       </div>
