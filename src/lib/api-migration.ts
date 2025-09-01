@@ -79,34 +79,57 @@ export interface Booking {
  * Uses the new BackendAPI under the hood
  */
 export class ApiClient {
-  private static backendApi: BackendAPI
-  private static initialized = false
-  private static isInitialized = false
+  private static backendApi: BackendAPI | null = null
+  private static initializationPromise: Promise<void> | null = null
+  private static resolveInitialization: (() => void) | null = null
 
   static initialize(getAccessToken: () => Promise<string | null>) {
-    if (!this.initialized) {
-      this.backendApi = new BackendAPI(getAccessToken)
-      this.initialized = true
-      this.isInitialized = true
-    } else {
-      // Force reinitialize to ensure correct function is used
-      this.backendApi = new BackendAPI(getAccessToken)
+    // Always update the backend API with the latest token function
+    this.backendApi = new BackendAPI(getAccessToken)
+    
+    // If this is the first initialization, resolve the promise
+    if (this.resolveInitialization) {
+      this.resolveInitialization()
+      this.resolveInitialization = null
     }
   }
 
+  /**
+   * Wait for ApiClient to be properly initialized with auth
+   * This prevents race conditions where components try to use ApiClient
+   * before PrivyAuthContext has initialized it
+   */
+  private static async waitForInitialization(): Promise<void> {
+    // If already initialized with a proper backend API, we're good
+    if (this.backendApi) {
+      return
+    }
+
+    // If no initialization promise exists, create one
+    if (!this.initializationPromise) {
+      this.initializationPromise = new Promise<void>((resolve) => {
+        this.resolveInitialization = resolve
+      })
+    }
+
+    // Wait for initialization to complete
+    await this.initializationPromise
+  }
+
+  /**
+   * For public endpoints that don't require auth
+   */
   private static ensureInitialized() {
     if (!this.backendApi) {
       // For public endpoints that don't require auth, initialize with no token
       this.backendApi = new BackendAPI(async () => null)
-      this.initialized = true
-      this.isInitialized = true
     }
   }
 
   // User/Profile methods
   static async ensureUserProfile(userId: string): Promise<User> {
-    this.ensureInitialized()
-    return this.backendApi.getUserProfile()
+    await this.waitForInitialization()
+    return this.backendApi!.getUserProfile()
   }
 
   static async getUserProfileById(userId: string): Promise<User | null> {
@@ -123,28 +146,28 @@ export class ApiClient {
   }
 
   static async getUserProfile(userId: string): Promise<User | null> {
-    this.ensureInitialized()
-    return this.backendApi.getUserProfile()
+    await this.waitForInitialization()
+    return this.backendApi!.getUserProfile()
   }
 
   static async updateUserProfile(userId: string, updates: Partial<User>): Promise<User> {
-    this.ensureInitialized()
-    return this.backendApi.updateUserProfile(updates)
+    await this.waitForInitialization()
+    return this.backendApi!.updateUserProfile(updates)
   }
 
   static async updateProfile(updates: Partial<User>, userId?: string): Promise<User> {
-    this.ensureInitialized()
-    return this.backendApi.updateUserProfile(updates)
+    await this.waitForInitialization()
+    return this.backendApi!.updateUserProfile(updates)
   }
 
   // Service methods
   static async getUserServices(userId?: string): Promise<Service[]> {
-    this.ensureInitialized()
+    await this.waitForInitialization()
     // If no userId provided, get current user's services
     if (!userId) {
-      return this.backendApi.getServices({ provider_id: 'current' })
+      return this.backendApi!.getServices({ provider_id: 'current' })
     }
-    return this.backendApi.getUserServices(userId)
+    return this.backendApi!.getUserServices(userId)
   }
 
   static async getUserServicesById(userId: string, timezone?: string): Promise<Service[]> {
@@ -190,30 +213,30 @@ export class ApiClient {
   }
 
   static async createService(userIdOrService: string | any, service?: Omit<Service, 'id' | 'provider_id'>): Promise<Service> {
-    this.ensureInitialized()
+    await this.waitForInitialization()
     // Handle both signatures: createService(userId, service) and createService(service)
     if (typeof userIdOrService === 'string') {
       // Old signature with userId
-      return this.backendApi.createService(service!)
+      return this.backendApi!.createService(service!)
     }
     // New signature without userId
-    return this.backendApi.createService(userIdOrService)
+    return this.backendApi!.createService(userIdOrService)
   }
 
   static async updateService(serviceId: string, userIdOrUpdates: string | Partial<Service>, updates?: Partial<Service>): Promise<Service> {
-    this.ensureInitialized()
+    await this.waitForInitialization()
     // Handle both signatures: updateService(id, userId, updates) and updateService(id, updates)
     if (typeof userIdOrUpdates === 'string' && updates) {
       // Old signature with userId
-      return this.backendApi.updateService(serviceId, updates)
+      return this.backendApi!.updateService(serviceId, updates)
     }
     // New signature without userId
-    return this.backendApi.updateService(serviceId, userIdOrUpdates as Partial<Service>)
+    return this.backendApi!.updateService(serviceId, userIdOrUpdates as Partial<Service>)
   }
 
   static async deleteService(serviceId: string, userId?: string): Promise<void> {
-    this.ensureInitialized()
-    return this.backendApi.deleteService(serviceId)
+    await this.waitForInitialization()
+    return this.backendApi!.deleteService(serviceId)
   }
 
   // Booking methods
@@ -225,43 +248,41 @@ export class ApiClient {
     location?: string
     isOnline?: boolean
   } | any, userId?: string): Promise<Booking> {
-    this.ensureInitialized()
+    await this.waitForInitialization()
     // Handle both old signatures
     if (typeof userId === 'string') {
       // Old signature: createBooking(bookingData, userId)
       const { customerId, ...bookingData } = booking
-      return this.backendApi.createBooking(bookingData)
+      return this.backendApi!.createBooking(bookingData)
     }
     // New signature
     const { customerId, ...bookingData } = booking
-    return this.backendApi.createBooking(bookingData)
+    return this.backendApi!.createBooking(bookingData)
   }
 
   static async getUserBookings(userIdOrRole?: string, role?: 'customer' | 'provider'): Promise<Booking[]> {
-    this.ensureInitialized()
+    await this.waitForInitialization()
     // Handle different call signatures
     if (!userIdOrRole) {
       // No params - get current user's bookings
-      return this.backendApi.getUserBookings('current')
+      return this.backendApi!.getUserBookings('current')
     }
     if (userIdOrRole === 'customer' || userIdOrRole === 'provider') {
       // Role only - get current user's bookings with role
-      return this.backendApi.getUserBookings('current', userIdOrRole as 'customer' | 'provider')
+      return this.backendApi!.getUserBookings('current', userIdOrRole as 'customer' | 'provider')
     }
     // UserId and optional role
-    return this.backendApi.getUserBookings(userIdOrRole, role)
+    return this.backendApi!.getUserBookings(userIdOrRole, role)
   }
 
   static async getProviderBookings(userId: string): Promise<Booking[]> {
-    this.ensureInitialized()
-    return this.backendApi.getUserBookings(userId, 'provider')
+    await this.waitForInitialization()
+    return this.backendApi!.getUserBookings(userId, 'provider')
   }
 
   static async getMyBookings(userId: string): Promise<Booking[]> {
-    // Ensure we have a backend API instance (this will use fallback if needed)
-    this.ensureInitialized()
-    
-    return this.backendApi.getUserBookings(userId, 'customer')
+    await this.waitForInitialization()
+    return this.backendApi!.getUserBookings(userId, 'customer')
   }
 
   static async getBookingById(bookingId: string): Promise<Booking | null> {
@@ -277,24 +298,24 @@ export class ApiClient {
     statusOrAdditionalData?: string | any,
     additionalData?: any
   ): Promise<Booking> {
-    this.ensureInitialized()
+    await this.waitForInitialization()
     // Handle both signatures: (id, userId, status, data) and (id, status, data)
     if (statusOrAdditionalData && typeof statusOrAdditionalData === 'string') {
       // Old signature with userId
-      return this.backendApi.updateBooking(bookingId, { status: statusOrAdditionalData, ...additionalData })
+      return this.backendApi!.updateBooking(bookingId, { status: statusOrAdditionalData, ...additionalData })
     }
     // New signature without userId
-    return this.backendApi.updateBooking(bookingId, { status: statusOrUserId, ...statusOrAdditionalData })
+    return this.backendApi!.updateBooking(bookingId, { status: statusOrUserId, ...statusOrAdditionalData })
   }
 
   static async cancelBooking(bookingId: string, userId: string, reason?: string): Promise<Booking> {
-    this.ensureInitialized()
-    return this.backendApi.cancelBooking(bookingId, reason)
+    await this.waitForInitialization()
+    return this.backendApi!.cancelBooking(bookingId, reason)
   }
 
   static async completeBooking(bookingId: string, userId: string): Promise<Booking> {
-    this.ensureInitialized()
-    return this.backendApi.completeBooking(bookingId)
+    await this.waitForInitialization()
+    return this.backendApi!.completeBooking(bookingId)
   }
 
   // Category methods
@@ -312,18 +333,18 @@ export class ApiClient {
   }
 
   static async getUserConversations(userId: string): Promise<any[]> {
-    this.ensureInitialized()
-    return this.backendApi.getConversations()
+    await this.waitForInitialization()
+    return this.backendApi!.getConversations()
   }
 
   static async getConversationById(conversationId: string, userId: string): Promise<any> {
-    this.ensureInitialized()
-    return this.backendApi.getConversation(conversationId)
+    await this.waitForInitialization()
+    return this.backendApi!.getConversation(conversationId)
   }
 
   static async getConversationMessages(conversationId: string, limit?: number, before?: string): Promise<any[]> {
-    this.ensureInitialized()
-    return this.backendApi.getMessages(conversationId, { limit, before })
+    await this.waitForInitialization()
+    return this.backendApi!.getMessages(conversationId, { limit, before })
   }
 
   static async getUnreadMessageCount(userId: string): Promise<number> {
@@ -340,19 +361,19 @@ export class ApiClient {
 
   // Review methods
   static async submitReview(bookingId: string, rating: number, comment: string): Promise<any> {
-    this.ensureInitialized()
-    return this.backendApi.createReview(bookingId, rating, comment)
+    await this.waitForInitialization()
+    return this.backendApi!.createReview(bookingId, rating, comment)
   }
 
   static async getReviewByBooking(bookingId: string): Promise<any | null> {
-    this.ensureInitialized()
-    return this.backendApi.getReviewByBooking(bookingId)
+    await this.waitForInitialization()
+    return this.backendApi!.getReviewByBooking(bookingId)
   }
 
   static async getBookingReview(bookingId: string, userId?: string): Promise<any | null> {
-    this.ensureInitialized()
+    await this.waitForInitialization()
     // userId parameter was for access control, backend handles this now
-    return this.backendApi.getReviewByBooking(bookingId)
+    return this.backendApi!.getReviewByBooking(bookingId)
   }
 
   static async getProviderReviews(providerId: string): Promise<any[]> {
@@ -368,14 +389,14 @@ export class ApiClient {
 
   // Meeting integration methods
   static async getUserMeetingIntegrations(userId: string): Promise<any[]> {
-    this.ensureInitialized()
-    return this.backendApi.getIntegrations()
+    await this.waitForInitialization()
+    return this.backendApi!.getIntegrations()
   }
 
   static async getMeetingIntegrations(userId?: string): Promise<any[]> {
-    this.ensureInitialized()
+    await this.waitForInitialization()
     // userId parameter was for filtering, backend handles this based on auth
-    return this.backendApi.getIntegrations()
+    return this.backendApi!.getIntegrations()
   }
 
   static async saveIntegration(integrationData: {
@@ -387,18 +408,18 @@ export class ApiClient {
     platform_user_id?: string
     platform_user_email?: string
   }): Promise<any> {
-    this.ensureInitialized()
-    return this.backendApi.saveIntegration(integrationData)
+    await this.waitForInitialization()
+    return this.backendApi!.saveIntegration(integrationData)
   }
 
   static async disconnectMeetingIntegration(integrationId: string, userId?: string): Promise<void> {
-    this.ensureInitialized()
-    return this.backendApi.disconnectIntegration(integrationId)
+    await this.waitForInitialization()
+    return this.backendApi!.disconnectIntegration(integrationId)
   }
 
   static async deleteMeetingIntegration(integrationId: string): Promise<void> {
-    this.ensureInitialized()
-    return this.backendApi.disconnectIntegration(integrationId)
+    await this.waitForInitialization()
+    return this.backendApi!.disconnectIntegration(integrationId)
   }
 
   static async getMeetingOAuthUrl(platform: string): Promise<{ url: string }> {
@@ -416,45 +437,45 @@ export class ApiClient {
   }
 
   static async generateMeetingLink(bookingId: string): Promise<string | null> {
-    this.ensureInitialized()
-    const result = await this.backendApi.generateMeetingLink(bookingId)
+    await this.waitForInitialization()
+    const result = await this.backendApi!.generateMeetingLink(bookingId)
     return result.meetingLink
   }
 
   static async deleteMeeting(bookingId: string): Promise<void> {
-    this.ensureInitialized()
-    return this.backendApi.deleteMeeting(bookingId)
+    await this.waitForInitialization()
+    return this.backendApi!.deleteMeeting(bookingId)
   }
 
   // Chat/Messaging methods
   static async getOrCreateConversation(otherUserId: string, currentUserId?: string): Promise<any> {
-    this.ensureInitialized()
+    await this.waitForInitialization()
     // currentUserId is not needed as backend gets it from auth
-    return this.backendApi.getOrCreateConversation(otherUserId)
+    return this.backendApi!.getOrCreateConversation(otherUserId)
   }
 
   static async getMessages(conversationId: string, limit: number = 30, before?: string): Promise<any[]> {
-    this.ensureInitialized()
-    return this.backendApi.getMessages(conversationId, limit, before)
+    await this.waitForInitialization()
+    return this.backendApi!.getMessages(conversationId, limit, before)
   }
 
   static async sendMessage(conversationId: string, content: string, senderId?: string): Promise<any> {
-    this.ensureInitialized()
+    await this.waitForInitialization()
     // senderId is not needed as backend gets it from auth
-    return this.backendApi.sendMessage(conversationId, content)
+    return this.backendApi!.sendMessage(conversationId, content)
   }
 
   static async markMessagesAsRead(conversationId: string, userId?: string): Promise<void> {
-    this.ensureInitialized()
+    await this.waitForInitialization()
     // userId is not needed as backend gets it from auth
-    return this.backendApi.markMessagesAsRead(conversationId)
+    return this.backendApi!.markMessagesAsRead(conversationId)
   }
 
   // File upload
   static async uploadFile(file: File, bucket: string = 'avatars', userId?: string): Promise<{ url: string; path: string }> {
-    this.ensureInitialized()
+    await this.waitForInitialization()
     // userId parameter was for path generation, backend handles this now
-    return this.backendApi.uploadFile(file, bucket)
+    return this.backendApi!.uploadFile(file, bucket)
   }
 }
 

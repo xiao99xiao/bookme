@@ -100,12 +100,6 @@ export default function DashboardBookings() {
   const loadBookings = async () => {
     try {
       setLoading(true);
-      
-      // Add a small delay to ensure ApiClient is properly initialized
-      if (!userId) {
-        throw new Error('User ID not available');
-      }
-      
       const bookingsData = await ApiClient.getMyBookings(userId!);
       setBookings(bookingsData);
       
@@ -126,17 +120,7 @@ export default function DashboardBookings() {
       setBookingReviews(reviewsMap);
     } catch (error) {
       console.error('Failed to load bookings:', error);
-      
-      // If it's an initialization error, provide a more helpful message
-      if (error instanceof Error && error.message.includes('not properly initialized')) {
-        toast.error('Authentication system is still loading. Please try again in a moment.');
-        // Retry after a short delay
-        setTimeout(() => {
-          loadBookings();
-        }, 2000);
-      } else {
-        toast.error('Failed to load bookings');
-      }
+      toast.error('Failed to load bookings');
     } finally {
       setLoading(false);
     }
