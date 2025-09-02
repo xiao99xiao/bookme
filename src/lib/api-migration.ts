@@ -10,6 +10,7 @@ export interface User {
   id: string
   email: string
   display_name: string
+  username?: string
   bio?: string
   avatar_url?: string
   phone?: string
@@ -242,6 +243,22 @@ export class ApiClient {
   static async toggleServiceVisibility(serviceId: string, isVisible: boolean, userId?: string): Promise<Service> {
     await this.waitForInitialization()
     return this.backendApi!.toggleServiceVisibility(serviceId, isVisible)
+  }
+
+  // Username methods
+  static async checkUsernameAvailability(username: string): Promise<{ available: boolean; error?: string }> {
+    await this.waitForInitialization()
+    return this.backendApi!.checkUsernameAvailability(username)
+  }
+
+  static async updateUsername(username: string, userId?: string): Promise<User> {
+    await this.waitForInitialization()
+    return this.backendApi!.updateUsername(username)
+  }
+
+  static async getUserByUsername(username: string): Promise<User> {
+    await this.waitForInitialization()
+    return this.backendApi!.getUserByUsername(username)
   }
 
   // Booking methods
@@ -481,6 +498,56 @@ export class ApiClient {
     await this.waitForInitialization()
     // userId parameter was for path generation, backend handles this now
     return this.backendApi!.uploadFile(file, bucket)
+  }
+
+  // Public methods (no authentication required)
+  
+  /**
+   * Public method to get user profile by username (no auth required)
+   */
+  static async getPublicUserByUsername(username: string): Promise<User> {
+    this.ensureInitialized()
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://192.168.0.10:4443'}/api/user/username/${encodeURIComponent(username)}`)
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error('User not found')
+      }
+      throw new Error('Failed to fetch user')
+    }
+    return response.json()
+  }
+
+  /**
+   * Public method to get user profile by ID (no auth required)
+   */
+  static async getPublicUserProfile(userId: string): Promise<User> {
+    this.ensureInitialized()
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://192.168.0.10:4443'}/api/user/${encodeURIComponent(userId)}`)
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error('User not found')
+      }
+      throw new Error('Failed to fetch user profile')
+    }
+    return response.json()
+  }
+
+  /**
+   * Public method to get user services by ID (no auth required)
+   */
+  static async getPublicUserServices(userId: string, timezone?: string): Promise<Service[]> {
+    this.ensureInitialized()
+    const url = new URL(`${import.meta.env.VITE_BACKEND_URL || 'https://192.168.0.10:4443'}/api/services/public/${encodeURIComponent(userId)}`)
+    if (timezone) {
+      url.searchParams.set('timezone', timezone)
+    }
+    
+    const response = await fetch(url.toString())
+    if (!response.ok) {
+      console.warn('Failed to fetch public services, returning empty array')
+      return []
+    }
+    return response.json()
   }
 }
 

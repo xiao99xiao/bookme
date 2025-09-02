@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -11,14 +11,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Camera, Globe, Mail, Phone, MapPin, Calendar, Star, Video, Users, Copy, Check, ExternalLink, Clock } from 'lucide-react';
+import { Loader2, Camera, Globe, Mail, Phone, MapPin, Calendar, Star, Video, Users, Copy, Check, ExternalLink, Clock, CheckCircle, XCircle } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient } from '@/lib/api-migration';
 import { getBrowserTimezone, getTimezoneOffset } from '@/lib/timezone';
+import { validateUsername, generateUsernameFromName, getUserPageUrl } from '@/lib/username';
 
 const profileSchema = z.object({
   display_name: z.string().min(2, 'Name must be at least 2 characters'),
+  username: z.string().min(3, 'Username must be at least 3 characters').optional(),
   bio: z.string().max(500, 'Bio must be less than 500 characters').optional(),
   phone: z.string().optional(),
   location: z.string().optional(),
@@ -78,12 +80,24 @@ export default function CustomerProfile() {
   const [profileLinkCopied, setProfileLinkCopied] = useState(false);
   const [timezoneList, setTimezoneList] = useState(generateTimezoneList());
   
-  const profileUrl = `${window.location.origin}/profile/${userId}`;
+  // Username availability state
+  const [usernameAvailability, setUsernameAvailability] = useState<{
+    checking: boolean;
+    available: boolean | null;
+    error: string | null;
+  }>({
+    checking: false,
+    available: null,
+    error: null
+  });
+  
+  const profileUrl = getUserPageUrl(profile);
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       display_name: '',
+      username: '',
       bio: '',
       phone: '',
       location: '',
@@ -91,6 +105,64 @@ export default function CustomerProfile() {
       timezone: '',
     },
   });
+
+  // Throttled username availability checking
+  const checkUsernameAvailability = useCallback(async (username: string) => {
+    if (!username || username.length < 3) {
+      setUsernameAvailability({ checking: false, available: null, error: null });
+      return;
+    }
+
+    // Skip check if it's the user's current username
+    if (profile?.username === username) {
+      setUsernameAvailability({ checking: false, available: true, error: null });
+      return;
+    }
+
+    // Validate format first
+    const validation = validateUsername(username);
+    if (!validation.isValid) {
+      setUsernameAvailability({ checking: false, available: false, error: validation.error });
+      return;
+    }
+
+    setUsernameAvailability({ checking: true, available: null, error: null });
+
+    try {
+      const availability = await ApiClient.checkUsernameAvailability(username);
+      setUsernameAvailability({
+        checking: false,
+        available: availability.available,
+        error: availability.available ? null : (availability.error || 'Username is already taken')
+      });
+    } catch (error) {
+      setUsernameAvailability({
+        checking: false,
+        available: false,
+        error: 'Failed to check availability'
+      });
+    }
+  }, [profile?.username]);
+
+  // Throttled version of username availability check
+  const throttledCheckUsername = useCallback(
+    (() => {
+      let timeoutId: NodeJS.Timeout;
+      return (username: string) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => checkUsernameAvailability(username), 500);
+      };
+    })(),
+    [checkUsernameAvailability]
+  );
+
+  // Watch username changes for real-time availability checking
+  const watchedUsername = form.watch('username');
+  useEffect(() => {
+    if (watchedUsername !== undefined) {
+      throttledCheckUsername(watchedUsername);
+    }
+  }, [watchedUsername, throttledCheckUsername]);
 
   // Effect to populate form with profile data whenever profile changes or component mounts
   useEffect(() => {
@@ -104,6 +176,7 @@ export default function CustomerProfile() {
         // Always reset form when profile data is available
         const formData = {
           display_name: profile.display_name || '',
+          username: profile.username || '',
           bio: profile.bio || '',
           phone: profile.phone || '',
           location: profile.location || '',
@@ -188,10 +261,35 @@ export default function CustomerProfile() {
   const onSubmit = async (data: ProfileFormData) => {
     try {
       setLoading(true);
+      
+      // Handle username update separately if changed
+      const currentUsername = profile?.username;
+      if (data.username && data.username !== currentUsername) {
+        // Validate username format
+        const validation = validateUsername(data.username);
+        if (!validation.isValid) {
+          toast.error(validation.error);
+          return;
+        }
+        
+        // Final availability check before submission (security measure)
+        const availability = await ApiClient.checkUsernameAvailability(data.username);
+        if (!availability.available) {
+          toast.error(availability.error || 'Username is already taken');
+          return;
+        }
+        
+        // Update username
+        await ApiClient.updateUsername(data.username, userId);
+      }
+      
+      // Update other profile fields (exclude username from profile update)
+      const { username, ...profileData } = data;
       await ApiClient.updateProfile({
-        ...data,
-        website: data.website || undefined,
+        ...profileData,
+        website: profileData.website || undefined,
       }, userId);
+      
       await refreshProfile();
       toast.success('Profile updated successfully');
     } catch (error) {
@@ -256,42 +354,50 @@ export default function CustomerProfile() {
             <h2 className="text-lg font-semibold text-gray-900 mb-2">Profile Link</h2>
             <p className="text-sm text-gray-600 mb-6">Share your profile with others</p>
             
-            <div className="flex items-center space-x-2">
-              <div className="flex-1">
-                <div className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
-                  <Globe className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                  <span className="text-sm text-gray-700 truncate flex-1">{profileUrl}</span>
+            {profileUrl ? (
+              <div className="flex items-center space-x-2">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
+                    <Globe className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    <span className="text-sm text-gray-700 truncate flex-1">{profileUrl}</span>
+                  </div>
                 </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    navigator.clipboard.writeText(profileUrl);
+                    setProfileLinkCopied(true);
+                    toast.success('Profile link copied!');
+                    setTimeout(() => setProfileLinkCopied(false), 2000);
+                  }}
+                  className="flex items-center space-x-1"
+                >
+                  {profileLinkCopied ? (
+                    <><Check className="w-4 h-4" /><span>Copied</span></>
+                  ) : (
+                    <><Copy className="w-4 h-4" /><span>Copy</span></>
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(profileUrl, '_blank')}
+                  className="flex items-center space-x-1"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  <span>View</span>
+                </Button>
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  navigator.clipboard.writeText(profileUrl);
-                  setProfileLinkCopied(true);
-                  toast.success('Profile link copied!');
-                  setTimeout(() => setProfileLinkCopied(false), 2000);
-                }}
-                className="flex items-center space-x-1"
-              >
-                {profileLinkCopied ? (
-                  <><Check className="w-4 h-4" /><span>Copied</span></>
-                ) : (
-                  <><Copy className="w-4 h-4" /><span>Copy</span></>
-                )}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => window.open(profileUrl, '_blank')}
-                className="flex items-center space-x-1"
-              >
-                <ExternalLink className="w-4 h-4" />
-                <span>View</span>
-              </Button>
-            </div>
+            ) : (
+              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm text-yellow-800">
+                  Set a username to get your public profile link
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Basic Information */}
@@ -311,6 +417,65 @@ export default function CustomerProfile() {
                 {form.formState.errors.display_name && (
                   <p className="text-sm text-red-600 mt-1">
                     {form.formState.errors.display_name.message}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="username">Username</Label>
+                <div className="mt-1">
+                  <div className="relative">
+                    <Input
+                      id="username"
+                      {...form.register('username')}
+                      placeholder="e.g. john-smith, jane_doe, alex123"
+                      className={`pr-10 ${
+                        usernameAvailability.available === true ? 'border-green-500 focus:border-green-500' :
+                        usernameAvailability.available === false ? 'border-red-500 focus:border-red-500' :
+                        ''
+                      }`}
+                    />
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                      {usernameAvailability.checking ? (
+                        <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                      ) : usernameAvailability.available === true ? (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      ) : usernameAvailability.available === false ? (
+                        <XCircle className="h-4 w-4 text-red-500" />
+                      ) : null}
+                    </div>
+                  </div>
+                  
+                  {/* Username requirements */}
+                  <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h4 className="text-sm font-medium text-blue-900 mb-2">Username Requirements:</h4>
+                    <ul className="text-sm text-blue-800 space-y-1">
+                      <li>• 3-30 characters long</li>
+                      <li>• Only letters (a-z, A-Z), numbers (0-9), underscores (_), and dashes (-)</li>
+                      <li>• No spaces or special characters</li>
+                      <li>• Cannot be a reserved word (like "admin", "api", etc.)</li>
+                    </ul>
+                  </div>
+                  
+                  {/* Availability status message */}
+                  {usernameAvailability.error && (
+                    <p className="text-sm text-red-600 mt-2">
+                      {usernameAvailability.error}
+                    </p>
+                  )}
+                  {usernameAvailability.available === true && watchedUsername && watchedUsername.length >= 3 && (
+                    <p className="text-sm text-green-600 mt-2">
+                      ✓ Username is available
+                    </p>
+                  )}
+                  
+                  <p className="text-xs text-gray-500 mt-2">
+                    Your public page will be available at: {window.location.origin}/{watchedUsername || 'your-username'}
+                  </p>
+                </div>
+                {form.formState.errors.username && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {form.formState.errors.username.message}
                   </p>
                 )}
               </div>

@@ -79,7 +79,7 @@ interface Review {
 }
 
 const Profile = () => {
-  const { userId } = useParams<{ userId: string }>();
+  const { userId, username } = useParams<{ userId?: string; username?: string }>();
   const [searchParams] = useSearchParams();
   const { user: currentUser, profile: currentProfile, loading: authLoading, userId: currentUserId } = useAuth();
   
@@ -94,18 +94,47 @@ const Profile = () => {
   const [customerNotes, setCustomerNotes] = useState('');
   const [isBooking, setIsBooking] = useState(false);
 
+  // State for resolved user data
+  const [resolvedUserId, setResolvedUserId] = useState<string | null>(null);
+  
   // Determine which user's profile to show
-  const targetUserId = userId || currentUserId;
+  const targetUserId = resolvedUserId || userId || currentUserId;
   // Dynamic check for own profile that works even during auth loading
   const isOwnProfile = targetUserId && currentUserId && targetUserId === currentUserId;
   
   // Debug logging
-  console.log('Profile page params:', { userId, targetUserId, currentUserId, isOwnProfile });
+  console.log('Profile page params:', { userId, username, targetUserId, currentUserId, isOwnProfile });
+
+  // Resolve username to userId if needed
+  useEffect(() => {
+    const resolveUsername = async () => {
+      if (username && !userId) {
+        try {
+          const userData = await ApiClient.getPublicUserByUsername(username);
+          setResolvedUserId(userData.id);
+        } catch (error) {
+          console.error('Failed to resolve username:', error);
+          setError('User not found');
+          setLoading(false);
+        }
+      } else if (userId) {
+        setResolvedUserId(userId);
+      }
+    };
+
+    resolveUsername();
+  }, [username, userId]);
 
   // Load profile and services data immediately
   useEffect(() => {
     const loadProfileData = async () => {
       console.log('Loading profile data for:', targetUserId);
+      
+      // Wait for username resolution if needed
+      if (username && !resolvedUserId) {
+        console.log('Still resolving username, waiting...');
+        return;
+      }
       
       if (!targetUserId) {
         console.log('No target user ID, setting error');
@@ -130,7 +159,7 @@ const Profile = () => {
         try {
           console.log('Fetching profile for user:', targetUserId);
           // Always fetch the profile data from API
-          const profileData = await ApiClient.getUserProfileById(targetUserId);
+          const profileData = await ApiClient.getPublicUserProfile(targetUserId);
           console.log('Profile fetched:', profileData);
           setProfile(profileData);
 
@@ -138,7 +167,7 @@ const Profile = () => {
           // Fetch services for the target user
           // Get viewer's timezone to properly display service time slots
           const viewerTimezone = profile?.timezone || getBrowserTimezone();
-          const servicesData = await ApiClient.getUserServicesById(targetUserId, viewerTimezone);
+          const servicesData = await ApiClient.getPublicUserServices(targetUserId, viewerTimezone);
           console.log('Services fetched:', servicesData?.length || 0, 'services');
           setServices(servicesData);
           
@@ -171,7 +200,7 @@ const Profile = () => {
     };
 
     loadProfileData();
-  }, [targetUserId]);
+  }, [targetUserId, resolvedUserId, username]);
 
   // Separate effect to handle auth-dependent UI updates
   useEffect(() => {

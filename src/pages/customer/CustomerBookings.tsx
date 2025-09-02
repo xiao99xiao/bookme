@@ -233,8 +233,12 @@ export default function CustomerBookings() {
     return now <= sevenDaysAfterBooking;
   };
 
-  const handleViewProviderProfile = (providerId: string) => {
-    navigate(`/profile/${providerId}`);
+  const handleViewProviderProfile = async (providerId: string) => {
+    const { navigateToUserProfile } = await import('@/lib/username');
+    const success = await navigateToUserProfile(providerId, navigate);
+    if (!success) {
+      toast.error('This provider does not have a public profile');
+    }
   };
 
   const getStatusColor = (status: string) => {

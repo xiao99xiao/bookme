@@ -59,10 +59,7 @@ function AppContent() {
                 </ProtectedRoute>
               } 
             />
-            <Route 
-              path="/profile/:userId" 
-              element={<Profile />} 
-            />
+            {/* Username-based user page - must be last to avoid conflicts */}
             <Route 
               path="/auth" 
               element={
@@ -160,6 +157,11 @@ function AppContent() {
             />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            {/* Username-based user page - must be at the bottom to avoid conflicts */}
+            <Route 
+              path="/:username" 
+              element={<Profile />} 
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
     </>

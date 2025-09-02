@@ -106,6 +106,28 @@ export class BackendAPI {
     });
   }
 
+  // Username APIs
+  async checkUsernameAvailability(username: string): Promise<{ available: boolean; error?: string }> {
+    return this.request(`/api/username/check/${encodeURIComponent(username)}`, {
+      method: 'GET',
+      requireAuth: false,
+    });
+  }
+
+  async updateUsername(username: string): Promise<any> {
+    return this.request('/api/username', {
+      method: 'PATCH',
+      body: JSON.stringify({ username }),
+    });
+  }
+
+  async getUserByUsername(username: string): Promise<any> {
+    return this.request(`/api/user/username/${encodeURIComponent(username)}`, {
+      method: 'GET',
+      requireAuth: false,
+    });
+  }
+
   // Bookings APIs
   async createBooking(bookingData: any): Promise<any> {
     return this.request('/api/bookings', {

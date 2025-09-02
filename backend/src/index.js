@@ -783,6 +783,200 @@ app.get('/api/services/public', async (c) => {
   }
 })
 
+// Check username availability
+app.get('/api/username/check/:username', async (c) => {
+  try {
+    const username = c.req.param('username').toLowerCase()
+    
+    // Server-side validation
+    const blacklist = [
+      'admin', 'administrator', 'api', 'app', 'auth', 'balance', 'balances', 
+      'book', 'booking', 'bookings', 'chat', 'customer', 'dashboard', 
+      'discover', 'help', 'home', 'index', 'login', 'logout', 'message', 
+      'messages', 'order', 'orders', 'profile', 'provider', 'resume', 
+      'root', 'service', 'services', 'setting', 'settings', 'support', 
+      'user', 'wallet', 'wallets', 'www', 'mail', 'email', 'ftp', 
+      'blog', 'news', 'shop', 'store', 'test', 'demo', 'example',
+      'null', 'undefined', 'true', 'false', 'system', 'config', 'onboarding'
+    ]
+    
+    // Check format
+    if (!/^[a-zA-Z0-9_-]{3,30}$/.test(username)) {
+      return c.json({ 
+        available: false, 
+        error: 'Username must be 3-30 characters and contain only letters, numbers, underscores, and dashes' 
+      })
+    }
+    
+    // Check blacklist
+    if (blacklist.includes(username)) {
+      return c.json({ available: false, error: 'This username is reserved' })
+    }
+    
+    // Check if username exists
+    const { data, error } = await supabaseAdmin
+      .from('users')
+      .select('username')
+      .eq('username', username)
+      .single()
+    
+    if (error && error.code !== 'PGRST116') {
+      console.error('Username check error:', error)
+      return c.json({ error: 'Failed to check username' }, 500)
+    }
+    
+    return c.json({ available: !data })
+  } catch (error) {
+    console.error('Username check error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Update user username
+app.patch('/api/username', verifyPrivyAuth, async (c) => {
+  try {
+    const userId = c.get('userId')
+    const { username } = await c.req.json()
+    
+    if (!username) {
+      return c.json({ error: 'Username is required' }, 400)
+    }
+    
+    const normalizedUsername = username.toLowerCase()
+    
+    // Server-side validation (same as check endpoint)
+    const blacklist = [
+      'admin', 'administrator', 'api', 'app', 'auth', 'balance', 'balances', 
+      'book', 'booking', 'bookings', 'chat', 'customer', 'dashboard', 
+      'discover', 'help', 'home', 'index', 'login', 'logout', 'message', 
+      'messages', 'order', 'orders', 'profile', 'provider', 'resume', 
+      'root', 'service', 'services', 'setting', 'settings', 'support', 
+      'user', 'wallet', 'wallets', 'www', 'mail', 'email', 'ftp', 
+      'blog', 'news', 'shop', 'store', 'test', 'demo', 'example',
+      'null', 'undefined', 'true', 'false', 'system', 'config', 'onboarding'
+    ]
+    
+    if (!/^[a-zA-Z0-9_-]{3,30}$/.test(normalizedUsername) || blacklist.includes(normalizedUsername)) {
+      return c.json({ error: 'Invalid username' }, 400)
+    }
+    
+    const { data, error } = await supabaseAdmin
+      .from('users')
+      .update({ username: normalizedUsername })
+      .eq('id', userId)
+      .select()
+      .single()
+    
+    if (error) {
+      if (error.code === '23505') { // Unique violation
+        return c.json({ error: 'Username already taken' }, 409)
+      }
+      console.error('Username update error:', error)
+      return c.json({ error: 'Failed to update username' }, 500)
+    }
+    
+    return c.json(data)
+  } catch (error) {
+    console.error('Username update error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Get user by username (for public user pages)
+app.get('/api/user/username/:username', async (c) => {
+  try {
+    const username = c.req.param('username').toLowerCase()
+    
+    const { data, error } = await supabaseAdmin
+      .from('users')
+      .select('*')
+      .eq('username', username)
+      .single()
+    
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return c.json({ error: 'User not found' }, 404)
+      }
+      console.error('User lookup error:', error)
+      return c.json({ error: 'Failed to find user' }, 500)
+    }
+    
+    return c.json(data)
+  } catch (error) {
+    console.error('User lookup error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Get user by ID (public endpoint for profile pages)
+app.get('/api/user/:userId', async (c) => {
+  try {
+    const userId = c.req.param('userId')
+    
+    const { data, error } = await supabaseAdmin
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single()
+    
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return c.json({ error: 'User not found' }, 404)
+      }
+      console.error('User lookup error:', error)
+      return c.json({ error: 'Failed to find user' }, 500)
+    }
+    
+    return c.json(data)
+  } catch (error) {
+    console.error('User lookup error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Get public services by provider (no auth required)
+app.get('/api/services/public/:providerId', async (c) => {
+  try {
+    const providerId = c.req.param('providerId')
+    const { timezone } = c.req.query()
+    
+    console.log('Getting public services for provider:', providerId)
+    
+    let query = supabaseAdmin
+      .from('services')
+      .select(`
+        *,
+        categories(name, icon, color),
+        provider:users!provider_id(display_name, avatar, rating)
+      `)
+      .eq('provider_id', providerId)
+      .eq('is_visible', true)
+      .order('created_at', { ascending: false })
+    
+    const { data, error } = await query
+    
+    if (error) {
+      console.error('Services fetch error:', error)
+      return c.json({ error: 'Failed to fetch services' }, 500)
+    }
+    
+    // Transform the data to match expected format
+    const transformedServices = (data || []).map(service => ({
+      ...service,
+      categories: service.categories ? {
+        name: service.categories.name,
+        icon: service.categories.icon,
+        color: service.categories.color
+      } : null
+    }))
+    
+    return c.json(transformedServices)
+  } catch (error) {
+    console.error('Services error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
 // Get single service by ID
 app.get('/api/services/:id', verifyPrivyAuth, async (c) => {
   try {

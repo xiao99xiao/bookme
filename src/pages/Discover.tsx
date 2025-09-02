@@ -11,6 +11,7 @@ import { Link } from "react-router-dom";
 import { ApiClient } from "@/lib/api-migration";
 import { useAuth } from "@/contexts/PrivyAuthContext";
 import { getBrowserTimezone } from "@/lib/timezone";
+import { toast } from "sonner";
 
 interface Service {
   id: string;
@@ -123,9 +124,13 @@ const Discover = () => {
     return () => clearTimeout(timeoutId);
   }, [searchTerm, selectedCategory]);
 
-  const handleServiceClick = (service: Service) => {
+  const handleServiceClick = async (service: Service) => {
     // Navigate to the provider's profile page with the service pre-selected
-    navigate(`/profile/${service.provider_id}?service=${service.id}`);
+    const { navigateToUserProfile } = await import('@/lib/username');
+    const success = await navigateToUserProfile(service.provider_id, (path) => navigate(`${path}?service=${service.id}`));
+    if (!success) {
+      toast.error('This provider does not have a public profile');
+    }
   };
 
   const getLocationIcon = (isOnline: boolean, hasLocation: boolean) => {

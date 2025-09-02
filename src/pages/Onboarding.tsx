@@ -102,10 +102,18 @@ const Onboarding = () => {
         navigate(returnTo);
       } else if (fromProfile && serviceId) {
         // User was trying to book a specific service, redirect to that profile
-        navigate(`/profile/${fromProfile}?service=${serviceId}`);
+        const { navigateToUserProfile } = await import('@/lib/username');
+        const success = await navigateToUserProfile(fromProfile, (path) => navigate(`${path}?service=${serviceId}`));
+        if (!success) {
+          navigate('/discover'); // Fallback to discover page
+        }
       } else if (fromProfile) {
         // User was viewing someone's profile, redirect back
-        navigate(`/profile/${fromProfile}`);
+        const { navigateToUserProfile } = await import('@/lib/username');
+        const success = await navigateToUserProfile(fromProfile, navigate);
+        if (!success) {
+          navigate('/discover'); // Fallback to discover page
+        }
       } else if (formData.wantsToProvideService) {
         // User wants to provide services, go to edit profile to create services
         navigate('/provider/services');
