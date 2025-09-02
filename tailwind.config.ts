@@ -19,10 +19,10 @@ export default {
 		},
 		extend: {
 			fontFamily: {
-				sans: ["Nunito", "-apple-system", "BlinkMacSystemFont", "system-ui", "sans-serif"],
-				heading: ["Poppins", "Nunito", "sans-serif"],
-				body: ["Nunito", "-apple-system", "BlinkMacSystemFont", "system-ui", "sans-serif"],
-				mono: ["JetBrains Mono", "Menlo", "Monaco", "Consolas", "monospace"],
+				sans: ["'Baloo 2'", "-apple-system", "BlinkMacSystemFont", "system-ui", "sans-serif"],
+				heading: ["Spectral", "Georgia", "serif"],
+				body: ["'Baloo 2'", "-apple-system", "BlinkMacSystemFont", "system-ui", "sans-serif"],
+				mono: ["Menlo", "Monaco", "Consolas", "monospace"],
 			},
 			fontSize: {
 				'xs': ['0.75rem', { lineHeight: '1.5', letterSpacing: '0.01em' }],
@@ -81,12 +81,15 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				linear: {
-					border: 'hsl(var(--linear-border))',
-					hover: 'hsl(var(--linear-hover))',
-					active: 'hsl(var(--linear-active))',
-					'text-secondary': 'hsl(var(--linear-text-secondary))',
-				},
+				// Figma brand colors
+				'brand-green': 'hsl(var(--color-green))',
+				'brand-light-green': 'hsl(var(--color-light-green))',
+				'brand-yellow': 'hsl(var(--color-yellow))',
+				'brand-light-yellow': 'hsl(var(--color-light-yellow))',
+				'brand-red': 'hsl(var(--color-red))',
+				'brand-light-red': 'hsl(var(--color-light-red))',
+				'brand-blue': 'hsl(var(--color-blue))',
+				'brand-light-blue': 'hsl(var(--color-light-blue))',
 				'text-primary': 'hsl(var(--text-primary))',
 				'text-secondary': 'hsl(var(--text-secondary))',
 				'text-tertiary': 'hsl(var(--text-tertiary))',

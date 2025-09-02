@@ -94,21 +94,52 @@ const Navigation = () => {
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-transform duration-300 ${
       isVisible ? 'translate-y-0' : '-translate-y-full'
-    } ${isAuthPage ? 'bg-transparent' : ''}`}>
-      <div className="max-w-6xl mx-auto px-4">
+    } ${isAuthPage ? 'bg-transparent' : 'bg-white border-b border-gray-200'}`}>
+      <div className="max-w-7xl mx-auto px-6">
         <div className="flex items-center justify-between h-16">
-          {/* Logo and Brand */}
-          <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <img 
-              src={timeeLogo} 
-              alt="Timee logo" 
-              className="w-8 h-8 rounded-lg"
-            />
-            <span className="text-2xl font-bold font-heading text-foreground">Timee</span>
+          {/* Logo - Spectral font */}
+          <Link to="/" className="hover:opacity-80 transition-opacity">
+            <h1 className="text-xl font-bold text-black font-heading">Timee</h1>
           </Link>
+          
+          {/* Center Navigation - Baloo 2 font */}
+          {isLoggedIn && !isAuthPage && (
+            <nav className="flex items-center space-x-8">
+              <Link 
+                to="/provider/orders" 
+                className={`text-sm font-medium font-body ${
+                  location.pathname === '/provider/orders' ? 'text-black' : 'text-gray-400 hover:text-black'
+                }`}
+              >
+                Bookings
+              </Link>
+              <Link 
+                to="/messages" 
+                className={`text-sm font-medium font-body ${
+                  location.pathname === '/messages' ? 'text-black' : 'text-gray-400 hover:text-black'
+                }`}
+              >
+                Messages
+              </Link>
+            </nav>
+          )}
+          
+          {/* User Info - Baloo 2 font */}
+          {isLoggedIn && !isAuthPage && (
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center">
+                <span className="text-white text-xs font-body">
+                  {userName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                </span>
+              </div>
+              <span className="text-sm text-gray-600 font-body">
+                {userName.split(' ')[0]}
+              </span>
+            </div>
+          )}
 
-          {/* Right Content */}
-          {renderRightContent()}
+          {/* Fallback Right Content for non-logged in users */}
+          {!isLoggedIn && renderRightContent()}
         </div>
       </div>
     </nav>

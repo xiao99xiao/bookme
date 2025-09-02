@@ -1,30 +1,25 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Calendar, Clock, User, DollarSign, CheckCircle, XCircle, AlertCircle, MessageSquare } from 'lucide-react';
+import { Calendar, Clock, User, CheckCircle, MessageSquare, Copy, Video, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient } from '@/lib/api-migration';
 import ChatModal from '@/components/ChatModal';
-import AddToCalendar from '@/components/AddToCalendar';
-import MeetingLinkDisplay from '@/components/MeetingLinkDisplay';
 import ReviewDialog from '@/components/ReviewDialog';
-import StarRating from '@/components/StarRating';
-import PageLayout from '@/components/PageLayout';
 
 interface Booking {
   id: string;
   service_id: string;
   provider_id: string;
   customer_id: string;
-  scheduled_at: string; // Changed from booking_date
+  scheduled_at: string;
   duration_minutes: number;
   total_price: number;
   service_fee: number;
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
-  customer_notes?: string; // Changed from notes
+  customer_notes?: string;
   location?: string;
   is_online?: boolean;
   meeting_link?: string;
@@ -62,7 +57,7 @@ interface Booking {
 }
 
 export default function ProviderOrders() {
-  const { userId } = useAuth();
+  const { userId, user } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
@@ -102,13 +97,11 @@ export default function ProviderOrders() {
       const bookingsData = await ApiClient.getProviderBookings(userId!);
       setBookings(bookingsData);
       
-      // Extract reviews from bookings data (now included in the query)
       const reviewsMap: Record<string, any> = {};
       
       bookingsData.forEach((booking) => {
-        // Reviews are now included as an array in the booking object
         if (booking.reviews && booking.reviews.length > 0) {
-          const review = booking.reviews[0]; // Should only be one review per booking
+          const review = booking.reviews[0];
           reviewsMap[booking.id] = {
             id: review.id,
             rating: review.rating,
@@ -135,8 +128,8 @@ export default function ProviderOrders() {
       await ApiClient.updateBookingStatus(
         bookingId, 
         newStatus as 'confirmed' | 'cancelled' | 'completed',
-        undefined, // no notes
-        userId // pass userId for Privy users
+        undefined,
+        userId
       );
       toast.success(`Booking ${newStatus}`);
       loadBookings();
@@ -146,67 +139,39 @@ export default function ProviderOrders() {
     }
   };
 
-  const handleChatOpen = (booking: Booking) => {
-    setChatModal({
-      isOpen: true,
-      otherUserId: booking.customer_id,
-      otherUserName: booking.customer?.display_name || 'Customer',
-      otherUserAvatar: booking.customer?.avatar,
-      isReadOnly: booking.status === 'cancelled'
-    });
+  const handleCopyMeetingLink = (link: string) => {
+    navigator.clipboard.writeText(link);
+    toast.success('Meeting link copied to clipboard');
   };
 
-  const handleChatClose = () => {
-    setChatModal({
-      isOpen: false,
-      otherUserId: '',
-      otherUserName: '',
-      otherUserAvatar: undefined,
-      isReadOnly: false
-    });
-  };
-
-  const getStatusColor = (status: string) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
+        return (
+          <span className="inline-flex items-center gap-1.5 text-xs text-gray-700 font-body">
+            <span className="w-2 h-2 bg-yellow-400 rounded-full"></span>
+            Pending
+          </span>
+        );
       case 'confirmed':
-        return 'bg-blue-100 text-blue-800';
+        return (
+          <span className="inline-flex items-center gap-1.5 text-xs text-gray-700 font-body">
+            <CheckCircle className="w-3.5 h-3.5 text-green-600 fill-green-600" />
+            Confirmed
+          </span>
+        );
       case 'completed':
-        return 'bg-green-100 text-green-800';
+        return (
+          <span className="inline-flex items-center gap-1.5 text-xs text-gray-700 font-body">
+            <CheckCircle className="w-3.5 h-3.5 text-green-600 fill-green-600" />
+            Completed
+          </span>
+        );
       case 'cancelled':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return <AlertCircle className="w-4 h-4" />;
-      case 'confirmed':
-        return <CheckCircle className="w-4 h-4" />;
-      case 'completed':
-        return <CheckCircle className="w-4 h-4" />;
-      case 'cancelled':
-        return <XCircle className="w-4 h-4" />;
+        return null;
       default:
         return null;
     }
-  };
-
-  const isBookingOverdue = (booking: Booking) => {
-    const now = new Date();
-    const scheduledEnd = new Date(booking.scheduled_at);
-    scheduledEnd.setMinutes(scheduledEnd.getMinutes() + booking.duration_minutes);
-    return now > scheduledEnd && (booking.status === 'confirmed' || booking.status === 'pending');
-  };
-
-  const hasBookingTimeStarted = (booking: Booking) => {
-    const now = new Date();
-    const scheduledStart = new Date(booking.scheduled_at);
-    return now >= scheduledStart;
   };
 
   const filteredBookings = bookings.filter(booking => {
@@ -214,245 +179,288 @@ export default function ProviderOrders() {
     return booking.status === activeTab;
   });
 
-  return (
-    <PageLayout 
-      title="Incoming Orders" 
-      description="Manage bookings from your customers"
-      maxWidth="wide"
-    >
-      <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="pending">Pending</TabsTrigger>
-            <TabsTrigger value="confirmed">Confirmed</TabsTrigger>
-            <TabsTrigger value="completed">Completed</TabsTrigger>
-            <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
-          </TabsList>
+  const tabLabels = {
+    all: 'All',
+    pending: 'Pending', 
+    confirmed: 'Confirmed',
+    completed: 'Completed',
+    cancelled: 'Cancelled'
+  };
 
-          <TabsContent value={activeTab} className="mt-8">
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="flex gap-8">
+          {/* Left Sidebar */}
+          <div className="w-64 flex-shrink-0">
+            <div className="mb-6">
+              {/* Title - Spectral font */}
+              <h2 className="text-2xl font-bold text-black font-heading mb-2">Bookings</h2>
+              {/* Subtitle - Baloo 2 font */}
+              <p className="text-sm text-gray-500 font-body">Manage bookings from your customers</p>
+            </div>
+            
+            {/* Vertical Navigation - Baloo 2 font */}
+            <nav className="space-y-1">
+              {Object.entries(tabLabels).map(([key, label]) => (
+                <button
+                  key={key}
+                  onClick={() => setActiveTab(key)}
+                  className={`w-full text-left px-3 py-2.5 text-sm font-medium rounded-md transition-colors font-body ${
+                    activeTab === key 
+                      ? 'bg-gray-100 text-black' 
+                      : 'text-gray-600 hover:text-black hover:bg-gray-50'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </nav>
+          </div>
+
+          {/* Main Content Area */}
+          <div className="flex-1">
             {loading ? (
-              <p className="text-center text-gray-500 py-8">Loading orders...</p>
+              <div className="text-center py-12">
+                <p className="text-gray-500 font-body">Loading orders...</p>
+              </div>
             ) : filteredBookings.length === 0 ? (
-              <div className="text-center py-8">
+              <div className="text-center py-12">
                 <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">No {activeTab === 'all' ? '' : activeTab} orders</p>
+                <p className="text-gray-500 font-body">No {activeTab === 'all' ? '' : activeTab} orders</p>
               </div>
             ) : (
-              <div className="space-y-8">
-                {filteredBookings.map((booking, index) => (
-                  <div key={booking.id} className={`pb-8 ${index !== filteredBookings.length - 1 ? 'border-b border-gray-200' : ''}`}>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-3">
-                          <Badge className={getStatusColor(booking.status)}>
-                            <span className="flex items-center space-x-1">
-                              {getStatusIcon(booking.status)}
-                              <span>{booking.status}</span>
-                            </span>
-                          </Badge>
-                          {isBookingOverdue(booking) && (
-                            <Badge className="bg-red-100 text-red-800">
-                              <span className="flex items-center space-x-1">
-                                <AlertCircle className="w-4 h-4" />
-                                <span>OVERDUE</span>
-                              </span>
-                            </Badge>
-                          )}
-                          <span className="text-sm text-gray-500">
-                            Booked {format(new Date(booking.created_at), 'MMM dd, yyyy')}
-                          </span>
+              <div className="space-y-4">
+                {/* Each booking is a separate CARD */}
+                {filteredBookings.map((booking) => {
+                  const review = bookingReviews[booking.id];
+                  const earnings = booking.total_price - (booking.service_fee || 0);
+                  
+                  return (
+                    <div key={booking.id} className="bg-white rounded-2xl border border-[#eeeeee] p-6">
+                      {/* Top Section: Title and Icons */}
+                      <div className="flex items-start justify-between mb-6">
+                        <div className="flex-1">
+                          {/* Service Title */}
+                          <h3 className="text-lg font-semibold text-black font-body mb-1">
+                            {booking.services?.title || 'Online Teaching'}
+                          </h3>
+                          {/* Booked date */}
+                          <p className="text-xs text-[#aaaaaa] font-body">
+                            Booked {format(new Date(booking.created_at), 'MMM d,yyyy')}
+                          </p>
                         </div>
-
-                        <h3 className="font-semibold text-lg mb-2">
-                          {booking.services?.title || 'Service'}
-                        </h3>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                          <div className="space-y-2">
-                            <div className="flex items-center text-gray-600">
-                              <User className="w-4 h-4 mr-2" />
-                              {booking.customer?.display_name || 'Customer'}
-                            </div>
-                            <div className="flex items-center text-gray-600">
-                              <Calendar className="w-4 h-4 mr-2" />
-                              {format(new Date(booking.scheduled_at), 'EEEE, MMMM dd, yyyy')}
-                            </div>
-                            <div className="flex items-center text-gray-600">
-                              <Clock className="w-4 h-4 mr-2" />
-                              {format(new Date(booking.scheduled_at), 'HH:mm')} ({booking.duration_minutes} min)
-                            </div>
-                          </div>
-                          <div className="space-y-2">
-                            <div className="flex items-center text-gray-600">
-                              <DollarSign className="w-4 h-4 mr-2" />
-                              Total: ${booking.total_price}
-                            </div>
-                            <div className="flex items-center text-gray-600">
-                              <DollarSign className="w-4 h-4 mr-2" />
-                              Your earnings: ${(booking.total_price - (booking.service_fee || 0)).toFixed(2)}
-                            </div>
-                          </div>
-                        </div>
-
-                        {booking.customer_notes && (
-                          <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                            <p className="text-sm text-gray-600">
-                              <span className="font-medium">Notes:</span> {booking.customer_notes}
-                            </p>
-                          </div>
-                        )}
-
-                        {booking.meeting_link && booking.status === 'confirmed' && (
-                          <div className="mt-4">
-                            <MeetingLinkDisplay
-                              meetingLink={booking.meeting_link}
-                              meetingPlatform={booking.meeting_platform}
-                              scheduledAt={booking.scheduled_at}
-                            />
-                          </div>
-                        )}
-
-                        {isBookingOverdue(booking) && (
-                          <div className="mt-4 p-3 bg-red-50 border-l-4 border-red-400 rounded-lg">
-                            <p className="text-sm text-red-700">
-                              <span className="font-medium">⚠️ This booking is overdue!</span>
-                              <br />
-                              The scheduled time has passed. Please mark as completed or contact the customer.
-                            </p>
-                          </div>
-                        )}
-
-                        {/* Customer Review Section */}
-                        {booking.status === 'completed' && bookingReviews[booking.id] && (
-                          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                            <div className="flex items-center justify-between mb-3">
-                              <h4 className="text-sm font-semibold text-blue-900">Customer Review</h4>
-                              <div className="flex items-center gap-2">
-                                <StarRating 
-                                  value={bookingReviews[booking.id].rating} 
-                                  readonly 
-                                  size="sm" 
-                                />
-                                <span className="text-sm font-medium text-blue-800">
-                                  {bookingReviews[booking.id].rating}/5
-                                </span>
-                              </div>
-                            </div>
-                            {bookingReviews[booking.id].comment && bookingReviews[booking.id].comment.trim() && (
-                              <div className="mt-2">
-                                <p className="text-sm text-blue-800 leading-relaxed">
-                                  "{bookingReviews[booking.id].comment.length > 150 
-                                    ? `${bookingReviews[booking.id].comment.substring(0, 150)}...` 
-                                    : bookingReviews[booking.id].comment}"
-                                </p>
-                                {bookingReviews[booking.id].comment.length > 150 && (
-                                  <button
-                                    onClick={() => {
-                                      const existingReview = bookingReviews[booking.id];
-                                      setReviewDialog({ 
-                                        isOpen: true, 
-                                        booking,
-                                        existingReview
-                                      });
-                                    }}
-                                    className="text-xs text-blue-600 hover:text-blue-800 mt-1"
-                                  >
-                                    Read full review
-                                  </button>
-                                )}
-                              </div>
-                            )}
-                            {(!bookingReviews[booking.id].comment || !bookingReviews[booking.id].comment.trim()) && (
-                              <p className="text-sm text-blue-600 italic">No written comments provided</p>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex flex-col space-y-2 ml-4">
-                        {(booking.status === 'confirmed' || booking.status === 'pending') && (
-                          <>
-                            {booking.status === 'confirmed' && (
-                              <AddToCalendar
-                                title={`${booking.services?.title || 'Service'} - ${booking.customer?.display_name || 'Customer'}`}
-                                description={`Service booking with ${booking.customer?.display_name}${booking.customer_notes ? `\n\nCustomer notes: ${booking.customer_notes}` : ''}`}
-                                startDate={new Date(booking.scheduled_at)}
-                                endDate={new Date(new Date(booking.scheduled_at).getTime() + booking.duration_minutes * 60000)}
-                                location={booking.location}
-                                isOnline={booking.is_online}
-                              />
-                            )}
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => handleChatOpen(booking)}
-                            >
-                              <MessageSquare className="w-4 h-4 mr-1" />
-                              Message
-                            </Button>
-                          </>
-                        )}
                         
-                        {booking.status === 'pending' && (
-                          <div className="flex space-x-2">
-                            <Button
-                              size="sm"
-                              onClick={() => handleUpdateStatus(booking.id, 'confirmed')}
-                            >
-                              Accept
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleUpdateStatus(booking.id, 'cancelled')}
-                            >
-                              Decline
-                            </Button>
-                          </div>
-                        )}
-
-
-                        {booking.status === 'completed' && (
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => handleChatOpen(booking)}
+                        {/* Top Right Icons */}
+                        <div className="flex items-center gap-2">
+                          <button className="p-1.5 border border-[#cccccc] rounded-xl hover:bg-gray-50">
+                            <Calendar className="w-5 h-5 text-gray-600" />
+                          </button>
+                          <button 
+                            className="p-1.5 border border-[#cccccc] rounded-xl hover:bg-gray-50"
+                            onClick={() => setChatModal({
+                              isOpen: true,
+                              otherUserId: booking.customer_id,
+                              otherUserName: booking.customer?.display_name || 'Customer',
+                              otherUserAvatar: booking.customer?.avatar,
+                              isReadOnly: booking.status === 'cancelled'
+                            })}
                           >
-                            <MessageSquare className="w-4 h-4 mr-1" />
-                            Message
-                          </Button>
-                        )}
-
-                        {booking.status === 'cancelled' && (
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => handleChatOpen(booking)}
-                          >
-                            <MessageSquare className="w-4 h-4 mr-1" />
-                            View Chat
-                          </Button>
-                        )}
+                            <MessageSquare className="w-5 h-5 text-gray-600" />
+                          </button>
+                        </div>
                       </div>
+
+                      {/* Customer Name and Date */}
+                      <div className="flex items-center gap-2 text-sm font-medium font-body mb-4">
+                        <span className="text-black">{booking.customer?.display_name || 'Xiao xiao'}</span>
+                        <span className="text-[#cccccc]">|</span>
+                        <span className="text-black">{format(new Date(booking.scheduled_at), 'EEE, MMM d, yyyy')}</span>
+                      </div>
+
+                      {/* Status Pills and Price Row */}
+                      <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-2">
+                          {/* Status Badge */}
+                          {booking.status === 'confirmed' && (
+                            <div className="bg-[#eff7ff] px-1.5 py-1 rounded-lg flex items-center gap-1">
+                              <svg className="w-5 h-5" viewBox="0 0 20 20" fill="none">
+                                <path d="M5 10h10m0 0l-3-3m3 3l-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                              <span className="text-sm text-black font-body">Ongoing</span>
+                            </div>
+                          )}
+                          {booking.status === 'pending' && (
+                            <div className="bg-[#fcf9f4] px-1.5 py-1 rounded-lg flex items-center gap-1">
+                              <span className="w-2 h-2 bg-[#FFD43C] rounded-full"></span>
+                              <span className="text-sm text-black font-body">Pending</span>
+                            </div>
+                          )}
+                          {booking.status === 'completed' && (
+                            <div className="bg-[#e7fded] px-1.5 py-1 rounded-lg flex items-center gap-1">
+                              <CheckCircle className="w-4 h-4 text-[#36D267]" />
+                              <span className="text-sm text-black font-body">Completed</span>
+                            </div>
+                          )}
+                          
+                          {/* Online Badge */}
+                          {booking.is_online && (
+                            <div className="bg-[#f3f3f3] px-1.5 py-1 rounded-lg flex items-center gap-1">
+                              <svg className="w-5 h-5" viewBox="0 0 20 20" fill="none">
+                                <rect x="3" y="5" width="14" height="10" rx="1" stroke="#666666" strokeWidth="1.5"/>
+                                <line x1="7" y1="18" x2="13" y2="18" stroke="#666666" strokeWidth="1.5" strokeLinecap="round"/>
+                              </svg>
+                              <span className="text-sm text-[#666666] font-body">Online</span>
+                            </div>
+                          )}
+                          
+                          {/* Duration Badge */}
+                          <div className="bg-[#f3f3f3] px-1.5 py-1 rounded-lg flex items-center gap-1">
+                            <Calendar className="w-5 h-5 text-[#666666]" />
+                            <span className="text-sm text-[#666666] font-body">{booking.duration_minutes} min</span>
+                          </div>
+                        </div>
+
+                        {/* Total Price */}
+                        <div className="text-lg font-bold text-black font-body">
+                          Total: ${booking.total_price}
+                        </div>
+                      </div>
+
+                      {/* Divider Line */}
+                      <div className="border-t border-[#eeeeee] my-6"></div>
+
+                      {/* Bottom Section: Timer and Actions */}
+                      <div className="flex items-center justify-between">
+                        {/* Timer or Status Text */}
+                        <div className="text-sm font-medium text-black font-body">
+                          {booking.status === 'confirmed' && '02:03:06'}
+                          {booking.status === 'pending' && 'New order'}
+                          {booking.status === 'completed' && 'Ended'}
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-3">
+                          {booking.status === 'confirmed' && (
+                            <>
+                              <Button
+                                size="sm"
+                                onClick={() => handleUpdateStatus(booking.id, 'completed')}
+                                className="bg-[#36D267] hover:bg-[#2eb858] text-white text-sm font-semibold px-2 py-1.5 h-8 rounded-xl border border-[#cccccc] font-body flex items-center gap-2"
+                              >
+                                <CheckCircle className="w-5 h-5" />
+                                Mark Complete
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => booking.meeting_link && handleCopyMeetingLink(booking.meeting_link)}
+                                className="text-sm font-semibold px-2 py-1.5 h-8 rounded-xl border border-[#cccccc] text-[#666666] font-body flex items-center gap-2 min-w-[110px]"
+                              >
+                                <Copy className="w-5 h-5" />
+                                Copy
+                              </Button>
+                              <Button
+                                size="sm"
+                                className="bg-black hover:bg-gray-900 text-white text-sm font-semibold px-2 py-1.5 h-8 rounded-xl border border-black font-body flex items-center gap-2 min-w-[110px]"
+                              >
+                                <Video className="w-5 h-5" />
+                                Join
+                              </Button>
+                            </>
+                          )}
+
+                          {booking.status === 'pending' && (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleUpdateStatus(booking.id, 'cancelled')}
+                                className="text-sm font-semibold px-4 py-1.5 h-8 rounded-xl border border-[#cccccc] text-[#666666] font-body"
+                              >
+                                Decline
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => handleUpdateStatus(booking.id, 'confirmed')}
+                                className="bg-black hover:bg-gray-900 text-white text-sm font-semibold px-4 py-1.5 h-8 rounded-xl border border-black font-body"
+                              >
+                                Accept
+                              </Button>
+                            </>
+                          )}
+
+                          {booking.status === 'completed' && (
+                            <>
+                              {review && (
+                                <div className="flex items-center gap-1 mr-4">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star
+                                      key={i}
+                                      className={`w-4 h-4 ${
+                                        i < (review?.rating || 5)
+                                          ? 'text-[#FFD43C] fill-[#FFD43C]'
+                                          : 'text-gray-300'
+                                      }`}
+                                    />
+                                  ))}
+                                  <span className="text-sm font-medium text-black font-body ml-1">
+                                    {review?.rating || 5}/5
+                                  </span>
+                                </div>
+                              )}
+                              <Button
+                                size="sm"
+                                onClick={() => setReviewDialog({ 
+                                  isOpen: true, 
+                                  booking,
+                                  existingReview: review
+                                })}
+                                className="bg-[#FFD43C] hover:bg-[#f5c830] text-black text-sm font-semibold px-4 py-1.5 h-8 rounded-xl border border-[#cccccc] font-body"
+                              >
+                                Review
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Customer Review Section for Completed */}
+                      {booking.status === 'completed' && review && (
+                        <div className="mt-4 pt-4 border-t border-[#eeeeee]">
+                          <p className="text-sm font-medium text-black font-body mb-2">Customer Review</p>
+                          <p className="text-sm text-[#666666] font-body italic">
+                            "{review.comment || 'This is a test review that used to demo how a review will be displayed in the future.'}"
+                          </p>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
-          </TabsContent>
-        </Tabs>
-      
+          </div>
+        </div>
+      </div>
+
       {/* Chat Modal */}
       <ChatModal
         isOpen={chatModal.isOpen}
-        onClose={handleChatClose}
+        onClose={() => setChatModal({
+          isOpen: false,
+          otherUserId: '',
+          otherUserName: '',
+          otherUserAvatar: undefined,
+          isReadOnly: false
+        })}
         otherUserId={chatModal.otherUserId}
         otherUserName={chatModal.otherUserName}
         otherUserAvatar={chatModal.otherUserAvatar}
         isReadOnly={chatModal.isReadOnly}
       />
       
-      {/* Review Dialog - Read Only for Providers */}
+      {/* Review Dialog */}
       {reviewDialog.booking && (
         <ReviewDialog
           isOpen={reviewDialog.isOpen}
@@ -461,11 +469,10 @@ export default function ProviderOrders() {
           existingReview={reviewDialog.existingReview}
           forceReadOnly={true}
           onSubmit={async () => {
-            // Providers can't submit reviews from this view - this is read-only
             throw new Error('Providers cannot submit reviews from incoming orders');
           }}
         />
       )}
-    </PageLayout>
+    </div>
   );
 }

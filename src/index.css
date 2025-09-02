@@ -8,107 +8,110 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 220 13% 18%;
+    /* Figma Design System Colors */
+    --background: 0 0% 98%; /* #FAFAFA */
+    --foreground: 0 0% 0%; /* #000000 */
 
-    --card: 0 0% 100%;
-    --card-foreground: 220 13% 18%;
+    --card: 0 0% 100%; /* #FFFFFF */
+    --card-foreground: 0 0% 0%; /* #000000 */
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 13% 18%;
+    --popover-foreground: 0 0% 0%;
 
-    --primary: 220 10% 15%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 0 0% 0%; /* Black #000000 */
+    --primary-foreground: 0 0% 100%; /* White */
 
-    --secondary: 220 10% 96%;
-    --secondary-foreground: 220 10% 20%;
+    --secondary: 0 0% 95%; /* Light Grey #F3F3F3 */
+    --secondary-foreground: 0 0% 0%;
 
-    --muted: 220 13% 97%;
-    --muted-foreground: 220 9% 46%;
+    --muted: 0 0% 93%; /* #EEEEEE */
+    --muted-foreground: 0 0% 40%; /* #666666 */
 
-    --accent: 220 13% 97%;
-    --accent-foreground: 220 13% 18%;
+    --accent: 209 96% 60%; /* Blue #3B9EF9 */
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 357 88% 59%; /* Red #F1343D */
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 220 10% 15%;
+    --border: 0 0% 80%; /* #CCCCCC */
+    --input: 0 0% 80%;
+    --ring: 0 0% 0%;
 
-    --linear-border: 220 13% 91%;
-    --linear-hover: 220 13% 98%;
-    --linear-active: 220 13% 95%;
-    --linear-text-secondary: 220 9% 46%;
+    /* Brand Colors */
+    --color-green: 140 57% 52%; /* #36D267 */
+    --color-light-green: 140 67% 95%; /* #E7FDED */
+    --color-yellow: 44 100% 62%; /* #FFD43C */
+    --color-light-yellow: 42 60% 98%; /* #FCF9F4 */
+    --color-red: 357 88% 59%; /* #F1343D */
+    --color-light-red: 357 100% 97%; /* #FFEFF0 */
+    --color-blue: 209 96% 60%; /* #3B9EF9 */
+    --color-light-blue: 209 100% 97%; /* #EFF7FF */
 
     --radius: 0.5rem;
 
-    --sidebar-background: 220 13% 98%;
-    --sidebar-foreground: 220 13% 26%;
-    --sidebar-primary: 220 13% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 220 13% 95%;
-    --sidebar-accent-foreground: 220 13% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 220 10% 15%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 0%;
+    --sidebar-primary: 0 0% 0%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 95%;
+    --sidebar-accent-foreground: 0 0% 0%;
+    --sidebar-border: 0 0% 80%;
+    --sidebar-ring: 0 0% 0%;
 
     /* Typography tokens */
-    --text-primary: 220 15% 12%;
-    --text-secondary: 220 12% 42%;
-    --text-tertiary: 220 10% 65%;
-    --text-inverse: 0 0% 98%;
-    --text-accent: 220 10% 15%;
+    --text-primary: 0 0% 0%; /* #000000 */
+    --text-secondary: 0 0% 40%; /* #666666 */
+    --text-tertiary: 0 0% 67%; /* #AAAAAA */
+    --text-inverse: 0 0% 100%;
+    --text-accent: 209 96% 60%; /* Blue */
   }
 
+  /* Dark mode not implemented in Figma design - keeping light theme for now */
   .dark {
-    --background: 220 13% 4%;
-    --foreground: 220 13% 98%;
+    /* Same as light mode for now */
+    --background: 0 0% 98%;
+    --foreground: 0 0% 0%;
 
-    --card: 220 13% 4%;
-    --card-foreground: 220 13% 98%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 0%;
 
-    --popover: 220 13% 4%;
-    --popover-foreground: 220 13% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 0%;
 
-    --primary: 0 0% 98%;
-    --primary-foreground: 220 10% 15%;
+    --primary: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 10% 12%;
-    --secondary-foreground: 220 10% 85%;
+    --secondary: 0 0% 95%;
+    --secondary-foreground: 0 0% 0%;
 
-    --muted: 220 13% 8%;
-    --muted-foreground: 220 9% 64%;
+    --muted: 0 0% 93%;
+    --muted-foreground: 0 0% 40%;
 
-    --accent: 220 13% 8%;
-    --accent-foreground: 220 13% 98%;
+    --accent: 209 96% 60%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 62% 31%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 357 88% 59%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 15%;
-    --input: 220 13% 15%;
-    --ring: 0 0% 98%;
+    --border: 0 0% 80%;
+    --input: 0 0% 80%;
+    --ring: 0 0% 0%;
 
-    --linear-border: 220 13% 15%;
-    --linear-hover: 220 13% 8%;
-    --linear-active: 220 13% 12%;
-    --linear-text-secondary: 220 9% 64%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 0%;
+    --sidebar-primary: 0 0% 0%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 95%;
+    --sidebar-accent-foreground: 0 0% 0%;
+    --sidebar-border: 0 0% 80%;
+    --sidebar-ring: 0 0% 0%;
 
-    --sidebar-background: 220 13% 6%;
-    --sidebar-foreground: 220 13% 95%;
-    --sidebar-primary: 0 0% 98%;
-    --sidebar-primary-foreground: 220 10% 15%;
-    --sidebar-accent: 220 13% 12%;
-    --sidebar-accent-foreground: 220 13% 95%;
-    --sidebar-border: 220 13% 15%;
-    --sidebar-ring: 0 0% 98%;
-
-    /* Dark mode typography tokens */
-    --text-primary: 220 15% 98%;
-    --text-secondary: 220 12% 70%;
-    --text-tertiary: 220 10% 55%;
-    --text-inverse: 220 15% 12%;
-    --text-accent: 0 0% 98%;
+    /* Typography tokens */
+    --text-primary: 0 0% 0%;
+    --text-secondary: 0 0% 40%;
+    --text-tertiary: 0 0% 67%;
+    --text-inverse: 0 0% 100%;
+    --text-accent: 209 96% 60%;
   }
 }
 
@@ -125,16 +128,16 @@ All colors MUST be HSL.
     -moz-osx-font-smoothing: grayscale;
   }
 
-  h1 { @apply display-1 text-primary font-heading; }
-  h2 { @apply display-2 text-primary font-heading; }
-  h3 { @apply heading-2 text-primary font-heading; }
-  h4 { @apply heading-3 text-primary font-heading; }
-  h5 { @apply heading-4 text-primary font-heading; }
-  h6 { @apply heading-4 text-secondary font-heading uppercase tracking-wide; }
+  h1 { @apply text-3xl font-bold text-primary font-heading; }
+  h2 { @apply text-2xl font-bold text-primary font-heading; }
+  h3 { @apply text-xl font-bold text-primary font-heading; }
+  h4 { @apply text-lg font-bold text-primary font-heading; }
+  h5 { @apply text-base font-semibold text-primary font-body; }
+  h6 { @apply text-sm font-semibold text-secondary font-body; }
 
-  p { @apply body-text text-primary; }
-  li { @apply body-text; }
-  small { @apply caption text-secondary; }
+  p { @apply text-base leading-relaxed text-primary; }
+  li { @apply text-base leading-relaxed; }
+  small { @apply text-xs uppercase tracking-wider font-medium text-secondary; }
 }
 
 
@@ -176,49 +179,42 @@ All colors MUST be HSL.
     color: hsl(var(--text-accent));
   }
 
-  /* Typography hierarchy */
-  .display-1 {
-    @apply font-heading font-bold text-5xl sm:text-6xl lg:text-7xl tracking-tighter;
+  /* Figma Typography System */
+  .text-tiny {
+    @apply font-body text-xs leading-relaxed; /* 12px */
   }
   
-  .display-2 {
-    @apply font-heading font-bold text-4xl sm:text-5xl lg:text-6xl tracking-tight;
+  .text-small {
+    @apply font-body text-sm leading-relaxed; /* 14px */
   }
   
-  .heading-1 {
-    @apply font-heading font-bold text-3xl sm:text-4xl tracking-tight;
+  .text-regular {
+    @apply font-body text-base leading-relaxed; /* 16px */
   }
   
-  .heading-2 {
-    @apply font-heading font-semibold text-2xl sm:text-3xl tracking-tight;
+  .text-medium {
+    @apply font-body text-lg leading-relaxed; /* 18px */
   }
   
-  .heading-3 {
-    @apply font-heading font-semibold text-xl sm:text-2xl tracking-tight;
+  .heading-desktop {
+    @apply font-heading font-bold text-xl leading-snug; /* 20px, Spectral Bold */
   }
   
-  .heading-4 {
-    @apply font-heading font-semibold text-lg sm:text-xl;
+  /* Font weight utilities */
+  .font-regular {
+    font-weight: 400;
   }
   
-  .body-large {
-    @apply font-body text-lg sm:text-xl leading-relaxed;
+  .font-medium-custom {
+    font-weight: 500;
   }
   
-  .body-text {
-    @apply font-body text-base leading-relaxed;
+  .font-semibold-custom {
+    font-weight: 600;
   }
   
-  .body-small {
-    @apply font-body text-sm leading-relaxed;
-  }
-  
-  .caption {
-    @apply font-body text-xs uppercase tracking-wider font-medium;
-  }
-  
-  .code {
-    @apply font-mono text-sm;
+  .font-bold-custom {
+    font-weight: 700;
   }
 }
 
