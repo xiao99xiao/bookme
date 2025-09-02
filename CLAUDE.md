@@ -80,15 +80,22 @@ src/
 ├── contexts/
 │   └── PrivyAuthContext.tsx    # Main auth provider, handles Privy user and Supabase profile sync
 ├── lib/
-│   ├── api.ts                   # API client - uses supabaseAdmin for all operations
+│   ├── api-migration.ts         # ApiClient with Promise-based initialization (prevents race conditions)
+│   ├── backend-api.ts           # Backend API client for token-based auth
+│   ├── api.ts                   # Legacy API client (deprecated - use ApiClient)
 │   ├── supabase.ts              # Supabase client configurations
 │   └── id-mapping.ts            # Converts Privy DIDs to UUIDs
 ├── pages/
-│   ├── dashboard/               # Protected dashboard pages
-│   │   ├── DashboardServices.tsx    # Service management
-│   │   ├── DashboardBookings.tsx    # User's bookings
-│   │   ├── DashboardOrders.tsx      # Incoming orders (provider view)
-│   │   └── DashboardBalance.tsx     # Wallet balance & funding
+│   ├── customer/                # Customer-specific pages
+│   │   ├── CustomerBookings.tsx # Customer's bookings
+│   │   ├── CustomerProfile.tsx  # Customer profile management
+│   │   └── CustomerMessages.tsx # Customer messaging
+│   ├── provider/                # Provider-specific pages
+│   │   ├── ProviderOrders.tsx   # Incoming orders (provider view)
+│   │   ├── ProviderServices.tsx # Service management
+│   │   ├── ProviderMessages.tsx # Provider messaging
+│   │   ├── ProviderIntegrations.tsx # OAuth integrations
+│   │   └── IntegrationsCallback.tsx # OAuth callback handler
 │   └── Profile.tsx              # Public profile page
 └── components/
     ├── CreateServiceModal.tsx   # Service creation/editing modal
@@ -120,7 +127,30 @@ Tables in Supabase (see `/database/*.sql`):
 - **Global Auth**: PrivyAuthContext provides user state across app
 
 ### API Patterns
-All API methods in `src/lib/api.ts` follow this pattern:
+
+#### ApiClient (api-migration.ts) - RECOMMENDED
+The ApiClient uses a **Promise-based initialization pattern** to prevent race conditions:
+```typescript
+export class ApiClient {
+  private static backendApi: BackendAPI | null = null
+  private static initializationPromise: Promise<void> | null = null
+  
+  // All auth-required methods wait for initialization
+  static async getMyBookings(userId?: string) {
+    await this.waitForInitialization()  // Prevents race conditions
+    return this.backendApi!.getMyBookings(userId)
+  }
+}
+```
+
+**Key Features:**
+- Prevents "Not authenticated" errors during app startup
+- Automatically waits for token availability before API calls
+- Global solution - no retry logic needed in components
+- All methods that require auth use `waitForInitialization()`
+
+#### Legacy API (api.ts) - DEPRECATED
+Old pattern using supabaseAdmin directly:
 ```typescript
 // Uses supabaseAdmin to bypass RLS
 static async methodName(userId: string, data: any) {
@@ -132,9 +162,10 @@ static async methodName(userId: string, data: any) {
 
 ### Critical Files to Understand
 1. **src/contexts/PrivyAuthContext.tsx**: Central auth logic and profile management
-2. **src/lib/api.ts**: All database operations
-3. **src/main.tsx**: App initialization with Privy and Smart Wallets
-4. **vite.config.ts**: Node polyfills configuration for crypto operations
+2. **src/lib/api-migration.ts**: ApiClient with race condition prevention (use this!)
+3. **src/lib/backend-api.ts**: Backend API client for token-based authentication
+4. **src/main.tsx**: App initialization with Privy and Smart Wallets
+5. **vite.config.ts**: Node polyfills configuration for crypto operations
 
 ## Environment Variables
 Required in `.env.local`:
