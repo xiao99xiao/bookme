@@ -147,16 +147,6 @@ const NewNavigation = () => {
           >
             Messages
           </Link>
-          <Link 
-            to="/customer/profile" 
-            className={`text-sm transition-colors ${
-              location.pathname === '/customer/profile' 
-                ? 'font-bold text-gray-900' 
-                : 'font-medium text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            Profile
-          </Link>
         </div>
       );
     }
@@ -220,7 +210,6 @@ const NewNavigation = () => {
     const tabItems = userMode === 'customer' ? [
       { to: '/customer/bookings', icon: Calendar, label: 'Bookings' },
       { to: '/customer/messages', icon: MessageCircle, label: 'Messages' },
-      { to: '/customer/profile', icon: User, label: 'Profile' },
     ] : [
       { to: '/provider/orders', icon: ClipboardList, label: 'Orders' },
       { to: '/provider/services', icon: Settings, label: 'Services' },
@@ -230,7 +219,7 @@ const NewNavigation = () => {
 
     return (
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
-        <div className={`grid ${userMode === 'customer' ? 'grid-cols-3' : 'grid-cols-4'}`}>
+        <div className={`grid ${userMode === 'customer' ? 'grid-cols-2' : 'grid-cols-4'}`}>
           {tabItems.map(({ to, icon: Icon, label }) => (
             <Link
               key={to}
@@ -277,6 +266,12 @@ const NewNavigation = () => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem asChild>
+              <Link to="/profile" className="flex items-center gap-2">
+                <User className="w-4 h-4" />
+                Profile
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link to="/balance" className="flex items-center gap-2">
                 <Wallet className="w-4 h-4" />

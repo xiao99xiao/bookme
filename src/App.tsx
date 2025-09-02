@@ -55,7 +55,7 @@ function AppContent() {
               path="/profile" 
               element={
                 <ProtectedRoute>
-                  <Profile />
+                  <CustomerProfile />
                 </ProtectedRoute>
               } 
             />
@@ -94,14 +94,6 @@ function AppContent() {
               element={
                 <ProtectedRoute>
                   <CustomerBookings />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/customer/profile" 
-              element={
-                <ProtectedRoute>
-                  <CustomerProfile />
                 </ProtectedRoute>
               } 
             />

@@ -84,7 +84,8 @@ src/
 │   ├── backend-api.ts           # Backend API client for token-based auth
 │   ├── api.ts                   # Legacy API client (deprecated - use ApiClient)
 │   ├── supabase.ts              # Supabase client configurations
-│   └── id-mapping.ts            # Converts Privy DIDs to UUIDs
+│   ├── id-mapping.ts            # Converts Privy DIDs to UUIDs
+│   └── username.ts              # Username validation, generation, and URL utilities
 ├── pages/
 │   ├── customer/                # Customer-specific pages
 │   │   ├── CustomerBookings.tsx # Customer's bookings
@@ -96,7 +97,7 @@ src/
 │   │   ├── ProviderMessages.tsx # Provider messaging
 │   │   ├── ProviderIntegrations.tsx # OAuth integrations
 │   │   └── IntegrationsCallback.tsx # OAuth callback handler
-│   └── Profile.tsx              # Public profile page
+│   └── Profile.tsx              # Public user page (username-based)
 └── components/
     ├── CreateServiceModal.tsx   # Service creation/editing modal
     ├── ChatModal.tsx           # Real-time chat between users
@@ -105,8 +106,8 @@ src/
 
 ### Database Schema
 Tables in Supabase (see `/database/*.sql`):
-- `users`: User profiles with timezone, ratings, earnings
-- `services`: Service offerings with availability schedules
+- `users`: User profiles with timezone, ratings, earnings, usernames
+- `services`: Service offerings with availability schedules and visibility controls
 - `bookings`: Booking records with meeting links
 - `categories`: Service categories
 - `chats` & `messages`: Real-time messaging
@@ -125,6 +126,39 @@ Tables in Supabase (see `/database/*.sql`):
 - **React Query**: For data fetching and caching
 - **Local State**: Component-level with useState
 - **Global Auth**: PrivyAuthContext provides user state across app
+
+### Username System
+
+BookMe features a comprehensive username system for clean public user page URLs.
+
+#### Username Requirements
+- **Length**: 3-30 characters
+- **Allowed Characters**: Letters (a-z, A-Z), numbers (0-9), underscores (_), dashes (-)
+- **Restrictions**: No spaces, special characters, or reserved words (admin, api, etc.)
+- **Examples**: `john-smith`, `jane_doe`, `alex123`
+
+#### Database Implementation
+- **Field**: `users.username` (TEXT, unique, nullable)
+- **Constraints**: Format validation via PostgreSQL check constraint
+- **Auto-generation**: Functions to create default usernames from display names
+- **Blacklist**: Reserved words prevented at database and application level
+
+#### Public User Pages
+- **URL Pattern**: `/{username}` (e.g., `https://app.com/john-smith`)
+- **Authentication**: No authentication required for viewing public user pages
+- **Fallback**: Users without usernames have no public user page URL
+- **Legacy**: `/profile/:userId` routes completely removed
+
+#### API Patterns
+- **Public Methods**: `getPublicUserByUsername()`, `getPublicUserProfile()`, `getPublicUserServices()`
+- **Authentication**: Public methods bypass auth, use direct fetch to public endpoints
+- **Availability Checking**: Real-time throttled validation + final submission check
+
+#### Real-time Validation
+- **Throttling**: 500ms delay to prevent API spam while typing
+- **Visual Feedback**: Green/red borders, loading spinners, status icons
+- **Dual Validation**: Real-time UX feedback + security check during submission
+- **Error Handling**: Specific messages for format, availability, and reserved word issues
 
 ### API Patterns
 
@@ -164,8 +198,9 @@ static async methodName(userId: string, data: any) {
 1. **src/contexts/PrivyAuthContext.tsx**: Central auth logic and profile management
 2. **src/lib/api-migration.ts**: ApiClient with race condition prevention (use this!)
 3. **src/lib/backend-api.ts**: Backend API client for token-based authentication
-4. **src/main.tsx**: App initialization with Privy and Smart Wallets
-5. **vite.config.ts**: Node polyfills configuration for crypto operations
+4. **src/lib/username.ts**: Username validation, URL generation, and navigation utilities
+5. **src/main.tsx**: App initialization with Privy and Smart Wallets
+6. **vite.config.ts**: Node polyfills configuration for crypto operations
 
 ## Environment Variables
 Required in `.env.local`:
@@ -220,6 +255,13 @@ VITE_BACKEND_URL=https://192.168.0.10:4443  # Your local IP with HTTPS
 - Styling with Tailwind CSS
 - Forms use react-hook-form with zod validation
 
+### Username System
+- **Public User Pages**: Only users with usernames have public user pages (`/{username}`)
+- **Legacy Routes**: `/profile/:userId` routes are completely removed
+- **Navigation**: Use `navigateToUserProfile()` helper for safe navigation to user pages
+- **Validation**: Always use dual validation (real-time + submission) for username availability
+- **Public APIs**: Use `getPublicUser*()` methods for unauthenticated access to user data
+
 ## Case Convention Standards
 
 ### Overview
@@ -227,7 +269,7 @@ BookMe follows a **layered approach** to naming conventions, where each layer us
 
 ### Database Layer (PostgreSQL/Supabase)
 - **Convention**: `snake_case` (PostgreSQL standard)
-- **Examples**: `user_id`, `display_name`, `created_at`, `is_active`, `total_earnings`
+- **Examples**: `user_id`, `display_name`, `username`, `created_at`, `is_visible`, `total_earnings`
 - **All database tables and columns follow this pattern consistently**
 
 ### Backend API (Hono)
@@ -257,13 +299,14 @@ const bookingData = {
 // Interface definitions match API responses
 interface User {
   display_name: string
+  username?: string
   is_verified: boolean
   total_earnings: number
   created_at: string
 }
 
 // Component usage
-const { display_name, is_verified, total_earnings } = user
+const { display_name, username, is_verified, total_earnings } = user
 ```
 
 ### Best Practices
@@ -301,8 +344,10 @@ booking.serviceId // undefined unless explicitly converted
 | `scheduled_at` | `scheduledAt` | Backend maps on extraction |
 | `customer_notes` | `customerNotes` | Backend maps on extraction |
 | `is_online` | `isOnline` | Backend maps on extraction |
+| `is_visible` | `isVisible` | Backend maps on extraction |
 | `created_at` | Access directly | Frontend uses `item.created_at` |
 | `display_name` | Access directly | Frontend uses `user.display_name` |
+| `username` | Access directly | Frontend uses `user.username` |
 
 ### Debugging Field Name Issues
 If you encounter "undefined" field errors:
