@@ -30,7 +30,7 @@ interface Service {
   location?: string;
   is_online: boolean;
   meeting_platform?: string;
-  is_active: boolean;
+  is_visible: boolean;
   timeSlots?: { [key: string]: boolean };
   created_at: string;
   updated_at: string;
@@ -75,18 +75,17 @@ export default function ProviderServices() {
     setIsServiceModalOpen(true);
   };
 
-  const handleToggleActive = async (service: Service) => {
+
+  const handleToggleVisibility = async (service: Service) => {
     try {
-      const updatedService = await ApiClient.updateService(service.id, {
-        is_active: !service.is_active,
-      }, userId!);
+      const updatedService = await ApiClient.toggleServiceVisibility(service.id, !service.is_visible, userId!);
       setServices(prev => 
         prev.map(s => s.id === service.id ? updatedService : s)
       );
-      toast.success(`Service ${updatedService.is_active ? 'activated' : 'deactivated'}`);
+      toast.success(`Service ${updatedService.is_visible ? 'made visible' : 'hidden from public'}`);
     } catch (error) {
-      console.error('Failed to toggle service:', error);
-      toast.error('Failed to update service');
+      console.error('Failed to toggle service visibility:', error);
+      toast.error('Failed to update service visibility');
     }
   };
 
@@ -198,13 +197,13 @@ export default function ProviderServices() {
           ) : (
             <div className="space-y-8">
               {services.map((service, index) => (
-                <div key={service.id} className={`pb-8 ${index !== services.length - 1 ? 'border-b border-gray-200' : ''} ${!service.is_active ? 'opacity-60' : ''}`}>
+                <div key={service.id} className={`pb-8 ${index !== services.length - 1 ? 'border-b border-gray-200' : ''} ${service.is_visible === false ? 'opacity-60' : ''}`}>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
                         <h3 className="font-semibold text-lg">{service.title}</h3>
-                        {!service.is_active && (
-                          <Badge variant="secondary">Inactive</Badge>
+                        {service.is_visible === false && (
+                          <Badge variant="outline">Hidden</Badge>
                         )}
                       </div>
                       
@@ -238,13 +237,13 @@ export default function ProviderServices() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleToggleActive(service)}
-                        title={service.is_active ? 'Deactivate' : 'Activate'}
+                        onClick={() => handleToggleVisibility(service)}
+                        title={service.is_visible !== false ? 'Hide from public view' : 'Show in public view'}
                       >
-                        {service.is_active ? (
-                          <EyeOff className="w-4 h-4" />
-                        ) : (
+                        {service.is_visible !== false ? (
                           <Eye className="w-4 h-4" />
+                        ) : (
+                          <EyeOff className="w-4 h-4" />
                         )}
                       </Button>
                       <Button
@@ -317,9 +316,9 @@ export default function ProviderServices() {
                     <p className="text-sm text-muted-foreground">Your services</p>
                   </div>
                   
-                  {services.length > 0 ? (
+                  {services.filter(service => service.is_visible !== false).length > 0 ? (
                     <div className="space-y-3">
-                      {services.map((service) => (
+                      {services.filter(service => service.is_visible !== false).map((service) => (
                         <div 
                           key={service.id} 
                           className="border rounded-lg p-4 transition-colors"

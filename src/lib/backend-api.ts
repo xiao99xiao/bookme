@@ -99,6 +99,13 @@ export class BackendAPI {
     });
   }
 
+  async toggleServiceVisibility(serviceId: string, isVisible: boolean): Promise<any> {
+    return this.request(`/api/services/${serviceId}/visibility`, {
+      method: 'PATCH',
+      body: JSON.stringify({ is_visible: isVisible }),
+    });
+  }
+
   // Bookings APIs
   async createBooking(bookingData: any): Promise<any> {
     return this.request('/api/bookings', {

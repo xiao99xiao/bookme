@@ -243,13 +243,13 @@ app.get('/api/profile', verifyPrivyAuth, async (c) => {
 app.get('/api/services', verifyPrivyAuth, async (c) => {
   try {
     const userId = c.get('userId')
-    const { provider_id, category, is_active } = c.req.query()
+    const { provider_id, category, is_visible } = c.req.query()
     
     let query = supabaseAdmin.from('services').select('*')
     
     if (provider_id) query = query.eq('provider_id', provider_id)
     if (category) query = query.eq('category_id', category)
-    if (is_active !== undefined) query = query.eq('is_active', is_active === 'true')
+    if (is_visible !== undefined) query = query.eq('is_visible', is_visible === 'true')
     
     const { data, error } = await query
     
@@ -417,7 +417,6 @@ app.get('/api/services/user/:userId', verifyPrivyAuth, async (c) => {
       .from('services')
       .select('*')
       .eq('provider_id', targetUserId)
-      .eq('is_active', true)
       .order('created_at', { ascending: false })
     
     if (error) {
@@ -505,6 +504,42 @@ app.delete('/api/services/:serviceId', verifyPrivyAuth, async (c) => {
     return c.json({ success: true })
   } catch (error) {
     console.error('Service deletion error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Toggle service visibility
+app.patch('/api/services/:serviceId/visibility', verifyPrivyAuth, async (c) => {
+  try {
+    const userId = c.get('userId')
+    const serviceId = c.req.param('serviceId')
+    const body = await c.req.json()
+    const { is_visible } = body
+    
+    if (typeof is_visible !== 'boolean') {
+      return c.json({ error: 'is_visible must be a boolean' }, 400)
+    }
+    
+    const { data, error } = await supabaseAdmin
+      .from('services')
+      .update({ is_visible })
+      .eq('id', serviceId)
+      .eq('provider_id', userId) // Ensure user owns the service
+      .select()
+      .single()
+    
+    if (error) {
+      console.error('Service visibility toggle error:', error)
+      return c.json({ error: 'Failed to update service visibility' }, 500)
+    }
+    
+    if (!data) {
+      return c.json({ error: 'Service not found' }, 404)
+    }
+    
+    return c.json(data)
+  } catch (error) {
+    console.error('Service visibility toggle error:', error)
     return c.json({ error: 'Internal server error' }, 500)
   }
 })
@@ -661,7 +696,7 @@ app.get('/api/services/public/user/:userId', async (c) => {
         categories(name, icon, color)
       `)
       .eq('provider_id', userId)
-      .eq('is_active', true)
+      .eq('is_visible', true)
       .order('created_at', { ascending: false })
     
     if (error) {
@@ -715,7 +750,7 @@ app.get('/api/services/public', async (c) => {
         *,
         provider:users!provider_id(display_name, avatar, rating, review_count)
       `)
-      .eq('is_active', true)
+      .eq('is_visible', true)
     
     // Only apply filters if they have valid values
     if (search && search !== 'undefined' && search.trim()) {
@@ -785,7 +820,7 @@ app.get('/api/services/search', verifyPrivyAuth, async (c) => {
         *,
         provider:users!provider_id(display_name, avatar, rating, review_count)
       `)
-      .eq('is_active', true)
+      .eq('is_visible', true)
     
     if (query) {
       dbQuery = dbQuery.or(`title.ilike.%${query}%,description.ilike.%${query}%`)

@@ -30,7 +30,7 @@ interface Service {
   tags?: string[];
   requirements?: string;
   cancellation_policy?: string;
-  is_active: boolean;
+  is_visible?: boolean;
   created_at: string;
   updated_at: string;
   categories?: {
@@ -330,9 +330,9 @@ const Profile = () => {
                   </p>
                 </div>
                 
-                {services.length > 0 ? (
+                {services.filter(service => service.is_visible !== false).length > 0 ? (
                   <div className="space-y-3">
-                    {services.map((service) => (
+                    {services.filter(service => service.is_visible !== false).map((service) => (
                       <div 
                         key={service.id} 
                         className="border rounded-lg p-4 transition-colors cursor-pointer hover:bg-muted/50"

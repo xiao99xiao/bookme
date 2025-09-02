@@ -36,7 +36,7 @@ export interface Service {
   location?: string
   max_bookings_per_day: number
   availability_schedule?: any
-  is_active: boolean
+  is_visible?: boolean
   rating?: number
   review_count?: number
   meeting_platform?: string
@@ -237,6 +237,11 @@ export class ApiClient {
   static async deleteService(serviceId: string, userId?: string): Promise<void> {
     await this.waitForInitialization()
     return this.backendApi!.deleteService(serviceId)
+  }
+
+  static async toggleServiceVisibility(serviceId: string, isVisible: boolean, userId?: string): Promise<Service> {
+    await this.waitForInitialization()
+    return this.backendApi!.toggleServiceVisibility(serviceId, isVisible)
   }
 
   // Booking methods
