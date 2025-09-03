@@ -17,8 +17,11 @@ import { OnboardingNavigator } from "./components/OnboardingNavigator";
 
 // Customer pages
 import CustomerBookings from "./pages/customer/CustomerBookings";
-import Profile from "./pages/settings/Profile";
+import SettingsProfile from "./pages/settings/Profile";
 import CustomerMessages from "./pages/customer/CustomerMessages";
+
+// Public Profile page
+import Profile from "./pages/Profile";
 import CustomerMobileChat from "./pages/customer/CustomerMobileChat";
 
 // Settings pages
@@ -60,7 +63,7 @@ function AppContent() {
               path="/settings/profile" 
               element={
                 <ProtectedRoute>
-                  <Profile />
+                  <SettingsProfile />
                 </ProtectedRoute>
               } 
             />
