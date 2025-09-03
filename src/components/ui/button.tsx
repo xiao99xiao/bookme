@@ -16,7 +16,7 @@ const buttonVariants = cva(
           "border border-gray-300 bg-white text-black hover:bg-gray-50",
         secondary:
           "bg-gray-100 text-gray-900 hover:bg-gray-200",
-        ghost: "hover:bg-gray-100 text-gray-900",
+        ghost: "hover:bg-gray-100 text-black",
         link: "text-accent underline-offset-4 hover:underline",
         yellow: "bg-brand-yellow text-black hover:bg-brand-yellow/90 shadow-sm",
         green: "bg-brand-green text-white hover:bg-brand-green/90 shadow-sm",
@@ -25,7 +25,7 @@ const buttonVariants = cva(
         default: "h-9 px-4 py-2",
         sm: "h-8 px-3 text-xs",
         lg: "h-11 px-6",
-        icon: "h-9 w-9",
+        icon: "h-12 w-12 rounded-[40px] p-[12px]",
       },
     },
     defaultVariants: {

@@ -292,44 +292,41 @@ export default function ChatModal({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg w-full max-w-2xl h-[600px] flex flex-col">
-        {/* Header */}
-        <div className="p-4 border-b flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={otherUserAvatar} alt={otherUserName} />
-              <AvatarFallback>{otherUserName.charAt(0).toUpperCase()}</AvatarFallback>
-            </Avatar>
-            <div>
-              <h3 className="font-semibold">{otherUserName}</h3>
-              <div className="flex items-center space-x-2 text-xs">
-                {connectionStatus === 'connected' ? (
-                  <>
-                    <Wifi className="w-3 h-3 text-green-500" />
-                    <span className="text-green-500">Connected</span>
-                  </>
-                ) : connectionStatus === 'connecting' ? (
-                  <>
-                    <RefreshCw className="w-3 h-3 text-yellow-500 animate-spin" />
-                    <span className="text-yellow-500">Connecting...</span>
-                  </>
-                ) : (
-                  <>
-                    <WifiOff className="w-3 h-3 text-red-500" />
-                    <span className="text-red-500">Disconnected</span>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-          <Button variant="ghost" size="icon" onClick={onClose}>
+        {/* Header - Match Figma style */}
+        <div className="flex-shrink-0 px-10 pt-8 pb-6 relative">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={onClose}
+            className="absolute top-4 right-4"
+          >
             <X className="h-5 w-5" />
           </Button>
+          <div className="flex flex-col gap-1 mb-6">
+            <div className="flex flex-col gap-1">
+              <h1 className="font-['Spectral'] font-bold text-[20px] text-black leading-[1.4]">
+                Chat
+              </h1>
+            </div>
+            <div className="flex items-center gap-2">
+              <Avatar className="h-5 w-5 rounded-[40px]">
+                <AvatarImage src={otherUserAvatar} alt={otherUserName} />
+                <AvatarFallback className="text-xs">
+                  {otherUserName.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <span className="font-['Spectral'] font-bold text-[14px] text-black leading-[1.2]">
+                {otherUserName}
+              </span>
+            </div>
+          </div>
+          <div className="w-full h-px bg-[#eeeeee]"></div>
         </div>
 
         {/* Messages */}
         <div 
           ref={messagesContainerRef}
-          className="flex-1 overflow-y-auto p-4 space-y-4"
+          className="flex-1 overflow-y-auto px-10 py-6 space-y-4"
           onScroll={handleScroll}
         >
           {loading ? (
@@ -366,22 +363,31 @@ export default function ChatModal({
               {messages.map((message) => (
                 <div
                   key={message.id}
-                  className={`flex ${message.sender_id === userId ? 'justify-end' : 'justify-start'}`}
+                  className={`flex items-end gap-2 group ${
+                    message.sender_id === userId ? 'justify-end' : 'justify-start'
+                  }`}
                 >
+                  {message.sender_id === userId && (
+                    <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-xs text-gray-500 mb-1 whitespace-nowrap">
+                      {formatMessageTime(message.created_at)}
+                    </span>
+                  )}
                   <div
-                    className={`max-w-[70%] rounded-lg p-3 ${
+                    className={`max-w-[410px] rounded-[12px] p-3 ${
                       message.sender_id === userId
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-gray-100 text-gray-900'
+                        ? 'bg-[#f2f2f2] rounded-br-[4px]'
+                        : 'bg-[#eff7ff] rounded-bl-[4px]'
                     }`}
                   >
-                    <p className="break-words">{message.content}</p>
-                    <p className={`text-xs mt-1 ${
-                      message.sender_id === userId ? 'text-blue-100' : 'text-gray-500'
-                    }`}>
-                      {formatMessageTime(message.created_at)}
+                    <p className="font-['Baloo_2'] text-[16px] leading-[1.5] text-black break-words">
+                      {message.content}
                     </p>
                   </div>
+                  {message.sender_id !== userId && (
+                    <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-xs text-gray-500 mb-1 whitespace-nowrap">
+                      {formatMessageTime(message.created_at)}
+                    </span>
+                  )}
                 </div>
               ))}
               <div ref={messagesEndRef} />
@@ -391,21 +397,22 @@ export default function ChatModal({
 
         {/* Input */}
         {!isReadOnly && (
-          <form onSubmit={handleSendMessage} className="p-4 border-t">
-            <div className="flex space-x-2">
-              <Input
+          <div className="px-10 pb-8">
+            <div className="w-full h-px bg-[#eeeeee] mb-6"></div>
+            <form onSubmit={handleSendMessage} className="flex gap-3">
+              <input
                 ref={inputRef}
                 type="text"
                 placeholder="Type a message..."
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 disabled={sending || !connected}
-                className="flex-1"
+                className="flex-1 px-4 py-3 border border-[#cccccc] rounded-xl font-['Baloo_2'] text-[16px] leading-[1.5] text-black placeholder:text-[#999999] focus-visible:outline-none focus-visible:border-primary"
               />
               <Button 
                 type="submit" 
                 disabled={!newMessage.trim() || sending || !connected}
-                size="icon"
+                className="px-4 py-3 bg-black text-white rounded-xl hover:bg-gray-800 disabled:bg-gray-300 disabled:text-gray-500"
               >
                 {sending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -413,8 +420,8 @@ export default function ChatModal({
                   <Send className="h-4 w-4" />
                 )}
               </Button>
-            </div>
-          </form>
+            </form>
+          </div>
         )}
       </div>
     </div>

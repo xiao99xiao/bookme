@@ -1,60 +1,12 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Calendar, Clock, User, CheckCircle, MessageSquare, Copy, Video, Star } from 'lucide-react';
+import { Calendar, CheckCircle, MessageSquare, Copy, Video, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/PrivyAuthContext';
-import { ApiClient } from '@/lib/api-migration';
+import { ApiClient, Booking } from '@/lib/api-migration';
 import ChatModal from '@/components/ChatModal';
 import ReviewDialog from '@/components/ReviewDialog';
-
-interface Booking {
-  id: string;
-  service_id: string;
-  provider_id: string;
-  customer_id: string;
-  scheduled_at: string;
-  duration_minutes: number;
-  total_price: number;
-  service_fee: number;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
-  customer_notes?: string;
-  location?: string;
-  is_online?: boolean;
-  meeting_link?: string;
-  meeting_platform?: string;
-  meeting_id?: string;
-  created_at: string;
-  services?: {
-    id: string;
-    title: string;
-    short_description?: string;
-    description?: string;
-    price: number;
-    images?: string[];
-  };
-  customer?: {
-    display_name: string;
-    email: string;
-    avatar?: string;
-  };
-  reviews?: {
-    id: string;
-    rating: number;
-    comment: string;
-    created_at: string;
-    updated_at: string;
-    reviewer?: {
-      display_name: string;
-      avatar?: string;
-    };
-    reviewee?: {
-      display_name: string;
-      avatar?: string;
-    };
-  }[];
-}
 
 export default function ProviderOrders() {
   const { userId, user } = useAuth();
@@ -196,9 +148,9 @@ export default function ProviderOrders() {
           <div className="w-64 flex-shrink-0">
             <div className="mb-6">
               {/* Title - Spectral font */}
-              <h2 className="text-2xl font-bold text-black font-heading mb-2">Bookings</h2>
+              <h2 className="text-2xl font-bold text-black font-heading mb-2">Orders</h2>
               {/* Subtitle - Baloo 2 font */}
-              <p className="text-sm text-gray-500 font-body">Manage bookings from your customers</p>
+              <p className="text-sm text-gray-500 font-body">Manage orders from your customers</p>
             </div>
             
             {/* Vertical Navigation - Baloo 2 font */}
@@ -244,7 +196,7 @@ export default function ProviderOrders() {
                         <div className="flex-1">
                           {/* Service Title */}
                           <h3 className="text-lg font-semibold text-black font-body mb-1">
-                            {booking.services?.title || 'Online Teaching'}
+                            {booking.service?.title || 'Online Teaching'}
                           </h3>
                           {/* Booked date */}
                           <p className="text-xs text-[#aaaaaa] font-body">

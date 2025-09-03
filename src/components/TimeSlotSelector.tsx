@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface TimeSlotSelectorProps {
@@ -92,25 +91,26 @@ export const TimeSlotSelector = ({ value, onChange }: TimeSlotSelectorProps) => 
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={selectWorkHours}
-          className="text-xs"
-        >
-          9-5 Weekdays
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={clearAll}
-          className="text-xs"
-        >
-          Clear All
-        </Button>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex gap-4">
+          <button
+            type="button"
+            onClick={selectWorkHours}
+            className="px-3 py-2 text-sm text-[#666666] font-body bg-gray-50 border border-[#cccccc] rounded-xl hover:bg-gray-100"
+          >
+            09:00-17:00 Weekdays
+          </button>
+          <button
+            type="button"
+            onClick={clearAll}
+            className="px-3 py-2 text-sm text-[#666666] font-body bg-gray-50 border border-[#cccccc] rounded-xl hover:bg-gray-100"
+          >
+            Clear All
+          </button>
+        </div>
+        <span className="text-sm text-[#666666] font-body">
+          Selected: {Object.keys(value).length} slots
+        </span>
       </div>
       
       <div 
@@ -134,7 +134,7 @@ export const TimeSlotSelector = ({ value, onChange }: TimeSlotSelectorProps) => 
         <div className="max-h-[400px] overflow-y-auto">
           {HOURS.map(hour => (
             <div key={hour.value} className="grid grid-cols-8 gap-1 mb-1">
-              <div className="text-xs text-gray-500 text-center py-1 flex items-center justify-center">
+              <div className="text-xs text-[#666666] font-body text-center py-1 flex items-center justify-center">
                 {hour.label}
               </div>
               {DAYS.map(day => (
@@ -142,10 +142,10 @@ export const TimeSlotSelector = ({ value, onChange }: TimeSlotSelectorProps) => 
                   key={`${day.key}-${hour.value}`}
                   type="button"
                   className={cn(
-                    "h-6 w-full rounded text-xs transition-colors",
+                    "h-7 w-full rounded-[12px] text-xs transition-colors border",
                     isSlotSelected(day.key, hour.value)
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-100 hover:bg-gray-200 border border-gray-300"
+                      ? "bg-[#eff7ff] border-[#3b9ef9]"
+                      : "bg-neutral-50 border-[#eeeeee] hover:bg-[#f2f2f2] hover:border-[#cccccc]"
                   )}
                   onMouseDown={() => handleMouseDown(day.key, hour.value)}
                   onMouseEnter={() => handleMouseEnter(day.key, hour.value)}

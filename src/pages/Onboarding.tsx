@@ -272,13 +272,16 @@ const Onboarding = () => {
             <div className="space-y-6">
               <div>
                 <Label htmlFor="name" className="text-base font-medium">Your Name *</Label>
-                <Input
-                  id="name"
-                  placeholder="Enter your full name"
-                  value={formData.display_name}
-                  onChange={(e) => handleInputChange('display_name', e.target.value)}
-                  className="mt-3 h-12 text-base"
-                />
+                <div className="bg-white box-border content-stretch flex gap-2 items-center justify-start p-[12px] relative rounded-[8px] shrink-0 w-full mt-3">
+                  <div aria-hidden="true" className="absolute border border-[#eeeeee] border-solid inset-[-1px] pointer-events-none rounded-[9px]" />
+                  <Input
+                    id="name"
+                    placeholder="Enter your full name"
+                    value={formData.display_name}
+                    onChange={(e) => handleInputChange('display_name', e.target.value)}
+                    className="basis-0 font-body font-normal grow leading-[0] min-h-px min-w-px relative shrink-0 text-[16px] text-black border-0 focus:ring-0 p-0 bg-transparent placeholder:text-[#666666]"
+                  />
+                </div>
               </div>
               
               <div>
@@ -335,13 +338,16 @@ const Onboarding = () => {
             <div className="space-y-6">
               <div>
                 <Label htmlFor="location" className="text-base font-medium">Location (Optional)</Label>
-                <Input
-                  id="location"
-                  placeholder="e.g. San Francisco, CA or London, UK"
-                  value={formData.location}
-                  onChange={(e) => handleInputChange('location', e.target.value)}
-                  className="mt-3 h-12 text-base"
-                />
+                <div className="bg-white box-border content-stretch flex gap-2 items-center justify-start p-[12px] relative rounded-[8px] shrink-0 w-full mt-3">
+                  <div aria-hidden="true" className="absolute border border-[#eeeeee] border-solid inset-[-1px] pointer-events-none rounded-[9px]" />
+                  <Input
+                    id="location"
+                    placeholder="e.g. San Francisco, CA or London, UK"
+                    value={formData.location}
+                    onChange={(e) => handleInputChange('location', e.target.value)}
+                    className="basis-0 font-body font-normal grow leading-[0] min-h-px min-w-px relative shrink-0 text-[16px] text-black border-0 focus:ring-0 p-0 bg-transparent placeholder:text-[#666666]"
+                  />
+                </div>
                 <p className="text-sm text-muted-foreground mt-2">
                   You can always change this later in your profile settings.
                 </p>
@@ -363,14 +369,17 @@ const Onboarding = () => {
             <div className="space-y-6">
               <div>
                 <Label htmlFor="bio" className="text-base font-medium">Bio (Optional)</Label>
-                <Textarea
-                  id="bio"
-                  placeholder="e.g. I'm a passionate developer who loves helping others learn new technologies. In my free time, I enjoy hiking and photography."
-                  value={formData.bio}
-                  onChange={(e) => handleInputChange('bio', e.target.value)}
-                  className="mt-3 min-h-[140px] text-base leading-relaxed"
-                  maxLength={500}
-                />
+                <div className="bg-white box-border content-stretch flex items-start justify-start p-[12px] relative rounded-[8px] shrink-0 w-full mt-3 min-h-[140px]">
+                  <div aria-hidden="true" className="absolute border border-[#eeeeee] border-solid inset-[-1px] pointer-events-none rounded-[9px]" />
+                  <Textarea
+                    id="bio"
+                    placeholder="e.g. I'm a passionate developer who loves helping others learn new technologies. In my free time, I enjoy hiking and photography."
+                    value={formData.bio}
+                    onChange={(e) => handleInputChange('bio', e.target.value)}
+                    className="basis-0 font-body font-normal grow leading-[1.5] min-h-full min-w-px relative shrink-0 text-[16px] text-black border-0 focus:ring-0 p-0 bg-transparent placeholder:text-[#666666] resize-none"
+                    maxLength={500}
+                  />
+                </div>
                 <p className="text-sm text-muted-foreground mt-2">
                   {formData.bio.length}/500 characters
                 </p>

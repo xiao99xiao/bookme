@@ -301,392 +301,375 @@ export default function CustomerProfile() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Profile Settings</h1>
-        <p className="text-gray-600 text-lg">Manage your personal profile and preferences</p>
-      </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3">
-        {/* Left Column - Edit Form */}
-        <div className="lg:col-span-2 p-6 space-y-6">
-          {/* Avatar Section */}
-          <div className="pb-8 mb-8 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900 mb-2">Profile Picture</h2>
-            <p className="text-sm text-gray-600 mb-6">Update your profile picture</p>
+    <div className="bg-white content-stretch flex flex-col items-start justify-center relative size-full">
+      {/* Main Content Area */}
+      <div className="content-stretch flex h-[1176px] items-center justify-start relative shrink-0 w-full">
+        {/* Left Sidebar */}
+        <div className="bg-neutral-50 box-border content-stretch flex flex-col gap-6 h-full items-start justify-start overflow-clip px-8 py-10 relative shrink-0 w-64">
+          <div className="content-stretch flex flex-col gap-0.5 items-start justify-start leading-[0] relative shrink-0 w-full">
+            <div className="font-heading font-bold not-italic relative shrink-0 text-[20px] text-black w-full">
+              <p className="leading-[1.4]">Settings</p>
+            </div>
+            <div className="font-body font-normal relative shrink-0 text-[#aaaaaa] text-[12px] w-full">
+              <p className="leading-[1.5]">Update your profile picture</p>
+            </div>
+          </div>
+          <div className="basis-0 content-stretch flex flex-col grow items-start justify-start min-h-px min-w-px relative shrink-0 w-full">
+            <div className="bg-[#f3f3f3] box-border content-stretch flex gap-2 items-center justify-start px-2 py-3 relative rounded-[12px] shrink-0 w-full">
+              <div className="overflow-clip relative shrink-0 size-5">
+                <Users className="w-5 h-5 text-black" />
+              </div>
+              <div className="basis-0 font-body font-medium grow leading-[0] min-h-px min-w-px relative shrink-0 text-[16px] text-black">
+                <p className="leading-[1.5]">Profile</p>
+              </div>
+            </div>
+            <div className="box-border content-stretch flex gap-2 items-center justify-start px-0 py-3 relative rounded-[12px] shrink-0 w-full">
+              <div className="overflow-clip relative shrink-0 size-5">
+                <div className="w-5 h-5 text-[#666666] flex items-center justify-center">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2.5 3.33334H17.5C18.4167 3.33334 19.1667 4.08334 19.1667 5V15C19.1667 15.9167 18.4167 16.6667 17.5 16.6667H2.5C1.58333 16.6667 0.833333 15.9167 0.833333 15V5C0.833333 4.08334 1.58333 3.33334 2.5 3.33334Z" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M6.66667 7.5H6.675" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M10 7.5H13.3333" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M6.66667 10.8333H6.675" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M10 10.8333H13.3333" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+              </div>
+              <div className="basis-0 font-body font-normal grow leading-[0] min-h-px min-w-px relative shrink-0 text-[#666666] text-[16px]">
+                <p className="leading-[1.5]">Services</p>
+              </div>
+            </div>
+            <div className="box-border content-stretch flex gap-2 items-center justify-start px-0 py-3 relative rounded-[12px] shrink-0 w-full">
+              <div className="overflow-clip relative shrink-0 size-5">
+                <div className="w-5 h-5 text-[#666666] flex items-center justify-center">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8.33333 11.6667L11.6667 8.33334" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M15.8333 5.83334C16.2936 6.29363 16.2936 7.03971 15.8333 7.5L13.3333 10L10 6.66667L12.5 4.16667C12.9603 3.70638 13.7064 3.70638 14.1667 4.16667L15.8333 5.83334Z" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M4.16667 14.1667C3.70638 13.7064 3.70638 12.9603 4.16667 12.5L6.66667 10L10 13.3333L7.5 15.8333C7.03971 16.2936 6.29363 16.2936 5.83333 15.8333L4.16667 14.1667Z" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+              </div>
+              <div className="basis-0 font-body font-normal grow leading-[0] min-h-px min-w-px relative shrink-0 text-[#666666] text-[16px]">
+                <p className="leading-[1.5]">Integrations</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Middle Column - Form */}
+        <div className="basis-0 bg-neutral-50 box-border content-stretch flex flex-col gap-6 grow h-full items-start justify-start min-h-px min-w-px px-10 py-0 relative shrink-0">
+          <div className="box-border content-stretch flex flex-col gap-10 items-start justify-start p-[40px] relative rounded-[16px] shrink-0 w-full">
+            <div className="content-stretch flex flex-col gap-8 items-start justify-start relative shrink-0 w-full">
+              {/* Profile Picture Section */}
+              <div className="content-stretch flex flex-col gap-0.5 items-start justify-start leading-[0] relative shrink-0 w-full">
+                <div className="font-heading font-bold not-italic relative shrink-0 text-[20px] text-black w-full">
+                  <p className="leading-[1.4]">Profile Picture</p>
+                </div>
+                <div className="font-body font-normal relative shrink-0 text-[#aaaaaa] text-[12px] w-full">
+                  <p className="leading-[1.5]">Update your profile picture</p>
+                </div>
+              </div>
+              <div className="content-stretch flex gap-6 items-center justify-start relative shrink-0 w-full">
+                <div className="relative rounded-[40px] shrink-0 size-20">
+                  <Avatar className="w-20 h-20">
+                    <AvatarImage src={avatarUrl} />
+                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-2xl">
+                      {getUserDisplayName()?.charAt(0)?.toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <label 
+                    htmlFor="avatar-upload" 
+                    className="absolute bg-white bottom-[-8px] box-border content-stretch flex gap-1 items-center justify-start p-[10px] right-[-8px] rounded-[80px] shadow-[0px_4px_8px_-2px_rgba(0,0,0,0.1),0px_2px_4px_-2px_rgba(0,0,0,0.06)] size-10 cursor-pointer hover:bg-gray-50 transition-colors"
+                  >
+                    {uploading ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <Camera className="w-5 h-5" />
+                    )}
+                  </label>
+                  <input
+                    id="avatar-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarUpload}
+                    disabled={uploading}
+                  />
+                </div>
+                <div className="basis-0 content-stretch flex flex-col font-body font-normal gap-1 grow items-start justify-start leading-[0] min-h-px min-w-px relative shrink-0">
+                  <div className="relative shrink-0 text-[16px] text-black w-full">
+                    <p className="leading-[1.5]">Upload a new avatar</p>
+                  </div>
+                  <div className="relative shrink-0 text-[#aaaaaa] text-[12px] w-full">
+                    <p className="leading-[1.5]">JPG, PNG or GIF. Max 5MB</p>
+                  </div>
+                </div>
+              </div>
+            </div>
             
-            <div className="flex items-center space-x-6">
-              <div className="relative">
-                <Avatar className="h-24 w-24">
+            {/* Divider */}
+            <div className="h-0 relative shrink-0 w-full border-b border-[#eeeeee]"></div>
+            
+            {/* Basic Information Section */}
+            <div className="content-stretch flex flex-col gap-8 items-start justify-start relative shrink-0 w-full">
+              <div className="content-stretch flex gap-8 items-center justify-start relative shrink-0 w-full">
+                <div className="basis-0 content-stretch flex flex-col gap-0.5 grow items-start justify-start leading-[0] min-h-px min-w-px relative shrink-0">
+                  <div className="font-heading font-bold not-italic relative shrink-0 text-[20px] text-black w-full">
+                    <p className="leading-[1.4]">Basic Information</p>
+                  </div>
+                </div>
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="bg-black box-border content-stretch flex gap-2 items-center justify-center opacity-40 px-6 py-3 relative rounded-[40px] shrink-0 w-40 hover:bg-gray-900"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <span className="font-body font-semibold text-[16px] text-white">Save</span>
+                  )}
+                </Button>
+              </div>
+              
+              <form onSubmit={form.handleSubmit(onSubmit)} className="content-stretch flex flex-col gap-6 items-start justify-start relative shrink-0 w-full">
+                {/* Display Name */}
+                <div className="content-stretch flex flex-col gap-2 items-start justify-start relative shrink-0 w-full">
+                  <div className="font-body font-normal leading-[0] relative shrink-0 text-[#666666] text-[14px] w-full">
+                    <p className="leading-[1.5]">
+                      <span>Display Name</span>
+                      <span className="font-body font-normal text-[#b42318]"> *</span>
+                    </p>
+                  </div>
+                  <div className="bg-white box-border content-stretch flex gap-2 items-center justify-start p-[12px] relative rounded-[8px] shrink-0 w-full">
+                    <div aria-hidden="true" className="absolute border border-[#eeeeee] border-solid inset-[-1px] pointer-events-none rounded-[9px]" />
+                    <Input
+                      {...form.register('display_name')}
+                      placeholder="Your display name"
+                      className="basis-0 font-body font-normal grow leading-[0] min-h-px min-w-px relative shrink-0 text-[16px] text-black border-0 focus:ring-0 p-0 bg-transparent placeholder:text-[#666666]"
+                    />
+                  </div>
+                  {form.formState.errors.display_name && (
+                    <p className="text-[#b42318] text-sm">{form.formState.errors.display_name.message}</p>
+                  )}
+                </div>
+                
+                {/* Email */}
+                <div className="content-stretch flex flex-col gap-2 items-start justify-start relative shrink-0 w-full">
+                  <div className="font-body font-normal leading-[0] relative shrink-0 text-[#666666] text-[14px] w-full">
+                    <p className="leading-[1.5]">
+                      <span>Email</span>
+                      <span className="font-body font-normal text-[#b42318]"> *</span>
+                    </p>
+                  </div>
+                  <div className="bg-white box-border content-stretch flex gap-2 items-center justify-start p-[12px] relative rounded-[8px] shrink-0 w-full">
+                    <div aria-hidden="true" className="absolute border border-[#eeeeee] border-solid inset-[-1px] pointer-events-none rounded-[9px]" />
+                    <Input
+                      {...form.register('username')}
+                      placeholder="your@email.com"
+                      className="basis-0 font-body font-normal grow leading-[0] min-h-px min-w-px relative shrink-0 text-[16px] text-black border-0 focus:ring-0 p-0 bg-transparent placeholder:text-[#666666]"
+                      value={getUserEmail() || ''}
+                      disabled
+                    />
+                  </div>
+                </div>
+                
+                {/* Bio */}
+                <div className="content-stretch flex flex-col gap-2 items-start justify-start relative shrink-0 w-full">
+                  <div className="font-body font-normal leading-[0] relative shrink-0 text-[#666666] text-[14px] w-full">
+                    <p className="leading-[1.5]">
+                      <span>Bio</span>
+                      <span className="font-body font-normal text-[#b42318]"> *</span>
+                    </p>
+                  </div>
+                  <div className="bg-white box-border content-stretch flex h-[120px] items-start justify-start p-[12px] relative rounded-[8px] shrink-0 w-full">
+                    <div aria-hidden="true" className="absolute border border-[#eeeeee] border-solid inset-[-1px] pointer-events-none rounded-[9px]" />
+                    <Textarea
+                      {...form.register('bio')}
+                      placeholder="Type your message..."
+                      className="basis-0 font-body font-normal grow leading-[1.5] min-h-full min-w-px relative shrink-0 text-[16px] text-black border-0 focus:ring-0 p-0 resize-none bg-transparent placeholder:text-[#666666]"
+                    />
+                  </div>
+                  {form.formState.errors.bio && (
+                    <p className="text-[#b42318] text-sm">{form.formState.errors.bio.message}</p>
+                  )}
+                </div>
+                
+                {/* Phone and Location */}
+                <div className="content-stretch flex gap-8 items-start justify-start relative shrink-0 w-full">
+                  <div className="basis-0 content-stretch flex flex-col gap-2 grow items-start justify-start min-h-px min-w-px relative shrink-0">
+                    <div className="font-body font-normal leading-[0] relative shrink-0 text-[#666666] text-[14px] w-full">
+                      <p className="leading-[1.5]">Phone</p>
+                    </div>
+                    <div className="bg-white box-border content-stretch flex gap-2 items-center justify-start p-[12px] relative rounded-[8px] shrink-0 w-full">
+                      <div aria-hidden="true" className="absolute border border-[#eeeeee] border-solid inset-[-1px] pointer-events-none rounded-[9px]" />
+                      <Input
+                        {...form.register('phone')}
+                        placeholder="+1 (555) 000-0000"
+                        className="basis-0 font-body font-normal grow leading-[0] min-h-px min-w-px relative shrink-0 text-[16px] text-black border-0 focus:ring-0 p-0 bg-transparent placeholder:text-[#666666]"
+                      />
+                    </div>
+                  </div>
+                  <div className="basis-0 content-stretch flex flex-col gap-2 grow items-start justify-start min-h-px min-w-px relative shrink-0">
+                    <div className="font-body font-normal leading-[0] relative shrink-0 text-[#666666] text-[14px] w-full">
+                      <p className="leading-[1.5]">Location</p>
+                    </div>
+                    <div className="bg-white box-border content-stretch flex gap-2 items-center justify-start p-[12px] relative rounded-[8px] shrink-0 w-full">
+                      <div aria-hidden="true" className="absolute border border-[#eeeeee] border-solid inset-[-1px] pointer-events-none rounded-[9px]" />
+                      <Input
+                        {...form.register('location')}
+                        placeholder="Japan"
+                        className="basis-0 font-body font-normal grow leading-[0] min-h-px min-w-px relative shrink-0 text-[16px] text-black border-0 focus:ring-0 p-0 bg-transparent placeholder:text-[#666666]"
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Website */}
+                <div className="content-stretch flex flex-col gap-2 items-start justify-start relative shrink-0 w-full">
+                  <div className="font-body font-normal leading-[0] relative shrink-0 text-[#666666] text-[14px] w-full">
+                    <p className="leading-[1.5]">Website</p>
+                  </div>
+                  <div className="bg-white box-border content-stretch flex gap-2 items-center justify-start p-[12px] relative rounded-[8px] shrink-0 w-full">
+                    <div aria-hidden="true" className="absolute border border-[#eeeeee] border-solid inset-[-1px] pointer-events-none rounded-[9px]" />
+                    <Input
+                      {...form.register('website')}
+                      placeholder="https://example.com"
+                      className="basis-0 font-body font-normal grow leading-[0] min-h-px min-w-px relative shrink-0 text-[16px] text-black border-0 focus:ring-0 p-0 bg-transparent placeholder:text-[#666666]"
+                    />
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column - Profile Preview */}
+        <div className="content-stretch flex flex-col gap-6 h-full items-start justify-start relative shrink-0 border-l border-[#eeeeee]">
+          <div className="basis-0 box-border content-stretch flex flex-col gap-10 grow items-center justify-start min-h-px min-w-px p-[40px] relative shrink-0 w-[400px]">
+            {/* Profile Preview */}
+            <div className="content-stretch flex flex-col gap-8 items-center justify-start relative shrink-0 w-full">
+              <div className="content-stretch flex flex-col gap-0.5 items-start justify-start leading-[0] relative shrink-0 w-full">
+                <div className="font-heading font-bold not-italic relative shrink-0 text-[20px] text-black w-full">
+                  <p className="leading-[1.4]">Profile Preview</p>
+                </div>
+                <div className="font-body font-normal relative shrink-0 text-[#aaaaaa] text-[12px] w-full">
+                  <p className="leading-[1.5]">This is how others see your profile</p>
+                </div>
+              </div>
+              
+              {/* Avatar and Name */}
+              <div className="content-stretch flex flex-col gap-6 items-center justify-start relative shrink-0 w-full">
+                <Avatar className="overflow-clip relative rounded-[40px] shrink-0 size-20">
                   <AvatarImage src={avatarUrl} />
                   <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-2xl">
                     {getUserDisplayName()?.charAt(0)?.toUpperCase() || 'U'}
                   </AvatarFallback>
                 </Avatar>
-                <label 
-                  htmlFor="avatar-upload" 
-                  className="absolute bottom-0 right-0 p-1.5 bg-white rounded-full shadow-lg cursor-pointer hover:bg-gray-50 transition-colors"
-                >
-                  {uploading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Camera className="w-4 h-4" />
-                  )}
-                </label>
-                <input
-                  id="avatar-upload"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleAvatarUpload}
-                  disabled={uploading}
-                />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Upload a new avatar</p>
-                <p className="text-xs text-gray-400 mt-1">JPG, PNG or GIF. Max 5MB</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Profile Link Section */}
-          <div className="pb-8 mb-8 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900 mb-2">Profile Link</h2>
-            <p className="text-sm text-gray-600 mb-6">Share your profile with others</p>
-            
-            {profileUrl ? (
-              <div className="flex items-center space-x-2">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
-                    <Globe className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                    <span className="text-sm text-gray-700 truncate flex-1">{profileUrl}</span>
+                
+                <div className="content-stretch flex flex-col gap-2 items-start justify-start relative shrink-0 w-full">
+                  <div className="font-heading font-bold leading-[0] not-italic relative shrink-0 text-[20px] text-black text-center w-full">
+                    <p className="leading-[1.4]">{form.watch('display_name') || getUserDisplayName() || 'Your Name'}</p>
+                  </div>
+                  <div className="content-stretch flex gap-2 items-start justify-center relative shrink-0 w-full">
+                    <div className="bg-[#fcf9f4] box-border content-stretch flex gap-1 items-center justify-start px-4 py-2 relative rounded-[12px] shrink-0">
+                      <MapPin className="w-5 h-5 text-[#666666]" />
+                      <div className="font-body font-normal leading-[0] relative shrink-0 text-[#666666] text-[14px] text-center text-nowrap">
+                        <p className="leading-[1.5] whitespace-pre">{form.watch('location') || 'Location'}</p>
+                      </div>
+                    </div>
+                    <div className="bg-[#fcf9f4] box-border content-stretch flex gap-1 items-center justify-start px-4 py-2 relative rounded-[12px] shrink-0">
+                      <Star className="w-5 h-5 text-[#666666]" />
+                      <div className="font-body font-normal leading-[0] relative shrink-0 text-[#666666] text-[14px] text-center text-nowrap">
+                        <p className="leading-[1.5] whitespace-pre">0.0 (0 reviews)</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
+                
+                <div className="font-body font-normal leading-[1.5] min-w-full relative shrink-0 text-[16px] text-black text-center prose prose-sm max-w-none [&>p]:leading-[1.5] [&>p]:my-0 [&>strong]:font-semibold [&>em]:italic [&>ul]:text-left [&>ol]:text-left [&>blockquote]:text-left">
+                  <ReactMarkdown>
+                    {form.watch('bio') || 'Your bio will appear here.'}
+                  </ReactMarkdown>
+                </div>
+              </div>
+            </div>
+            
+            {/* Divider */}
+            <div className="h-0 relative shrink-0 w-full border-b border-[#eeeeee]"></div>
+            
+            {/* Services Section */}
+            <div className="content-stretch flex flex-col gap-1 items-start justify-start relative shrink-0 w-full">
+              <div className="font-heading font-bold leading-[0] not-italic relative shrink-0 text-[20px] text-black w-full">
+                <p className="leading-[1.4]">Services</p>
+              </div>
+            </div>
+            
+            {services.length > 0 ? (
+              <div className="content-stretch flex flex-col gap-4 items-start justify-start relative shrink-0 w-full">
+                {services.slice(0, 2).map((service) => (
+                  <div key={service.id} className="bg-white box-border content-stretch flex flex-col gap-6 items-start justify-start p-[16px] relative rounded-[16px] shrink-0 w-full border border-[#eeeeee]">
+                    <div className="content-stretch flex flex-col items-start justify-start leading-[0] relative shrink-0 w-full">
+                      <div className="font-body font-semibold relative shrink-0 text-[18px] text-black w-full">
+                        <p className="leading-[1.5]">{service.title}</p>
+                      </div>
+                      <div className="font-body font-normal relative shrink-0 text-[#aaaaaa] text-[12px] w-full">
+                        <p className="leading-[1.5]">{service.description}</p>
+                      </div>
+                    </div>
+                    <div className="content-stretch flex items-center justify-between relative shrink-0 w-full">
+                      <div className="bg-[#f3f3f3] box-border content-stretch flex gap-1 items-center justify-start px-2 py-1 relative rounded-[8px] shrink-0">
+                        <Video className="w-5 h-5 text-[#666666]" />
+                        <div className="font-body font-normal leading-[0] relative shrink-0 text-[#666666] text-[14px] text-center text-nowrap">
+                          <p className="leading-[1.5] whitespace-pre">{service.is_online ? 'Online' : 'Offline'}</p>
+                        </div>
+                      </div>
+                      <div className="content-stretch flex gap-1 items-baseline justify-start leading-[0] relative shrink-0 text-nowrap">
+                        <div className="font-body font-semibold relative shrink-0 text-[18px] text-black">
+                          <p className="leading-[1.5] text-nowrap whitespace-pre">${service.price}</p>
+                        </div>
+                        <div className="font-body font-normal relative shrink-0 text-[#666666] text-[12px]">
+                          <p className="leading-[1.5] text-nowrap whitespace-pre">/ {service.duration_minutes}min</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="content-stretch flex flex-col gap-4 items-center justify-center relative shrink-0 w-full py-8">
+                <p className="font-body text-[#aaaaaa] text-center">No services created yet</p>
+              </div>
+            )}
+          </div>
+          
+          {/* Copy Link Section */}
+          <div className="box-border content-stretch flex flex-col gap-10 items-center justify-start p-[24px] relative shrink-0 w-[400px] border-t border-[#eeeeee]">
+            <div className="content-stretch flex gap-2 items-start justify-center relative shrink-0 w-full">
+              <div className="basis-0 bg-white box-border content-stretch flex gap-2 grow items-center justify-start min-h-px min-w-px p-[12px] relative rounded-[8px] border border-[#eeeeee]">
+                <div className="basis-0 font-body font-normal grow leading-[0] min-h-px min-w-px relative shrink-0 text-[#666666] text-[16px]">
+                  <p className="leading-[1.5] truncate">{profileUrl || 'Set a username to get your link'}</p>
+                </div>
+              </div>
+              <Button
+                type="button"
+                onClick={() => {
+                  if (profileUrl) {
                     navigator.clipboard.writeText(profileUrl);
                     setProfileLinkCopied(true);
                     toast.success('Profile link copied!');
                     setTimeout(() => setProfileLinkCopied(false), 2000);
-                  }}
-                  className="flex items-center space-x-1"
-                >
-                  {profileLinkCopied ? (
-                    <><Check className="w-4 h-4" /><span>Copied</span></>
-                  ) : (
-                    <><Copy className="w-4 h-4" /><span>Copy</span></>
-                  )}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => window.open(profileUrl, '_blank')}
-                  className="flex items-center space-x-1"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  <span>View</span>
-                </Button>
-              </div>
-            ) : (
-              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p className="text-sm text-yellow-800">
-                  Set a username to get your public profile link
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Basic Information */}
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-2">Basic Information</h2>
-            <p className="text-sm text-gray-600 mb-6">Update your personal details</p>
-            
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div>
-                <Label htmlFor="display_name">Display Name</Label>
-                <Input
-                  id="display_name"
-                  {...form.register('display_name')}
-                  placeholder="Enter your display name"
-                  className="mt-1"
-                />
-                {form.formState.errors.display_name && (
-                  <p className="text-sm text-red-600 mt-1">
-                    {form.formState.errors.display_name.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="username">Username</Label>
-                <div className="mt-1">
-                  <div className="relative">
-                    <Input
-                      id="username"
-                      {...form.register('username')}
-                      placeholder="e.g. john-smith, jane_doe, alex123"
-                      className={`pr-10 ${
-                        usernameAvailability.available === true ? 'border-green-500 focus:border-green-500' :
-                        usernameAvailability.available === false ? 'border-red-500 focus:border-red-500' :
-                        ''
-                      }`}
-                    />
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                      {usernameAvailability.checking ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
-                      ) : usernameAvailability.available === true ? (
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                      ) : usernameAvailability.available === false ? (
-                        <XCircle className="h-4 w-4 text-red-500" />
-                      ) : null}
-                    </div>
-                  </div>
-                  
-                  {/* Username requirements */}
-                  <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <h4 className="text-sm font-medium text-blue-900 mb-2">Username Requirements:</h4>
-                    <ul className="text-sm text-blue-800 space-y-1">
-                      <li>• 3-30 characters long</li>
-                      <li>• Only letters (a-z, A-Z), numbers (0-9), underscores (_), and dashes (-)</li>
-                      <li>• No spaces or special characters</li>
-                      <li>• Cannot be a reserved word (like "admin", "api", etc.)</li>
-                    </ul>
-                  </div>
-                  
-                  {/* Availability status message */}
-                  {usernameAvailability.error && (
-                    <p className="text-sm text-red-600 mt-2">
-                      {usernameAvailability.error}
-                    </p>
-                  )}
-                  {usernameAvailability.available === true && watchedUsername && watchedUsername.length >= 3 && (
-                    <p className="text-sm text-green-600 mt-2">
-                      ✓ Username is available
-                    </p>
-                  )}
-                  
-                  <p className="text-xs text-gray-500 mt-2">
-                    Your public page will be available at: {window.location.origin}/{watchedUsername || 'your-username'}
-                  </p>
-                </div>
-                {form.formState.errors.username && (
-                  <p className="text-sm text-red-600 mt-1">
-                    {form.formState.errors.username.message}
-                  </p>
-                )}
-              </div>
-
-              <hr className="border-gray-200" />
-
-              <div>
-                <Label htmlFor="bio">Bio</Label>
-                <Textarea
-                  id="bio"
-                  {...form.register('bio')}
-                  placeholder="Tell us about yourself"
-                  rows={4}
-                  className="mt-1"
-                />
-                {form.formState.errors.bio && (
-                  <p className="text-sm text-red-600 mt-1">
-                    {form.formState.errors.bio.message}
-                  </p>
-                )}
-              </div>
-
-              <hr className="border-gray-200" />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <Label htmlFor="phone">Phone</Label>
-                  <Input
-                    id="phone"
-                    {...form.register('phone')}
-                    placeholder="+1 (555) 000-0000"
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="location">Location</Label>
-                  <Input
-                    id="location"
-                    {...form.register('location')}
-                    placeholder="City, Country"
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-
-              <hr className="border-gray-200" />
-
-              <div>
-                <Label htmlFor="website">Website</Label>
-                <Input
-                  id="website"
-                  {...form.register('website')}
-                  placeholder="https://example.com"
-                  className="mt-1"
-                />
-                {form.formState.errors.website && (
-                  <p className="text-sm text-red-600 mt-1">
-                    {form.formState.errors.website.message}
-                  </p>
-                )}
-              </div>
-
-              <hr className="border-gray-200" />
-
-              <div>
-                <Label htmlFor="timezone" className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
-                  Timezone
-                </Label>
-                <Select
-                  value={form.watch('timezone') || ''}
-                  onValueChange={(value) => {
-                    form.setValue('timezone', value);
-                    form.trigger('timezone'); // Trigger validation
-                  }}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select your timezone">
-                      {form.watch('timezone') ? 
-                        timezoneList.find(tz => tz.value === form.watch('timezone'))?.label || form.watch('timezone')
-                        : "Select your timezone"}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {timezoneList.map((tz) => (
-                      <SelectItem key={tz.value} value={tz.value}>
-                        {tz.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground mt-1">
-                  This helps display accurate times for your services and bookings
-                </p>
-              </div>
-
-              <hr className="border-gray-200" />
-
-              <Button type="submit" disabled={loading} className="w-full">
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Updating...
-                  </>
-                ) : (
-                  'Update Profile'
-                )}
+                  }
+                }}
+                disabled={!profileUrl}
+                className="bg-neutral-50 box-border content-stretch flex gap-2 items-center justify-center px-6 py-3 relative rounded-[8px] shrink-0 border border-[#eeeeee] hover:bg-gray-100"
+              >
+                <span className="font-body font-semibold leading-[0] relative shrink-0 text-[16px] text-black text-nowrap">
+                  {profileLinkCopied ? 'Copied!' : 'Copy'}
+                </span>
               </Button>
-            </form>
-          </div>
-
-        </div>
-
-        {/* Right Column - Profile Preview */}
-        <div className="lg:col-span-1 bg-gray-50 border-l border-gray-200">
-          <div className="sticky top-0 h-screen overflow-y-auto">
-            <div className="max-w-lg mx-auto py-8 px-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-2">Profile Preview</h2>
-              <p className="text-sm text-gray-600 mb-8">This is how others see your profile</p>
-              
-              {/* User Profile Section - Exact match to Profile.tsx */}
-              <div className="mb-12">
-                <div className="text-center mb-10">
-                  <Avatar className="h-20 w-20 mx-auto mb-6">
-                    <AvatarImage src={avatarUrl} />
-                    <AvatarFallback className="text-lg bg-muted text-foreground">
-                      {form.watch('display_name')?.charAt(0) || getUserEmail()?.charAt(0) || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <h1 className="text-2xl font-medium text-foreground mb-2">
-                    {form.watch('display_name') || getUserEmail()?.split('@')[0] || 'User'}
-                  </h1>
-                  {form.watch('location') && (
-                    <div className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground mb-2">
-                      <MapPin className="h-3.5 w-3.5" />
-                      <span>{form.watch('location')}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground">
-                    <Star className="h-3.5 w-3.5 fill-current" />
-                    <span className="font-medium">{profile?.rating?.toFixed(1) || '5.0'}</span>
-                    <span>({profile?.review_count || 0} reviews)</span>
-                  </div>
-                </div>
-                
-                {form.watch('bio') && (
-                  <div className="prose prose-sm max-w-none text-muted-foreground leading-relaxed">
-                    <ReactMarkdown>{form.watch('bio')}</ReactMarkdown>
-                  </div>
-                )}
-              </div>
-
-              {/* Services Section - Exact match to Profile.tsx */}
-              {(profile?.is_provider || services.length > 0) && (
-                <div>
-                  <div className="mb-6">
-                    <h2 className="text-lg font-medium text-foreground mb-1">Services</h2>
-                    <p className="text-sm text-muted-foreground">Your services</p>
-                  </div>
-                  
-                  {services.length > 0 ? (
-                    <div className="space-y-3">
-                      {services.map((service) => (
-                        <div 
-                          key={service.id} 
-                          className="border rounded-lg p-4 transition-colors"
-                        >
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex items-center gap-2">
-                              <Badge variant="secondary" className="text-xs">
-                                {service.categories?.name || 'General'}
-                              </Badge>
-                              <div className="flex items-center text-muted-foreground text-xs">
-                                {getLocationIcon(service.is_online, !!service.location)}
-                                <span className="ml-1">{getLocationText(service.is_online, !!service.location)}</span>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <div className="text-sm font-medium">${service.price}</div>
-                              <div className="text-xs text-muted-foreground">{service.duration_minutes}m</div>
-                            </div>
-                          </div>
-                          
-                          <h3 className="text-sm font-medium mb-2">
-                            {service.title}
-                          </h3>
-                          
-                          <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
-                            {service.description}
-                          </p>
-                          
-                          {service.tags && service.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-1">
-                              {service.tags.slice(0, 3).map((tag) => (
-                                <Badge key={tag} variant="secondary" className="text-xs">
-                                  {tag}
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <p>You haven't created any services yet.</p>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -694,3 +677,4 @@ export default function CustomerProfile() {
     </div>
   );
 }
+

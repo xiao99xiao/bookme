@@ -13,6 +13,7 @@ export interface User {
   username?: string
   bio?: string
   avatar_url?: string
+  avatar?: string
   phone?: string
   timezone: string
   is_verified: boolean
@@ -73,6 +74,21 @@ export interface Booking {
   service?: Service
   customer?: User
   provider?: User
+  reviews?: {
+    id: string;
+    rating: number;
+    comment: string;
+    created_at: string;
+    updated_at: string;
+    reviewer?: {
+      display_name: string;
+      avatar?: string;
+    };
+    reviewee?: {
+      display_name: string;
+      avatar?: string;
+    };
+  }[]
 }
 
 /**

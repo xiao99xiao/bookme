@@ -1,66 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { format, isPast, isFuture } from 'date-fns';
-import { Calendar, Clock, MapPin, User, DollarSign, CheckCircle, XCircle, AlertCircle, MessageSquare, Star } from 'lucide-react';
+import { format, isPast } from 'date-fns';
+import { Calendar, Clock, MapPin, User, DollarSign, CheckCircle, XCircle, AlertCircle, MessageSquare, Star, Copy, Video } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/PrivyAuthContext';
-import { ApiClient } from '@/lib/api-migration';
+import { ApiClient, Booking } from '@/lib/api-migration';
 import ChatModal from '@/components/ChatModal';
-import AddToCalendar from '@/components/AddToCalendar';
-import MeetingLinkDisplay from '@/components/MeetingLinkDisplay';
 import ReviewDialog from '@/components/ReviewDialog';
-import PageLayout from '@/components/PageLayout';
-
-interface Booking {
-  id: string;
-  service_id: string;
-  provider_id: string;
-  customer_id: string;
-  scheduled_at: string; // Changed from booking_date
-  duration_minutes: number;
-  total_price: number;
-  service_fee: number;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
-  customer_notes?: string; // Changed from notes
-  location?: string;
-  is_online?: boolean;
-  meeting_link?: string;
-  meeting_platform?: string;
-  meeting_id?: string;
-  created_at: string;
-  services?: {
-    id: string;
-    title: string;
-    short_description?: string;
-    description?: string;
-    price: number;
-    images?: string[];
-  };
-  provider?: {
-    display_name: string;
-    email: string;
-    avatar?: string;
-  };
-  reviews?: {
-    id: string;
-    rating: number;
-    comment: string;
-    created_at: string;
-    updated_at: string;
-    reviewer?: {
-      display_name: string;
-      avatar?: string;
-    };
-    reviewee?: {
-      display_name: string;
-      avatar?: string;
-    };
-  }[];
-}
 
 export default function CustomerBookings() {
   const { userId } = useAuth();
@@ -104,13 +57,11 @@ export default function CustomerBookings() {
       const bookingsData = await ApiClient.getMyBookings(userId!);
       setBookings(bookingsData);
       
-      // Extract reviews from bookings data (now included in the query)
       const reviewsMap: Record<string, { rating: number; comment: string }> = {};
       
       bookingsData.forEach((booking) => {
-        // Reviews are now included as an array in the booking object
         if (booking.reviews && booking.reviews.length > 0) {
-          const review = booking.reviews[0]; // Should only be one review per booking
+          const review = booking.reviews[0];
           reviewsMap[booking.id] = {
             rating: review.rating,
             comment: review.comment || ''
@@ -132,8 +83,8 @@ export default function CustomerBookings() {
       await ApiClient.updateBookingStatus(
         bookingId, 
         'cancelled',
-        undefined, // no notes
-        userId // pass userId for Privy users
+        undefined,
+        userId
       );
       toast.success('Booking cancelled successfully');
       loadBookings();
@@ -145,19 +96,16 @@ export default function CustomerBookings() {
 
   const handleCompleteBooking = async (bookingId: string) => {
     try {
-      // First mark the booking as completed
       await ApiClient.updateBookingStatus(
         bookingId, 
         'completed',
-        undefined, // no notes
-        userId // pass userId for Privy users
+        undefined,
+        userId
       );
       toast.success('Booking marked as completed');
       
-      // Find the booking to show in review dialog
       const booking = bookings.find(b => b.id === bookingId);
       if (booking) {
-        // Open the review dialog (for new review after completion)
         setReviewDialog({
           isOpen: true,
           booking,
@@ -183,13 +131,11 @@ export default function CustomerBookings() {
         userId
       );
       
-      // Update the local reviews cache
       setBookingReviews(prev => ({
         ...prev,
         [reviewDialog.booking!.id]: { rating, comment }
       }));
       
-      // Close the review dialog
       setReviewDialog({
         isOpen: false,
         booking: null,
@@ -197,40 +143,78 @@ export default function CustomerBookings() {
       });
     } catch (error) {
       console.error('Failed to submit review:', error);
-      throw error; // Let the ReviewDialog handle the error display
+      throw error;
     }
   };
 
-  const handleChatOpen = (booking: Booking) => {
-    setChatModal({
-      isOpen: true,
-      otherUserId: booking.provider_id,
-      otherUserName: booking.provider?.display_name || 'Provider',
-      otherUserAvatar: booking.provider?.avatar,
-      isReadOnly: booking.status === 'cancelled'
-    });
+  const handleCopyMeetingLink = (link: string) => {
+    navigator.clipboard.writeText(link);
+    toast.success('Meeting link copied to clipboard');
   };
 
-  const handleChatClose = () => {
-    setChatModal({
-      isOpen: false,
-      otherUserId: '',
-      otherUserName: '',
-      otherUserAvatar: undefined,
-      isReadOnly: false
-    });
+  const handleJoinMeeting = (link: string) => {
+    window.open(link, '_blank');
   };
 
-  // Check if review can be edited (within 7 days of booking end time)
-  const canEditReview = (booking: Booking): boolean => {
-    const now = new Date();
-    const bookingEndTime = new Date(booking.scheduled_at);
-    bookingEndTime.setMinutes(bookingEndTime.getMinutes() + booking.duration_minutes);
+  const handleGoogleCalendar = (booking: Booking) => {
+    const startDate = new Date(booking.scheduled_at);
+    const endDate = new Date(startDate.getTime() + booking.duration_minutes * 60000);
     
-    const sevenDaysAfterBooking = new Date(bookingEndTime);
-    sevenDaysAfterBooking.setDate(sevenDaysAfterBooking.getDate() + 7);
+    const formatDateForGoogle = (date: Date) => {
+      return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    };
+
+    const params = new URLSearchParams({
+      action: 'TEMPLATE',
+      text: `${booking.service?.title || 'Service'} with ${booking.provider?.display_name || 'Provider'}`,
+      dates: `${formatDateForGoogle(startDate)}/${formatDateForGoogle(endDate)}`,
+      details: `Booking for ${booking.service?.title}${booking.customer_notes ? `\n\nNotes: ${booking.customer_notes}` : ''}`,
+      location: booking.is_online ? 'Online Meeting' : (booking.location || ''),
+    });
+
+    const url = `https://calendar.google.com/calendar/render?${params.toString()}`;
+    window.open(url, '_blank');
+  };
+
+  const handleICSDownload = (booking: Booking) => {
+    const startDate = new Date(booking.scheduled_at);
+    const endDate = new Date(startDate.getTime() + booking.duration_minutes * 60000);
     
-    return now <= sevenDaysAfterBooking;
+    const formatDateForICS = (date: Date) => {
+      return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    };
+
+    const title = `${booking.service?.title || 'Service'} with ${booking.provider?.display_name || 'Provider'}`;
+    const description = `Booking for ${booking.service?.title}${booking.customer_notes ? `\n\nNotes: ${booking.customer_notes}` : ''}`;
+    
+    const icsContent = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//BookMe//Booking Calendar//EN',
+      'METHOD:REQUEST',
+      'BEGIN:VEVENT',
+      `UID:${Date.now()}@bookme.com`,
+      `DTSTAMP:${formatDateForICS(new Date())}`,
+      `DTSTART:${formatDateForICS(startDate)}`,
+      `DTEND:${formatDateForICS(endDate)}`,
+      `SUMMARY:${title}`,
+      description ? `DESCRIPTION:${description.replace(/\n/g, '\\n')}` : '',
+      `LOCATION:${booking.is_online ? 'Online Meeting' : (booking.location || '')}`,
+      'STATUS:CONFIRMED',
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ].filter(Boolean).join('\r\n');
+
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.ics`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
   };
 
   const handleViewProviderProfile = async (providerId: string) => {
@@ -241,41 +225,15 @@ export default function CustomerBookings() {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'confirmed':
-        return 'bg-blue-100 text-blue-800';
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return <AlertCircle className="w-4 h-4" />;
-      case 'confirmed':
-        return <CheckCircle className="w-4 h-4" />;
-      case 'completed':
-        return <CheckCircle className="w-4 h-4" />;
-      case 'cancelled':
-        return <XCircle className="w-4 h-4" />;
-      default:
-        return null;
-    }
-  };
-
-  const isBookingOverdue = (booking: Booking) => {
+  const canEditReview = (booking: Booking): boolean => {
     const now = new Date();
-    const scheduledEnd = new Date(booking.scheduled_at);
-    scheduledEnd.setMinutes(scheduledEnd.getMinutes() + booking.duration_minutes);
-    return now > scheduledEnd && (booking.status === 'confirmed' || booking.status === 'pending');
+    const bookingEndTime = new Date(booking.scheduled_at);
+    bookingEndTime.setMinutes(bookingEndTime.getMinutes() + booking.duration_minutes);
+    
+    const sevenDaysAfterBooking = new Date(bookingEndTime);
+    sevenDaysAfterBooking.setDate(sevenDaysAfterBooking.getDate() + 7);
+    
+    return now <= sevenDaysAfterBooking;
   };
 
   const filteredBookings = bookings.filter(booking => {
@@ -295,232 +253,375 @@ export default function CustomerBookings() {
     }
   });
 
-  return (
-    <PageLayout 
-      title="My Bookings" 
-      description="Services you have booked from other providers"
-      maxWidth="wide"
-    >
-      <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-            <TabsTrigger value="past">Past</TabsTrigger>
-            <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
-          </TabsList>
+  const tabLabels = {
+    all: 'All',
+    upcoming: 'Upcoming',
+    past: 'Past',
+    cancelled: 'Cancelled'
+  };
 
-          <TabsContent value={activeTab} className="mt-8">
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="flex gap-8">
+          {/* Left Sidebar */}
+          <div className="w-64 flex-shrink-0">
+            <div className="mb-6">
+              {/* Title - Spectral font */}
+              <h2 className="text-2xl font-bold text-black font-heading mb-2">My Bookings</h2>
+              {/* Subtitle - Baloo 2 font */}
+              <p className="text-sm text-gray-500 font-body">Services you have booked from providers</p>
+            </div>
+            
+            {/* Vertical Navigation - Baloo 2 font */}
+            <nav className="space-y-1">
+              {Object.entries(tabLabels).map(([key, label]) => (
+                <button
+                  key={key}
+                  onClick={() => setActiveTab(key)}
+                  className={`w-full text-left px-3 py-2.5 text-sm font-medium rounded-md transition-colors font-body ${
+                    activeTab === key 
+                      ? 'bg-gray-100 text-black' 
+                      : 'text-gray-600 hover:text-black hover:bg-gray-50'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </nav>
+          </div>
+
+          {/* Main Content Area */}
+          <div className="flex-1">
             {loading ? (
-              <p className="text-center text-gray-500 py-8">Loading bookings...</p>
+              <div className="text-center py-12">
+                <p className="text-gray-500 font-body">Loading bookings...</p>
+              </div>
             ) : filteredBookings.length === 0 ? (
-              <div className="text-center py-8">
+              <div className="text-center py-12">
                 <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">No {activeTab} bookings</p>
+                <p className="text-gray-500 font-body">No {activeTab === 'all' ? '' : activeTab} bookings</p>
                 {activeTab === 'upcoming' && (
-                  <p className="text-sm text-gray-400 mt-1">
+                  <p className="text-sm text-gray-400 mt-1 font-body">
                     Browse services and make your first booking
                   </p>
                 )}
               </div>
             ) : (
-              <div className="space-y-8">
-                {filteredBookings.map((booking, index) => (
-                  <div key={booking.id} className={`pb-8 ${index !== filteredBookings.length - 1 ? 'border-b border-gray-200' : ''}`}>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-3">
-                          <Badge className={getStatusColor(booking.status)}>
-                            <span className="flex items-center space-x-1">
-                              {getStatusIcon(booking.status)}
-                              <span>{booking.status}</span>
-                            </span>
-                          </Badge>
-                          {isBookingOverdue(booking) && (
-                            <Badge className="bg-red-100 text-red-800">
-                              <span className="flex items-center space-x-1">
-                                <AlertCircle className="w-4 h-4" />
-                                <span>OVERDUE</span>
-                              </span>
-                            </Badge>
+              <div className="space-y-4">
+                {/* Each booking is a separate CARD */}
+                {filteredBookings.map((booking) => {
+                  const review = bookingReviews[booking.id];
+                  const bookingStartTime = new Date(booking.scheduled_at);
+                  const hasStarted = isPast(bookingStartTime);
+                  
+                  return (
+                    <div key={booking.id} className="bg-white rounded-2xl border border-[#eeeeee] p-6">
+                      {/* Top Section: Title and Icons */}
+                      <div className="flex items-start justify-between mb-6">
+                        <div className="flex-1">
+                          {/* Service Title */}
+                          <h3 className="text-lg font-semibold text-black font-body mb-1">
+                            {booking.service?.title || 'Service'}
+                          </h3>
+                          {/* Booked date */}
+                          <p className="text-xs text-[#aaaaaa] font-body">
+                            Booked {format(new Date(booking.created_at), 'MMM d, yyyy')}
+                          </p>
+                        </div>
+                        
+                        {/* Top Right Icons */}
+                        <div className="flex items-center gap-2">
+                          {booking.status === 'confirmed' ? (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button className="p-1.5 border border-[#cccccc] rounded-xl hover:bg-gray-50">
+                                  {/* Calendar Plus icon from Figma */}
+                                  <svg className="w-5 h-5" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M6.66667 1.66675V4.16675" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M13.3333 1.66675V4.16675" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M2.5 7.50008H17.5" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M17.5 3.33325H2.5C1.83696 3.33325 1.66667 3.50354 1.66667 4.16658V16.6666C1.66667 17.3296 1.83696 17.4999 2.5 17.4999H17.5C18.163 17.4999 18.3333 17.3296 18.3333 16.6666V4.16658C18.3333 3.50354 18.163 3.33325 17.5 3.33325Z" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M10 11.6667V14.1667" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M8.75 12.9167H11.25" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                  </svg>
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem onClick={() => handleGoogleCalendar(booking)}>
+                                  <svg
+                                    className="w-4 h-4 mr-2"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                  >
+                                    <path
+                                      d="M19.5 3.5L18 2L17 3.5L16 2L15 3.5L14 2L13 3.5L12 2L11 3.5L10 2L9 3.5L8 2L7 3.5L6 2L5 3.5L4.5 2V22L6 20.5L7 22L8 20.5L9 22L10 20.5L11 22L12 20.5L13 22L14 20.5L15 22L16 20.5L17 22L18 20.5L19.5 22V2L19.5 3.5Z"
+                                      fill="#4285F4"
+                                    />
+                                    <path d="M8 9H16V11H8V9Z" fill="white" />
+                                    <path d="M8 13H13V15H8V13Z" fill="white" />
+                                  </svg>
+                                  Google Calendar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleICSDownload(booking)}>
+                                  <Calendar className="w-4 h-4 mr-2 text-blue-600" />
+                                  Download .ics file
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          ) : (
+                            <button className="p-1.5 border border-[#cccccc] rounded-xl hover:bg-gray-50 opacity-50 cursor-not-allowed">
+                              <svg className="w-5 h-5" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M6.66667 1.66675V4.16675" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M13.3333 1.66675V4.16675" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M2.5 7.50008H17.5" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M17.5 3.33325H2.5C1.83696 3.33325 1.66667 3.50354 1.66667 4.16658V16.6666C1.66667 17.3296 1.83696 17.4999 2.5 17.4999H17.5C18.163 17.4999 18.3333 17.3296 18.3333 16.6666V4.16658C18.3333 3.50354 18.163 3.33325 17.5 3.33325Z" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M10 11.6667V14.1667" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M8.75 12.9167H11.25" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </button>
                           )}
-                          <span className="text-sm text-gray-500">
-                            Booked {format(new Date(booking.created_at), 'MMM dd, yyyy')}
-                          </span>
+                          <button 
+                            className="p-1.5 border border-[#cccccc] rounded-xl hover:bg-gray-50"
+                            onClick={() => setChatModal({
+                              isOpen: true,
+                              otherUserId: booking.provider_id,
+                              otherUserName: booking.provider?.display_name || 'Provider',
+                              otherUserAvatar: booking.provider?.avatar,
+                              isReadOnly: booking.status === 'cancelled'
+                            })}
+                          >
+                            <MessageSquare className="w-5 h-5 text-gray-600" />
+                          </button>
                         </div>
-
-                        <h3 className="font-semibold text-lg mb-2">
-                          {booking.services?.title || 'Service'}
-                        </h3>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                          <div className="space-y-2">
-                            <div className="flex items-center text-gray-600">
-                              <User className="w-4 h-4 mr-2" />
-                              Provider: <button 
-                                onClick={() => handleViewProviderProfile(booking.provider_id)}
-                                className="text-blue-600 hover:text-blue-800 hover:underline font-medium ml-1"
-                              >
-                                {booking.provider?.display_name || 'Provider'}
-                              </button>
-                            </div>
-                            <div className="flex items-center text-gray-600">
-                              <Calendar className="w-4 h-4 mr-2" />
-                              {format(new Date(booking.scheduled_at), 'EEEE, MMMM dd, yyyy')}
-                            </div>
-                            <div className="flex items-center text-gray-600">
-                              <Clock className="w-4 h-4 mr-2" />
-                              {format(new Date(booking.scheduled_at), 'HH:mm')} ({booking.duration_minutes} min)
-                            </div>
-                          </div>
-                          <div className="space-y-2">
-                            <div className="flex items-center font-medium">
-                              <DollarSign className="w-4 h-4 mr-2" />
-                              Total Paid: ${booking.total_price.toFixed(2)}
-                            </div>
-                          </div>
-                        </div>
-
-                        {booking.customer_notes && (
-                          <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                            <p className="text-sm text-gray-600">
-                              <span className="font-medium">Your notes:</span> {booking.customer_notes}
-                            </p>
-                          </div>
-                        )}
-
-                        {booking.meeting_link && booking.status === 'confirmed' && (
-                          <div className="mt-4">
-                            <MeetingLinkDisplay
-                              meetingLink={booking.meeting_link}
-                              meetingPlatform={booking.meeting_platform}
-                              scheduledAt={booking.scheduled_at}
-                            />
-                          </div>
-                        )}
-
-                        {isBookingOverdue(booking) && (
-                          <div className="mt-4 p-3 bg-orange-50 border-l-4 border-orange-400 rounded-lg">
-                            <p className="text-sm text-orange-700">
-                              <span className="font-medium">⏰ Service time has passed</span>
-                              <br />
-                              Please contact the provider to confirm if the service was completed.
-                            </p>
-                          </div>
-                        )}
                       </div>
 
-                      <div className="flex flex-col space-y-2 ml-4">
-                        {(booking.status === 'confirmed' || booking.status === 'pending') && (
-                          <>
-                            {booking.status === 'confirmed' && (
-                              <AddToCalendar
-                                title={`${booking.services?.title || 'Service'} with ${booking.provider?.display_name || 'Provider'}`}
-                                description={`Booking for ${booking.services?.title}${booking.customer_notes ? `\n\nNotes: ${booking.customer_notes}` : ''}`}
-                                startDate={new Date(booking.scheduled_at)}
-                                endDate={new Date(new Date(booking.scheduled_at).getTime() + booking.duration_minutes * 60000)}
-                                location={booking.location}
-                                isOnline={booking.is_online}
-                              />
-                            )}
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => handleChatOpen(booking)}
-                            >
-                              <MessageSquare className="w-4 h-4 mr-1" />
-                              Message
-                            </Button>
-                          </>
-                        )}
-                        
-                        {booking.status === 'confirmed' && (() => {
-                          // Check if booking start time has arrived
-                          const bookingStartTime = new Date(booking.scheduled_at);
-                          const hasStarted = isPast(bookingStartTime);
+                      {/* Provider Name and Date */}
+                      <div className="flex items-center gap-2 text-sm font-medium font-body mb-4">
+                        <button 
+                          onClick={() => handleViewProviderProfile(booking.provider_id)}
+                          className="text-black hover:text-blue-600 hover:underline"
+                        >
+                          {booking.provider?.display_name || 'Provider'}
+                        </button>
+                        <span className="text-[#cccccc]">|</span>
+                        <span className="text-black">{format(new Date(booking.scheduled_at), 'EEE, MMM d, yyyy')}</span>
+                        <span className="text-[#cccccc]">|</span>
+                        <span className="text-black">{format(new Date(booking.scheduled_at), 'h:mm a')}</span>
+                      </div>
+
+                      {/* Status Pills and Price Row */}
+                      <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-2">
+                          {/* Status Badge */}
+                          {booking.status === 'confirmed' && (
+                            <div className="bg-[#eff7ff] px-1.5 py-1 rounded-lg flex items-center gap-1">
+                              <CheckCircle className="w-4 h-4 text-[#3B9EF9]" />
+                              <span className="text-sm text-black font-body">Confirmed</span>
+                            </div>
+                          )}
+                          {booking.status === 'pending' && (
+                            <div className="bg-[#fcf9f4] px-1.5 py-1 rounded-lg flex items-center gap-1">
+                              <span className="w-2 h-2 bg-[#FFD43C] rounded-full"></span>
+                              <span className="text-sm text-black font-body">Pending</span>
+                            </div>
+                          )}
+                          {booking.status === 'completed' && (
+                            <div className="bg-[#e7fded] px-1.5 py-1 rounded-lg flex items-center gap-1">
+                              <CheckCircle className="w-4 h-4 text-[#36D267]" />
+                              <span className="text-sm text-black font-body">Completed</span>
+                            </div>
+                          )}
+                          {booking.status === 'cancelled' && (
+                            <div className="bg-[#ffeff0] px-1.5 py-1 rounded-lg flex items-center gap-1">
+                              <XCircle className="w-4 h-4 text-[#F1343D]" />
+                              <span className="text-sm text-black font-body">Cancelled</span>
+                            </div>
+                          )}
                           
-                          return hasStarted ? (
+                          {/* Online Badge */}
+                          {booking.is_online && (
+                            <div className="bg-[#f3f3f3] px-1.5 py-1 rounded-lg flex items-center gap-1">
+                              <svg className="w-5 h-5" viewBox="0 0 20 20" fill="none">
+                                <rect x="3" y="5" width="14" height="10" rx="1" stroke="#666666" strokeWidth="1.5"/>
+                                <line x1="7" y1="18" x2="13" y2="18" stroke="#666666" strokeWidth="1.5" strokeLinecap="round"/>
+                              </svg>
+                              <span className="text-sm text-[#666666] font-body">Online</span>
+                            </div>
+                          )}
+                          
+                          {/* Duration Badge */}
+                          <div className="bg-[#f3f3f3] px-1.5 py-1 rounded-lg flex items-center gap-1">
+                            <Clock className="w-5 h-5 text-[#666666]" />
+                            <span className="text-sm text-[#666666] font-body">{booking.duration_minutes} min</span>
+                          </div>
+                        </div>
+
+                        {/* Total Price */}
+                        <div className="text-lg font-bold text-black font-body">
+                          Total: ${booking.total_price}
+                        </div>
+                      </div>
+
+                      {/* Customer Notes Section if present */}
+                      {booking.customer_notes && (
+                        <>
+                          <div className="border-t border-[#eeeeee] my-4"></div>
+                          <div className="mb-4">
+                            <p className="text-sm text-[#666666] font-body">
+                              <span className="font-medium text-black">Your notes:</span> {booking.customer_notes}
+                            </p>
+                          </div>
+                        </>
+                      )}
+
+                      {/* Divider Line and Bottom Section - only for non-cancelled bookings */}
+                      {booking.status !== 'cancelled' && (
+                        <>
+                          <div className="border-t border-[#eeeeee] my-6"></div>
+                          
+                          {/* Bottom Section: Actions */}
+                          <div className="flex items-center justify-between">
+                            {/* Left Status Text */}
+                            <div className="text-sm font-medium text-black font-body">
+                              {booking.status === 'confirmed' && (hasStarted ? 'In Progress' : 'Upcoming')}
+                              {booking.status === 'pending' && 'Awaiting Confirmation'}
+                              {booking.status === 'completed' && 'Completed'}
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex items-center gap-3">
+                          {booking.status === 'confirmed' && (
+                            <>
+                              {hasStarted ? (
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleCompleteBooking(booking.id)}
+                                  className="bg-[#36D267] hover:bg-[#2eb858] text-white text-sm font-semibold px-2 py-1.5 h-8 rounded-xl border border-[#cccccc] font-body flex items-center gap-2"
+                                >
+                                  <CheckCircle className="w-5 h-5" />
+                                  Mark Complete
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleCancelBooking(booking.id)}
+                                  className="text-sm font-semibold px-4 py-1.5 h-8 rounded-xl border border-[#cccccc] text-[#F1343D] hover:bg-[#ffeff0] font-body"
+                                >
+                                  Cancel
+                                </Button>
+                              )}
+                              {booking.meeting_link && (
+                                <>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleCopyMeetingLink(booking.meeting_link!)}
+                                    className="text-sm font-semibold px-2 py-1.5 h-8 rounded-xl border border-[#cccccc] text-[#666666] font-body flex items-center gap-2 min-w-[110px]"
+                                  >
+                                    <Copy className="w-5 h-5" />
+                                    Copy Link
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleJoinMeeting(booking.meeting_link!)}
+                                    className="bg-black hover:bg-gray-900 text-white text-sm font-semibold px-2 py-1.5 h-8 rounded-xl border border-black font-body flex items-center gap-2 min-w-[110px]"
+                                  >
+                                    <Video className="w-5 h-5" />
+                                    Join
+                                  </Button>
+                                </>
+                              )}
+                            </>
+                          )}
+
+                          {booking.status === 'pending' && (
                             <Button
+                              variant="outline"
                               size="sm"
-                              onClick={() => handleCompleteBooking(booking.id)}
-                            >
-                              Mark Complete
-                            </Button>
-                          ) : (
-                            <Button
-                              size="sm"
-                              variant="destructive"
                               onClick={() => handleCancelBooking(booking.id)}
+                              className="text-sm font-semibold px-4 py-1.5 h-8 rounded-xl border border-[#cccccc] text-[#F1343D] hover:bg-[#ffeff0] font-body"
                             >
-                              Cancel
+                              Cancel Request
                             </Button>
-                          );
-                        })()}
-                        
-                        {booking.status === 'completed' && (
-                          <>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => handleChatOpen(booking)}
-                            >
-                              <MessageSquare className="w-4 h-4 mr-1" />
-                              Message
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => {
-                                const existingReview = bookingReviews[booking.id] || null;
-                                setReviewDialog({ 
+                          )}
+
+                          {booking.status === 'completed' && (
+                            <>
+                              {review && (
+                                <div className="flex items-center gap-1 mr-4">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star
+                                      key={i}
+                                      className={`w-4 h-4 ${
+                                        i < review.rating
+                                          ? 'text-[#FFD43C] fill-[#FFD43C]'
+                                          : 'text-gray-300'
+                                      }`}
+                                    />
+                                  ))}
+                                  <span className="text-sm font-medium text-black font-body ml-1">
+                                    {review.rating}/5
+                                  </span>
+                                </div>
+                              )}
+                              <Button
+                                size="sm"
+                                onClick={() => setReviewDialog({ 
                                   isOpen: true, 
                                   booking,
-                                  existingReview
-                                });
-                              }}
-                              disabled={bookingReviews[booking.id] && !canEditReview(booking)}
-                            >
-                              <Star className="w-4 h-4 mr-1" />
-                              {bookingReviews[booking.id] 
-                                ? (canEditReview(booking) ? 'Edit Review' : 'View Review')
-                                : 'Leave Review'
-                              }
-                            </Button>
-                          </>
-                        )}
+                                  existingReview: review || null
+                                })}
+                                disabled={review && !canEditReview(booking)}
+                                className={`text-sm font-semibold px-4 py-1.5 h-8 rounded-xl border font-body ${
+                                  review && !canEditReview(booking)
+                                    ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
+                                    : 'bg-[#FFD43C] hover:bg-[#f5c830] text-black border-[#cccccc]'
+                                }`}
+                              >
+                                {review 
+                                  ? (canEditReview(booking) ? 'Edit Review' : 'View Review')
+                                  : 'Leave Review'
+                                }
+                              </Button>
+                            </>
+                          )}
+                            </div>
+                          </div>
+                        </>
+                      )}
 
-                        {booking.status === 'pending' && (
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleCancelBooking(booking.id)}
-                          >
-                            Cancel Request
-                          </Button>
-                        )}
-
-                        {booking.status === 'cancelled' && (
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => handleChatOpen(booking)}
-                          >
-                            <MessageSquare className="w-4 h-4 mr-1" />
-                            View Chat
-                          </Button>
-                        )}
-                      </div>
+                      {/* Review Section for Completed */}
+                      {booking.status === 'completed' && review && (
+                        <div className="mt-4 pt-4 border-t border-[#eeeeee]">
+                          <p className="text-sm font-medium text-black font-body mb-2">Your Review</p>
+                          <p className="text-sm text-[#666666] font-body italic">
+                            "{review.comment}"
+                          </p>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
-          </TabsContent>
-        </Tabs>
-      
+          </div>
+        </div>
+      </div>
+
       {/* Chat Modal */}
       <ChatModal
         isOpen={chatModal.isOpen}
-        onClose={handleChatClose}
+        onClose={() => setChatModal({
+          isOpen: false,
+          otherUserId: '',
+          otherUserName: '',
+          otherUserAvatar: undefined,
+          isReadOnly: false
+        })}
         otherUserId={chatModal.otherUserId}
         otherUserName={chatModal.otherUserName}
         otherUserAvatar={chatModal.otherUserAvatar}
@@ -537,6 +638,6 @@ export default function CustomerBookings() {
           onSubmit={handleSubmitReview}
         />
       )}
-    </PageLayout>
+    </div>
   );
 }
