@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Calendar, CheckCircle, MessageSquare, Copy, Video, Star } from 'lucide-react';
+import { Calendar, CheckCircle, MessageSquare, Copy, Video, Star, XCircle } from 'lucide-react';
+import { GoogleMeetIcon, ZoomIcon, TeamsIcon } from '@/components/icons/MeetingPlatformIcons';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/PrivyAuthContext';
@@ -96,6 +97,19 @@ export default function ProviderOrders() {
     toast.success('Meeting link copied to clipboard');
   };
 
+  const getMeetingIcon = (platform?: string) => {
+    switch (platform) {
+      case 'google_meet':
+        return <GoogleMeetIcon className="w-5 h-5" />;
+      case 'zoom':
+        return <ZoomIcon className="w-5 h-5" />;
+      case 'teams':
+        return <TeamsIcon className="w-5 h-5" />;
+      default:
+        return <Video className="w-5 h-5" />;
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
@@ -120,7 +134,12 @@ export default function ProviderOrders() {
           </span>
         );
       case 'cancelled':
-        return null;
+        return (
+          <span className="inline-flex items-center gap-1.5 text-xs text-gray-700 font-body">
+            <XCircle className="w-3.5 h-3.5 text-[#F1343D]" />
+            Cancelled
+          </span>
+        );
       default:
         return null;
     }
@@ -142,9 +161,10 @@ export default function ProviderOrders() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="flex gap-8">
-          {/* Left Sidebar */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
+        {/* Desktop Layout */}
+        <div className="hidden lg:flex gap-8">
+          {/* Left Sidebar - Desktop Only */}
           <div className="w-64 flex-shrink-0">
             <div className="mb-6">
               {/* Title - Spectral font */}
@@ -171,7 +191,7 @@ export default function ProviderOrders() {
             </nav>
           </div>
 
-          {/* Main Content Area */}
+          {/* Main Content Area - Desktop */}
           <div className="flex-1">
             {loading ? (
               <div className="text-center py-12">
@@ -255,6 +275,12 @@ export default function ProviderOrders() {
                               <span className="text-sm text-black font-body">Completed</span>
                             </div>
                           )}
+                          {booking.status === 'cancelled' && (
+                            <div className="bg-[#ffeff0] px-1.5 py-1 rounded-lg flex items-center gap-1">
+                              <XCircle className="w-4 h-4 text-[#F1343D]" />
+                              <span className="text-sm text-black font-body">Cancelled</span>
+                            </div>
+                          )}
                           
                           {/* Online Badge */}
                           {booking.is_online && (
@@ -280,20 +306,23 @@ export default function ProviderOrders() {
                         </div>
                       </div>
 
-                      {/* Divider Line */}
-                      <div className="border-t border-[#eeeeee] my-6"></div>
+                      {/* Bottom Section: Timer and Actions - only for bookings that have actions */}
+                      {(booking.status === 'confirmed' || booking.status === 'pending' || booking.status === 'completed') && (
+                        <>
+                          {/* Divider Line */}
+                          <div className="border-t border-[#eeeeee] my-6"></div>
 
-                      {/* Bottom Section: Timer and Actions */}
-                      <div className="flex items-center justify-between">
-                        {/* Timer or Status Text */}
-                        <div className="text-sm font-medium text-black font-body">
-                          {booking.status === 'confirmed' && '02:03:06'}
-                          {booking.status === 'pending' && 'New order'}
-                          {booking.status === 'completed' && 'Ended'}
-                        </div>
+                          {/* Bottom Section: Timer and Actions */}
+                          <div className="flex items-center justify-between">
+                            {/* Timer or Status Text */}
+                            <div className="text-sm font-medium text-black font-body">
+                              {booking.status === 'confirmed' && '02:03:06'}
+                              {booking.status === 'pending' && 'New order'}
+                              {booking.status === 'completed' && 'Ended'}
+                            </div>
 
-                        {/* Action Buttons */}
-                        <div className="flex items-center gap-3">
+                            {/* Action Buttons */}
+                            <div className="flex items-center gap-3">
                           {booking.status === 'confirmed' && (
                             <>
                               <Button
@@ -317,7 +346,7 @@ export default function ProviderOrders() {
                                 size="sm"
                                 className="bg-black hover:bg-gray-900 text-white text-sm font-semibold px-2 py-1.5 h-8 rounded-xl border border-black font-body flex items-center gap-2 min-w-[110px]"
                               >
-                                <Video className="w-5 h-5" />
+                                {getMeetingIcon(booking.meeting_platform)}
                                 Join
                               </Button>
                             </>
@@ -375,17 +404,282 @@ export default function ProviderOrders() {
                               </Button>
                             </>
                           )}
+                            </div>
+                          </div>
+
+                          {/* Customer Review Section for Completed */}
+                          {booking.status === 'completed' && review && (
+                            <div className="mt-4 pt-4 border-t border-[#eeeeee]">
+                              <p className="text-sm font-medium text-black font-body mb-2">Customer Review</p>
+                              <p className="text-sm text-[#666666] font-body italic">
+                                "{review.comment || 'This is a test review that used to demo how a review will be displayed in the future.'}"
+                              </p>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Mobile Layout */}
+        <div className="lg:hidden pb-20">
+          {/* Top Header with Title and Tabs */}
+          <div className="mb-6">
+            {/* Title Section */}
+            <div className="mb-4">
+              <h2 className="text-xl sm:text-2xl font-bold text-black font-heading mb-1">Orders</h2>
+              <p className="text-sm text-gray-500 font-body">Manage orders from your customers</p>
+            </div>
+            
+            {/* Horizontal Tab Navigation */}
+            <div className="flex gap-1 p-1 bg-gray-100 rounded-lg overflow-x-auto">
+              {Object.entries(tabLabels).map(([key, label]) => (
+                <button
+                  key={key}
+                  onClick={() => setActiveTab(key)}
+                  className={`flex-1 min-w-fit px-3 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap font-body ${
+                    activeTab === key 
+                      ? 'bg-white text-black shadow-sm' 
+                      : 'text-gray-600 hover:text-black'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Mobile Content Area */}
+          <div>
+            {loading ? (
+              <div className="text-center py-12">
+                <p className="text-gray-500 font-body">Loading orders...</p>
+              </div>
+            ) : filteredBookings.length === 0 ? (
+              <div className="text-center py-12">
+                <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 font-body">No {activeTab === 'all' ? '' : activeTab} orders</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Mobile Order Cards - Same content as desktop */}
+                {filteredBookings.map((booking) => {
+                  const review = bookingReviews[booking.id];
+                  const earnings = booking.total_price - (booking.service_fee || 0);
+                  
+                  return (
+                    <div key={booking.id} className="bg-white rounded-2xl border border-[#eeeeee] p-4 sm:p-6">
+                      {/* Top Section: Title and Icons */}
+                      <div className="flex items-start justify-between mb-4 sm:mb-6">
+                        <div className="flex-1 min-w-0">
+                          {/* Service Title */}
+                          <h3 className="text-base sm:text-lg font-semibold text-black font-body mb-1 truncate">
+                            {booking.service?.title || 'Online Teaching'}
+                          </h3>
+                          {/* Booked date */}
+                          <p className="text-xs text-[#aaaaaa] font-body">
+                            Booked {format(new Date(booking.created_at), 'MMM d,yyyy')}
+                          </p>
+                        </div>
+                        
+                        {/* Top Right Icons - Smaller on mobile */}
+                        <div className="flex items-center gap-2 ml-2">
+                          <button className="p-1.5 border border-[#cccccc] rounded-xl hover:bg-gray-50">
+                            <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+                          </button>
+                          <button 
+                            className="p-1.5 border border-[#cccccc] rounded-xl hover:bg-gray-50"
+                            onClick={() => setChatModal({
+                              isOpen: true,
+                              otherUserId: booking.customer_id,
+                              otherUserName: booking.customer?.display_name || 'Customer',
+                              otherUserAvatar: booking.customer?.avatar,
+                              isReadOnly: booking.status === 'cancelled'
+                            })}
+                          >
+                            <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+                          </button>
                         </div>
                       </div>
 
-                      {/* Customer Review Section for Completed */}
-                      {booking.status === 'completed' && review && (
-                        <div className="mt-4 pt-4 border-t border-[#eeeeee]">
-                          <p className="text-sm font-medium text-black font-body mb-2">Customer Review</p>
-                          <p className="text-sm text-[#666666] font-body italic">
-                            "{review.comment || 'This is a test review that used to demo how a review will be displayed in the future.'}"
-                          </p>
+                      {/* Customer Name and Date - Responsive text */}
+                      <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm font-medium font-body mb-4">
+                        <span className="text-black">{booking.customer?.display_name || 'Xiao xiao'}</span>
+                        <span className="text-[#cccccc]">|</span>
+                        <span className="text-black">{format(new Date(booking.scheduled_at), 'EEE, MMM d, yyyy')}</span>
+                      </div>
+
+                      {/* Status Pills and Price Row - Responsive layout */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {/* Status Badge */}
+                          {booking.status === 'confirmed' && (
+                            <div className="bg-[#eff7ff] px-1.5 py-1 rounded-lg flex items-center gap-1">
+                              <svg className="w-5 h-5" viewBox="0 0 20 20" fill="none">
+                                <path d="M5 10h10m0 0l-3-3m3 3l-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                              <span className="text-sm text-black font-body">Ongoing</span>
+                            </div>
+                          )}
+                          {booking.status === 'pending' && (
+                            <div className="bg-[#fcf9f4] px-1.5 py-1 rounded-lg flex items-center gap-1">
+                              <span className="w-2 h-2 bg-[#FFD43C] rounded-full"></span>
+                              <span className="text-sm text-black font-body">Pending</span>
+                            </div>
+                          )}
+                          {booking.status === 'completed' && (
+                            <div className="bg-[#e7fded] px-1.5 py-1 rounded-lg flex items-center gap-1">
+                              <CheckCircle className="w-4 h-4 text-[#36D267]" />
+                              <span className="text-sm text-black font-body">Completed</span>
+                            </div>
+                          )}
+                          {booking.status === 'cancelled' && (
+                            <div className="bg-[#ffeff0] px-1.5 py-1 rounded-lg flex items-center gap-1">
+                              <XCircle className="w-4 h-4 text-[#F1343D]" />
+                              <span className="text-sm text-black font-body">Cancelled</span>
+                            </div>
+                          )}
+                          
+                          {/* Online Badge */}
+                          {booking.is_online && (
+                            <div className="bg-[#f3f3f3] px-1.5 py-1 rounded-lg flex items-center gap-1">
+                              <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 20 20" fill="none">
+                                <rect x="3" y="5" width="14" height="10" rx="1" stroke="#666666" strokeWidth="1.5"/>
+                                <line x1="7" y1="18" x2="13" y2="18" stroke="#666666" strokeWidth="1.5" strokeLinecap="round"/>
+                              </svg>
+                              <span className="text-sm text-[#666666] font-body">Online</span>
+                            </div>
+                          )}
+                          
+                          {/* Duration Badge */}
+                          <div className="bg-[#f3f3f3] px-1.5 py-1 rounded-lg flex items-center gap-1">
+                            <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-[#666666]" />
+                            <span className="text-sm text-[#666666] font-body">{booking.duration_minutes} min</span>
+                          </div>
                         </div>
+
+                        {/* Total Price */}
+                        <div className="text-base sm:text-lg font-bold text-black font-body">
+                          Total: ${booking.total_price}
+                        </div>
+                      </div>
+
+                      {/* Bottom Section: Timer and Actions - only for bookings that have actions */}
+                      {(booking.status === 'confirmed' || booking.status === 'pending' || booking.status === 'completed') && (
+                        <>
+                          {/* Divider Line */}
+                          <div className="border-t border-[#eeeeee] my-6"></div>
+
+                          {/* Bottom Section: Timer and Actions */}
+                          <div className="flex items-center justify-between">
+                            {/* Timer or Status Text */}
+                            <div className="text-sm font-medium text-black font-body">
+                              {booking.status === 'confirmed' && '02:03:06'}
+                              {booking.status === 'pending' && 'New order'}
+                              {booking.status === 'completed' && 'Ended'}
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex items-center gap-3 flex-wrap justify-end">
+                          {booking.status === 'confirmed' && (
+                            <>
+                              <Button
+                                size="sm"
+                                onClick={() => handleUpdateStatus(booking.id, 'completed')}
+                                className="bg-[#36D267] hover:bg-[#2eb858] text-white text-sm font-semibold px-2 py-1.5 h-8 rounded-xl border border-[#cccccc] font-body flex items-center gap-2"
+                              >
+                                <CheckCircle className="w-5 h-5" />
+                                Mark Complete
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => booking.meeting_link && handleCopyMeetingLink(booking.meeting_link)}
+                                className="text-sm font-semibold px-2 py-1.5 h-8 rounded-xl border border-[#cccccc] text-[#666666] font-body flex items-center gap-2 min-w-[110px]"
+                              >
+                                <Copy className="w-5 h-5" />
+                                Copy
+                              </Button>
+                              <Button
+                                size="sm"
+                                className="bg-black hover:bg-gray-900 text-white text-sm font-semibold px-2 py-1.5 h-8 rounded-xl border border-black font-body flex items-center gap-2 min-w-[110px]"
+                              >
+                                {getMeetingIcon(booking.meeting_platform)}
+                                Join
+                              </Button>
+                            </>
+                          )}
+
+                          {booking.status === 'pending' && (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleUpdateStatus(booking.id, 'cancelled')}
+                                className="text-sm font-semibold px-4 py-1.5 h-8 rounded-xl border border-[#cccccc] text-[#666666] font-body"
+                              >
+                                Decline
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => handleUpdateStatus(booking.id, 'confirmed')}
+                                className="bg-black hover:bg-gray-900 text-white text-sm font-semibold px-4 py-1.5 h-8 rounded-xl border border-black font-body"
+                              >
+                                Accept
+                              </Button>
+                            </>
+                          )}
+
+                          {booking.status === 'completed' && (
+                            <>
+                              {review && (
+                                <div className="flex items-center gap-1 mr-4">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star
+                                      key={i}
+                                      className={`w-4 h-4 ${
+                                        i < (review?.rating || 5)
+                                          ? 'text-[#FFD43C] fill-[#FFD43C]'
+                                          : 'text-gray-300'
+                                      }`}
+                                    />
+                                  ))}
+                                  <span className="text-sm font-medium text-black font-body ml-1">
+                                    {review?.rating || 5}/5
+                                  </span>
+                                </div>
+                              )}
+                              <Button
+                                size="sm"
+                                onClick={() => setReviewDialog({ 
+                                  isOpen: true, 
+                                  booking,
+                                  existingReview: review
+                                })}
+                                className="bg-[#FFD43C] hover:bg-[#f5c830] text-black text-sm font-semibold px-4 py-1.5 h-8 rounded-xl border border-[#cccccc] font-body"
+                              >
+                                Review
+                              </Button>
+                            </>
+                          )}
+                            </div>
+                          </div>
+
+                          {/* Customer Review Section for Completed */}
+                          {booking.status === 'completed' && review && (
+                            <div className="mt-4 pt-4 border-t border-[#eeeeee]">
+                              <p className="text-sm font-medium text-black font-body mb-2">Customer Review</p>
+                              <p className="text-sm text-[#666666] font-body italic">
+                                "{review.comment || 'This is a test review that used to demo how a review will be displayed in the future.'}"
+                              </p>
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   );
