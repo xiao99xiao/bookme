@@ -286,8 +286,8 @@ export default function MessageThread({ conversation, onConversationUpdate }: Me
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header - Fixed at top */}
-      <div className="flex-shrink-0 px-10 pt-8 pb-6">
+      {/* Header - Fixed at top - Hidden on mobile */}
+      <div className="hidden lg:block flex-shrink-0 px-10 pt-8 pb-6">
         <div className="flex flex-col gap-1 mb-6">
           <div className="flex flex-col gap-1">
             <h1 className="font-['Spectral'] font-bold text-[20px] text-black leading-[1.4]">

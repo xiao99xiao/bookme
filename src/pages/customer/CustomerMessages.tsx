@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MessageSquare, Search, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,6 +12,7 @@ import PageLayout from '@/components/PageLayout';
 
 export default function CustomerMessages() {
   const { userId } = useAuth();
+  const navigate = useNavigate();
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<ConversationItem | null>(null);
   const [loading, setLoading] = useState(true);
@@ -79,7 +81,16 @@ export default function CustomerMessages() {
   };
 
   const handleConversationSelect = (conversation: ConversationItem) => {
-    setSelectedConversation(conversation);
+    // Check if user is on mobile (below lg breakpoint which is 1024px)
+    const isMobile = window.innerWidth < 1024;
+    
+    if (isMobile) {
+      // On mobile, navigate to the dedicated mobile chat page
+      navigate(`/customer/messages/${conversation.id}`);
+    } else {
+      // On desktop, use the existing two-panel layout
+      setSelectedConversation(conversation);
+    }
   };
 
   const handleConversationUpdate = (updatedConversation: ConversationItem) => {
@@ -91,9 +102,11 @@ export default function CustomerMessages() {
   };
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex bg-neutral-50 overflow-hidden">
-      {/* Left Panel - Sidebar */}
-      <div className="bg-neutral-50 flex flex-col gap-6 h-full px-8 py-10 w-64 flex-shrink-0">
+    <>
+      {/* Desktop Layout - unchanged */}
+      <div className="hidden lg:flex h-[calc(100vh-4rem)] bg-neutral-50 overflow-hidden">
+        {/* Left Panel - Sidebar */}
+        <div className="bg-neutral-50 flex flex-col gap-6 h-full px-8 py-10 w-64 flex-shrink-0">
         {/* Title Section */}
         <div className="flex flex-col gap-0.5 flex-shrink-0">
           <h1 className="font-['Spectral'] font-bold text-[20px] text-black leading-[1.4]">
@@ -153,5 +166,122 @@ export default function CustomerMessages() {
         )}
       </div>
     </div>
+
+    {/* Mobile Layout - List only */}
+    <div className="lg:hidden min-h-screen bg-gray-50 pb-20">
+      <div className="px-4 py-6">
+        {/* Title */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">Messages</h1>
+          <p className="text-sm text-gray-500">Chat with service providers</p>
+        </div>
+
+        {/* Search */}
+        <div className="mb-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search conversations..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            />
+          </div>
+        </div>
+
+        {/* Conversation List */}
+        <div className="space-y-3">
+          {loading ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500">Loading conversations...</p>
+            </div>
+          ) : conversations.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-lg">
+              <MessageSquare className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+              <h3 className="font-semibold text-gray-900 mb-2">No conversations yet</h3>
+              <p className="text-sm text-gray-500">Your messages will appear here</p>
+            </div>
+          ) : (
+            conversations
+              .filter(conv => {
+                if (!searchQuery.trim()) return true;
+                const query = searchQuery.toLowerCase();
+                return (
+                  conv.otherUser.display_name.toLowerCase().includes(query) ||
+                  conv.lastMessage?.content.toLowerCase().includes(query) ||
+                  conv.booking?.service?.title.toLowerCase().includes(query)
+                );
+              })
+              .map((conversation) => (
+                <div
+                  key={conversation.id}
+                  onClick={() => handleConversationSelect(conversation)}
+                  className="bg-white rounded-lg p-4 flex items-center gap-3 cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                >
+                  {/* Avatar */}
+                  <div className="relative flex-shrink-0">
+                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+                      {conversation.otherUser.avatar ? (
+                        <img 
+                          src={conversation.otherUser.avatar} 
+                          alt={conversation.otherUser.display_name}
+                          className="h-12 w-12 rounded-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-white font-semibold text-lg">
+                          {conversation.otherUser.display_name.charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    {conversation.unreadCount > 0 && (
+                      <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                        {conversation.unreadCount}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <h3 className="font-semibold text-gray-900 truncate">
+                        {conversation.otherUser.display_name}
+                      </h3>
+                      {conversation.lastMessage && (
+                        <span className="text-xs text-gray-500 flex-shrink-0">
+                          {(() => {
+                            const date = new Date(conversation.lastMessage.created_at);
+                            const now = new Date();
+                            const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+                            
+                            if (diffInHours < 24) {
+                              return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+                            } else if (diffInHours < 48) {
+                              return 'Yesterday';
+                            } else {
+                              return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+                            }
+                          })()}
+                        </span>
+                      )}
+                    </div>
+                    {conversation.booking?.service?.title && (
+                      <p className="text-xs text-gray-500 mb-1">
+                        {conversation.booking.service.title}
+                      </p>
+                    )}
+                    {conversation.lastMessage && (
+                      <p className="text-sm text-gray-600 line-clamp-1">
+                        {conversation.lastMessage.content}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))
+          )}
+        </div>
+      </div>
+    </div>
+    </>
   );
 }

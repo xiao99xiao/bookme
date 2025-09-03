@@ -18,8 +18,9 @@ import { OnboardingNavigator } from "./components/OnboardingNavigator";
 
 // Customer pages
 import CustomerBookings from "./pages/customer/CustomerBookings";
-import CustomerProfile from "./pages/customer/CustomerProfile";
+import Profile from "./pages/settings/Profile";
 import CustomerMessages from "./pages/customer/CustomerMessages";
+import CustomerMobileChat from "./pages/customer/CustomerMobileChat";
 
 // Settings pages
 import Customize from "./pages/settings/Customize";
@@ -29,6 +30,7 @@ import Timezone from "./pages/settings/Timezone";
 import ProviderOrders from "./pages/provider/ProviderOrders";
 import ProviderServices from "./pages/provider/ProviderServices";
 import ProviderMessages from "./pages/provider/ProviderMessages";
+import ProviderMobileChat from "./pages/provider/ProviderMobileChat";
 import ProviderIntegrations from "./pages/provider/ProviderIntegrations";
 import IntegrationsCallback from "./pages/provider/IntegrationsCallback";
 
@@ -59,7 +61,7 @@ function AppContent() {
               path="/settings/profile" 
               element={
                 <ProtectedRoute>
-                  <CustomerProfile />
+                  <Profile />
                 </ProtectedRoute>
               } 
             />
@@ -125,6 +127,14 @@ function AppContent() {
                 </ProtectedRoute>
               } 
             />
+            <Route 
+              path="/customer/messages/:conversationId" 
+              element={
+                <ProtectedRoute>
+                  <CustomerMobileChat />
+                </ProtectedRoute>
+              } 
+            />
             
             {/* Provider Routes */}
             <Route 
@@ -148,6 +158,14 @@ function AppContent() {
               element={
                 <ProtectedRoute>
                   <ProviderMessages />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/provider/messages/:conversationId" 
+              element={
+                <ProtectedRoute>
+                  <ProviderMobileChat />
                 </ProtectedRoute>
               } 
             />

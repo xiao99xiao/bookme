@@ -206,6 +206,12 @@ const NewNavigation = () => {
     if (!isLoggedIn || !ready || !userMode) {
       return null;
     }
+    
+    // Hide tab bar when in mobile chat view (has conversationId in path)
+    const isInMobileChat = location.pathname.includes('/messages/');
+    if (isInMobileChat) {
+      return null;
+    }
 
     const tabItems = userMode === 'customer' ? [
       { to: '/customer/bookings', icon: Calendar, label: 'Bookings' },
@@ -347,7 +353,7 @@ const NewNavigation = () => {
       
       {/* Add top padding for fixed navigation and bottom padding for mobile tab bar */}
       <div className="h-16" />
-      {isLoggedIn && userMode && (
+      {isLoggedIn && userMode && !location.pathname.includes('/messages/') && (
         <div className="md:hidden h-16" />
       )}
     </>
