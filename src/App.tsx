@@ -21,6 +21,10 @@ import CustomerBookings from "./pages/customer/CustomerBookings";
 import CustomerProfile from "./pages/customer/CustomerProfile";
 import CustomerMessages from "./pages/customer/CustomerMessages";
 
+// Settings pages
+import Customize from "./pages/settings/Customize";
+import Timezone from "./pages/settings/Timezone";
+
 // Provider pages
 import ProviderOrders from "./pages/provider/ProviderOrders";
 import ProviderServices from "./pages/provider/ProviderServices";
@@ -52,10 +56,26 @@ function AppContent() {
               } 
             />
             <Route 
-              path="/profile" 
+              path="/settings/profile" 
               element={
                 <ProtectedRoute>
                   <CustomerProfile />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/settings/customize" 
+              element={
+                <ProtectedRoute>
+                  <Customize />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/settings/timezone" 
+              element={
+                <ProtectedRoute>
+                  <Timezone />
                 </ProtectedRoute>
               } 
             />

@@ -267,9 +267,9 @@ const NewNavigation = () => {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem asChild>
-              <Link to="/profile" className="flex items-center gap-2">
-                <User className="w-4 h-4" />
-                Profile
+              <Link to="/settings/profile" className="flex items-center gap-2">
+                <Settings className="w-4 h-4" />
+                Settings
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>

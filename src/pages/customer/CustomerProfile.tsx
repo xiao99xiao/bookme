@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -11,65 +12,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Camera, Globe, Mail, Phone, MapPin, Calendar, Star, Video, Users, Copy, Check, ExternalLink, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Loader2, Camera, Globe, Mail, Phone, MapPin, Calendar, Star, Video, Users, Copy, Check, ExternalLink, Clock, CheckCircle, XCircle, Settings } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient } from '@/lib/api-migration';
-import { getBrowserTimezone, getTimezoneOffset } from '@/lib/timezone';
-import { validateUsername, generateUsernameFromName, getUserPageUrl } from '@/lib/username';
 
 const profileSchema = z.object({
   display_name: z.string().min(2, 'Name must be at least 2 characters'),
-  username: z.string().min(3, 'Username must be at least 3 characters').optional(),
   bio: z.string().max(500, 'Bio must be less than 500 characters').optional(),
   phone: z.string().optional(),
   location: z.string().optional(),
   website: z.string().url('Invalid URL').optional().or(z.literal('')),
-  timezone: z.string().optional(),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
-
-// Base timezone data with city names
-const TIMEZONE_BASE_DATA = [
-  { value: 'UTC', city: 'UTC (Coordinated Universal Time)' },
-  { value: 'America/New_York', city: 'New York' },
-  { value: 'America/Chicago', city: 'Chicago' },
-  { value: 'America/Denver', city: 'Denver' },
-  { value: 'America/Los_Angeles', city: 'Los Angeles' },
-  { value: 'America/Phoenix', city: 'Phoenix' },
-  { value: 'America/Anchorage', city: 'Anchorage' },
-  { value: 'Pacific/Honolulu', city: 'Honolulu' },
-  { value: 'America/Toronto', city: 'Toronto' },
-  { value: 'America/Vancouver', city: 'Vancouver' },
-  { value: 'Europe/London', city: 'London' },
-  { value: 'Europe/Paris', city: 'Paris' },
-  { value: 'Europe/Berlin', city: 'Berlin' },
-  { value: 'Europe/Rome', city: 'Rome' },
-  { value: 'Europe/Madrid', city: 'Madrid' },
-  { value: 'Europe/Moscow', city: 'Moscow' },
-  { value: 'Asia/Tokyo', city: 'Tokyo' },
-  { value: 'Asia/Shanghai', city: 'Shanghai' },
-  { value: 'Asia/Hong_Kong', city: 'Hong Kong' },
-  { value: 'Asia/Singapore', city: 'Singapore' },
-  { value: 'Asia/Dubai', city: 'Dubai' },
-  { value: 'Asia/Kolkata', city: 'Mumbai' },
-  { value: 'Australia/Sydney', city: 'Sydney' },
-  { value: 'Australia/Melbourne', city: 'Melbourne' },
-  { value: 'Australia/Perth', city: 'Perth' },
-  { value: 'Pacific/Auckland', city: 'Auckland' },
-];
-
-// Generate timezone list with dynamic GMT offsets
-const generateTimezoneList = () => {
-  return TIMEZONE_BASE_DATA.map(tz => {
-    const offset = getTimezoneOffset(tz.value);
-    return {
-      value: tz.value,
-      label: `${offset} - ${tz.city}`
-    };
-  });
-};
 
 export default function CustomerProfile() {
   const { user, profile, refreshProfile, getUserDisplayName, getUserEmail, userId } = useAuth();
@@ -77,134 +33,41 @@ export default function CustomerProfile() {
   const [uploading, setUploading] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string>('');
   const [services, setServices] = useState<any[]>([]);
-  const [profileLinkCopied, setProfileLinkCopied] = useState(false);
-  const [timezoneList, setTimezoneList] = useState(generateTimezoneList());
   
-  // Username availability state
-  const [usernameAvailability, setUsernameAvailability] = useState<{
-    checking: boolean;
-    available: boolean | null;
-    error: string | null;
-  }>({
-    checking: false,
-    available: null,
-    error: null
-  });
-  
-  const profileUrl = getUserPageUrl(profile);
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       display_name: '',
-      username: '',
       bio: '',
       phone: '',
       location: '',
       website: '',
-      timezone: '',
     },
   });
 
-  // Throttled username availability checking
-  const checkUsernameAvailability = useCallback(async (username: string) => {
-    if (!username || username.length < 3) {
-      setUsernameAvailability({ checking: false, available: null, error: null });
-      return;
-    }
-
-    // Skip check if it's the user's current username
-    if (profile?.username === username) {
-      setUsernameAvailability({ checking: false, available: true, error: null });
-      return;
-    }
-
-    // Validate format first
-    const validation = validateUsername(username);
-    if (!validation.isValid) {
-      setUsernameAvailability({ checking: false, available: false, error: validation.error });
-      return;
-    }
-
-    setUsernameAvailability({ checking: true, available: null, error: null });
-
-    try {
-      const availability = await ApiClient.checkUsernameAvailability(username);
-      setUsernameAvailability({
-        checking: false,
-        available: availability.available,
-        error: availability.available ? null : (availability.error || 'Username is already taken')
-      });
-    } catch (error) {
-      setUsernameAvailability({
-        checking: false,
-        available: false,
-        error: 'Failed to check availability'
-      });
-    }
-  }, [profile?.username]);
-
-  // Throttled version of username availability check
-  const throttledCheckUsername = useCallback(
-    (() => {
-      let timeoutId: NodeJS.Timeout;
-      return (username: string) => {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => checkUsernameAvailability(username), 500);
-      };
-    })(),
-    [checkUsernameAvailability]
-  );
-
-  // Watch username changes for real-time availability checking
-  const watchedUsername = form.watch('username');
-  useEffect(() => {
-    if (watchedUsername !== undefined) {
-      throttledCheckUsername(watchedUsername);
-    }
-  }, [watchedUsername, throttledCheckUsername]);
 
   // Effect to populate form with profile data whenever profile changes or component mounts
   useEffect(() => {
     const populateForm = () => {
       if (profile && userId) {
-        // Ensure the timezone value exists in our list, fallback to browser timezone if not
-        const profileTimezone = profile.timezone || getBrowserTimezone();
-        const timezoneExists = TIMEZONE_BASE_DATA.some(tz => tz.value === profileTimezone);
-        const finalTimezone = timezoneExists ? profileTimezone : getBrowserTimezone();
-        
         // Always reset form when profile data is available
         const formData = {
           display_name: profile.display_name || '',
-          username: profile.username || '',
           bio: profile.bio || '',
           phone: profile.phone || '',
           location: profile.location || '',
           website: profile.website || '',
-          timezone: finalTimezone,
         };
         
         form.reset(formData);
         setAvatarUrl(profile.avatar || '');
-        
-        // If user doesn't have a timezone set, automatically update their profile with browser timezone
-        if (!profile.timezone) {
-          const browserTimezone = getBrowserTimezone();
-          // Silently update the user's timezone in the background
-          ApiClient.updateProfile({ timezone: browserTimezone }, userId)
-            .then(() => {
-              refreshProfile(); // Refresh to get updated profile
-            })
-            .catch(error => {
-              console.error('Failed to auto-set timezone:', error);
-            });
-        }
       }
     };
 
     // Populate form immediately if profile is available
     populateForm();
-  }, [profile, userId, refreshProfile]);
+  }, [profile, userId, form]);
 
   useEffect(() => {
     if (userId) {
@@ -262,32 +125,10 @@ export default function CustomerProfile() {
     try {
       setLoading(true);
       
-      // Handle username update separately if changed
-      const currentUsername = profile?.username;
-      if (data.username && data.username !== currentUsername) {
-        // Validate username format
-        const validation = validateUsername(data.username);
-        if (!validation.isValid) {
-          toast.error(validation.error);
-          return;
-        }
-        
-        // Final availability check before submission (security measure)
-        const availability = await ApiClient.checkUsernameAvailability(data.username);
-        if (!availability.available) {
-          toast.error(availability.error || 'Username is already taken');
-          return;
-        }
-        
-        // Update username
-        await ApiClient.updateUsername(data.username, userId);
-      }
-      
-      // Update other profile fields (exclude username from profile update)
-      const { username, ...profileData } = data;
+      // Update profile fields
       await ApiClient.updateProfile({
-        ...profileData,
-        website: profileData.website || undefined,
+        ...data,
+        website: data.website || undefined,
       }, userId);
       
       await refreshProfile();
@@ -307,11 +148,11 @@ export default function CustomerProfile() {
         {/* Left Sidebar */}
         <div className="bg-neutral-50 box-border content-stretch flex flex-col gap-6 h-full items-start justify-start overflow-clip px-8 py-10 relative shrink-0 w-64">
           <div className="content-stretch flex flex-col gap-0.5 items-start justify-start leading-[0] relative shrink-0 w-full">
-            <div className="font-heading font-bold not-italic relative shrink-0 text-[20px] text-black w-full">
+            <div className="font-heading font-bold text-xl text-primary w-full">
               <p className="leading-[1.4]">Settings</p>
             </div>
-            <div className="font-body font-normal relative shrink-0 text-[#aaaaaa] text-[12px] w-full">
-              <p className="leading-[1.5]">Update your profile picture</p>
+            <div className="font-body text-xs text-tertiary w-full">
+              <p className="leading-[1.5] text-tertiary">Update your profile picture</p>
             </div>
           </div>
           <div className="basis-0 content-stretch flex flex-col grow items-start justify-start min-h-px min-w-px relative shrink-0 w-full">
@@ -323,36 +164,22 @@ export default function CustomerProfile() {
                 <p className="leading-[1.5]">Profile</p>
               </div>
             </div>
-            <div className="box-border content-stretch flex gap-2 items-center justify-start px-0 py-3 relative rounded-[12px] shrink-0 w-full">
+            <Link to="/settings/customize" className="box-border content-stretch flex gap-2 items-center justify-start px-2 py-3 relative rounded-[12px] shrink-0 w-full hover:bg-[#f3f3f3] transition-colors">
               <div className="overflow-clip relative shrink-0 size-5">
-                <div className="w-5 h-5 text-[#666666] flex items-center justify-center">
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M2.5 3.33334H17.5C18.4167 3.33334 19.1667 4.08334 19.1667 5V15C19.1667 15.9167 18.4167 16.6667 17.5 16.6667H2.5C1.58333 16.6667 0.833333 15.9167 0.833333 15V5C0.833333 4.08334 1.58333 3.33334 2.5 3.33334Z" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M6.66667 7.5H6.675" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M10 7.5H13.3333" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M6.66667 10.8333H6.675" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M10 10.8333H13.3333" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
+                <Settings className="w-5 h-5 text-[#666666]" />
               </div>
-              <div className="basis-0 font-body font-normal grow leading-[0] min-h-px min-w-px relative shrink-0 text-[#666666] text-[16px]">
-                <p className="leading-[1.5]">Services</p>
+              <div className="basis-0 font-body font-normal grow leading-[0] min-h-px min-w-px relative shrink-0 text-[#666666] text-[16px] hover:text-black transition-colors">
+                <p className="leading-[1.5]">Customize</p>
               </div>
-            </div>
-            <div className="box-border content-stretch flex gap-2 items-center justify-start px-0 py-3 relative rounded-[12px] shrink-0 w-full">
+            </Link>
+            <Link to="/settings/timezone" className="box-border content-stretch flex gap-2 items-center justify-start px-2 py-3 relative rounded-[12px] shrink-0 w-full hover:bg-[#f3f3f3] transition-colors">
               <div className="overflow-clip relative shrink-0 size-5">
-                <div className="w-5 h-5 text-[#666666] flex items-center justify-center">
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M8.33333 11.6667L11.6667 8.33334" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M15.8333 5.83334C16.2936 6.29363 16.2936 7.03971 15.8333 7.5L13.3333 10L10 6.66667L12.5 4.16667C12.9603 3.70638 13.7064 3.70638 14.1667 4.16667L15.8333 5.83334Z" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M4.16667 14.1667C3.70638 13.7064 3.70638 12.9603 4.16667 12.5L6.66667 10L10 13.3333L7.5 15.8333C7.03971 16.2936 6.29363 16.2936 5.83333 15.8333L4.16667 14.1667Z" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
+                <Clock className="w-5 h-5 text-[#666666]" />
               </div>
-              <div className="basis-0 font-body font-normal grow leading-[0] min-h-px min-w-px relative shrink-0 text-[#666666] text-[16px]">
-                <p className="leading-[1.5]">Integrations</p>
+              <div className="basis-0 font-body font-normal grow leading-[0] min-h-px min-w-px relative shrink-0 text-[#666666] text-[16px] hover:text-black transition-colors">
+                <p className="leading-[1.5]">Timezone</p>
               </div>
-            </div>
+            </Link>
           </div>
         </div>
 
@@ -362,7 +189,7 @@ export default function CustomerProfile() {
             <div className="content-stretch flex flex-col gap-8 items-start justify-start relative shrink-0 w-full">
               {/* Profile Picture Section */}
               <div className="content-stretch flex flex-col gap-0.5 items-start justify-start leading-[0] relative shrink-0 w-full">
-                <div className="font-heading font-bold not-italic relative shrink-0 text-[20px] text-black w-full">
+                <div className="font-heading font-bold text-xl text-primary w-full">
                   <p className="leading-[1.4]">Profile Picture</p>
                 </div>
                 <div className="font-body font-normal relative shrink-0 text-[#aaaaaa] text-[12px] w-full">
@@ -414,7 +241,7 @@ export default function CustomerProfile() {
             <div className="content-stretch flex flex-col gap-8 items-start justify-start relative shrink-0 w-full">
               <div className="content-stretch flex gap-8 items-center justify-start relative shrink-0 w-full">
                 <div className="basis-0 content-stretch flex flex-col gap-0.5 grow items-start justify-start leading-[0] min-h-px min-w-px relative shrink-0">
-                  <div className="font-heading font-bold not-italic relative shrink-0 text-[20px] text-black w-full">
+                  <div className="font-heading font-bold text-xl text-primary w-full">
                     <p className="leading-[1.4]">Basic Information</p>
                   </div>
                 </div>
@@ -467,7 +294,6 @@ export default function CustomerProfile() {
                   <div className="bg-white box-border content-stretch flex gap-2 items-center justify-start p-[12px] relative rounded-[8px] shrink-0 w-full">
                     <div aria-hidden="true" className="absolute border border-[#eeeeee] border-solid inset-[-1px] pointer-events-none rounded-[9px]" />
                     <Input
-                      {...form.register('username')}
                       placeholder="your@email.com"
                       className="basis-0 font-body font-normal grow leading-[0] min-h-px min-w-px relative shrink-0 text-[16px] text-black border-0 focus:ring-0 p-0 bg-transparent placeholder:text-[#666666]"
                       value={getUserEmail() || ''}
@@ -552,7 +378,7 @@ export default function CustomerProfile() {
             {/* Profile Preview */}
             <div className="content-stretch flex flex-col gap-8 items-center justify-start relative shrink-0 w-full">
               <div className="content-stretch flex flex-col gap-0.5 items-start justify-start leading-[0] relative shrink-0 w-full">
-                <div className="font-heading font-bold not-italic relative shrink-0 text-[20px] text-black w-full">
+                <div className="font-heading font-bold text-xl text-primary w-full">
                   <p className="leading-[1.4]">Profile Preview</p>
                 </div>
                 <div className="font-body font-normal relative shrink-0 text-[#aaaaaa] text-[12px] w-full">
@@ -645,33 +471,6 @@ export default function CustomerProfile() {
             )}
           </div>
           
-          {/* Copy Link Section */}
-          <div className="box-border content-stretch flex flex-col gap-10 items-center justify-start p-[24px] relative shrink-0 w-[400px] border-t border-[#eeeeee]">
-            <div className="content-stretch flex gap-2 items-start justify-center relative shrink-0 w-full">
-              <div className="basis-0 bg-white box-border content-stretch flex gap-2 grow items-center justify-start min-h-px min-w-px p-[12px] relative rounded-[8px] border border-[#eeeeee]">
-                <div className="basis-0 font-body font-normal grow leading-[0] min-h-px min-w-px relative shrink-0 text-[#666666] text-[16px]">
-                  <p className="leading-[1.5] truncate">{profileUrl || 'Set a username to get your link'}</p>
-                </div>
-              </div>
-              <Button
-                type="button"
-                onClick={() => {
-                  if (profileUrl) {
-                    navigator.clipboard.writeText(profileUrl);
-                    setProfileLinkCopied(true);
-                    toast.success('Profile link copied!');
-                    setTimeout(() => setProfileLinkCopied(false), 2000);
-                  }
-                }}
-                disabled={!profileUrl}
-                className="bg-neutral-50 box-border content-stretch flex gap-2 items-center justify-center px-6 py-3 relative rounded-[8px] shrink-0 border border-[#eeeeee] hover:bg-gray-100"
-              >
-                <span className="font-body font-semibold leading-[0] relative shrink-0 text-[16px] text-black text-nowrap">
-                  {profileLinkCopied ? 'Copied!' : 'Copy'}
-                </span>
-              </Button>
-            </div>
-          </div>
         </div>
       </div>
     </div>
