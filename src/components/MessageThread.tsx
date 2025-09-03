@@ -285,138 +285,140 @@ export default function MessageThread({ conversation, onConversationUpdate }: Me
   };
 
   return (
-    <div className="h-full flex flex-col max-h-full min-h-0">
-      {/* Header */}
-      <div className="p-4 border-b flex items-center justify-between bg-background flex-shrink-0">
-        <div className="flex items-center space-x-3">
-          <Avatar className="h-10 w-10">
-            <AvatarImage src={conversation.otherUser.avatar} alt={conversation.otherUser.display_name} />
-            <AvatarFallback>{conversation.otherUser.display_name.charAt(0).toUpperCase()}</AvatarFallback>
-          </Avatar>
-          <div>
-            <h3 className="font-semibold">{conversation.otherUser.display_name}</h3>
-            <div className="flex items-center space-x-2 text-xs">
-              {connectionStatus === 'connected' ? (
-                <>
-                  <Wifi className="w-3 h-3 text-green-500" />
-                  <span className="text-green-500">Connected</span>
-                </>
-              ) : connectionStatus === 'connecting' ? (
-                <>
-                  <RefreshCw className="w-3 h-3 text-yellow-500 animate-spin" />
-                  <span className="text-yellow-500">Connecting...</span>
-                </>
-              ) : (
-                <>
-                  <WifiOff className="w-3 h-3 text-red-500" />
-                  <span className="text-red-500">Disconnected</span>
-                </>
-              )}
-            </div>
+    <div className="h-full flex flex-col">
+      {/* Header - Fixed at top */}
+      <div className="flex-shrink-0 px-10 pt-8 pb-6">
+        <div className="flex flex-col gap-1 mb-6">
+          <div className="flex flex-col gap-1">
+            <h1 className="font-['Spectral'] font-bold text-[20px] text-black leading-[1.4]">
+              {conversation.booking?.service?.title || 'Online Teaching'}
+            </h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <Avatar className="h-5 w-5 rounded-[40px]">
+              <AvatarImage src={conversation.otherUser.avatar} alt={conversation.otherUser.display_name} />
+              <AvatarFallback className="text-xs">
+                {conversation.otherUser.display_name.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <span className="font-['Spectral'] font-bold text-[14px] text-black leading-[1.2]">
+              {conversation.otherUser.display_name}
+            </span>
           </div>
         </div>
-        {conversation.booking?.service?.title && (
-          <div className="text-sm text-muted-foreground">
-            Re: {conversation.booking.service.title}
-          </div>
-        )}
+        {/* Divider */}
+        <div className="w-full h-px bg-[#eeeeee]"></div>
       </div>
 
-      {/* Messages */}
+      {/* Messages Area - Scrollable internally */}
       <div 
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/30 min-h-0"
+        className="flex-1 overflow-y-auto px-10 min-h-0"
         onScroll={handleScroll}
       >
-        {loading ? (
-          <div className="flex justify-center items-center h-full">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        ) : messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-            <User className="h-12 w-12 mb-2" />
-            <p>No messages yet</p>
-            <p className="text-sm">Start the conversation!</p>
-          </div>
-        ) : (
-          <>
-            {hasMoreMessages && (
-              <div className="flex justify-center pb-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={loadMoreMessages}
-                  disabled={loadingMore}
-                  className="text-xs"
-                >
-                  {loadingMore ? (
-                    <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                  ) : (
-                    <ChevronUp className="h-3 w-3 mr-1" />
-                  )}
-                  Load earlier messages
-                </Button>
-              </div>
-            )}
-            
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={cn(
-                  "flex",
-                  message.sender_id === userId ? 'justify-end' : 'justify-start'
-                )}
-              >
-                <div
-                  className={cn(
-                    "max-w-[70%] rounded-lg p-3",
-                    message.sender_id === userId
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-background border'
-                  )}
-                >
-                  <p className="break-words">{message.content}</p>
-                  <p className={cn(
-                    "text-xs mt-1",
-                    message.sender_id === userId 
-                      ? 'text-primary-foreground/70' 
-                      : 'text-muted-foreground'
-                  )}>
-                    {formatMessageTime(message.created_at)}
-                  </p>
+        <div className="space-y-6 py-6">
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
+              <User className="h-12 w-12 mb-2" />
+              <p>No messages yet</p>
+              <p className="text-sm">Start the conversation!</p>
+            </div>
+          ) : (
+            <>
+              {hasMoreMessages && (
+                <div className="flex justify-center pb-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={loadMoreMessages}
+                    disabled={loadingMore}
+                    className="text-xs"
+                  >
+                    {loadingMore ? (
+                      <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                    ) : (
+                      <ChevronUp className="h-3 w-3 mr-1" />
+                    )}
+                    Load earlier messages
+                  </Button>
                 </div>
-              </div>
-            ))}
-            <div ref={messagesEndRef} />
-          </>
-        )}
+              )}
+              
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={cn(
+                    "flex items-end gap-2 group",
+                    message.sender_id === userId ? 'justify-end' : 'justify-start'
+                  )}
+                >
+                  {/* Timestamp for sent messages (left side) */}
+                  {message.sender_id === userId && (
+                    <span className="text-xs text-[#aaaaaa] opacity-0 group-hover:opacity-100 transition-opacity duration-200 mb-1 whitespace-nowrap">
+                      {formatMessageTime(message.created_at)}
+                    </span>
+                  )}
+                  
+                  {/* Message bubble */}
+                  <div
+                    className={cn(
+                      "max-w-[410px] rounded-[12px] p-3",
+                      message.sender_id === userId
+                        ? 'bg-[#f2f2f2] rounded-br-[4px]' // Right message: gray background, different border radius
+                        : 'bg-[#eff7ff] rounded-bl-[4px]' // Left message: light blue background, different border radius
+                    )}
+                  >
+                    <p className="font-['Baloo_2'] font-normal text-[16px] text-black leading-[1.5] break-words">
+                      {message.content}
+                    </p>
+                  </div>
+                  
+                  {/* Timestamp for received messages (right side) */}
+                  {message.sender_id !== userId && (
+                    <span className="text-xs text-[#aaaaaa] opacity-0 group-hover:opacity-100 transition-opacity duration-200 mb-1 whitespace-nowrap">
+                      {formatMessageTime(message.created_at)}
+                    </span>
+                  )}
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </>
+          )}
+        </div>
       </div>
 
-      {/* Input */}
-      <form onSubmit={handleSendMessage} className="p-4 border-t bg-background flex-shrink-0">
-        <div className="flex space-x-2">
-          <Input
-            ref={inputRef}
-            type="text"
-            placeholder="Type a message..."
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            disabled={sending || !connected}
-            className="flex-1"
-          />
-          <Button 
-            type="submit" 
-            disabled={!newMessage.trim() || sending || !connected}
-            size="icon"
-          >
-            {sending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
-      </form>
+      {/* Input - Fixed at bottom */}
+      <div className="flex-shrink-0 px-10 pb-8">
+        <form onSubmit={handleSendMessage}>
+          <div className="flex gap-2">
+            <input
+              ref={inputRef}
+              type="text"
+              placeholder="Perfect, see you !"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              disabled={sending || !connected}
+              className="flex-1 bg-white border border-[#eeeeee] rounded-[8px] px-3 py-2 font-['Baloo_2'] font-normal text-[16px] text-[#666666] leading-[1.5] focus-visible:outline-none focus-visible:border-primary transition-colors"
+            />
+            <Button 
+              type="submit" 
+              disabled={!newMessage.trim() || sending || !connected}
+              size="icon"
+              className="bg-primary hover:bg-primary/90"
+            >
+              {sending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

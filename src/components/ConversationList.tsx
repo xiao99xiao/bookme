@@ -115,60 +115,41 @@ export default function ConversationList({
   }
 
   return (
-    <div className="space-y-1 p-2">
-      {filteredConversations.map((conversation) => (
-        <Button
-          key={conversation.id}
-          variant="ghost"
-          className={cn(
-            "w-full justify-start p-3 h-auto text-left hover:bg-muted/50 transition-colors",
-            selectedConversationId === conversation.id && "bg-muted"
-          )}
-          onClick={() => onConversationSelect(conversation)}
-        >
-          <div className="flex items-start space-x-3 w-full">
-            <Avatar className="h-12 w-12 flex-shrink-0">
+    <div className="space-y-0">
+      {filteredConversations.map((conversation) => {
+        const isSelected = selectedConversationId === conversation.id;
+        
+        return (
+          <div
+            key={conversation.id}
+            className={cn(
+              "flex items-center gap-2 px-2 py-3 rounded-[12px] cursor-pointer transition-colors w-48",
+              isSelected 
+                ? "bg-[#f3f3f3]" 
+                : "hover:bg-[#f8f8f8]"
+            )}
+            onClick={() => onConversationSelect(conversation)}
+          >
+            <Avatar className="h-5 w-5 flex-shrink-0 rounded-[40px]">
               <AvatarImage src={conversation.otherUser.avatar} alt={conversation.otherUser.display_name} />
-              <AvatarFallback>
+              <AvatarFallback className="text-xs">
                 {conversation.otherUser.display_name.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             
-            <div className="flex-1 min-w-0 space-y-1">
-              <div className="flex items-center justify-between">
-                <p className="font-medium text-sm truncate">
-                  {conversation.otherUser.display_name}
-                </p>
-                <div className="flex items-center space-x-2 flex-shrink-0 ml-2">
-                  {conversation.unreadCount > 0 && (
-                    <Badge variant="destructive" className="text-xs min-w-[1.25rem] h-5 flex items-center justify-center">
-                      {conversation.unreadCount > 99 ? '99+' : conversation.unreadCount}
-                    </Badge>
-                  )}
-                  {conversation.lastMessage && (
-                    <span className="text-xs text-muted-foreground">
-                      {formatLastMessageTime(conversation.lastMessage.created_at)}
-                    </span>
-                  )}
-                </div>
-              </div>
-              
-              {conversation.booking?.service?.title && (
-                <p className="text-xs text-muted-foreground truncate">
-                  Re: {conversation.booking.service.title}
-                </p>
-              )}
-              
-              {conversation.lastMessage && (
-                <p className="text-sm text-muted-foreground truncate">
-                  {conversation.lastMessage.sender_id === conversation.otherUser.id ? '' : 'You: '}
-                  {truncateMessage(conversation.lastMessage.content)}
-                </p>
-              )}
+            <div className="flex-1 min-w-0">
+              <p className={cn(
+                "font-['Baloo_2'] text-[16px] leading-[1.5] truncate",
+                isSelected 
+                  ? "font-medium text-black" 
+                  : "font-normal text-[#666666]"
+              )}>
+                {conversation.otherUser.display_name}
+              </p>
             </div>
           </div>
-        </Button>
-      ))}
+        );
+      })}
     </div>
   );
 }

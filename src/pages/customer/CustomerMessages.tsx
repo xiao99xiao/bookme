@@ -91,70 +91,67 @@ export default function CustomerMessages() {
   };
 
   return (
-    <PageLayout 
-      title="Messages" 
-      description="Chat with customers and service providers"
-      maxWidth="wide"
-    >
+    <div className="h-[calc(100vh-4rem)] flex bg-neutral-50 overflow-hidden">
+      {/* Left Panel - Sidebar */}
+      <div className="bg-neutral-50 flex flex-col gap-6 h-full px-8 py-10 w-64 flex-shrink-0">
+        {/* Title Section */}
+        <div className="flex flex-col gap-0.5 flex-shrink-0">
+          <h1 className="font-['Spectral'] font-bold text-[20px] text-black leading-[1.4]">
+            Messages
+          </h1>
+          <p className="font-['Baloo_2'] font-normal text-[12px] text-[#aaaaaa] leading-[1.5]">
+            Chat with customers and service providers
+          </p>
+        </div>
 
-          {/* Messages Interface */}
-          <div className="h-[calc(100vh-200px)] min-h-[600px]">
-            <Card className="h-full">
-              <CardContent className="p-0 h-full">
-                <div className="grid grid-cols-1 lg:grid-cols-[350px,1fr] h-full">
-                  {/* Left Panel - Conversation List */}
-                  <div className="border-r border-border h-full flex flex-col max-h-full">
-                    <CardHeader className="flex-shrink-0 border-b">
-                      <CardTitle className="flex items-center space-x-2">
-                        <Users className="h-5 w-5" />
-                        <span>Conversations</span>
-                      </CardTitle>
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                        <Input
-                          placeholder="Search conversations..."
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          className="pl-10"
-                        />
-                      </div>
-                    </CardHeader>
-                    
-                    <div className="flex-1 overflow-y-auto min-h-0">
-                      <ConversationList
-                        conversations={conversations}
-                        selectedConversationId={selectedConversation?.id}
-                        onConversationSelect={handleConversationSelect}
-                        loading={loading}
-                        searchQuery={searchQuery}
-                        onSearchChange={setSearchQuery}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Right Panel - Message Thread */}
-                  <div className="h-full max-h-full flex flex-col min-h-0">
-                    {selectedConversation ? (
-                      <MessageThread 
-                        conversation={selectedConversation}
-                        onConversationUpdate={handleConversationUpdate}
-                      />
-                    ) : (
-                      <div className="h-full flex items-center justify-center">
-                        <div className="text-center">
-                          <MessageSquare className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-                          <h3 className="text-lg font-medium mb-2">Select a conversation</h3>
-                          <p className="text-muted-foreground">
-                            Choose a conversation from the left to start messaging
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+        {/* Search Box */}
+        <div className="relative flex-shrink-0">
+          <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+            <Search className="h-6 w-6 text-[#666666]" />
           </div>
-    </PageLayout>
+          <input
+            type="text"
+            placeholder="Search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-white border border-[#eeeeee] rounded-[8px] px-3 py-2 pl-12 font-['Baloo_2'] font-normal text-[16px] text-[#666666] leading-[1.5] focus-visible:outline-none focus-visible:border-primary transition-colors"
+          />
+        </div>
+
+        {/* Conversation List */}
+        <div className="flex-1 overflow-y-auto min-h-0">
+          <ConversationList
+            conversations={conversations}
+            selectedConversationId={selectedConversation?.id}
+            onConversationSelect={handleConversationSelect}
+            loading={loading}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+          />
+        </div>
+      </div>
+
+      {/* Right Panel - Message Thread */}
+      <div className="flex-1 bg-neutral-50 p-10 min-h-0 min-w-0">
+        {selectedConversation ? (
+          <div className="h-full bg-white rounded-[24px] shadow-[0px_12px_16px_-4px_rgba(0,0,0,0.08),0px_4px_6px_-2px_rgba(0,0,0,0.03)] min-h-0">
+            <MessageThread 
+              conversation={selectedConversation}
+              onConversationUpdate={handleConversationUpdate}
+            />
+          </div>
+        ) : (
+          <div className="h-full bg-white rounded-[24px] shadow-[0px_12px_16px_-4px_rgba(0,0,0,0.08),0px_4px_6px_-2px_rgba(0,0,0,0.03)] flex items-center justify-center">
+            <div className="text-center">
+              <MessageSquare className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-lg font-medium mb-2">Select a conversation</h3>
+              <p className="text-muted-foreground">
+                Choose a conversation from the left to start messaging
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
