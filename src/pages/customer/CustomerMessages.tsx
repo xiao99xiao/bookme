@@ -36,8 +36,18 @@ export default function CustomerMessages() {
       // Transform the data to match our ConversationItem interface
       const transformedConversations: ConversationItem[] = conversationsData.map(conv => {
         // Determine who is the "other user" in the conversation
-        const isCustomer = conv.customer_id === userId;
-        const otherUser = isCustomer ? conv.provider : conv.customer;
+        // Simple logic: the opponent is whoever is NOT the current user
+        let otherUser = null;
+        if (conv.customer?.id === userId) {
+          // Current user is customer, so opponent is provider
+          otherUser = conv.provider;
+        } else if (conv.provider?.id === userId) {
+          // Current user is provider, so opponent is customer
+          otherUser = conv.customer;
+        } else {
+          // Fallback: use whichever user exists that's not the current user
+          otherUser = conv.customer || conv.provider;
+        }
         
         // Calculate unread count (for now, we'll use a placeholder)
         // TODO: Implement proper unread count calculation
