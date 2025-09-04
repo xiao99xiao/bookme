@@ -1,4 +1,4 @@
-import { Button as DSButton } from "@/design-system";
+import { Button as DSButton, Container, Grid, Stack } from "@/design-system";
 import { Link } from "react-router-dom";
 import { Clock, CreditCard, User, Globe, Coins, Video, MessageCircle, MapPin } from "lucide-react";
 import heroIllustration from "@/assets/hero-illustration.jpg";
@@ -12,8 +12,8 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="relative py-20 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <Container maxWidth="lg">
+          <Grid columns={2} spacing="xl" className="items-center">
             <div className="text-left">
               <H1 className="mb-4">
                 Your Expertise Matters,
@@ -22,14 +22,14 @@ const Index = () => {
               <p className="text-lg text-muted-foreground mb-6 leading-snug max-w-lg">
                 Turn your expertise into income. Share what you know, set your schedule, and get paid in crypto while customers use their credit cards.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4">
+              <Stack direction="row" spacing="lg" className="flex-col sm:flex-row">
                 <DSButton as={Link} to="/auth" size="large" className="text-lg px-8">
                   Start Earning Today
                 </DSButton>
                 <DSButton variant="secondary" size="large" as={Link} to="/book-services" className="text-lg px-8">
                   I'm Looking for Services
                 </DSButton>
-              </div>
+              </Stack>
             </div>
             <div className="relative">
               <img 
@@ -38,13 +38,13 @@ const Index = () => {
                 className="w-full h-auto rounded-lg"
               />
             </div>
-          </div>
-        </div>
+          </Grid>
+        </Container>
       </section>
 
       {/* How It Works Section */}
       <section className="py-20 px-4 bg-muted/30">
-        <div className="max-w-6xl mx-auto">
+        <Container maxWidth="lg">
           <div className="text-center mb-16">
             <H2 className="mb-4">How It Works</H2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
@@ -52,7 +52,7 @@ const Index = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-12">
+          <Grid columns={3} spacing="xl">
             {/* Step 1 */}
             <div className="text-center">
               <div className="relative mb-8">
@@ -109,13 +109,13 @@ const Index = () => {
                 This protects everyone and ensures you get paid for quality work.
               </p>
             </div>
-          </div>
-        </div>
+          </Grid>
+        </Container>
       </section>
 
       {/* Service Delivery Methods Section */}
       <section className="py-20 px-4 bg-muted/30">
-        <div className="max-w-6xl mx-auto">
+        <Container maxWidth="lg">
           <div className="text-center mb-16">
             <H2 className="mb-4">Deliver Your Services Your Way</H2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
@@ -123,7 +123,7 @@ const Index = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <Grid columns={3} spacing="lg">
             <div className="text-center p-8 bg-background rounded-lg border">
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Video className="w-8 h-8 text-primary" />
@@ -153,13 +153,13 @@ const Index = () => {
                 Meet customers locally for hands-on services, workshops, or personal consultations.
               </p>
             </div>
-          </div>
-        </div>
+          </Grid>
+        </Container>
       </section>
 
       {/* Features Section */}
       <section className="py-20 px-4">
-        <div className="max-w-6xl mx-auto">
+        <Container maxWidth="lg">
           <div className="text-center mb-16">
             <H2 className="mb-4">Why Choose Our Platform?</H2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
@@ -167,7 +167,7 @@ const Index = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <Grid columns={4} spacing="lg">
             <div className="text-center p-6">
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Globe className="w-8 h-8 text-primary" />
@@ -207,13 +207,13 @@ const Index = () => {
                 Customers pay easily, funds held securely until service completion
               </p>
             </div>
-          </div>
-        </div>
+          </Grid>
+        </Container>
       </section>
 
       {/* CTA Section */}
       <section className="py-20 px-4 bg-primary/5">
-        <div className="max-w-4xl mx-auto text-center">
+        <Container maxWidth="md" className="text-center">
           <H2 className="mb-6">Ready to Monetize Your Time?</H2>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
             Join thousands of professionals already earning cryptocurrency by sharing their expertise.
@@ -222,7 +222,7 @@ const Index = () => {
           <DSButton as={Link} to="/auth" size="large" className="text-lg px-12">
             Create Your Profile Now
           </DSButton>
-        </div>
+        </Container>
       </section>
     </div>
   );

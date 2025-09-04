@@ -14,5 +14,9 @@ export { Input, Textarea } from './components/Input';
 export { Button } from './components/Button';
 export { Badge } from './components/Badge';
 
+// Card Components
+export { ServiceDiscoverCard } from './components/ServiceDiscoverCard';
+export { ServiceProfileCard } from './components/ServiceProfileCard';
+
 // Re-export design tokens for easy access
 export type { DesignTokens } from './tokens';
