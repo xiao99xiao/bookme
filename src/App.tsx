@@ -13,6 +13,7 @@ import AuthCallback from "./pages/AuthCallback";
 import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
 import NewNavigation from "./components/NewNavigation";
+import RefactoredNavigation from "./components/RefactoredNavigation";
 import { OnboardingNavigator } from "./components/OnboardingNavigator";
 
 // Customer pages
@@ -39,6 +40,9 @@ import IntegrationsCallback from "./pages/provider/IntegrationsCallback";
 // Balance page
 import Balance from "./pages/Balance";
 
+// Demo page
+import DesignSystemDemo from "./pages/DesignSystemDemo";
+
 
 const queryClient = new QueryClient();
 
@@ -51,6 +55,7 @@ function AppContent() {
       <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/discover" element={<Discover />} />
+            <Route path="/design-system-demo" element={<DesignSystemDemo />} />
             <Route 
               path="/book-services" 
               element={

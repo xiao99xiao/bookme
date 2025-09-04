@@ -18,6 +18,8 @@ import {
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient } from '@/lib/api-migration';
 import CreateServiceModal from '@/components/CreateServiceModal';
+import { RefactoredServiceModal } from '@/components/RefactoredServiceModal';
+import { ServiceCard } from '@/components/ServiceCard';
 
 interface Service {
   id: string;

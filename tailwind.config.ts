@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import { tokens } from './src/design-system/tokens';
 
 export default {
 	darkMode: ["class"],
@@ -38,6 +39,24 @@ export default {
 				'7xl': ['4.5rem', { lineHeight: '1.1', letterSpacing: '-0.04em' }],
 			},
 			colors: {
+				// Design system colors
+				textPrimary: tokens.colors.textPrimary,
+				textSecondary: tokens.colors.textSecondary,
+				textTertiary: tokens.colors.textTertiary,
+				textAlternate: tokens.colors.textAlternate,
+				neutralLightest: tokens.colors.neutralLightest,
+				neutral: tokens.colors.neutral,
+				neutralBlack: tokens.colors.neutralBlack,
+				neutralWhite: tokens.colors.neutralWhite,
+				brandBlack: tokens.colors.brandBlack,
+				brandWhite: tokens.colors.brandWhite,
+				brandLightGrey: tokens.colors.brandLightGrey,
+				brandBgGrey2: tokens.colors.brandBgGrey2,
+				brandLightYellow: tokens.colors.brandLightYellow,
+				brandYellow: tokens.colors.brandYellow,
+				borderError: tokens.colors.borderError,
+				
+				// Keep existing shadcn colors
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
@@ -99,7 +118,16 @@ export default {
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
-				sm: 'calc(var(--radius) - 4px)'
+				sm: 'calc(var(--radius) - 4px)',
+				// Design system radius
+				'ds-sm': tokens.borderRadius.sm,
+				'ds-md': tokens.borderRadius.md, 
+				'ds-lg': tokens.borderRadius.lg,
+				'ds-xl': tokens.borderRadius.xl,
+				'ds-pill': tokens.borderRadius.pill,
+			},
+			boxShadow: {
+				card: tokens.shadows.card,
 			},
 			keyframes: {
 				'accordion-down': {
