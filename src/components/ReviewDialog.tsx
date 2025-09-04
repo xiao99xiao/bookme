@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { Textarea } from '@/design-system/components/Input';
 import { toast } from 'sonner';
 import StarRating from './StarRating';
 
@@ -168,13 +168,14 @@ export default function ReviewDialog({
                 : (isReadOnly ? 'Your comments' : 'Share your experience (optional)')
               }
             </label>
-            <Textarea
+            <Textarea 
+              fullWidth 
+              rows={4}
               id="comment"
               placeholder={isReadOnly ? 'No comments provided' : 'Tell us about your experience with this service...'}
               value={comment}
               onChange={isReadOnly ? undefined : (e) => setComment(e.target.value)}
               maxLength={maxCommentLength}
-              rows={4}
               className="resize-none"
               readOnly={isReadOnly}
             />

@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Badge as DSBadge } from '@/design-system';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Input, Textarea } from '@/design-system/components/Input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -350,7 +349,7 @@ export default function MyServices() {
                             <FormItem className="col-span-2">
                               <FormLabel>Title</FormLabel>
                               <FormControl>
-                                <Input {...field} />
+                                <Input {...field} fullWidth />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -415,6 +414,7 @@ export default function MyServices() {
                                   {...field} 
                                   type="number" 
                                   onChange={(e) => field.onChange(Number(e.target.value))}
+                                  fullWidth
                                 />
                               </FormControl>
                               <FormMessage />
@@ -433,6 +433,7 @@ export default function MyServices() {
                                   {...field} 
                                   type="number" 
                                   onChange={(e) => field.onChange(Number(e.target.value))}
+                                  fullWidth
                                 />
                               </FormControl>
                               <FormMessage />
@@ -448,7 +449,7 @@ export default function MyServices() {
                           <FormItem>
                             <FormLabel>Location (for in-person services)</FormLabel>
                             <FormControl>
-                              <Input {...field} placeholder="e.g., Downtown Coffee Shop, My Office" />
+                              <Input {...field} placeholder="e.g., Downtown Coffee Shop, My Office" fullWidth />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -464,8 +465,9 @@ export default function MyServices() {
                             <FormControl>
                               <Textarea 
                                 {...field} 
-                                className="min-h-[120px]"
+                                rows={6}
                                 placeholder="Describe your service..."
+                                fullWidth
                               />
                             </FormControl>
                             <FormMessage />
@@ -483,6 +485,7 @@ export default function MyServices() {
                               <Input 
                                 {...field}
                                 placeholder="Enter tags separated by commas (e.g., coaching, wellness, productivity)"
+                                fullWidth
                               />
                             </FormControl>
                             <FormMessage />

@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Input, Textarea } from '@/design-system/components/Input';
 import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
@@ -145,7 +144,7 @@ export default function MyProfile() {
                         <FormItem>
                           <FormLabel>Display Name</FormLabel>
                           <FormControl>
-                            <Input {...field} value={field.value || ''} />
+                            <Input {...field} value={field.value || ''} fullWidth />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -160,7 +159,7 @@ export default function MyProfile() {
                         <FormItem>
                           <FormLabel>Location</FormLabel>
                           <FormControl>
-                            <Input {...field} value={field.value || ''} placeholder="City, Country" />
+                            <Input {...field} value={field.value || ''} placeholder="City, Country" fullWidth />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -175,7 +174,7 @@ export default function MyProfile() {
                         <FormItem>
                           <FormLabel>Phone</FormLabel>
                           <FormControl>
-                            <Input {...field} value={field.value || ''} placeholder="+1 (555) 123-4567" />
+                            <Input {...field} value={field.value || ''} placeholder="+1 (555) 123-4567" fullWidth />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -215,8 +214,9 @@ export default function MyProfile() {
                             <Textarea
                               {...field}
                               value={field.value || ''}
-                              className="min-h-[120px]"
+                              rows={6}
                               placeholder="Tell people about yourself..."
+                              fullWidth
                             />
                           </FormControl>
                           <FormMessage />
@@ -252,6 +252,7 @@ export default function MyProfile() {
                       value={profileUrl} 
                       readOnly 
                       className="text-xs bg-muted"
+                      fullWidth
                     />
                     <DSButton 
                       onClick={copyProfileLink} 

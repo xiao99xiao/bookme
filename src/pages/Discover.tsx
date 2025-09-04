@@ -4,13 +4,13 @@ import { Button as DSButton, ServiceDiscoverCard, Container, Grid } from "@/desi
 import { Badge as DSBadge } from "@/design-system";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Filter, Loader2 } from "lucide-react";
+import { Search, Filter } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ApiClient } from "@/lib/api-migration";
 import { useAuth } from "@/contexts/PrivyAuthContext";
 import { getBrowserTimezone } from "@/lib/timezone";
 import { toast } from "sonner";
-import { H1, H2, Text, Description } from "@/design-system";
+import { H1, H2, Text, Description, Loading } from "@/design-system";
 
 interface Service {
   id: string;
@@ -196,12 +196,10 @@ const Discover = () => {
       </section>
 
       {/* Services Grid */}
-      <section className="pb-8 px-4">
-        <Container maxWidth="lg">
+      <section className="pb-8 px-4 flex-1 flex flex-col min-h-[400px]">
+        <Container maxWidth="lg" className="flex-1 flex flex-col">
           {loading ? (
-            <div className="flex justify-center items-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
+            <Loading variant="spinner" size="md" text="Loading services..." fullHeight={true} />
           ) : error ? (
             <div className="text-center py-12">
               <p className="text-red-500 text-lg mb-4">{error}</p>

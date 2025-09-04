@@ -1,4 +1,4 @@
-import { Edit2, Trash2, Plus, Clock, DollarSign, MapPin } from 'lucide-react';
+import { Edit2, Trash2, Plus, Clock, DollarSign, MapPin, Calendar, MessageSquare, Search, Users } from 'lucide-react';
 import { 
   Container, 
   Card, 
@@ -10,7 +10,16 @@ import {
   Badge,
   Input,
   Textarea,
-  Label 
+  Label,
+  Loading,
+  PageLoading,
+  CardSkeleton,
+  ButtonLoading,
+  EmptyState,
+  BookingEmptyState,
+  NoResultsFound,
+  NoDataYet,
+  EmptyListState
 } from '@/design-system';
 import { ServiceCard } from '@/components/ServiceCard';
 import RefactoredNavigation from '@/components/RefactoredNavigation';
@@ -168,6 +177,172 @@ export default function DesignSystemDemo() {
                   showActions={false}
                 />
               </Grid>
+            </Stack>
+          </Card>
+
+          {/* Empty States Section */}
+          <Card>
+            <Stack spacing="xl">
+              <Heading as="h2">Empty States</Heading>
+              <Grid columns={2} spacing="lg">
+                <Stack spacing="lg">
+                  <Text variant="small" color="tertiary" className="uppercase tracking-wide">BASIC VARIANTS</Text>
+                  <Stack spacing="md">
+                    <div className="p-4 bg-muted/20 rounded">
+                      <EmptyState
+                        icon={<Search className="w-full h-full" />}
+                        title="No services found"
+                        description="Try adjusting your search criteria"
+                        action={{ 
+                          text: "Clear Filters", 
+                          onClick: () => console.log('Clear filters'), 
+                          variant: "secondary" 
+                        }}
+                      />
+                    </div>
+                    <div className="p-4 bg-muted/20 rounded">
+                      <EmptyState
+                        icon={<Calendar className="w-full h-full" />}
+                        title="No bookings yet"
+                        description="Browse services and make your first booking"
+                        size="sm"
+                        variant="minimal"
+                      />
+                    </div>
+                  </Stack>
+                </Stack>
+                
+                <Stack spacing="lg">
+                  <Text variant="small" color="tertiary" className="uppercase tracking-wide">SPECIALIZED COMPONENTS</Text>
+                  <Stack spacing="md">
+                    <div className="p-4 bg-muted/20 rounded">
+                      <BookingEmptyState 
+                        type="upcoming"
+                        onBrowseServices={() => console.log('Browse services')}
+                      />
+                    </div>
+                    <div className="p-4 bg-muted/20 rounded">
+                      <NoResultsFound 
+                        searchTerm="JavaScript"
+                        onClear={() => console.log('Clear search')}
+                      />
+                    </div>
+                    <div className="p-4 bg-muted/20 rounded">
+                      <NoDataYet
+                        title="No messages yet"
+                        description="Start a conversation with a service provider"
+                        icon={<MessageSquare className="w-full h-full" />}
+                        actionText="Browse Services"
+                        onAction={() => console.log('Browse services')}
+                      />
+                    </div>
+                    <div className="p-4 bg-muted/20 rounded">
+                      <EmptyListState
+                        itemType="Services"
+                        addText="Create Service"
+                        onAdd={() => console.log('Add service')}
+                        icon={<Users className="w-full h-full" />}
+                      />
+                    </div>
+                  </Stack>
+                </Stack>
+              </Grid>
+              
+              <Stack spacing="lg">
+                <Text variant="small" color="tertiary" className="uppercase tracking-wide">SIZE & VARIANT EXAMPLES</Text>
+                <Grid columns={3} spacing="lg">
+                  <Card padding="lg" className="min-h-[200px]">
+                    <EmptyState
+                      icon={<Calendar className="w-full h-full" />}
+                      title="Small Empty State"
+                      description="Compact version for smaller spaces"
+                      size="sm"
+                    />
+                  </Card>
+                  <Card padding="lg" className="min-h-[200px]">
+                    <EmptyState
+                      icon={<Search className="w-full h-full" />}
+                      title="Medium Empty State"
+                      description="Standard size for most use cases"
+                      size="md"
+                      action={{ 
+                        text: "Try Again", 
+                        onClick: () => console.log('Try again'), 
+                        variant: "primary" 
+                      }}
+                    />
+                  </Card>
+                  <Card padding="lg" className="min-h-[200px]">
+                    <EmptyState
+                      icon={<MessageSquare className="w-full h-full" />}
+                      title="Large Empty State"
+                      description="Spacious version for prominent empty states with multiple actions"
+                      size="lg"
+                      action={{ 
+                        text: "Get Started", 
+                        onClick: () => console.log('Get started'), 
+                        variant: "primary",
+                        icon: <Plus className="w-4 h-4" />
+                      }}
+                      secondaryAction={{ 
+                        text: "Learn More", 
+                        onClick: () => console.log('Learn more'), 
+                        variant: "secondary" 
+                      }}
+                    />
+                  </Card>
+                </Grid>
+              </Stack>
+            </Stack>
+          </Card>
+
+          {/* Loading Components Section */}
+          <Card>
+            <Stack spacing="xl">
+              <Heading as="h2">Loading Components</Heading>
+              <Grid columns={2} spacing="xl">
+                <Stack spacing="lg">
+                  <Text variant="small" color="tertiary" className="uppercase tracking-wide">SPINNER VARIANTS</Text>
+                  <Stack spacing="md">
+                    <div className="p-4 bg-muted/20 rounded">
+                      <Loading variant="spinner" size="sm" text="Loading..." />
+                    </div>
+                    <div className="p-4 bg-muted/20 rounded">
+                      <Loading variant="spinner" size="md" text="Loading services..." />
+                    </div>
+                    <div className="p-4 bg-muted/20 rounded">
+                      <Loading variant="spinner" size="lg" text="Processing payment..." />
+                    </div>
+                  </Stack>
+                </Stack>
+                
+                <Stack spacing="lg">
+                  <Text variant="small" color="tertiary" className="uppercase tracking-wide">OTHER VARIANTS</Text>
+                  <Stack spacing="md">
+                    <div className="p-4 bg-muted/20 rounded">
+                      <Loading variant="dots" text="Connecting..." />
+                    </div>
+                    <div className="p-4 bg-muted/20 rounded">
+                      <ButtonLoading loading={true}>
+                        Cancel Booking
+                      </ButtonLoading>
+                    </div>
+                    <div className="p-4 bg-muted/20 rounded">
+                      <Loading variant="inline" text="Uploading file..." />
+                    </div>
+                  </Stack>
+                </Stack>
+              </Grid>
+              
+              <Stack spacing="lg">
+                <Text variant="small" color="tertiary" className="uppercase tracking-wide">SKELETON LOADING</Text>
+                <Grid columns={2} spacing="lg">
+                  <div className="p-4 bg-muted/20 rounded">
+                    <Loading variant="skeleton" lines={3} />
+                  </div>
+                  <CardSkeleton lines={4} />
+                </Grid>
+              </Stack>
             </Stack>
           </Card>
 

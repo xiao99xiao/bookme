@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/PrivyAuthContext";
 import authHero from "@/assets/auth-hero.jpg";
-import { H1, H2, Text, Button as DSButton } from "@/design-system";
+import { H1, H2, Text, Button as DSButton, Loading } from "@/design-system";
 
 const Auth = () => {
   const { login, ready } = useAuth();
@@ -12,10 +12,7 @@ const Auth = () => {
   if (!ready) {
     return (
       <div className="h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <Text color="secondary">Loading...</Text>
-        </div>
+        <Loading variant="spinner" size="lg" text="Loading..." />
       </div>
     );
   }

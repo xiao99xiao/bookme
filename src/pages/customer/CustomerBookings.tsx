@@ -15,7 +15,7 @@ import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient, Booking } from '@/lib/api-migration';
 import ChatModal from '@/components/ChatModal';
 import ReviewDialog from '@/components/ReviewDialog';
-import { H2, H3, Text, Description, Label, Button as DSButton } from '@/design-system';
+import { H2, H3, Text, Description, Label, Button as DSButton, BookingEmptyState, Loading } from '@/design-system';
 
 export default function CustomerBookings() {
   const { userId } = useAuth();
@@ -312,21 +312,15 @@ export default function CustomerBookings() {
           </div>
 
           {/* Main Content Area - Desktop */}
-          <div className="flex-1">
+          <div className="flex-1 flex flex-col min-h-[600px]">
             {loading ? (
-              <div className="text-center py-12">
-                <Text color="secondary">Loading bookings...</Text>
-              </div>
+              <Loading variant="spinner" size="md" text="Loading bookings..." fullHeight={true} />
             ) : filteredBookings.length === 0 ? (
-              <div className="text-center py-12">
-                <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <Text color="secondary">No {activeTab === 'all' ? '' : activeTab} bookings</Text>
-                {activeTab === 'upcoming' && (
-                  <Text variant="small" color="tertiary" className="mt-1">
-                    Browse services and make your first booking
-                  </Text>
-                )}
-              </div>
+              <BookingEmptyState
+                type={activeTab as "upcoming" | "past" | "cancelled" | "all"}
+                onBrowseServices={() => navigate('/discover')}
+                fullHeight={true}
+              />
             ) : (
               <div className="space-y-4">
                 {/* Each booking is a separate CARD */}
@@ -682,21 +676,15 @@ export default function CustomerBookings() {
           </div>
 
           {/* Mobile Content Area */}
-          <div>
+          <div className="flex flex-col min-h-[500px]">
             {loading ? (
-              <div className="text-center py-12">
-                <Text color="secondary">Loading bookings...</Text>
-              </div>
+              <Loading variant="spinner" size="md" text="Loading bookings..." fullHeight={true} />
             ) : filteredBookings.length === 0 ? (
-              <div className="text-center py-12">
-                <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <Text color="secondary">No {activeTab === 'all' ? '' : activeTab} bookings</Text>
-                {activeTab === 'upcoming' && (
-                  <Text variant="small" color="tertiary" className="mt-1">
-                    Browse services and make your first booking
-                  </Text>
-                )}
-              </div>
+              <BookingEmptyState
+                type={activeTab as "upcoming" | "past" | "cancelled" | "all"}
+                onBrowseServices={() => navigate('/discover')}
+                fullHeight={true}
+              />
             ) : (
               <div className="space-y-4">
                 {/* Mobile Booking Cards - Same content as desktop */}

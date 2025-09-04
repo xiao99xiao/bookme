@@ -5,8 +5,7 @@ import { z } from 'zod';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Input, Textarea } from '@/design-system/components/Input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -273,7 +272,7 @@ export default function Profile() {
                       </div>
                       <div className="bg-white box-border content-stretch flex gap-2 items-center justify-start p-[12px] relative rounded-[8px] shrink-0 w-full">
                         <div aria-hidden="true" className="absolute border border-[#eeeeee] border-solid inset-[-1px] pointer-events-none rounded-[9px]" />
-                        <Input
+                        <Input fullWidth
                           {...form.register('display_name')}
                           placeholder="Your display name"
                           className="basis-0 font-body font-normal grow leading-[0] min-h-px min-w-px relative shrink-0 text-[16px] text-black border-0 focus:ring-0 p-0 bg-transparent placeholder:text-[#666666]"
@@ -294,7 +293,7 @@ export default function Profile() {
                       </div>
                       <div className="bg-white box-border content-stretch flex gap-2 items-center justify-start p-[12px] relative rounded-[8px] shrink-0 w-full">
                         <div aria-hidden="true" className="absolute border border-[#eeeeee] border-solid inset-[-1px] pointer-events-none rounded-[9px]" />
-                        <Input
+                        <Input fullWidth
                           placeholder="your@email.com"
                           className="basis-0 font-body font-normal grow leading-[0] min-h-px min-w-px relative shrink-0 text-[16px] text-black border-0 focus:ring-0 p-0 bg-transparent placeholder:text-[#666666]"
                           value={getUserEmail() || ''}
@@ -313,7 +312,7 @@ export default function Profile() {
                       </div>
                       <div className="bg-white box-border content-stretch flex h-[120px] items-start justify-start p-[12px] relative rounded-[8px] shrink-0 w-full">
                         <div aria-hidden="true" className="absolute border border-[#eeeeee] border-solid inset-[-1px] pointer-events-none rounded-[9px]" />
-                        <Textarea
+                        <Textarea fullWidth rows={4}
                           {...form.register('bio')}
                           placeholder="Type your message..."
                           className="basis-0 font-body font-normal grow leading-[1.5] min-h-full min-w-px relative shrink-0 text-[16px] text-black border-0 focus:ring-0 p-0 resize-none bg-transparent placeholder:text-[#666666]"
@@ -332,7 +331,7 @@ export default function Profile() {
                         </div>
                         <div className="bg-white box-border content-stretch flex gap-2 items-center justify-start p-[12px] relative rounded-[8px] shrink-0 w-full">
                           <div aria-hidden="true" className="absolute border border-[#eeeeee] border-solid inset-[-1px] pointer-events-none rounded-[9px]" />
-                          <Input
+                          <Input fullWidth
                             {...form.register('phone')}
                             placeholder="+1 (555) 000-0000"
                             className="basis-0 font-body font-normal grow leading-[0] min-h-px min-w-px relative shrink-0 text-[16px] text-black border-0 focus:ring-0 p-0 bg-transparent placeholder:text-[#666666]"
@@ -345,7 +344,7 @@ export default function Profile() {
                         </div>
                         <div className="bg-white box-border content-stretch flex gap-2 items-center justify-start p-[12px] relative rounded-[8px] shrink-0 w-full">
                           <div aria-hidden="true" className="absolute border border-[#eeeeee] border-solid inset-[-1px] pointer-events-none rounded-[9px]" />
-                          <Input
+                          <Input fullWidth
                             {...form.register('location')}
                             placeholder="Japan"
                             className="basis-0 font-body font-normal grow leading-[0] min-h-px min-w-px relative shrink-0 text-[16px] text-black border-0 focus:ring-0 p-0 bg-transparent placeholder:text-[#666666]"
@@ -361,7 +360,7 @@ export default function Profile() {
                       </div>
                       <div className="bg-white box-border content-stretch flex gap-2 items-center justify-start p-[12px] relative rounded-[8px] shrink-0 w-full">
                         <div aria-hidden="true" className="absolute border border-[#eeeeee] border-solid inset-[-1px] pointer-events-none rounded-[9px]" />
-                        <Input
+                        <Input fullWidth
                           {...form.register('website')}
                           placeholder="https://example.com"
                           className="basis-0 font-body font-normal grow leading-[0] min-h-px min-w-px relative shrink-0 text-[16px] text-black border-0 focus:ring-0 p-0 bg-transparent placeholder:text-[#666666]"
@@ -577,7 +576,7 @@ export default function Profile() {
                   <Label htmlFor="display_name" className="text-sm font-medium text-gray-700">
                     Display Name <span className="text-red-500">*</span>
                   </Label>
-                  <Input
+                  <Input fullWidth
                     id="display_name"
                     {...form.register('display_name')}
                     placeholder="Your display name"
@@ -593,7 +592,7 @@ export default function Profile() {
                   <Label htmlFor="email" className="text-sm font-medium text-gray-700">
                     Email <span className="text-red-500">*</span>
                   </Label>
-                  <Input
+                  <Input fullWidth
                     id="email"
                     placeholder="your@email.com"
                     className="w-full p-3 border border-gray-200 rounded-lg bg-gray-50"
@@ -607,7 +606,7 @@ export default function Profile() {
                   <Label htmlFor="bio" className="text-sm font-medium text-gray-700">
                     Bio
                   </Label>
-                  <Textarea
+                  <Textarea fullWidth rows={4}
                     id="bio"
                     {...form.register('bio')}
                     placeholder="Tell us about yourself..."
@@ -623,7 +622,7 @@ export default function Profile() {
                   <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
                     Phone
                   </Label>
-                  <Input
+                  <Input fullWidth
                     id="phone"
                     {...form.register('phone')}
                     placeholder="+1 (555) 000-0000"
@@ -636,7 +635,7 @@ export default function Profile() {
                   <Label htmlFor="location" className="text-sm font-medium text-gray-700">
                     Location
                   </Label>
-                  <Input
+                  <Input fullWidth
                     id="location"
                     {...form.register('location')}
                     placeholder="New York, NY"
@@ -649,7 +648,7 @@ export default function Profile() {
                   <Label htmlFor="website" className="text-sm font-medium text-gray-700">
                     Website
                   </Label>
-                  <Input
+                  <Input fullWidth
                     id="website"
                     {...form.register('website')}
                     placeholder="https://example.com"

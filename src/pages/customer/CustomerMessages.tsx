@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MessageSquare, Search, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/design-system/components/Input';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient } from '@/lib/api-migration';
 import ConversationList, { ConversationItem } from '@/components/ConversationList';
@@ -133,12 +133,13 @@ export default function CustomerMessages() {
           <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
             <Search className="h-6 w-6 text-[#666666]" />
           </div>
-          <input
+          <Input
             type="text"
             placeholder="Search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white border border-[#eeeeee] rounded-[8px] px-3 py-2 pl-12 font-['Baloo_2'] font-normal text-[16px] text-[#666666] leading-[1.5] focus-visible:outline-none focus-visible:border-primary transition-colors"
+            className="pl-12"
+            fullWidth
           />
         </div>
 
@@ -191,12 +192,13 @@ export default function CustomerMessages() {
         <div className="mb-6">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <input
+            <Input
               type="text"
               placeholder="Search conversations..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="pl-10"
+              fullWidth
             />
           </div>
         </div>

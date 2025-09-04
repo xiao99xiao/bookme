@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { format } from 'date-fns';
-import { X, Send, MessageSquare, Loader2, Wifi, WifiOff, RefreshCw, ChevronUp } from 'lucide-react';
+import { X, Send, MessageSquare, Wifi, WifiOff, RefreshCw, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient } from '@/lib/api-migration';
 import { useWebSocket } from '@/lib/websocket';
 import { toast } from 'sonner';
+import { Loading } from '@/design-system';
 
 interface Message {
   id: string;
@@ -330,8 +330,8 @@ export default function ChatModal({
           onScroll={handleScroll}
         >
           {loading ? (
-            <div className="flex justify-center items-center h-full">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+            <div className="h-full flex items-center justify-center">
+              <Loading variant="spinner" size="md" />
             </div>
           ) : messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-500">
@@ -351,7 +351,9 @@ export default function ChatModal({
                     className="text-xs"
                   >
                     {loadingMore ? (
-                      <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                      <Loading variant="inline" size="sm">
+                        <ChevronUp className="h-3 w-3" />
+                      </Loading>
                     ) : (
                       <ChevronUp className="h-3 w-3 mr-1" />
                     )}
@@ -415,7 +417,9 @@ export default function ChatModal({
                 className="px-4 py-3 bg-black text-white rounded-xl hover:bg-gray-800 disabled:bg-gray-300 disabled:text-gray-500"
               >
                 {sending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loading variant="inline" size="sm">
+                    <Send className="h-4 w-4" />
+                  </Loading>
                 ) : (
                   <Send className="h-4 w-4" />
                 )}

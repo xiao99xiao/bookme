@@ -5,7 +5,7 @@ import { Badge as DSBadge } from "@/design-system";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { MapPin, Clock, DollarSign, Calendar, Phone, Video, Users, X, Star, ArrowLeft, Loader2, MessageSquare, ChevronDown } from "lucide-react";
+import { MapPin, Clock, DollarSign, Calendar, Phone, Video, Users, X, Star, ArrowLeft, MessageSquare, ChevronDown } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/PrivyAuthContext";
@@ -15,7 +15,7 @@ import StarRating from "@/components/StarRating";
 import { toast } from "sonner";
 import { getBrowserTimezone } from "@/lib/timezone";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { H1, Text, Description } from '@/design-system';
+import { H1, Text, Description, ServiceProfileCard, Loading } from '@/design-system';
 
 interface Service {
   id: string;
@@ -288,10 +288,7 @@ const Profile = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background pt-20 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <Text color="secondary">Loading profile...</Text>
-        </div>
+        <Loading variant="spinner" size="lg" text="Loading profile..." />
       </div>
     );
   }
@@ -363,45 +360,11 @@ const Profile = () => {
                 {services.filter(service => service.is_visible !== false).length > 0 ? (
                   <div className="space-y-3">
                     {services.filter(service => service.is_visible !== false).map((service) => (
-                      <div 
-                        key={service.id} 
-                        className="border rounded-lg p-4 transition-colors cursor-pointer hover:bg-muted/50"
-                        onClick={() => handleServiceClick(service)}
-                      >
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <DSBadge variant="secondary" size="small">
-                              {service.categories?.name || 'General'}
-                            </DSBadge>
-                            <div className="flex items-center text-muted-foreground text-xs">
-                              {getLocationIcon(service.is_online, !!service.location)}
-                              <span className="ml-1">{getLocationText(service.is_online, !!service.location)}</span>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-sm font-medium">${service.price}</div>
-                            <div className="text-xs text-muted-foreground">{service.duration_minutes}m</div>
-                          </div>
-                        </div>
-                        
-                        <h3 className="text-sm font-medium mb-2">
-                          {service.title}
-                        </h3>
-                        
-                        <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
-                          {service.description}
-                        </p>
-                        
-                        {service.tags && service.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
-                            {service.tags.slice(0, 3).map((tag) => (
-                              <DSBadge key={tag} variant="secondary" size="small">
-                                {tag}
-                              </DSBadge>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                      <ServiceProfileCard
+                        key={service.id}
+                        service={service}
+                        onClick={handleServiceClick}
+                      />
                     ))}
                   </div>
                 ) : (
@@ -591,15 +554,13 @@ const Profile = () => {
                         onClick={handleBookingSubmit}
                       >
                         {authLoading ? (
-                          <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          <Loading variant="inline" size="sm">
                             Loading...
-                          </>
+                          </Loading>
                         ) : isBooking ? (
-                          <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          <Loading variant="inline" size="sm">
                             Booking...
-                          </>
+                          </Loading>
                         ) : selectedTimeSlot ? (
                           'Confirm booking'
                         ) : (

@@ -4,11 +4,17 @@ import { Calendar, CheckCircle, MessageSquare, Copy, Video, Star, XCircle } from
 import { GoogleMeetIcon, ZoomIcon, TeamsIcon } from '@/components/icons/MeetingPlatformIcons';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient, Booking } from '@/lib/api-migration';
 import ChatModal from '@/components/ChatModal';
+import { H2, H3, Text, Loading, EmptyState } from '@/design-system';
 import ReviewDialog from '@/components/ReviewDialog';
-import { H2, H3 } from '@/design-system';
 
 export default function ProviderOrders() {
   const { userId, user } = useAuth();
@@ -146,6 +152,70 @@ export default function ProviderOrders() {
     }
   };
 
+  const handleGoogleCalendar = (booking: Booking) => {
+    const startDate = new Date(booking.scheduled_at);
+    const endDate = new Date(startDate.getTime() + booking.duration_minutes * 60000);
+    
+    const formatDateForGoogle = (date: Date) => {
+      return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    };
+
+    const params = new URLSearchParams({
+      action: 'TEMPLATE',
+      text: `${booking.service?.title || 'Service'} with ${booking.customer?.display_name || 'Customer'}`,
+      dates: `${formatDateForGoogle(startDate)}/${formatDateForGoogle(endDate)}`,
+      details: `Booking for ${booking.service?.title}${booking.customer_notes ? `\n\nCustomer notes: ${booking.customer_notes}` : ''}`,
+      location: booking.is_online ? 'Online Meeting' : (booking.location || ''),
+    });
+
+    const url = `https://calendar.google.com/calendar/render?${params.toString()}`;
+    window.open(url, '_blank');
+  };
+
+  const handleICSDownload = (booking: Booking) => {
+    const startDate = new Date(booking.scheduled_at);
+    const endDate = new Date(startDate.getTime() + booking.duration_minutes * 60000);
+    
+    const formatDateForICS = (date: Date) => {
+      return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '') + 'Z';
+    };
+
+    const title = `${booking.service?.title || 'Service'} with ${booking.customer?.display_name || 'Customer'}`;
+    const description = `Booking for ${booking.service?.title}${booking.customer_notes ? `\n\nCustomer notes: ${booking.customer_notes}` : ''}`;
+    
+    const icsContent = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//BookMe//Booking Calendar//EN',
+      'METHOD:REQUEST',
+      'BEGIN:VEVENT',
+      `UID:${Date.now()}@bookme.com`,
+      `DTSTAMP:${formatDateForICS(new Date())}`,
+      `DTSTART:${formatDateForICS(startDate)}`,
+      `DTEND:${formatDateForICS(endDate)}`,
+      `SUMMARY:${title}`,
+      description ? `DESCRIPTION:${description.replace(/\n/g, '\\n')}` : '',
+      `LOCATION:${booking.is_online ? 'Online Meeting' : (booking.location || '')}`,
+      'STATUS:CONFIRMED',
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ].filter(Boolean).join('\r\n');
+
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.ics`;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    
+    toast.success('Calendar event downloaded');
+  };
+
   const filteredBookings = bookings.filter(booking => {
     if (activeTab === 'all') return true;
     return booking.status === activeTab;
@@ -193,16 +263,17 @@ export default function ProviderOrders() {
           </div>
 
           {/* Main Content Area - Desktop */}
-          <div className="flex-1">
+          <div className="flex-1 flex flex-col min-h-[600px]">
             {loading ? (
-              <div className="text-center py-12">
-                <p className="text-gray-500 font-body">Loading orders...</p>
-              </div>
+              <Loading variant="spinner" size="md" text="Loading orders..." fullHeight={true} />
             ) : filteredBookings.length === 0 ? (
-              <div className="text-center py-12">
-                <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 font-body">No {activeTab === 'all' ? '' : activeTab} orders</p>
-              </div>
+              <EmptyState
+                icon={<Calendar className="w-full h-full" />}
+                title={`No ${activeTab === 'all' ? '' : activeTab} orders`}
+                description="Your incoming orders will appear here"
+                size="md"
+                fullHeight={true}
+              />
             ) : (
               <div className="space-y-4">
                 {/* Each booking is a separate CARD */}
@@ -227,9 +298,49 @@ export default function ProviderOrders() {
                         
                         {/* Top Right Icons */}
                         <div className="flex items-center gap-2">
-                          <button className="p-1.5 border border-[#cccccc] rounded-xl hover:bg-gray-50">
-                            <Calendar className="w-5 h-5 text-gray-600" />
-                          </button>
+                          {booking.status === 'confirmed' ? (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button className="p-1.5 border border-[#cccccc] rounded-xl hover:bg-gray-50">
+                                  {/* Calendar Plus icon from Figma */}
+                                  <svg className="w-5 h-5" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M6.66667 1.66675V4.16675" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M13.3333 1.66675V4.16675" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M2.5 7.50008H17.5" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M17.5 3.33325H2.5C1.83696 3.33325 1.66667 3.50354 1.66667 4.16658V16.6666C1.66667 17.3296 1.83696 17.4999 2.5 17.4999H17.5C18.163 17.4999 18.3333 17.3296 18.3333 16.6666V4.16658C18.3333 3.50354 18.163 3.33325 17.5 3.33325Z" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M10 9.58325V12.0833" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M8.75 12.9167H11.25" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                  </svg>
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem onClick={() => handleGoogleCalendar(booking)}>
+                                  <svg
+                                    className="w-4 h-4 mr-2"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                  >
+                                    <path
+                                      d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"
+                                      fill="#4285F4"
+                                    />
+                                    <path d="M8 9H16V11H8V9Z" fill="white" />
+                                    <path d="M8 13H13V15H8V13Z" fill="white" />
+                                  </svg>
+                                  Google Calendar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleICSDownload(booking)}>
+                                  <Calendar className="w-4 h-4 mr-2 text-blue-600" />
+                                  Download .ics file
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          ) : (
+                            <button className="p-1.5 border border-[#cccccc] rounded-xl hover:bg-gray-50 opacity-50 cursor-not-allowed" disabled>
+                              <Calendar className="w-5 h-5 text-gray-400" />
+                            </button>
+                          )}
                           <button 
                             className="p-1.5 border border-[#cccccc] rounded-xl hover:bg-gray-50"
                             onClick={() => setChatModal({
@@ -456,16 +567,17 @@ export default function ProviderOrders() {
           </div>
 
           {/* Mobile Content Area */}
-          <div>
+          <div className="flex flex-col min-h-[500px]">
             {loading ? (
-              <div className="text-center py-12">
-                <p className="text-gray-500 font-body">Loading orders...</p>
-              </div>
+              <Loading variant="spinner" size="md" text="Loading orders..." fullHeight={true} />
             ) : filteredBookings.length === 0 ? (
-              <div className="text-center py-12">
-                <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 font-body">No {activeTab === 'all' ? '' : activeTab} orders</p>
-              </div>
+              <EmptyState
+                icon={<Calendar className="w-full h-full" />}
+                title={`No ${activeTab === 'all' ? '' : activeTab} orders`}
+                description="Your incoming orders will appear here"
+                size="md"
+                fullHeight={true}
+              />
             ) : (
               <div className="space-y-4">
                 {/* Mobile Order Cards - Same content as desktop */}
@@ -490,9 +602,49 @@ export default function ProviderOrders() {
                         
                         {/* Top Right Icons - Smaller on mobile */}
                         <div className="flex items-center gap-2 ml-2">
-                          <button className="p-1.5 border border-[#cccccc] rounded-xl hover:bg-gray-50">
-                            <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
-                          </button>
+                          {booking.status === 'confirmed' ? (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button className="p-1.5 border border-[#cccccc] rounded-xl hover:bg-gray-50">
+                                  {/* Calendar Plus icon from Figma - mobile responsive */}
+                                  <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M6.66667 1.66675V4.16675" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M13.3333 1.66675V4.16675" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M2.5 7.50008H17.5" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M17.5 3.33325H2.5C1.83696 3.33325 1.66667 3.50354 1.66667 4.16658V16.6666C1.66667 17.3296 1.83696 17.4999 2.5 17.4999H17.5C18.163 17.4999 18.3333 17.3296 18.3333 16.6666V4.16658C18.3333 3.50354 18.163 3.33325 17.5 3.33325Z" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M10 9.58325V12.0833" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M8.75 12.9167H11.25" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                  </svg>
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem onClick={() => handleGoogleCalendar(booking)}>
+                                  <svg
+                                    className="w-4 h-4 mr-2"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                  >
+                                    <path
+                                      d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"
+                                      fill="#4285F4"
+                                    />
+                                    <path d="M8 9H16V11H8V9Z" fill="white" />
+                                    <path d="M8 13H13V15H8V13Z" fill="white" />
+                                  </svg>
+                                  Google Calendar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleICSDownload(booking)}>
+                                  <Calendar className="w-4 h-4 mr-2 text-blue-600" />
+                                  Download .ics file
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          ) : (
+                            <button className="p-1.5 border border-[#cccccc] rounded-xl hover:bg-gray-50 opacity-50 cursor-not-allowed" disabled>
+                              <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+                            </button>
+                          )}
                           <button 
                             className="p-1.5 border border-[#cccccc] rounded-xl hover:bg-gray-50"
                             onClick={() => setChatModal({

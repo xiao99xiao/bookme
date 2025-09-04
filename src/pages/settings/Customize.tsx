@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/design-system/components/Input';
 import { Label } from '@/components/ui/label';
 import { Loader2, CheckCircle, XCircle, Settings, Copy, Check, Clock, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/PrivyAuthContext';
@@ -247,7 +247,7 @@ export default function Customize() {
                         usernameAvailability.available === false ? 'ring-2 ring-red-500' : ''
                       }`}>
                         <div aria-hidden="true" className="absolute border border-[#eeeeee] border-solid inset-[-1px] pointer-events-none rounded-[9px]" />
-                        <Input
+                        <Input fullWidth
                           id="username"
                           {...form.register('username')}
                           placeholder="your-username"
@@ -438,7 +438,7 @@ export default function Customize() {
                     usernameAvailability.available === true ? 'ring-2 ring-green-500' :
                     usernameAvailability.available === false ? 'ring-2 ring-red-500' : ''
                   }`}>
-                    <Input
+                    <Input fullWidth
                       id="username"
                       {...form.register('username')}
                       placeholder="your-username"

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge as DSBadge } from "@/design-system";
-import { Textarea } from "@/components/ui/textarea";
+import { Textarea } from "@/design-system/components/Input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Video, Clock, MapPin, X, Star, Loader2, Phone, Users, MessageCircle } from "lucide-react";
 import { format, parseISO, isPast, isFuture } from "date-fns";
@@ -234,6 +234,8 @@ export default function MyBookingsCustomer() {
                       value={cancelReason}
                       onChange={(e) => setCancelReason(e.target.value)}
                       placeholder="Reason for cancellation..."
+                      rows={3}
+                      fullWidth
                     />
                     <div className="flex justify-end space-x-2">
                       <Button variant="outline" onClick={() => {
