@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/PrivyAuthContext";
 import authHero from "@/assets/auth-hero.jpg";
-import { H1, H2, Text } from "@/design-system";
+import { H1, H2, Text, Button as DSButton } from "@/design-system";
 
 const Auth = () => {
   const { login, ready } = useAuth();
@@ -26,12 +26,15 @@ const Auth = () => {
       <div className="flex-1 flex items-center justify-center p-8 bg-background">
         <div className="w-full max-w-md space-y-6">
           <div className="flex items-center gap-2 mb-8">
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
-              </Link>
-            </Button>
+            <DSButton 
+              variant="tertiary" 
+              size="small" 
+              as={Link} 
+              to="/"
+              icon={<ArrowLeft className="h-4 w-4" />}
+            >
+              Back
+            </DSButton>
           </div>
 
           <div className="text-center space-y-2">
@@ -42,12 +45,13 @@ const Auth = () => {
           </div>
 
           <div className="space-y-4">
-            <Button 
+            <DSButton 
               onClick={login}
-              className="w-full"
+              fullWidth
+              variant="primary"
             >
               Sign In / Sign Up
-            </Button>
+            </DSButton>
             
             <Text variant="small" color="secondary" className="text-center">
                 By continuing, you agree to our Terms of Service and Privacy Policy

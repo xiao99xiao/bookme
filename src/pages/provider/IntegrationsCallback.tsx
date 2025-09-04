@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Button as DSButton } from '@/design-system';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ApiClient } from '@/lib/api-migration';
@@ -120,9 +120,9 @@ export default function IntegrationsCallback() {
         
         <CardContent className="text-center">
           {(status === 'success' || status === 'error') && (
-            <Button onClick={handleGoBack} className="mt-4">
+            <DSButton onClick={handleGoBack} className="mt-4" variant="primary">
               Go Back to Integrations
-            </Button>
+            </DSButton>
           )}
         </CardContent>
       </Card>

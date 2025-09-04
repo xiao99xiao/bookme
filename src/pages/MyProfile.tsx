@@ -11,7 +11,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient } from '@/lib/api-migration';
-import { H1, H2, H3, Text, Description } from '@/design-system';
+import { H1, H2, H3, Text, Description, Button as DSButton } from '@/design-system';
 
 export default function MyProfile() {
   const { user, profile, refreshProfile, userId } = useAuth();
@@ -224,20 +224,15 @@ export default function MyProfile() {
                       )}
                     />
 
-                    <Button 
+                    <DSButton 
                       type="submit" 
-                      className="w-full"
+                      fullWidth
+                      variant="primary"
                       disabled={isUpdatingProfile}
+                      icon={isUpdatingProfile ? <Loader2 className="h-4 w-4 animate-spin" /> : undefined}
                     >
-                      {isUpdatingProfile ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Updating...
-                        </>
-                      ) : (
-                        'Update Profile'
-                      )}
-                    </Button>
+                      {isUpdatingProfile ? 'Updating...' : 'Update Profile'}
+                    </DSButton>
                   </div>
                 </div>
               </form>
@@ -258,13 +253,13 @@ export default function MyProfile() {
                       readOnly 
                       className="text-xs bg-muted"
                     />
-                    <Button onClick={copyProfileLink} variant="outline" size="sm">
-                      {profileLinkCopied ? (
-                        <Check className="h-4 w-4" />
-                      ) : (
-                        <Copy className="h-4 w-4" />
-                      )}
-                    </Button>
+                    <DSButton 
+                      onClick={copyProfileLink} 
+                      variant="secondary" 
+                      size="small"
+                      iconPosition="only"
+                      icon={profileLinkCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    />
                   </div>
                 </div>
               </div>

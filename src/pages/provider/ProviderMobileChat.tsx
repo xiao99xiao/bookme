@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button as DSButton } from '@/design-system';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient } from '@/lib/api-migration';
@@ -107,13 +107,13 @@ export default function ProviderMobileChat() {
     return (
       <div className="h-[100dvh] flex flex-col bg-white">
         <div className="flex items-center p-4 border-b">
-          <Button
-            variant="ghost"
-            size="icon"
+          <DSButton
+            variant="tertiary"
+            size="small"
+            iconPosition="only"
             onClick={handleBack}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
+            icon={<ArrowLeft className="h-5 w-5" />}
+          />
           <H2 className="ml-4">Messages</H2>
         </div>
         
@@ -125,9 +125,9 @@ export default function ProviderMobileChat() {
                 : 'Something went wrong loading this conversation'
               }
             </p>
-            <Button onClick={handleBack}>
+            <DSButton onClick={handleBack} variant="primary">
               Back to Messages
-            </Button>
+            </DSButton>
           </div>
         </div>
       </div>
@@ -138,13 +138,13 @@ export default function ProviderMobileChat() {
     <div className="h-[100dvh] flex flex-col bg-white">
       {/* Mobile Header */}
       <div className="flex items-center gap-3 p-4 border-b bg-white">
-        <Button
-          variant="ghost"
-          size="icon"
+        <DSButton
+          variant="tertiary"
+          size="small"
+          iconPosition="only"
           onClick={handleBack}
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
+          icon={<ArrowLeft className="h-5 w-5" />}
+        />
         
         <Avatar className="h-8 w-8">
           <AvatarImage src={conversation.otherUser.avatar} />

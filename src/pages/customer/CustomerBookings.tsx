@@ -15,7 +15,7 @@ import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient, Booking } from '@/lib/api-migration';
 import ChatModal from '@/components/ChatModal';
 import ReviewDialog from '@/components/ReviewDialog';
-import { H2, H3, Text, Description, Label } from '@/design-system';
+import { H2, H3, Text, Description, Label, Button as DSButton } from '@/design-system';
 
 export default function CustomerBookings() {
   const { userId } = useAuth();
@@ -518,23 +518,23 @@ export default function CustomerBookings() {
                           {booking.status === 'confirmed' && (
                             <>
                               {hasStarted ? (
-                                <Button
-                                  size="sm"
+                                <DSButton
+                                  size="small"
                                   onClick={() => handleCompleteBooking(booking.id)}
-                                  className="bg-[#36D267] hover:bg-[#2eb858] text-white text-sm font-semibold px-2 py-1.5 h-8 rounded-xl border border-[#cccccc] font-body flex items-center gap-2"
+                                  className="bg-[#36D267] hover:bg-[#2eb858] text-white"
+                                  icon={<CheckCircle className="w-5 h-5" />}
                                 >
-                                  <CheckCircle className="w-5 h-5" />
                                   Mark Complete
-                                </Button>
+                                </DSButton>
                               ) : (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
+                                <DSButton
+                                  variant="secondary"
+                                  size="small"
                                   onClick={() => handleCancelBooking(booking.id)}
-                                  className="text-sm font-semibold px-4 py-1.5 h-8 rounded-xl border border-[#cccccc] text-[#F1343D] hover:bg-[#ffeff0] font-body"
+                                  className="text-[#F1343D] hover:bg-[#ffeff0]"
                                 >
                                   Cancel
-                                </Button>
+                                </DSButton>
                               )}
                               {booking.meeting_link && (
                                 <>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { Button as DSButton } from "@/design-system";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -218,12 +218,12 @@ const Discover = () => {
           ) : error ? (
             <div className="text-center py-12">
               <p className="text-red-500 text-lg mb-4">{error}</p>
-              <Button 
-                variant="outline" 
+              <DSButton 
+                variant="secondary" 
                 onClick={() => window.location.reload()}
               >
                 Try Again
-              </Button>
+              </DSButton>
             </div>
           ) : (
             <>
@@ -307,9 +307,9 @@ const Discover = () => {
                               /{service.duration_minutes}min
                             </span>
                           </div>
-                          <Button size="sm" onClick={(e) => { e.stopPropagation(); handleServiceClick(service); }}>
+                          <DSButton size="small" variant="primary" onClick={(e) => { e.stopPropagation(); handleServiceClick(service); }}>
                             Book Now
-                          </Button>
+                          </DSButton>
                         </div>
                       </div>
                     </CardContent>
@@ -322,15 +322,15 @@ const Discover = () => {
                   <p className="text-muted-foreground text-lg mb-4">
                     No services found matching your criteria.
                   </p>
-                  <Button 
-                    variant="outline" 
+                  <DSButton 
+                    variant="secondary" 
                     onClick={() => {
                       setSearchTerm("");
                       setSelectedCategory("all");
                     }}
                   >
                     Clear Filters
-                  </Button>
+                  </DSButton>
                 </div>
               )}
             </>
@@ -345,9 +345,9 @@ const Discover = () => {
           <p className="text-lg text-muted-foreground mb-6">
             Join thousands of professionals earning by sharing their expertise. Start building your income stream today.
           </p>
-          <Button asChild size="lg" className="text-lg px-8">
-            <Link to="/auth">Become a Service Provider</Link>
-          </Button>
+          <DSButton as={Link} to="/auth" size="large" className="text-lg px-8">
+            Become a Service Provider
+          </DSButton>
         </div>
       </section>
     </div>

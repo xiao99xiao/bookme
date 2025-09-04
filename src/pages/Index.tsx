@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button as DSButton } from "@/design-system";
 import { Link } from "react-router-dom";
 import { Clock, CreditCard, User, Globe, Coins, Video, MessageCircle, MapPin } from "lucide-react";
 import heroIllustration from "@/assets/hero-illustration.jpg";
@@ -23,12 +23,12 @@ const Index = () => {
                 Turn your expertise into income. Share what you know, set your schedule, and get paid in crypto while customers use their credit cards.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button asChild size="lg" className="text-lg px-8">
-                  <Link to="/auth">Start Earning Today</Link>
-                </Button>
-                <Button variant="outline" size="lg" asChild className="text-lg px-8">
-                  <Link to="/book-services">I'm Looking for Services</Link>
-                </Button>
+                <DSButton as={Link} to="/auth" size="large" className="text-lg px-8">
+                  Start Earning Today
+                </DSButton>
+                <DSButton variant="secondary" size="large" as={Link} to="/book-services" className="text-lg px-8">
+                  I'm Looking for Services
+                </DSButton>
               </div>
             </div>
             <div className="relative">
@@ -219,9 +219,9 @@ const Index = () => {
             Join thousands of professionals already earning cryptocurrency by sharing their expertise.
             Start building your income stream today.
           </p>
-          <Button asChild size="lg" className="text-lg px-12">
-            <Link to="/auth">Create Your Profile Now</Link>
-          </Button>
+          <DSButton as={Link} to="/auth" size="large" className="text-lg px-12">
+            Create Your Profile Now
+          </DSButton>
         </div>
       </section>
     </div>

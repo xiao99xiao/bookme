@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, Clock, DollarSign, MapPin, Eye, EyeOff, Briefcase, Calendar, Star, Mail, Phone, Globe, Video, Users } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
+import { Button as DSButton } from '@/design-system';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -174,14 +174,15 @@ export default function ProviderServices() {
         <div className="lg:col-span-2 p-6 space-y-6">
           {/* Add Service Button */}
           <div className={`pb-8 mb-8 ${services.length === 0 ? "mt-12" : "mt-6"} border-b border-gray-200`}>
-            <Button 
+            <DSButton 
               onClick={handleCreateService}
-              className="w-full"
-              size="lg"
+              fullWidth
+              size="large"
+              variant="primary"
+              icon={<Plus className="h-5 w-5" />}
             >
-              <Plus className="mr-2 h-5 w-5" />
               Add New Service
-            </Button>
+            </DSButton>
           </div>
 
           {/* Services List */}
@@ -237,33 +238,33 @@ export default function ProviderServices() {
                     </div>
 
                     <div className="flex items-center space-x-2 ml-4">
-                      <Button
-                        variant="ghost"
-                        size="icon"
+                      <DSButton
+                        variant="tertiary"
+                        size="small"
+                        iconPosition="only"
                         onClick={() => handleToggleVisibility(service)}
                         title={service.is_visible !== false ? 'Hide from public view' : 'Show in public view'}
-                      >
-                        {service.is_visible !== false ? (
+                        icon={service.is_visible !== false ? (
                           <Eye className="w-4 h-4" />
                         ) : (
                           <EyeOff className="w-4 h-4" />
                         )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
+                      />
+                      <DSButton
+                        variant="tertiary"
+                        size="small"
+                        iconPosition="only"
                         onClick={() => handleEditService(service)}
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
+                        icon={<Edit2 className="w-4 h-4" />}
+                      />
+                      <DSButton
+                        variant="tertiary"
+                        size="small"
+                        iconPosition="only"
                         onClick={() => setDeletingService(service)}
                         className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                        icon={<Trash2 className="w-4 h-4" />}
+                      />
                     </div>
                   </div>
                 </div>

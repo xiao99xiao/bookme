@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Settings, ExternalLink, Trash2, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
+import { Button as DSButton } from '@/design-system';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/PrivyAuthContext';
@@ -191,27 +191,28 @@ export default function ProviderIntegrations() {
               
               <div className="flex space-x-2">
                 {status === 'expired' ? (
-                  <Button
-                    size="sm"
+                  <DSButton
+                    size="small"
+                    variant="primary"
                     onClick={() => handleConnect(platformKey)}
                     disabled={connectingPlatform === platformKey}
-                  >
-                    {connectingPlatform === platformKey ? (
-                      <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                    icon={connectingPlatform === platformKey ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
-                      <ExternalLink className="w-4 h-4 mr-1" />
+                      <ExternalLink className="w-4 h-4" />
                     )}
-                    Reconnect
-                  </Button>
-                ) : (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleDisconnect(integration.id, platformKey)}
                   >
-                    <Trash2 className="w-4 h-4 mr-1" />
+                    Reconnect
+                  </DSButton>
+                ) : (
+                  <DSButton
+                    size="small"
+                    variant="secondary"
+                    onClick={() => handleDisconnect(integration.id, platformKey)}
+                    icon={<Trash2 className="w-4 h-4" />}
+                  >
                     Disconnect
-                  </Button>
+                  </DSButton>
                 )}
               </div>
             </div>
@@ -227,19 +228,19 @@ export default function ProviderIntegrations() {
                 </div>
               )}
               
-              <Button
-                size="sm"
+              <DSButton
+                size="small"
                 onClick={() => handleConnect(platformKey)}
                 disabled={connectingPlatform === platformKey || platform.comingSoon}
-                variant={platform.comingSoon ? "outline" : "default"}
-              >
-                {connectingPlatform === platformKey ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                variant={platform.comingSoon ? "secondary" : "primary"}
+                icon={connectingPlatform === platformKey ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  <ExternalLink className="w-4 h-4 mr-1" />
+                  <ExternalLink className="w-4 h-4" />
                 )}
+              >
                 {platform.comingSoon ? 'Coming Soon' : `Connect ${platform.name}`}
-              </Button>
+              </DSButton>
             </div>
           )}
         </CardContent>

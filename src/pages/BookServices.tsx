@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button as DSButton } from "@/design-system";
 import { Link } from "react-router-dom";
 import { Search, Calendar, CreditCard, Video, MessageCircle, MapPin, Clock, Star } from "lucide-react";
 import clientBookingFlow from "@/assets/client-booking-flow.jpg";
@@ -24,12 +24,12 @@ const BookServices = () => {
                 Your payment is held safely until you confirm service completion - no scams, just quality service.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button asChild size="lg" className="text-lg px-8">
-                  <Link to="/discover">Browse Experts</Link>
-                </Button>
-                <Button variant="outline" size="lg" asChild className="text-lg px-8">
-                  <Link to="/auth">Join as Provider</Link>
-                </Button>
+                <DSButton as={Link} to="/discover" size="large" className="text-lg px-8">
+                  Browse Experts
+                </DSButton>
+                <DSButton variant="secondary" size="large" as={Link} to="/auth" className="text-lg px-8">
+                  Join as Provider
+                </DSButton>
               </div>
             </div>
             <div className="relative">
