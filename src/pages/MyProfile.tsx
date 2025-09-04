@@ -11,7 +11,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient } from '@/lib/api-migration';
-import { H1, H2, H3 } from '@/design-system';
+import { H1, H2, H3, Text, Description } from '@/design-system';
 
 export default function MyProfile() {
   const { user, profile, refreshProfile, userId } = useAuth();
@@ -89,9 +89,9 @@ export default function MyProfile() {
       <div className="max-w-4xl mx-auto p-8">
         <div className="mb-8">
           <H1 className="mb-2">My Profile</H1>
-          <p className="text-muted-foreground">
+          <Text color="secondary">
             Manage your personal information and account settings
-          </p>
+          </Text>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -190,9 +190,9 @@ export default function MyProfile() {
                         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                           <div className="space-y-0.5">
                             <FormLabel className="text-base">Service Provider</FormLabel>
-                            <div className="text-sm text-muted-foreground">
+                            <Text variant="small" color="secondary">
                               Enable this to offer services to others
-                            </div>
+                            </Text>
                           </div>
                           <FormControl>
                             <Switch
@@ -275,18 +275,18 @@ export default function MyProfile() {
               <H3 className="mb-4">Account Stats</H3>
               <div className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Rating</span>
-                  <span className="text-sm font-medium">{profile?.rating?.toFixed(1) || '0.0'}</span>
+                  <Text variant="small" color="secondary">Rating</Text>
+                  <Text variant="small" weight="medium">{profile?.rating?.toFixed(1) || '0.0'}</Text>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Reviews</span>
-                  <span className="text-sm font-medium">{profile?.review_count || 0}</span>
+                  <Text variant="small" color="secondary">Reviews</Text>
+                  <Text variant="small" weight="medium">{profile?.review_count || 0}</Text>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Member Since</span>
-                  <span className="text-sm font-medium">
+                  <Text variant="small" color="secondary">Member Since</Text>
+                  <Text variant="small" weight="medium">
                     {profile?.created_at ? new Date(profile.created_at).getFullYear() : 'N/A'}
-                  </span>
+                  </Text>
                 </div>
               </div>
             </div>

@@ -9,7 +9,7 @@ import { Video, Clock, MapPin, X, Star, Loader2, Phone, Users, MessageCircle } f
 import { format, parseISO, isPast, isFuture } from "date-fns";
 import { toast } from "sonner";
 import { useAuth} from "@/contexts/PrivyAuthContext";
-import { H1, H3 } from '@/design-system';
+import { H1, H3, Text, Label, Description } from '@/design-system';
 import { ApiClient } from "@/lib/api-migration";
 
 interface Booking {
@@ -179,20 +179,20 @@ export default function MyBookingsCustomer() {
             <div className="space-y-2">
               {booking.customer_notes && (
                 <div>
-                  <div className="text-sm font-medium">Your Notes:</div>
-                  <div className="text-sm text-muted-foreground">{booking.customer_notes}</div>
+                  <Label>Your Notes:</Label>
+                  <Text variant="small" color="secondary">{booking.customer_notes}</Text>
                 </div>
               )}
               {booking.provider_notes && (
                 <div>
-                  <div className="text-sm font-medium">Provider Notes:</div>
-                  <div className="text-sm text-muted-foreground">{booking.provider_notes}</div>
+                  <Label>Provider Notes:</Label>
+                  <Text variant="small" color="secondary">{booking.provider_notes}</Text>
                 </div>
               )}
               {booking.cancellation_reason && (
                 <div>
-                  <div className="text-sm font-medium">Cancellation Reason:</div>
-                  <div className="text-sm text-muted-foreground">{booking.cancellation_reason}</div>
+                  <Label>Cancellation Reason:</Label>
+                  <Text variant="small" color="secondary">{booking.cancellation_reason}</Text>
                 </div>
               )}
             </div>
@@ -273,7 +273,7 @@ export default function MyBookingsCustomer() {
       <div className="h-full flex items-center justify-center bg-background">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading bookings...</p>
+          <Text color="secondary">Loading bookings...</Text>
         </div>
       </div>
     );
@@ -284,17 +284,17 @@ export default function MyBookingsCustomer() {
       <div className="max-w-6xl mx-auto p-8">
         <div className="mb-8">
           <H1 className="mb-2">My Bookings</H1>
-          <p className="text-muted-foreground">
+          <Text color="secondary">
             View and manage your service bookings
-          </p>
+          </Text>
         </div>
 
         {bookings.length === 0 ? (
           <div className="bg-card border rounded-lg p-8 text-center">
             <H3 className="mb-2">No Bookings Yet</H3>
-            <p className="text-muted-foreground mb-4">
+            <Text color="secondary" className="mb-4">
               When you book services from providers, they will appear here.
-            </p>
+            </Text>
             <Button variant="outline" onClick={() => window.location.href = '/discover'}>
               Discover Services
             </Button>

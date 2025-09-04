@@ -15,7 +15,7 @@ import StarRating from "@/components/StarRating";
 import { toast } from "sonner";
 import { getBrowserTimezone } from "@/lib/timezone";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { H1 } from '@/design-system';
+import { H1, Text, Description } from '@/design-system';
 
 interface Service {
   id: string;
@@ -290,7 +290,7 @@ const Profile = () => {
       <div className="min-h-screen bg-background pt-20 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading profile...</p>
+          <Text color="secondary">Loading profile...</Text>
         </div>
       </div>
     );
@@ -303,7 +303,7 @@ const Profile = () => {
         <div className="text-center max-w-md">
           <div className="text-red-500 text-6xl mb-4">❌</div>
           <h2 className="text-xl font-semibold mb-2">Profile Not Found</h2>
-          <p className="text-muted-foreground mb-4">{error || 'This profile does not exist or could not be loaded.'}</p>
+          <Text color="secondary" className="mb-4">{error || 'This profile does not exist or could not be loaded.'}</Text>
         </div>
       </div>
     );

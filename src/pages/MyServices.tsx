@@ -10,7 +10,7 @@ import { MapPin, Video, Users, Phone, Plus, Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/PrivyAuthContext';
-import { H1, H2, H3 } from '@/design-system';
+import { H1, H2, H3, Text, Description } from '@/design-system';
 import { ApiClient } from '@/lib/api-migration';
 import { TimeSlotSelector } from '@/components/TimeSlotSelector';
 
@@ -238,7 +238,7 @@ export default function MyServices() {
       <div className="h-full flex items-center justify-center bg-background">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading services...</p>
+          <Text color="secondary">Loading services...</Text>
         </div>
       </div>
     );
@@ -250,9 +250,9 @@ export default function MyServices() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <H1 className="mb-2">My Services</H1>
-            <p className="text-muted-foreground">
+            <Text color="secondary">
               Manage the services you offer to other users
-            </p>
+            </Text>
           </div>
           <Button onClick={handleAddService} className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
@@ -263,9 +263,9 @@ export default function MyServices() {
         {!profile?.is_provider ? (
           <div className="bg-card border rounded-lg p-8 text-center">
             <H3 className="mb-2">Become a Service Provider</H3>
-            <p className="text-muted-foreground mb-4">
+            <Text color="secondary" className="mb-4">
               Enable service provider mode in your profile to start offering services to other users.
-            </p>
+            </Text>
             <Button variant="outline" onClick={() => window.location.href = '/customer/profile'}>
               Update Profile Settings
             </Button>
@@ -273,9 +273,9 @@ export default function MyServices() {
         ) : services.length === 0 ? (
           <div className="bg-card border rounded-lg p-8 text-center">
             <H3 className="mb-2">No Services Yet</H3>
-            <p className="text-muted-foreground mb-4">
+            <Text color="secondary" className="mb-4">
               Create your first service to start offering your skills to other users.
-            </p>
+            </Text>
             <Button onClick={handleAddService} className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
               Create Your First Service
@@ -300,13 +300,13 @@ export default function MyServices() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-medium">${service.price}</div>
-                    <div className="text-xs text-muted-foreground">{service.duration_minutes}m</div>
+                    <Text variant="small" weight="medium">${service.price}</Text>
+                    <Description>{service.duration_minutes}m</Description>
                   </div>
                 </div>
                 
                 <H3 className="mb-2">{service.title}</H3>
-                <p className="text-sm text-muted-foreground line-clamp-3 mb-4">{service.description}</p>
+                <Text variant="small" color="secondary" className="line-clamp-3 mb-4">{service.description}</Text>
                 
                 {service.tags && service.tags.length > 0 && (
                   <div className="flex flex-wrap gap-1">

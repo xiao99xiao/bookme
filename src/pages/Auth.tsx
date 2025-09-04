@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/PrivyAuthContext";
 import authHero from "@/assets/auth-hero.jpg";
-import { H1, H2 } from "@/design-system";
+import { H1, H2, Text } from "@/design-system";
 
 const Auth = () => {
   const { login, ready } = useAuth();
@@ -14,7 +14,7 @@ const Auth = () => {
       <div className="h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
+          <Text color="secondary">Loading...</Text>
         </div>
       </div>
     );
@@ -36,9 +36,9 @@ const Auth = () => {
 
           <div className="text-center space-y-2">
             <H1>Welcome</H1>
-            <p className="text-muted-foreground">
+            <Text color="secondary">
               Enter your email to get started
-            </p>
+            </Text>
           </div>
 
           <div className="space-y-4">
@@ -49,11 +49,9 @@ const Auth = () => {
               Sign In / Sign Up
             </Button>
             
-            <div className="text-center text-sm text-muted-foreground">
-              <p>
+            <Text variant="small" color="secondary" className="text-center">
                 By continuing, you agree to our Terms of Service and Privacy Policy
-              </p>
-            </div>
+            </Text>
           </div>
         </div>
       </div>
