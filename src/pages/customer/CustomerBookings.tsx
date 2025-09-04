@@ -353,17 +353,23 @@ export default function CustomerBookings() {
                           {booking.status === 'confirmed' ? (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <button className="p-1.5 border border-[#cccccc] rounded-xl hover:bg-gray-50">
-                                  {/* Calendar Plus icon from Figma */}
-                                  <svg className="w-5 h-5" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M6.66667 1.66675V4.16675" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                                    <path d="M13.3333 1.66675V4.16675" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                                    <path d="M2.5 7.50008H17.5" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                                    <path d="M17.5 3.33325H2.5C1.83696 3.33325 1.66667 3.50354 1.66667 4.16658V16.6666C1.66667 17.3296 1.83696 17.4999 2.5 17.4999H17.5C18.163 17.4999 18.3333 17.3296 18.3333 16.6666V4.16658C18.3333 3.50354 18.163 3.33325 17.5 3.33325Z" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                                    <path d="M10 11.6667V14.1667" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                                    <path d="M8.75 12.9167H11.25" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                                  </svg>
-                                </button>
+                                <DSButton 
+                                  variant="outline"
+                                  size="small"
+                                  iconPosition="only"
+                                  asChild
+                                >
+                                  <button>
+                                    <svg className="w-5 h-5" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path d="M6.66667 1.66675V4.16675" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                      <path d="M13.3333 1.66675V4.16675" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                      <path d="M2.5 7.50008H17.5" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                      <path d="M17.5 3.33325H2.5C1.83696 3.33325 1.66667 3.50354 1.66667 4.16658V16.6666C1.66667 17.3296 1.83696 17.4999 2.5 17.4999H17.5C18.163 17.4999 18.3333 17.3296 18.3333 16.6666V4.16658C18.3333 3.50354 18.163 3.33325 17.5 3.33325Z" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                      <path d="M10 11.6667V14.1667" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                      <path d="M8.75 12.9167H11.25" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
+                                  </button>
+                                </DSButton>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end" className="w-48">
                                 <DropdownMenuItem onClick={() => handleGoogleCalendar(booking)}>
@@ -389,19 +395,28 @@ export default function CustomerBookings() {
                               </DropdownMenuContent>
                             </DropdownMenu>
                           ) : (
-                            <button className="p-1.5 border border-[#cccccc] rounded-xl hover:bg-gray-50 opacity-50 cursor-not-allowed">
-                              <svg className="w-5 h-5" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M6.66667 1.66675V4.16675" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M13.3333 1.66675V4.16675" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M2.5 7.50008H17.5" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M17.5 3.33325H2.5C1.83696 3.33325 1.66667 3.50354 1.66667 4.16658V16.6666C1.66667 17.3296 1.83696 17.4999 2.5 17.4999H17.5C18.163 17.4999 18.3333 17.3296 18.3333 16.6666V4.16658C18.3333 3.50354 18.163 3.33325 17.5 3.33325Z" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M10 11.6667V14.1667" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M8.75 12.9167H11.25" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
-                            </button>
+                            <DSButton 
+                              variant="outline"
+                              size="small"
+                              iconPosition="only"
+                              disabled={true}
+                              icon={
+                                <svg className="w-5 h-5" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M6.66667 1.66675V4.16675" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                  <path d="M13.3333 1.66675V4.16675" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                  <path d="M2.5 7.50008H17.5" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                  <path d="M17.5 3.33325H2.5C1.83696 3.33325 1.66667 3.50354 1.66667 4.16658V16.6666C1.66667 17.3296 1.83696 17.4999 2.5 17.4999H17.5C18.163 17.4999 18.3333 17.3296 18.3333 16.6666V4.16658C18.3333 3.50354 18.163 3.33325 17.5 3.33325Z" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                  <path d="M10 11.6667V14.1667" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                  <path d="M8.75 12.9167H11.25" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                              }
+                            />
                           )}
-                          <button 
-                            className="p-1.5 border border-[#cccccc] rounded-xl hover:bg-gray-50"
+                          <DSButton 
+                            variant="outline"
+                            size="small"
+                            iconPosition="only"
+                            icon={<MessageSquare className="w-5 h-5" />}
                             onClick={() => setChatModal({
                               isOpen: true,
                               otherUserId: booking.provider_id,
@@ -409,9 +424,7 @@ export default function CustomerBookings() {
                               otherUserAvatar: booking.provider?.avatar,
                               isReadOnly: booking.status === 'cancelled'
                             })}
-                          >
-                            <MessageSquare className="w-5 h-5 text-gray-600" />
-                          </button>
+                          />
                         </div>
                       </div>
 
@@ -715,16 +728,23 @@ export default function CustomerBookings() {
                           {booking.status === 'confirmed' ? (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <button className="p-1.5 border border-[#cccccc] rounded-xl hover:bg-gray-50">
-                                  <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M6.66667 1.66675V4.16675" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                                    <path d="M13.3333 1.66675V4.16675" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                                    <path d="M2.5 7.50008H17.5" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                                    <path d="M17.5 3.33325H2.5C1.83696 3.33325 1.66667 3.50354 1.66667 4.16658V16.6666C1.66667 17.3296 1.83696 17.4999 2.5 17.4999H17.5C18.163 17.4999 18.3333 17.3296 18.3333 16.6666V4.16658C18.3333 3.50354 18.163 3.33325 17.5 3.33325Z" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                                    <path d="M10 11.6667V14.1667" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                                    <path d="M8.75 12.9167H11.25" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                                  </svg>
-                                </button>
+                                <DSButton 
+                                  variant="outline"
+                                  size="small"
+                                  iconPosition="only"
+                                  asChild
+                                >
+                                  <button>
+                                    <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path d="M6.66667 1.66675V4.16675" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                      <path d="M13.3333 1.66675V4.16675" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                      <path d="M2.5 7.50008H17.5" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                      <path d="M17.5 3.33325H2.5C1.83696 3.33325 1.66667 3.50354 1.66667 4.16658V16.6666C1.66667 17.3296 1.83696 17.4999 2.5 17.4999H17.5C18.163 17.4999 18.3333 17.3296 18.3333 16.6666V4.16658C18.3333 3.50354 18.163 3.33325 17.5 3.33325Z" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                      <path d="M10 11.6667V14.1667" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                      <path d="M8.75 12.9167H11.25" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
+                                  </button>
+                                </DSButton>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end" className="w-48">
                                 <DropdownMenuItem onClick={() => handleGoogleCalendar(booking)}>
@@ -750,19 +770,28 @@ export default function CustomerBookings() {
                               </DropdownMenuContent>
                             </DropdownMenu>
                           ) : (
-                            <button className="p-1.5 border border-[#cccccc] rounded-xl hover:bg-gray-50 opacity-50 cursor-not-allowed">
-                              <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M6.66667 1.66675V4.16675" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M13.3333 1.66675V4.16675" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M2.5 7.50008H17.5" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M17.5 3.33325H2.5C1.83696 3.33325 1.66667 3.50354 1.66667 4.16658V16.6666C1.66667 17.3296 1.83696 17.4999 2.5 17.4999H17.5C18.163 17.4999 18.3333 17.3296 18.3333 16.6666V4.16658C18.3333 3.50354 18.163 3.33325 17.5 3.33325Z" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M10 11.6667V14.1667" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M8.75 12.9167H11.25" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
-                            </button>
+                            <DSButton 
+                              variant="outline"
+                              size="small"
+                              iconPosition="only"
+                              disabled={true}
+                              icon={
+                                <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M6.66667 1.66675V4.16675" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                  <path d="M13.3333 1.66675V4.16675" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                  <path d="M2.5 7.50008H17.5" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                  <path d="M17.5 3.33325H2.5C1.83696 3.33325 1.66667 3.50354 1.66667 4.16658V16.6666C1.66667 17.3296 1.83696 17.4999 2.5 17.4999H17.5C18.163 17.4999 18.3333 17.3296 18.3333 16.6666V4.16658C18.3333 3.50354 18.163 3.33325 17.5 3.33325Z" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                  <path d="M10 11.6667V14.1667" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                  <path d="M8.75 12.9167H11.25" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                              }
+                            />
                           )}
-                          <button 
-                            className="p-1.5 border border-[#cccccc] rounded-xl hover:bg-gray-50"
+                          <DSButton 
+                            variant="outline"
+                            size="small"
+                            iconPosition="only"
+                            icon={<MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />}
                             onClick={() => setChatModal({
                               isOpen: true,
                               otherUserId: booking.provider_id,
@@ -770,9 +799,7 @@ export default function CustomerBookings() {
                               otherUserAvatar: booking.provider?.avatar,
                               isReadOnly: booking.status === 'cancelled'
                             })}
-                          >
-                            <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
-                          </button>
+                          />
                         </div>
                       </div>
 

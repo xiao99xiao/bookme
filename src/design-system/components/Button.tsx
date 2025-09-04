@@ -1,4 +1,5 @@
-import { ReactNode, ButtonHTMLAttributes, ElementType } from 'react';
+import { ReactNode, ButtonHTMLAttributes, ElementType, forwardRef } from 'react';
+import { Slot } from '@radix-ui/react-slot';
 import { cn } from '@/lib/utils';
 import { tokens } from '../tokens';
 
@@ -10,9 +11,10 @@ interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'siz
   iconPosition?: 'leading' | 'trailing' | 'only';
   fullWidth?: boolean;
   as?: ElementType;
+  asChild?: boolean;
 }
 
-export function Button({ 
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({ 
   children, 
   className,
   variant = 'primary',
@@ -22,8 +24,9 @@ export function Button({
   fullWidth = false,
   disabled,
   as: Component = 'button',
+  asChild = false,
   ...props 
-}: ButtonProps) {
+}, ref) => {
   const baseClasses = cn(
     'inline-flex items-center justify-center font-semibold transition-colors rounded-[12px] relative',
     'focus:outline-none focus:ring-2 focus:ring-offset-2',
@@ -75,10 +78,13 @@ export function Button({
 
   const radiusStyle = {};
 
+  const Comp = asChild ? Slot : Component;
+
   // Handle icon-only buttons
   if (iconPosition === 'only') {
     return (
-      <Component
+      <Comp
+        ref={ref}
         className={cn(
           baseClasses,
           variantClasses[variant],
@@ -90,13 +96,14 @@ export function Button({
         disabled={disabled}
         {...props}
       >
-        {icon}
-      </Component>
+        {asChild ? children : icon}
+      </Comp>
     );
   }
 
   return (
-    <Component
+    <Comp
+      ref={ref}
       className={cn(
         baseClasses,
         variantClasses[variant],
@@ -111,9 +118,17 @@ export function Button({
       disabled={disabled}
       {...props}
     >
-      {icon && iconPosition === 'leading' && icon}
-      {children}
-      {icon && iconPosition === 'trailing' && icon}
-    </Component>
+      {asChild ? (
+        children
+      ) : (
+        <>
+          {icon && iconPosition === 'leading' && icon}
+          {children}
+          {icon && iconPosition === 'trailing' && icon}
+        </>
+      )}
+    </Comp>
   );
-}
+});
+
+Button.displayName = 'Button';

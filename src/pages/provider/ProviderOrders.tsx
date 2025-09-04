@@ -3,7 +3,6 @@ import { format } from 'date-fns';
 import { Calendar, CheckCircle, MessageSquare, Copy, Video, Star, XCircle } from 'lucide-react';
 import { GoogleMeetIcon, ZoomIcon, TeamsIcon } from '@/components/icons/MeetingPlatformIcons';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,7 +12,7 @@ import {
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient, Booking } from '@/lib/api-migration';
 import ChatModal from '@/components/ChatModal';
-import { H2, H3, Text, Loading, EmptyState } from '@/design-system';
+import { H2, H3, Text, Loading, EmptyState, Button as DSButton } from '@/design-system';
 
 export default function ProviderOrders() {
   const { userId, user } = useAuth();
@@ -291,17 +290,23 @@ export default function ProviderOrders() {
                           {booking.status === 'confirmed' ? (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <button className="p-1.5 border border-[#cccccc] rounded-xl hover:bg-gray-50">
-                                  {/* Calendar Plus icon from Figma */}
-                                  <svg className="w-5 h-5" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M6.66667 1.66675V4.16675" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                                    <path d="M13.3333 1.66675V4.16675" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                                    <path d="M2.5 7.50008H17.5" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                                    <path d="M17.5 3.33325H2.5C1.83696 3.33325 1.66667 3.50354 1.66667 4.16658V16.6666C1.66667 17.3296 1.83696 17.4999 2.5 17.4999H17.5C18.163 17.4999 18.3333 17.3296 18.3333 16.6666V4.16658C18.3333 3.50354 18.163 3.33325 17.5 3.33325Z" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                                    <path d="M10 9.58325V12.0833" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                                    <path d="M8.75 12.9167H11.25" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                                  </svg>
-                                </button>
+                                <DSButton 
+                                  variant="outline"
+                                  size="small"
+                                  iconPosition="only"
+                                  asChild
+                                >
+                                  <button>
+                                    <svg className="w-5 h-5" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path d="M6.66667 1.66675V4.16675" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                      <path d="M13.3333 1.66675V4.16675" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                      <path d="M2.5 7.50008H17.5" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                      <path d="M17.5 3.33325H2.5C1.83696 3.33325 1.66667 3.50354 1.66667 4.16658V16.6666C1.66667 17.3296 1.83696 17.4999 2.5 17.4999H17.5C18.163 17.4999 18.3333 17.3296 18.3333 16.6666V4.16658C18.3333 3.50354 18.163 3.33325 17.5 3.33325Z" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                      <path d="M10 9.58325V12.0833" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                      <path d="M8.75 12.9167H11.25" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
+                                  </button>
+                                </DSButton>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end" className="w-48">
                                 <DropdownMenuItem onClick={() => handleGoogleCalendar(booking)}>
@@ -327,12 +332,19 @@ export default function ProviderOrders() {
                               </DropdownMenuContent>
                             </DropdownMenu>
                           ) : (
-                            <button className="p-1.5 border border-[#cccccc] rounded-xl hover:bg-gray-50 opacity-50 cursor-not-allowed" disabled>
-                              <Calendar className="w-5 h-5 text-gray-400" />
-                            </button>
+                            <DSButton 
+                              variant="outline"
+                              size="small"
+                              iconPosition="only"
+                              disabled={true}
+                              icon={<Calendar className="w-5 h-5" />}
+                            />
                           )}
-                          <button 
-                            className="p-1.5 border border-[#cccccc] rounded-xl hover:bg-gray-50"
+                          <DSButton 
+                            variant="outline"
+                            size="small"
+                            iconPosition="only"
+                            icon={<MessageSquare className="w-5 h-5" />}
                             onClick={() => setChatModal({
                               isOpen: true,
                               otherUserId: booking.customer_id,
@@ -340,9 +352,7 @@ export default function ProviderOrders() {
                               otherUserAvatar: booking.customer?.avatar,
                               isReadOnly: booking.status === 'cancelled'
                             })}
-                          >
-                            <MessageSquare className="w-5 h-5 text-gray-600" />
-                          </button>
+                          />
                         </div>
                       </div>
 
@@ -425,42 +435,40 @@ export default function ProviderOrders() {
                             <div className="flex items-center gap-3">
                               {booking.status === 'confirmed' && (
                                 <>
-                                  <Button
+                                  <DSButton
                                     variant="outline"
-                                    size="sm"
+                                    size="small"
                                     onClick={() => booking.meeting_link && handleCopyMeetingLink(booking.meeting_link)}
-                                    className="text-sm font-semibold px-2 py-1.5 h-8 rounded-xl border border-[#cccccc] text-[#666666] font-body flex items-center gap-2 min-w-[110px]"
+                                    icon={<Copy className="w-5 h-5" />}
                                   >
-                                    <Copy className="w-5 h-5" />
                                     Copy
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    className="bg-black hover:bg-gray-900 text-white text-sm font-semibold px-2 py-1.5 h-8 rounded-xl border border-black font-body flex items-center gap-2 min-w-[110px]"
+                                  </DSButton>
+                                  <DSButton
+                                    variant="primary"
+                                    size="small"
+                                    icon={getMeetingIcon(booking.meeting_platform)}
                                   >
-                                    {getMeetingIcon(booking.meeting_platform)}
                                     Join
-                                  </Button>
+                                  </DSButton>
                                 </>
                               )}
 
                               {booking.status === 'pending' && (
                                 <>
-                                  <Button
+                                  <DSButton
                                     variant="outline"
-                                    size="sm"
+                                    size="small"
                                     onClick={() => handleUpdateStatus(booking.id, 'cancelled')}
-                                    className="text-sm font-semibold px-4 py-1.5 h-8 rounded-xl border border-[#cccccc] text-[#666666] font-body"
                                   >
                                     Decline
-                                  </Button>
-                                  <Button
-                                    size="sm"
+                                  </DSButton>
+                                  <DSButton
+                                    variant="primary"
+                                    size="small"
                                     onClick={() => handleUpdateStatus(booking.id, 'confirmed')}
-                                    className="bg-black hover:bg-gray-900 text-white text-sm font-semibold px-4 py-1.5 h-8 rounded-xl border border-black font-body"
                                   >
                                     Accept
-                                  </Button>
+                                  </DSButton>
                                 </>
                               )}
                             </div>
@@ -583,17 +591,23 @@ export default function ProviderOrders() {
                           {booking.status === 'confirmed' ? (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <button className="p-1.5 border border-[#cccccc] rounded-xl hover:bg-gray-50">
-                                  {/* Calendar Plus icon from Figma - mobile responsive */}
-                                  <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M6.66667 1.66675V4.16675" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                                    <path d="M13.3333 1.66675V4.16675" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                                    <path d="M2.5 7.50008H17.5" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                                    <path d="M17.5 3.33325H2.5C1.83696 3.33325 1.66667 3.50354 1.66667 4.16658V16.6666C1.66667 17.3296 1.83696 17.4999 2.5 17.4999H17.5C18.163 17.4999 18.3333 17.3296 18.3333 16.6666V4.16658C18.3333 3.50354 18.163 3.33325 17.5 3.33325Z" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                                    <path d="M10 9.58325V12.0833" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                                    <path d="M8.75 12.9167H11.25" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-                                  </svg>
-                                </button>
+                                <DSButton 
+                                  variant="outline"
+                                  size="small"
+                                  iconPosition="only"
+                                  asChild
+                                >
+                                  <button>
+                                    <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path d="M6.66667 1.66675V4.16675" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                      <path d="M13.3333 1.66675V4.16675" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                      <path d="M2.5 7.50008H17.5" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                      <path d="M17.5 3.33325H2.5C1.83696 3.33325 1.66667 3.50354 1.66667 4.16658V16.6666C1.66667 17.3296 1.83696 17.4999 2.5 17.4999H17.5C18.163 17.4999 18.3333 17.3296 18.3333 16.6666V4.16658C18.3333 3.50354 18.163 3.33325 17.5 3.33325Z" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                      <path d="M10 9.58325V12.0833" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                      <path d="M8.75 12.9167H11.25" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
+                                  </button>
+                                </DSButton>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end" className="w-48">
                                 <DropdownMenuItem onClick={() => handleGoogleCalendar(booking)}>
@@ -619,12 +633,19 @@ export default function ProviderOrders() {
                               </DropdownMenuContent>
                             </DropdownMenu>
                           ) : (
-                            <button className="p-1.5 border border-[#cccccc] rounded-xl hover:bg-gray-50 opacity-50 cursor-not-allowed" disabled>
-                              <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-                            </button>
+                            <DSButton 
+                              variant="outline"
+                              size="small"
+                              iconPosition="only"
+                              disabled={true}
+                              icon={<Calendar className="w-4 h-4 sm:w-5 sm:h-5" />}
+                            />
                           )}
-                          <button 
-                            className="p-1.5 border border-[#cccccc] rounded-xl hover:bg-gray-50"
+                          <DSButton 
+                            variant="outline"
+                            size="small"
+                            iconPosition="only"
+                            icon={<MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />}
                             onClick={() => setChatModal({
                               isOpen: true,
                               otherUserId: booking.customer_id,
@@ -632,9 +653,7 @@ export default function ProviderOrders() {
                               otherUserAvatar: booking.customer?.avatar,
                               isReadOnly: booking.status === 'cancelled'
                             })}
-                          >
-                            <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
-                          </button>
+                          />
                         </div>
                       </div>
 
@@ -717,42 +736,40 @@ export default function ProviderOrders() {
                             <div className="flex items-center gap-3 flex-wrap justify-end">
                               {booking.status === 'confirmed' && (
                                 <>
-                                  <Button
+                                  <DSButton
                                     variant="outline"
-                                    size="sm"
+                                    size="small"
                                     onClick={() => booking.meeting_link && handleCopyMeetingLink(booking.meeting_link)}
-                                    className="text-sm font-semibold px-2 py-1.5 h-8 rounded-xl border border-[#cccccc] text-[#666666] font-body flex items-center gap-2 min-w-[110px]"
+                                    icon={<Copy className="w-5 h-5" />}
                                   >
-                                    <Copy className="w-5 h-5" />
                                     Copy
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    className="bg-black hover:bg-gray-900 text-white text-sm font-semibold px-2 py-1.5 h-8 rounded-xl border border-black font-body flex items-center gap-2 min-w-[110px]"
+                                  </DSButton>
+                                  <DSButton
+                                    variant="primary"
+                                    size="small"
+                                    icon={getMeetingIcon(booking.meeting_platform)}
                                   >
-                                    {getMeetingIcon(booking.meeting_platform)}
                                     Join
-                                  </Button>
+                                  </DSButton>
                                 </>
                               )}
 
                               {booking.status === 'pending' && (
                                 <>
-                                  <Button
+                                  <DSButton
                                     variant="outline"
-                                    size="sm"
+                                    size="small"
                                     onClick={() => handleUpdateStatus(booking.id, 'cancelled')}
-                                    className="text-sm font-semibold px-4 py-1.5 h-8 rounded-xl border border-[#cccccc] text-[#666666] font-body"
                                   >
                                     Decline
-                                  </Button>
-                                  <Button
-                                    size="sm"
+                                  </DSButton>
+                                  <DSButton
+                                    variant="primary"
+                                    size="small"
                                     onClick={() => handleUpdateStatus(booking.id, 'confirmed')}
-                                    className="bg-black hover:bg-gray-900 text-white text-sm font-semibold px-4 py-1.5 h-8 rounded-xl border border-black font-body"
                                   >
                                     Accept
-                                  </Button>
+                                  </DSButton>
                                 </>
                               )}
                             </div>
