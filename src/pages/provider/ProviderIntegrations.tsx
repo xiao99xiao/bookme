@@ -4,7 +4,7 @@ import { Settings, ExternalLink, Trash2, AlertCircle, CheckCircle, Loader2 } fro
 import { toast } from 'sonner';
 import { Button as DSButton } from '@/design-system';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Badge as DSBadge } from '@/design-system';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient } from '@/lib/api-migration';
 import { GoogleAuth } from '@/lib/google-auth';
@@ -153,7 +153,7 @@ export default function ProviderIntegrations() {
             </div>
             
             {connected ? (
-              <Badge variant={status === 'connected' ? 'default' : 'destructive'}>
+              <DSBadge variant={status === 'connected' ? 'default' : 'default'} className={status === 'connected' ? '' : 'bg-brand-light-red text-brand-red'}>
                 {status === 'connected' ? (
                   <>
                     <CheckCircle className="w-3 h-3 mr-1" />
@@ -165,9 +165,9 @@ export default function ProviderIntegrations() {
                     Expired
                   </>
                 )}
-              </Badge>
+              </DSBadge>
             ) : (
-              <Badge variant="outline">Not Connected</Badge>
+              <DSBadge variant="outline">Not Connected</DSBadge>
             )}
           </div>
         </CardHeader>
@@ -183,9 +183,9 @@ export default function ProviderIntegrations() {
                   </p>
                 </div>
                 {status === 'expired' && (
-                  <Badge variant="destructive" className="text-xs">
+                  <DSBadge variant="default" size="small" className="bg-brand-light-red text-brand-red">
                     Needs Reconnection
-                  </Badge>
+                  </DSBadge>
                 )}
               </div>
               

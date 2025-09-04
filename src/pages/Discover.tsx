@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button as DSButton } from "@/design-system";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Badge as DSBadge } from "@/design-system";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -277,9 +277,9 @@ const Discover = () => {
                         {service.tags && service.tags.length > 0 && (
                           <div className="flex flex-wrap gap-1">
                             {service.tags.slice(0, 3).map((tag) => (
-                              <Badge key={tag} variant="secondary" className="text-xs">
+                              <DSBadge key={tag} variant="secondary" size="small">
                                 {tag}
-                              </Badge>
+                              </DSBadge>
                             ))}
                           </div>
                         )}
@@ -294,9 +294,9 @@ const Discover = () => {
                             <span>{getLocationText(service.is_online, !!service.location)}</span>
                           </div>
                           {service.categories && (
-                            <Badge variant="outline" className="text-xs">
+                            <DSBadge variant="outline" size="small">
                               {service.categories.name}
-                            </Badge>
+                            </DSBadge>
                           )}
                         </div>
                         

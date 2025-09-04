@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
+import { Badge as DSBadge } from "@/design-system";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Video, Clock, MapPin, X, Star, Loader2, Phone, Users, MessageCircle } from "lucide-react";
@@ -103,12 +103,12 @@ export default function MyBookingsCustomer() {
       confirmed: { variant: 'default' as const, color: 'text-green-600', label: 'Confirmed' },
       in_progress: { variant: 'default' as const, color: 'text-blue-600', label: 'In Progress' },
       completed: { variant: 'secondary' as const, color: 'text-green-700', label: 'Completed' },
-      cancelled: { variant: 'destructive' as const, color: 'text-red-600', label: 'Cancelled' },
+      cancelled: { variant: 'default' as const, color: 'text-red-600', label: 'Cancelled', className: 'bg-brand-light-red text-brand-red' },
       refunded: { variant: 'outline' as const, color: 'text-gray-600', label: 'Refunded' }
     };
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
-    return <Badge variant={config.variant}>{config.label}</Badge>;
+    return <DSBadge variant={config.variant} className={config.className}>{config.label}</DSBadge>;
   };
 
   const getLocationIcon = (isOnline: boolean, hasLocation: boolean) => {
@@ -163,8 +163,8 @@ export default function MyBookingsCustomer() {
               <div className="flex items-center space-x-2 text-sm">
                 <Clock className="h-4 w-4 text-muted-foreground" />
                 <span>{format(scheduledDate, 'PPp')}</span>
-                {isUpcoming && <Badge variant="outline" className="text-xs">Upcoming</Badge>}
-                {isPassed && booking.status === 'pending' && <Badge variant="destructive" className="text-xs">Overdue</Badge>}
+                {isUpcoming && <DSBadge variant="outline" size="small">Upcoming</DSBadge>}
+                {isPassed && booking.status === 'pending' && <DSBadge variant="default" className="bg-brand-light-red text-brand-red text-xs">Overdue</DSBadge>}
               </div>
               <div className="flex items-center space-x-2 text-sm">
                 {getLocationIcon(booking.is_online, !!booking.location)}

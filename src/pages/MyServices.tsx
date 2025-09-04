@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Badge } from '@/components/ui/badge';
+import { Badge as DSBadge } from '@/design-system';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -291,9 +291,9 @@ export default function MyServices() {
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="text-xs">
+                    <DSBadge variant="secondary" size="small">
                       {service.categories?.name || 'General'}
-                    </Badge>
+                    </DSBadge>
                     <div className="flex items-center text-muted-foreground text-xs">
                       {getLocationIcon(service.is_online, !!service.location)}
                       <span className="ml-1">{getLocationText(service.is_online, !!service.location)}</span>
@@ -311,14 +311,14 @@ export default function MyServices() {
                 {service.tags && service.tags.length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     {service.tags.slice(0, 3).map((tag) => (
-                      <Badge key={tag} variant="outline" className="text-xs">
+                      <DSBadge key={tag} variant="outline" size="small">
                         {tag}
-                      </Badge>
+                      </DSBadge>
                     ))}
                     {service.tags.length > 3 && (
-                      <Badge variant="outline" className="text-xs">
+                      <DSBadge variant="outline" size="small">
                         +{service.tags.length - 3}
-                      </Badge>
+                      </DSBadge>
                     )}
                   </div>
                 )}

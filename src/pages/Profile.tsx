@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { Badge as DSBadge } from "@/design-system";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -370,9 +370,9 @@ const Profile = () => {
                       >
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-center gap-2">
-                            <Badge variant="secondary" className="text-xs">
+                            <DSBadge variant="secondary" size="small">
                               {service.categories?.name || 'General'}
-                            </Badge>
+                            </DSBadge>
                             <div className="flex items-center text-muted-foreground text-xs">
                               {getLocationIcon(service.is_online, !!service.location)}
                               <span className="ml-1">{getLocationText(service.is_online, !!service.location)}</span>
@@ -395,9 +395,9 @@ const Profile = () => {
                         {service.tags && service.tags.length > 0 && (
                           <div className="flex flex-wrap gap-1">
                             {service.tags.slice(0, 3).map((tag) => (
-                              <Badge key={tag} variant="secondary" className="text-xs">
+                              <DSBadge key={tag} variant="secondary" size="small">
                                 {tag}
-                              </Badge>
+                              </DSBadge>
                             ))}
                           </div>
                         )}
@@ -504,9 +504,10 @@ const Profile = () => {
                 {/* Service Details */}
                 <div className="space-y-6">
                   <div className="flex items-center gap-3">
-                    <Badge 
+                    <DSBadge 
                       variant="secondary" 
-                      className="bg-muted text-foreground border-0 rounded text-xs font-normal px-2 py-1"
+                      size="small"
+                      className="bg-muted text-foreground border-0 rounded font-normal"
                     >
                       {selectedService.categories?.name || 'General'}
                     </Badge>
@@ -523,9 +524,9 @@ const Profile = () => {
                     {selectedService.tags && selectedService.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {selectedService.tags.map((tag) => (
-                          <Badge key={tag} variant="secondary" className="text-xs">
+                          <DSBadge key={tag} variant="secondary" size="small">
                             {tag}
-                          </Badge>
+                          </DSBadge>
                         ))}
                       </div>
                     )}

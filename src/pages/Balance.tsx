@@ -3,7 +3,7 @@ import { usePrivy, useWallets, useFundWallet } from '@privy-io/react-auth';
 import { useSmartWallets } from '@privy-io/react-auth/smart-wallets';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Badge as DSBadge } from '@/design-system';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { Copy, Wallet, RefreshCw, ExternalLink, Plus, CreditCard } from 'lucide-react';
@@ -212,11 +212,11 @@ export default function Balance() {
   const getWalletTypeBadge = (type: WalletInfo['type']) => {
     switch (type) {
       case 'smart_wallet':
-        return <Badge className="bg-purple-100 text-purple-800">Smart Wallet</Badge>;
+        return <DSBadge className="bg-purple-100 text-purple-800">Smart Wallet</DSBadge>;
       case 'external':
-        return <Badge className="bg-blue-100 text-blue-800">External Wallet</Badge>;
+        return <DSBadge className="bg-blue-100 text-blue-800">External Wallet</DSBadge>;
       case 'embedded':
-        return <Badge className="bg-green-100 text-green-800">Embedded Wallet</Badge>;
+        return <DSBadge className="bg-green-100 text-green-800">Embedded Wallet</DSBadge>;
       default:
         return null;
     }
@@ -392,7 +392,7 @@ export default function Balance() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">ETH Balance</CardTitle>
-              <Badge variant="outline">Gas Token</Badge>
+              <DSBadge variant="outline">Gas Token</DSBadge>
             </div>
           </CardHeader>
           <CardContent>

@@ -3,7 +3,7 @@ import { Plus, Edit2, Trash2, Clock, DollarSign, MapPin, Eye, EyeOff, Briefcase,
 import { toast } from 'sonner';
 import { Button as DSButton } from '@/design-system';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Badge as DSBadge } from '@/design-system';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   AlertDialog,
@@ -207,7 +207,7 @@ export default function ProviderServices() {
                       <div className="flex items-center space-x-2 mb-2">
                         <H3>{service.title}</H3>
                         {service.is_visible === false && (
-                          <Badge variant="outline">Hidden</Badge>
+                          <DSBadge variant="outline">Hidden</DSBadge>
                         )}
                       </div>
                       
@@ -329,9 +329,9 @@ export default function ProviderServices() {
                         >
                           <div className="flex items-start justify-between mb-3">
                             <div className="flex items-center gap-2">
-                              <Badge variant="secondary" className="text-xs">
+                              <DSBadge variant="secondary" size="small">
                                 {service.categories?.name || 'General'}
-                              </Badge>
+                              </DSBadge>
                               <div className="flex items-center text-muted-foreground text-xs">
                                 {getLocationIcon(service.is_online, !!service.location)}
                                 <span className="ml-1">{getLocationText(service.is_online, !!service.location)}</span>
@@ -354,9 +354,9 @@ export default function ProviderServices() {
                           {service.tags && service.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1">
                               {service.tags.slice(0, 3).map((tag) => (
-                                <Badge key={tag} variant="secondary" className="text-xs">
+                                <DSBadge key={tag} variant="secondary" size="small">
                                   {tag}
-                                </Badge>
+                                </DSBadge>
                               ))}
                             </div>
                           )}
