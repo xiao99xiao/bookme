@@ -472,9 +472,9 @@ export default function ProviderOrders() {
                       {booking.status === 'completed' && (
                         <>
                           {/* Divider Line */}
-                          <div className="border-t border-[#eeeeee] my-6"></div>
+                          <div className="border-t border-[#eeeeee] mt-6 mb-4"></div>
                           
-                          <div className="pt-4">
+                          <div>
                             {review ? (
                               <>
                                 <p className="text-sm font-medium text-black font-body mb-2">Customer Review</p>
@@ -764,9 +764,9 @@ export default function ProviderOrders() {
                       {booking.status === 'completed' && (
                         <>
                           {/* Divider Line */}
-                          <div className="border-t border-[#eeeeee] my-6"></div>
+                          <div className="border-t border-[#eeeeee] mt-6 mb-4"></div>
                           
-                          <div className="pt-4">
+                          <div>
                             {review ? (
                               <>
                                 <p className="text-sm font-medium text-black font-body mb-2">Customer Review</p>
