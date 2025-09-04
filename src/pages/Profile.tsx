@@ -510,7 +510,7 @@ const Profile = () => {
                       className="bg-muted text-foreground border-0 rounded font-normal"
                     >
                       {selectedService.categories?.name || 'General'}
-                    </Badge>
+                    </DSBadge>
                     <div className="flex items-center text-muted-foreground text-xs">
                       {getLocationIcon(selectedService.is_online, !!selectedService.location)}
                       <span className="ml-1">{getLocationText(selectedService.is_online, !!selectedService.location)}</span>
