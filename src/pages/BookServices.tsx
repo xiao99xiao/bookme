@@ -5,6 +5,7 @@ import clientBookingFlow from "@/assets/client-booking-flow.jpg";
 import browseServices from "@/assets/browse-services.jpg";
 import easyBooking from "@/assets/easy-booking.jpg";
 import payAndConnect from "@/assets/pay-and-connect.jpg";
+import { H1, H2, H3 } from "@/design-system";
 
 const BookServices = () => {
   return (
@@ -14,10 +15,10 @@ const BookServices = () => {
         <div className="max-w-6xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="text-left">
-              <h1 className="text-5xl lg:text-6xl font-bold mb-4 leading-tight">
+              <H1 className="mb-4">
                 Find the Perfect Expert
                 <span className="text-primary block">For Any Task</span>
-              </h1>
+              </H1>
               <p className="text-lg text-muted-foreground mb-6 leading-snug max-w-lg">
                 Browse thousands of professionals, book instantly, and pay securely. 
                 Your payment is held safely until you confirm service completion - no scams, just quality service.
@@ -46,7 +47,7 @@ const BookServices = () => {
       <section className="py-20 px-4 bg-muted/30">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">How to Book Services</h2>
+            <H2 className="mb-4">How to Book Services</H2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Three simple steps to get expert help for any challenge
             </p>
@@ -65,7 +66,7 @@ const BookServices = () => {
                   1
                 </div>
               </div>
-              <h3 className="text-2xl font-bold mb-4">Browse & Discover</h3>
+              <H3 className="mb-4">Browse & Discover</H3>
               <p className="text-muted-foreground leading-relaxed">
                 Search through verified professionals by skill, rating, and availability. 
                 Read reviews and find the perfect match for your needs.
@@ -84,7 +85,7 @@ const BookServices = () => {
                   2
                 </div>
               </div>
-              <h3 className="text-2xl font-bold mb-4">Book Instantly</h3>
+              <H3 className="mb-4">Book Instantly</H3>
               <p className="text-muted-foreground leading-relaxed">
                 Check their real-time availability and book a time slot that works for you. 
                 Choose between video calls, chat, or in-person meetings.
@@ -103,7 +104,7 @@ const BookServices = () => {
                   3
                 </div>
               </div>
-              <h3 className="text-2xl font-bold mb-4">Pay Securely & Confirm</h3>
+              <H3 className="mb-4">Pay Securely & Confirm</H3>
               <p className="text-muted-foreground leading-relaxed">
                 Pay with your credit card - funds are held safely until you confirm the service was completed successfully. 
                 This protects you from scams and ensures quality service.
@@ -117,7 +118,7 @@ const BookServices = () => {
       <section className="py-20 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Choose Your Preferred Method</h2>
+            <H2 className="mb-4">Choose Your Preferred Method</H2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Connect with experts in the way that works best for you
             </p>
@@ -128,7 +129,7 @@ const BookServices = () => {
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Video className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-xl font-bold mb-3">Video Calls</h3>
+              <H3 className="mb-3">Video Calls</H3>
               <p className="text-muted-foreground">
                 Face-to-face consultations, workshops, and training sessions from anywhere.
               </p>
@@ -138,7 +139,7 @@ const BookServices = () => {
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <MessageCircle className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-xl font-bold mb-3">Text Chat</h3>
+              <H3 className="mb-3">Text Chat</H3>
               <p className="text-muted-foreground">
                 Get advice and support through messaging. Perfect for quick questions and ongoing help.
               </p>
@@ -148,7 +149,7 @@ const BookServices = () => {
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <MapPin className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-xl font-bold mb-3">In Person</h3>
+              <H3 className="mb-3">In Person</H3>
               <p className="text-muted-foreground">
                 Meet experts locally for hands-on help, workshops, or personal sessions.
               </p>
@@ -161,7 +162,7 @@ const BookServices = () => {
       <section className="py-20 px-4 bg-muted/30">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Why Book Through Timee?</h2>
+            <H2 className="mb-4">Why Book Through Timee?</H2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               The most convenient way to access expert knowledge and services
             </p>
@@ -172,7 +173,7 @@ const BookServices = () => {
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Search className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Verified Experts</h3>
+              <H3 className="mb-2">Verified Experts</H3>
               <p className="text-muted-foreground text-sm">
                 All professionals are verified with reviews and ratings
               </p>
@@ -182,7 +183,7 @@ const BookServices = () => {
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Clock className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Instant Booking</h3>
+              <H3 className="mb-2">Instant Booking</H3>
               <p className="text-muted-foreground text-sm">
                 Book available time slots immediately without waiting
               </p>
@@ -192,7 +193,7 @@ const BookServices = () => {
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CreditCard className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Secure Payments</h3>
+              <H3 className="mb-2">Secure Payments</H3>
               <p className="text-muted-foreground text-sm">
                 Funds held safely until service completion - protected transactions
               </p>
@@ -202,7 +203,7 @@ const BookServices = () => {
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Star className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Scam Protection</h3>
+              <H3 className="mb-2">Scam Protection</H3>
               <p className="text-muted-foreground text-sm">
                 Funds released only after you confirm successful service completion
               </p>
@@ -214,7 +215,7 @@ const BookServices = () => {
       {/* CTA Section */}
       <section className="py-20 px-4 bg-primary/5">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl font-bold mb-6">Ready to Get Expert Help?</h2>
+          <H2 className="mb-6">Ready to Get Expert Help?</H2>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
             Browse thousands of professionals ready to help you achieve your goals. 
             Find the perfect expert and book your session today.

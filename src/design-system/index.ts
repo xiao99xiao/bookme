@@ -5,7 +5,7 @@ export { tokens } from './tokens';
 export { Container, Card, Stack, Grid } from './components/Layout';
 
 // Typography Components  
-export { Heading, Text, Label, Description } from './components/Typography';
+export { Heading, H1, H2, H3, H4, H5, H6, Text, Label, Description } from './components/Typography';
 
 // Form Components
 export { Input, Textarea } from './components/Input';

@@ -8,13 +8,32 @@ interface TypographyProps {
   as?: keyof JSX.IntrinsicElements;
 }
 
-// Heading Components
-export function Heading({ children, className, as: Component = 'h1', ...props }: TypographyProps) {
+// Heading Components with proper hierarchy
+interface HeadingProps extends TypographyProps {
+  level?: 1 | 2 | 3 | 4 | 5 | 6;
+}
+
+export function Heading({ children, className, as, level, ...props }: HeadingProps) {
+  // Determine component type based on level or as prop
+  const Component = as || `h${level || 1}` as keyof JSX.IntrinsicElements;
+  
+  // Define heading sizes based on level
+  const headingSizes = {
+    1: 'text-4xl sm:text-5xl lg:text-6xl', // Hero headings
+    2: 'text-3xl sm:text-4xl',            // Section headings  
+    3: 'text-2xl sm:text-3xl',            // Subsection headings
+    4: 'text-xl sm:text-2xl',             // Card/Component headings
+    5: 'text-lg sm:text-xl',              // Small headings
+    6: 'text-[20px]',                     // Smallest headings (design system base)
+  };
+  
+  const currentLevel = level || (Component.toString().match(/h(\d)/) ? parseInt(Component.toString().match(/h(\d)/)![1]) : 1) as 1 | 2 | 3 | 4 | 5 | 6;
+  
   return (
     <Component
       className={cn(
         'font-heading font-bold text-textPrimary leading-tight',
-        'text-[20px]', // H6 from design system
+        headingSizes[currentLevel],
         className
       )}
       style={{ fontFamily: tokens.fonts.heading }}
@@ -23,6 +42,31 @@ export function Heading({ children, className, as: Component = 'h1', ...props }:
       {children}
     </Component>
   );
+}
+
+// Specific heading components for easier use
+export function H1({ children, className, ...props }: TypographyProps) {
+  return <Heading level={1} as="h1" className={className} {...props}>{children}</Heading>;
+}
+
+export function H2({ children, className, ...props }: TypographyProps) {
+  return <Heading level={2} as="h2" className={className} {...props}>{children}</Heading>;
+}
+
+export function H3({ children, className, ...props }: TypographyProps) {
+  return <Heading level={3} as="h3" className={className} {...props}>{children}</Heading>;
+}
+
+export function H4({ children, className, ...props }: TypographyProps) {
+  return <Heading level={4} as="h4" className={className} {...props}>{children}</Heading>;
+}
+
+export function H5({ children, className, ...props }: TypographyProps) {
+  return <Heading level={5} as="h5" className={className} {...props}>{children}</Heading>;
+}
+
+export function H6({ children, className, ...props }: TypographyProps) {
+  return <Heading level={6} as="h6" className={className} {...props}>{children}</Heading>;
 }
 
 // Body Text Components

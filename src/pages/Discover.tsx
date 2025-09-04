@@ -12,6 +12,7 @@ import { ApiClient } from "@/lib/api-migration";
 import { useAuth } from "@/contexts/PrivyAuthContext";
 import { getBrowserTimezone } from "@/lib/timezone";
 import { toast } from "sonner";
+import { H1, H2 } from "@/design-system";
 
 interface Service {
   id: string;
@@ -151,9 +152,9 @@ const Discover = () => {
       <section className="py-16 px-4 bg-muted/30">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <h1 className="text-4xl lg:text-5xl font-bold mb-6">
+            <H1 className="mb-6">
               Discover Expert Services
-            </h1>
+            </H1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
               Browse thousands of professionals offering their expertise. Find the perfect expert for your needs and book instantly with secure payment protection.
             </p>
@@ -340,7 +341,7 @@ const Discover = () => {
       {/* CTA Section */}
       <section className="py-16 px-4 bg-primary/5">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-4">Want to Offer Your Services?</h2>
+          <H2 className="mb-4">Want to Offer Your Services?</H2>
           <p className="text-lg text-muted-foreground mb-6">
             Join thousands of professionals earning by sharing their expertise. Start building your income stream today.
           </p>

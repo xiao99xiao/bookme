@@ -5,6 +5,7 @@ import heroIllustration from "@/assets/hero-illustration.jpg";
 import createProfileImg from "@/assets/create-profile.jpg";
 import bookServiceImg from "@/assets/book-service.jpg";
 import cryptoPaymentImg from "@/assets/crypto-payment.jpg";
+import { H1, H2, H3 } from "@/design-system";
 
 const Index = () => {
   return (
@@ -14,10 +15,10 @@ const Index = () => {
         <div className="max-w-6xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="text-left">
-              <h1 className="text-5xl lg:text-6xl font-bold mb-4 leading-tight">
+              <H1 className="mb-4">
                 Your Expertise Matters,
                 <span className="text-primary block">Share It</span>
-              </h1>
+              </H1>
               <p className="text-lg text-muted-foreground mb-6 leading-snug max-w-lg">
                 Turn your expertise into income. Share what you know, set your schedule, and get paid in crypto while customers use their credit cards.
               </p>
@@ -45,7 +46,7 @@ const Index = () => {
       <section className="py-20 px-4 bg-muted/30">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">How It Works</h2>
+            <H2 className="mb-4">How It Works</H2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Three simple steps to start monetizing your expertise and time
             </p>
@@ -64,7 +65,7 @@ const Index = () => {
                   1
                 </div>
               </div>
-              <h3 className="text-2xl font-bold mb-4">Create Your Profile</h3>
+              <H3 className="mb-4">Create Your Profile</H3>
               <p className="text-muted-foreground leading-relaxed">
                 Set up your professional profile with your skills, experience, and availability. 
                 Define your services and hourly rates.
@@ -83,7 +84,7 @@ const Index = () => {
                   2
                 </div>
               </div>
-              <h3 className="text-2xl font-bold mb-4">Share & Get Booked</h3>
+              <H3 className="mb-4">Share & Get Booked</H3>
               <p className="text-muted-foreground leading-relaxed">
                 Share your profile link anywhere. Customers can easily browse your services 
                 and book time slots that work for both of you.
@@ -102,7 +103,7 @@ const Index = () => {
                   3
                 </div>
               </div>
-              <h3 className="text-2xl font-bold mb-4">Get Paid Securely</h3>
+              <H3 className="mb-4">Get Paid Securely</H3>
               <p className="text-muted-foreground leading-relaxed">
                 Customers pay upfront, but funds are held safely until they confirm successful service completion. 
                 This protects everyone and ensures you get paid for quality work.
@@ -116,7 +117,7 @@ const Index = () => {
       <section className="py-20 px-4 bg-muted/30">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Deliver Your Services Your Way</h2>
+            <H2 className="mb-4">Deliver Your Services Your Way</H2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Choose how you want to connect with your customers. Flexibility is key to growing your business.
             </p>
@@ -127,7 +128,7 @@ const Index = () => {
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Video className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-xl font-bold mb-3">Online Meetings</h3>
+              <H3 className="mb-3">Online Meetings</H3>
               <p className="text-muted-foreground">
                 Host video calls, workshops, consultations, or training sessions from anywhere in the world.
               </p>
@@ -137,7 +138,7 @@ const Index = () => {
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <MessageCircle className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-xl font-bold mb-3">Text Chat</h3>
+              <H3 className="mb-3">Text Chat</H3>
               <p className="text-muted-foreground">
                 Provide advice, coaching, or support through messaging. Perfect for ongoing mentorship.
               </p>
@@ -147,7 +148,7 @@ const Index = () => {
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <MapPin className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-xl font-bold mb-3">In Person</h3>
+              <H3 className="mb-3">In Person</H3>
               <p className="text-muted-foreground">
                 Meet customers locally for hands-on services, workshops, or personal consultations.
               </p>
@@ -160,7 +161,7 @@ const Index = () => {
       <section className="py-20 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Why Choose Our Platform?</h2>
+            <H2 className="mb-4">Why Choose Our Platform?</H2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Built for the global freelance economy with crypto-first payments
             </p>
@@ -171,7 +172,7 @@ const Index = () => {
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Globe className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Global Reach</h3>
+              <H3 className="mb-2">Global Reach</H3>
               <p className="text-muted-foreground text-sm">
                 Work with customers worldwide without payment barriers
               </p>
@@ -181,7 +182,7 @@ const Index = () => {
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Coins className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Secure Payments</h3>
+              <H3 className="mb-2">Secure Payments</H3>
               <p className="text-muted-foreground text-sm">
                 Funds are held safely until service completion, protecting both parties
               </p>
@@ -191,7 +192,7 @@ const Index = () => {
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Clock className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Time Management</h3>
+              <H3 className="mb-2">Time Management</H3>
               <p className="text-muted-foreground text-sm">
                 Set your availability and let customers book when convenient
               </p>
@@ -201,7 +202,7 @@ const Index = () => {
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CreditCard className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Protected Payments</h3>
+              <H3 className="mb-2">Protected Payments</H3>
               <p className="text-muted-foreground text-sm">
                 Customers pay easily, funds held securely until service completion
               </p>
@@ -213,7 +214,7 @@ const Index = () => {
       {/* CTA Section */}
       <section className="py-20 px-4 bg-primary/5">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl font-bold mb-6">Ready to Monetize Your Time?</h2>
+          <H2 className="mb-6">Ready to Monetize Your Time?</H2>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
             Join thousands of professionals already earning cryptocurrency by sharing their expertise.
             Start building your income stream today.

@@ -10,6 +10,7 @@ import { Copy, Wallet, RefreshCw, ExternalLink, Plus, CreditCard } from 'lucide-
 import { createPublicClient, http, formatUnits, type Address } from 'viem';
 import { base, baseSepolia } from 'viem/chains';
 import { useAuth } from '@/contexts/PrivyAuthContext';
+import { H1 } from '@/design-system';
 
 // USDC contract addresses
 const USDC_ADDRESS_BASE = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913' as Address;
@@ -265,7 +266,7 @@ export default function Balance() {
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Wallet Balance</h1>
+        <H1>Wallet Balance</H1>
         <p className="text-gray-600 mt-1">
           View your {chain.name} wallet balance and manage your funds
         </p>

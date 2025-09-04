@@ -20,6 +20,7 @@ import { ApiClient } from '@/lib/api-migration';
 import CreateServiceModal from '@/components/CreateServiceModal';
 import { RefactoredServiceModal } from '@/components/RefactoredServiceModal';
 import { ServiceCard } from '@/components/ServiceCard';
+import { H1, H2, H3 } from '@/design-system';
 
 interface Service {
   id: string;
@@ -164,7 +165,7 @@ export default function ProviderServices() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Your Services</h1>
+        <H1 className="mb-2">Your Services</H1>
         <p className="text-gray-600 text-lg">Create and manage the services you offer to customers</p>
       </div>
       
@@ -203,7 +204,7 @@ export default function ProviderServices() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
-                        <h3 className="font-semibold text-lg">{service.title}</h3>
+                        <H3>{service.title}</H3>
                         {service.is_visible === false && (
                           <Badge variant="outline">Hidden</Badge>
                         )}
@@ -275,7 +276,7 @@ export default function ProviderServices() {
         <div className="lg:col-span-1 bg-gray-50 border-l border-gray-200">
           <div className="sticky top-0 h-screen overflow-y-auto">
             <div className="max-w-lg mx-auto py-8 px-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-2">Profile Preview</h2>
+              <H2 className="mb-2">Profile Preview</H2>
               <p className="text-sm text-gray-600 mb-8">This is how others see your profile</p>
               
               {/* User Profile Section - Exact match to Profile.tsx */}
@@ -287,9 +288,9 @@ export default function ProviderServices() {
                       {profile?.display_name?.charAt(0) || profile?.email?.charAt(0) || 'U'}
                     </AvatarFallback>
                   </Avatar>
-                  <h1 className="text-2xl font-medium text-foreground mb-2">
+                  <H1 className="mb-2">
                     {profile?.display_name || profile?.email?.split('@')[0] || 'User'}
-                  </h1>
+                  </H1>
                   {profile?.location && (
                     <div className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground mb-2">
                       <MapPin className="h-3.5 w-3.5" />
@@ -314,7 +315,7 @@ export default function ProviderServices() {
               {(profile?.is_provider || services.length > 0) && (
                 <div>
                   <div className="mb-6">
-                    <h2 className="text-lg font-medium text-foreground mb-1">Services</h2>
+                    <H2 className="mb-1">Services</H2>
                     <p className="text-sm text-muted-foreground">Your services</p>
                   </div>
                   
@@ -341,9 +342,9 @@ export default function ProviderServices() {
                             </div>
                           </div>
                           
-                          <h3 className="text-sm font-medium mb-2">
+                          <H3 className="mb-2">
                             {service.title}
-                          </h3>
+                          </H3>
                           
                           <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
                             {service.description}

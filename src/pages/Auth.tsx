@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/PrivyAuthContext";
 import authHero from "@/assets/auth-hero.jpg";
+import { H1, H2 } from "@/design-system";
 
 const Auth = () => {
   const { login, ready } = useAuth();
@@ -34,7 +35,7 @@ const Auth = () => {
           </div>
 
           <div className="text-center space-y-2">
-            <h1 className="text-3xl font-bold">Welcome</h1>
+            <H1>Welcome</H1>
             <p className="text-muted-foreground">
               Enter your email to get started
             </p>
@@ -66,7 +67,7 @@ const Auth = () => {
           className="object-cover w-full h-full"
         />
         <div className="absolute bottom-8 left-8 right-8 z-20 text-white">
-          <h2 className="text-2xl font-bold mb-2">Join thousands of professionals</h2>
+          <H2 className="mb-2">Join thousands of professionals</H2>
           <p className="text-white/90">
             Connect with service providers and manage your appointments seamlessly.
           </p>
