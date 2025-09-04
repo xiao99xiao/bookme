@@ -87,6 +87,10 @@ export default function DesignSystemDemo() {
                     <Button variant="secondary">Secondary Button</Button>
                     <Button variant="tertiary">Tertiary Button</Button>
                     <Button variant="link">Link Button</Button>
+                    <Button variant="success" icon={<Plus className="w-4 h-4" />}>Mark Complete</Button>
+                    <Button variant="warning">Review</Button>
+                    <Button variant="danger">Cancel</Button>
+                    <Button variant="outline" icon={<Edit2 className="w-4 h-4" />}>Copy Link</Button>
                   </Stack>
                 </Stack>
                 <Stack spacing="lg">

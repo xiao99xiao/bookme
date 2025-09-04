@@ -14,7 +14,6 @@ import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient, Booking } from '@/lib/api-migration';
 import ChatModal from '@/components/ChatModal';
 import { H2, H3, Text, Loading, EmptyState } from '@/design-system';
-import ReviewDialog from '@/components/ReviewDialog';
 
 export default function ProviderOrders() {
   const { userId, user } = useAuth();
@@ -35,15 +34,6 @@ export default function ProviderOrders() {
     isReadOnly: false
   });
   const [bookingReviews, setBookingReviews] = useState<Record<string, any>>({});
-  const [reviewDialog, setReviewDialog] = useState<{
-    isOpen: boolean;
-    booking: Booking | null;
-    existingReview: any | null;
-  }>({
-    isOpen: false,
-    booking: null,
-    existingReview: null
-  });
 
   useEffect(() => {
     if (userId) {
@@ -418,116 +408,104 @@ export default function ProviderOrders() {
                         </div>
                       </div>
 
-                      {/* Bottom Section: Timer and Actions - only for bookings that have actions */}
-                      {(booking.status === 'confirmed' || booking.status === 'pending' || booking.status === 'completed') && (
+                      {/* Bottom Section: Timer and Actions - only for confirmed and pending bookings */}
+                      {(booking.status === 'confirmed' || booking.status === 'pending') && (
                         <>
                           {/* Divider Line */}
                           <div className="border-t border-[#eeeeee] my-6"></div>
 
-                          {/* Bottom Section: Timer and Actions */}
                           <div className="flex items-center justify-between">
                             {/* Timer or Status Text */}
                             <div className="text-sm font-medium text-black font-body">
                               {booking.status === 'confirmed' && '02:03:06'}
                               {booking.status === 'pending' && 'New order'}
-                              {booking.status === 'completed' && 'Ended'}
                             </div>
 
                             {/* Action Buttons */}
                             <div className="flex items-center gap-3">
-                          {booking.status === 'confirmed' && (
-                            <>
-                              <Button
-                                size="sm"
-                                onClick={() => handleUpdateStatus(booking.id, 'completed')}
-                                className="bg-[#36D267] hover:bg-[#2eb858] text-white text-sm font-semibold px-2 py-1.5 h-8 rounded-xl border border-[#cccccc] font-body flex items-center gap-2"
-                              >
-                                <CheckCircle className="w-5 h-5" />
-                                Mark Complete
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => booking.meeting_link && handleCopyMeetingLink(booking.meeting_link)}
-                                className="text-sm font-semibold px-2 py-1.5 h-8 rounded-xl border border-[#cccccc] text-[#666666] font-body flex items-center gap-2 min-w-[110px]"
-                              >
-                                <Copy className="w-5 h-5" />
-                                Copy
-                              </Button>
-                              <Button
-                                size="sm"
-                                className="bg-black hover:bg-gray-900 text-white text-sm font-semibold px-2 py-1.5 h-8 rounded-xl border border-black font-body flex items-center gap-2 min-w-[110px]"
-                              >
-                                {getMeetingIcon(booking.meeting_platform)}
-                                Join
-                              </Button>
-                            </>
-                          )}
+                              {booking.status === 'confirmed' && (
+                                <>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => booking.meeting_link && handleCopyMeetingLink(booking.meeting_link)}
+                                    className="text-sm font-semibold px-2 py-1.5 h-8 rounded-xl border border-[#cccccc] text-[#666666] font-body flex items-center gap-2 min-w-[110px]"
+                                  >
+                                    <Copy className="w-5 h-5" />
+                                    Copy
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    className="bg-black hover:bg-gray-900 text-white text-sm font-semibold px-2 py-1.5 h-8 rounded-xl border border-black font-body flex items-center gap-2 min-w-[110px]"
+                                  >
+                                    {getMeetingIcon(booking.meeting_platform)}
+                                    Join
+                                  </Button>
+                                </>
+                              )}
 
-                          {booking.status === 'pending' && (
-                            <>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleUpdateStatus(booking.id, 'cancelled')}
-                                className="text-sm font-semibold px-4 py-1.5 h-8 rounded-xl border border-[#cccccc] text-[#666666] font-body"
-                              >
-                                Decline
-                              </Button>
-                              <Button
-                                size="sm"
-                                onClick={() => handleUpdateStatus(booking.id, 'confirmed')}
-                                className="bg-black hover:bg-gray-900 text-white text-sm font-semibold px-4 py-1.5 h-8 rounded-xl border border-black font-body"
-                              >
-                                Accept
-                              </Button>
-                            </>
-                          )}
+                              {booking.status === 'pending' && (
+                                <>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleUpdateStatus(booking.id, 'cancelled')}
+                                    className="text-sm font-semibold px-4 py-1.5 h-8 rounded-xl border border-[#cccccc] text-[#666666] font-body"
+                                  >
+                                    Decline
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleUpdateStatus(booking.id, 'confirmed')}
+                                    className="bg-black hover:bg-gray-900 text-white text-sm font-semibold px-4 py-1.5 h-8 rounded-xl border border-black font-body"
+                                  >
+                                    Accept
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      )}
 
-                          {booking.status === 'completed' && (
-                            <>
-                              {review && (
-                                <div className="flex items-center gap-1 mr-4">
+                      {/* Customer Review Section for Completed */}
+                      {booking.status === 'completed' && (
+                        <>
+                          {/* Divider Line */}
+                          <div className="border-t border-[#eeeeee] my-6"></div>
+                          
+                          <div className="pt-4">
+                            {review ? (
+                              <>
+                                <p className="text-sm font-medium text-black font-body mb-2">Customer Review</p>
+                                <div className="flex items-center gap-1 mb-2">
                                   {[...Array(5)].map((_, i) => (
                                     <Star
                                       key={i}
                                       className={`w-4 h-4 ${
-                                        i < (review?.rating || 5)
+                                        i < review.rating
                                           ? 'text-[#FFD43C] fill-[#FFD43C]'
                                           : 'text-gray-300'
                                       }`}
                                     />
                                   ))}
                                   <span className="text-sm font-medium text-black font-body ml-1">
-                                    {review?.rating || 5}/5
+                                    {review.rating}/5
                                   </span>
                                 </div>
-                              )}
-                              <Button
-                                size="sm"
-                                onClick={() => setReviewDialog({ 
-                                  isOpen: true, 
-                                  booking,
-                                  existingReview: review
-                                })}
-                                className="bg-[#FFD43C] hover:bg-[#f5c830] text-black text-sm font-semibold px-4 py-1.5 h-8 rounded-xl border border-[#cccccc] font-body"
-                              >
-                                Review
-                              </Button>
-                            </>
-                          )}
-                            </div>
+                                <p className="text-sm text-[#666666] font-body italic">
+                                  "{review.comment || 'No written review provided.'}"
+                                </p>
+                              </>
+                            ) : (
+                              <>
+                                <p className="text-sm font-medium text-black font-body mb-2">Customer Review</p>
+                                <p className="text-sm text-[#999999] font-body italic">
+                                  The customer has not provided a review yet. Once they leave a review, it will be displayed here.
+                                </p>
+                              </>
+                            )}
                           </div>
-
-                          {/* Customer Review Section for Completed */}
-                          {booking.status === 'completed' && review && (
-                            <div className="mt-4 pt-4 border-t border-[#eeeeee]">
-                              <p className="text-sm font-medium text-black font-body mb-2">Customer Review</p>
-                              <p className="text-sm text-[#666666] font-body italic">
-                                "{review.comment || 'This is a test review that used to demo how a review will be displayed in the future.'}"
-                              </p>
-                            </div>
-                          )}
                         </>
                       )}
                     </div>
@@ -722,116 +700,104 @@ export default function ProviderOrders() {
                         </div>
                       </div>
 
-                      {/* Bottom Section: Timer and Actions - only for bookings that have actions */}
-                      {(booking.status === 'confirmed' || booking.status === 'pending' || booking.status === 'completed') && (
+                      {/* Bottom Section: Timer and Actions - only for confirmed and pending bookings */}
+                      {(booking.status === 'confirmed' || booking.status === 'pending') && (
                         <>
                           {/* Divider Line */}
                           <div className="border-t border-[#eeeeee] my-6"></div>
 
-                          {/* Bottom Section: Timer and Actions */}
                           <div className="flex items-center justify-between">
                             {/* Timer or Status Text */}
                             <div className="text-sm font-medium text-black font-body">
                               {booking.status === 'confirmed' && '02:03:06'}
                               {booking.status === 'pending' && 'New order'}
-                              {booking.status === 'completed' && 'Ended'}
                             </div>
 
                             {/* Action Buttons */}
                             <div className="flex items-center gap-3 flex-wrap justify-end">
-                          {booking.status === 'confirmed' && (
-                            <>
-                              <Button
-                                size="sm"
-                                onClick={() => handleUpdateStatus(booking.id, 'completed')}
-                                className="bg-[#36D267] hover:bg-[#2eb858] text-white text-sm font-semibold px-2 py-1.5 h-8 rounded-xl border border-[#cccccc] font-body flex items-center gap-2"
-                              >
-                                <CheckCircle className="w-5 h-5" />
-                                Mark Complete
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => booking.meeting_link && handleCopyMeetingLink(booking.meeting_link)}
-                                className="text-sm font-semibold px-2 py-1.5 h-8 rounded-xl border border-[#cccccc] text-[#666666] font-body flex items-center gap-2 min-w-[110px]"
-                              >
-                                <Copy className="w-5 h-5" />
-                                Copy
-                              </Button>
-                              <Button
-                                size="sm"
-                                className="bg-black hover:bg-gray-900 text-white text-sm font-semibold px-2 py-1.5 h-8 rounded-xl border border-black font-body flex items-center gap-2 min-w-[110px]"
-                              >
-                                {getMeetingIcon(booking.meeting_platform)}
-                                Join
-                              </Button>
-                            </>
-                          )}
+                              {booking.status === 'confirmed' && (
+                                <>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => booking.meeting_link && handleCopyMeetingLink(booking.meeting_link)}
+                                    className="text-sm font-semibold px-2 py-1.5 h-8 rounded-xl border border-[#cccccc] text-[#666666] font-body flex items-center gap-2 min-w-[110px]"
+                                  >
+                                    <Copy className="w-5 h-5" />
+                                    Copy
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    className="bg-black hover:bg-gray-900 text-white text-sm font-semibold px-2 py-1.5 h-8 rounded-xl border border-black font-body flex items-center gap-2 min-w-[110px]"
+                                  >
+                                    {getMeetingIcon(booking.meeting_platform)}
+                                    Join
+                                  </Button>
+                                </>
+                              )}
 
-                          {booking.status === 'pending' && (
-                            <>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleUpdateStatus(booking.id, 'cancelled')}
-                                className="text-sm font-semibold px-4 py-1.5 h-8 rounded-xl border border-[#cccccc] text-[#666666] font-body"
-                              >
-                                Decline
-                              </Button>
-                              <Button
-                                size="sm"
-                                onClick={() => handleUpdateStatus(booking.id, 'confirmed')}
-                                className="bg-black hover:bg-gray-900 text-white text-sm font-semibold px-4 py-1.5 h-8 rounded-xl border border-black font-body"
-                              >
-                                Accept
-                              </Button>
-                            </>
-                          )}
+                              {booking.status === 'pending' && (
+                                <>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleUpdateStatus(booking.id, 'cancelled')}
+                                    className="text-sm font-semibold px-4 py-1.5 h-8 rounded-xl border border-[#cccccc] text-[#666666] font-body"
+                                  >
+                                    Decline
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleUpdateStatus(booking.id, 'confirmed')}
+                                    className="bg-black hover:bg-gray-900 text-white text-sm font-semibold px-4 py-1.5 h-8 rounded-xl border border-black font-body"
+                                  >
+                                    Accept
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      )}
 
-                          {booking.status === 'completed' && (
-                            <>
-                              {review && (
-                                <div className="flex items-center gap-1 mr-4">
+                      {/* Customer Review Section for Completed */}
+                      {booking.status === 'completed' && (
+                        <>
+                          {/* Divider Line */}
+                          <div className="border-t border-[#eeeeee] my-6"></div>
+                          
+                          <div className="pt-4">
+                            {review ? (
+                              <>
+                                <p className="text-sm font-medium text-black font-body mb-2">Customer Review</p>
+                                <div className="flex items-center gap-1 mb-2">
                                   {[...Array(5)].map((_, i) => (
                                     <Star
                                       key={i}
                                       className={`w-4 h-4 ${
-                                        i < (review?.rating || 5)
+                                        i < review.rating
                                           ? 'text-[#FFD43C] fill-[#FFD43C]'
                                           : 'text-gray-300'
                                       }`}
                                     />
                                   ))}
                                   <span className="text-sm font-medium text-black font-body ml-1">
-                                    {review?.rating || 5}/5
+                                    {review.rating}/5
                                   </span>
                                 </div>
-                              )}
-                              <Button
-                                size="sm"
-                                onClick={() => setReviewDialog({ 
-                                  isOpen: true, 
-                                  booking,
-                                  existingReview: review
-                                })}
-                                className="bg-[#FFD43C] hover:bg-[#f5c830] text-black text-sm font-semibold px-4 py-1.5 h-8 rounded-xl border border-[#cccccc] font-body"
-                              >
-                                Review
-                              </Button>
-                            </>
-                          )}
-                            </div>
+                                <p className="text-sm text-[#666666] font-body italic">
+                                  "{review.comment || 'No written review provided.'}"
+                                </p>
+                              </>
+                            ) : (
+                              <>
+                                <p className="text-sm font-medium text-black font-body mb-2">Customer Review</p>
+                                <p className="text-sm text-[#999999] font-body italic">
+                                  The customer has not provided a review yet. Once they leave a review, it will be displayed here.
+                                </p>
+                              </>
+                            )}
                           </div>
-
-                          {/* Customer Review Section for Completed */}
-                          {booking.status === 'completed' && review && (
-                            <div className="mt-4 pt-4 border-t border-[#eeeeee]">
-                              <p className="text-sm font-medium text-black font-body mb-2">Customer Review</p>
-                              <p className="text-sm text-[#666666] font-body italic">
-                                "{review.comment || 'This is a test review that used to demo how a review will be displayed in the future.'}"
-                              </p>
-                            </div>
-                          )}
                         </>
                       )}
                     </div>
@@ -858,20 +824,6 @@ export default function ProviderOrders() {
         otherUserAvatar={chatModal.otherUserAvatar}
         isReadOnly={chatModal.isReadOnly}
       />
-      
-      {/* Review Dialog */}
-      {reviewDialog.booking && (
-        <ReviewDialog
-          isOpen={reviewDialog.isOpen}
-          onClose={() => setReviewDialog({ isOpen: false, booking: null, existingReview: null })}
-          booking={reviewDialog.booking}
-          existingReview={reviewDialog.existingReview}
-          forceReadOnly={true}
-          onSubmit={async () => {
-            throw new Error('Providers cannot submit reviews from incoming orders');
-          }}
-        />
-      )}
     </div>
   );
 }

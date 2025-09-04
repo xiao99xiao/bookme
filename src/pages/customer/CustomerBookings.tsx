@@ -513,42 +513,40 @@ export default function CustomerBookings() {
                             <>
                               {hasStarted ? (
                                 <DSButton
+                                  variant="success"
                                   size="small"
                                   onClick={() => handleCompleteBooking(booking.id)}
-                                  className="bg-[#36D267] hover:bg-[#2eb858] text-white"
                                   icon={<CheckCircle className="w-5 h-5" />}
                                 >
                                   Mark Complete
                                 </DSButton>
                               ) : (
                                 <DSButton
-                                  variant="secondary"
+                                  variant="danger"
                                   size="small"
                                   onClick={() => handleCancelBooking(booking.id)}
-                                  className="text-[#F1343D] hover:bg-[#ffeff0]"
                                 >
                                   Cancel
                                 </DSButton>
                               )}
                               {booking.meeting_link && (
                                 <>
-                                  <Button
+                                  <DSButton
                                     variant="outline"
-                                    size="sm"
+                                    size="small"
                                     onClick={() => handleCopyMeetingLink(booking.meeting_link!)}
-                                    className="text-sm font-semibold px-2 py-1.5 h-8 rounded-xl border border-[#cccccc] text-[#666666] font-body flex items-center gap-2 min-w-[110px]"
+                                    icon={<Copy className="w-5 h-5" />}
                                   >
-                                    <Copy className="w-5 h-5" />
                                     Copy Link
-                                  </Button>
-                                  <Button
-                                    size="sm"
+                                  </DSButton>
+                                  <DSButton
+                                    variant="primary"
+                                    size="small"
                                     onClick={() => handleJoinMeeting(booking.meeting_link!)}
-                                    className="bg-black hover:bg-gray-900 text-white text-sm font-semibold px-2 py-1.5 h-8 rounded-xl border border-black font-body flex items-center gap-2 min-w-[110px]"
+                                    icon={getMeetingIcon(booking.meeting_platform)}
                                   >
-                                    {getMeetingIcon(booking.meeting_platform)}
                                     Join
-                                  </Button>
+                                  </DSButton>
                                 </>
                               )}
                             </>
@@ -862,43 +860,41 @@ export default function CustomerBookings() {
                             {booking.status === 'confirmed' && (
                               <>
                                 {hasStarted ? (
-                                  <Button
-                                    size="sm"
+                                  <DSButton
+                                    variant="success"
+                                    size="small"
                                     onClick={() => handleCompleteBooking(booking.id)}
-                                    className="bg-[#36D267] hover:bg-[#2eb858] text-white text-sm font-semibold px-2 py-1.5 h-8 rounded-xl border border-[#cccccc] font-body flex items-center gap-2"
+                                    icon={<CheckCircle className="w-5 h-5" />}
                                   >
-                                    <CheckCircle className="w-5 h-5" />
                                     Mark Complete
-                                  </Button>
+                                  </DSButton>
                                 ) : (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
+                                  <DSButton
+                                    variant="danger"
+                                    size="small"
                                     onClick={() => handleCancelBooking(booking.id)}
-                                    className="text-sm font-semibold px-4 py-1.5 h-8 rounded-xl border border-[#cccccc] text-[#F1343D] hover:bg-[#ffeff0] font-body"
                                   >
                                     Cancel
-                                  </Button>
+                                  </DSButton>
                                 )}
                                 {booking.meeting_link && (
                                   <>
-                                    <Button
+                                    <DSButton
                                       variant="outline"
-                                      size="sm"
+                                      size="small"
                                       onClick={() => handleCopyMeetingLink(booking.meeting_link!)}
-                                      className="text-sm font-semibold px-2 py-1.5 h-8 rounded-xl border border-[#cccccc] text-[#666666] font-body flex items-center gap-2 min-w-[110px]"
+                                      icon={<Copy className="w-5 h-5" />}
                                     >
-                                      <Copy className="w-5 h-5" />
                                       Copy Link
-                                    </Button>
-                                    <Button
-                                      size="sm"
+                                    </DSButton>
+                                    <DSButton
+                                      variant="primary"
+                                      size="small"
                                       onClick={() => handleJoinMeeting(booking.meeting_link!)}
-                                      className="bg-black hover:bg-gray-900 text-white text-sm font-semibold px-2 py-1.5 h-8 rounded-xl border border-black font-body flex items-center gap-2 min-w-[110px]"
+                                      icon={getMeetingIcon(booking.meeting_platform)}
                                     >
-                                      {getMeetingIcon(booking.meeting_platform)}
                                       Join
-                                    </Button>
+                                    </DSButton>
                                   </>
                                 )}
                               </>
