@@ -11,6 +11,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient } from '@/lib/api-migration';
+import { H1, H2, H3 } from '@/design-system';
 
 export default function MyProfile() {
   const { user, profile, refreshProfile, userId } = useAuth();
@@ -87,7 +88,7 @@ export default function MyProfile() {
     <div className="h-full overflow-y-auto bg-background">
       <div className="max-w-4xl mx-auto p-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">My Profile</h1>
+          <H1 className="mb-2">My Profile</H1>
           <p className="text-muted-foreground">
             Manage your personal information and account settings
           </p>
@@ -99,7 +100,7 @@ export default function MyProfile() {
             <Form {...profileForm}>
               <form onSubmit={profileForm.handleSubmit(handleProfileUpdate)} className="space-y-6">
                 <div className="bg-card border rounded-lg p-6">
-                  <h2 className="text-xl font-semibold mb-6">Basic Information</h2>
+                  <H2 className="mb-6">Basic Information</H2>
                   
                   <div className="space-y-6">
                     {/* Avatar Upload */}
@@ -247,7 +248,7 @@ export default function MyProfile() {
           <div className="space-y-6">
             {/* Profile Link */}
             <div className="bg-card border rounded-lg p-6">
-              <h3 className="text-lg font-semibold mb-4">Public Profile</h3>
+              <H3 className="mb-4">Public Profile</H3>
               <div className="space-y-4">
                 <div>
                   <Label className="text-sm font-medium">Profile Link</Label>
@@ -271,7 +272,7 @@ export default function MyProfile() {
 
             {/* Account Stats */}
             <div className="bg-card border rounded-lg p-6">
-              <h3 className="text-lg font-semibold mb-4">Account Stats</h3>
+              <H3 className="mb-4">Account Stats</H3>
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Rating</span>

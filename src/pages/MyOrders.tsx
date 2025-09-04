@@ -9,6 +9,7 @@ import { Video, CheckCircle, Clock, MapPin, X, Star, Loader2, Phone, Users } fro
 import { format, parseISO, isPast, isFuture } from "date-fns";
 import { toast } from "sonner";
 import { useAuth} from "@/contexts/PrivyAuthContext";
+import { H1, H3 } from '@/design-system';
 import { ApiClient } from "@/lib/api-migration";
 
 interface Booking {
@@ -49,7 +50,7 @@ interface Booking {
 }
 
 export default function MyOrders() {
-  const { user } = useWeb3Auth();
+  const { user } = useAuth();
   const [orders, setOrders] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Booking | null>(null);
@@ -313,7 +314,7 @@ export default function MyOrders() {
     <div className="h-full overflow-y-auto bg-background">
       <div className="max-w-6xl mx-auto p-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">My Orders</h1>
+          <H1 className="mb-2">My Orders</H1>
           <p className="text-muted-foreground">
             Manage service requests from customers
           </p>
@@ -321,7 +322,7 @@ export default function MyOrders() {
 
         {orders.length === 0 ? (
           <div className="bg-card border rounded-lg p-8 text-center">
-            <h3 className="text-lg font-semibold mb-2">No Orders Yet</h3>
+            <H3 className="mb-2">No Orders Yet</H3>
             <p className="text-muted-foreground mb-4">
               When customers book your services, their orders will appear here.
             </p>

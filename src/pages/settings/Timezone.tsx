@@ -11,6 +11,7 @@ import { Loader2, Clock, Users, Settings } from 'lucide-react';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient } from '@/lib/api-migration';
 import { getBrowserTimezone, getTimezoneOffset } from '@/lib/timezone';
+import { H2 } from '@/design-system';
 
 const timezoneSchema = z.object({
   timezone: z.string().min(1, 'Please select a timezone'),
@@ -157,9 +158,7 @@ export default function Timezone() {
           <div className="w-64 flex-shrink-0">
             <div className="bg-neutral-50 box-border content-stretch flex flex-col gap-6 h-full items-start justify-start overflow-clip px-8 py-10 relative shrink-0 w-64 rounded-2xl">
               <div className="content-stretch flex flex-col gap-0.5 items-start justify-start leading-[0] relative shrink-0 w-full">
-                <div className="font-heading font-bold text-xl text-primary w-full">
-                  <p className="leading-[1.4]">Settings</p>
-                </div>
+                <H2 className="leading-[1.4]">Settings</H2>
                 <div className="font-body text-xs text-tertiary w-full">
                   <p className="leading-[1.5] text-tertiary">Manage your timezone preferences</p>
                 </div>
@@ -200,9 +199,7 @@ export default function Timezone() {
                 <div className="content-stretch flex flex-col gap-8 items-start justify-start relative shrink-0 w-full">
                   {/* Timezone Section */}
                   <div className="content-stretch flex flex-col gap-0.5 items-start justify-start leading-[0] relative shrink-0 w-full">
-                    <div className="font-heading font-bold text-xl text-primary w-full">
-                      <p className="leading-[1.4]">Timezone Settings</p>
-                    </div>
+                    <H2 className="leading-[1.4]">Timezone Settings</H2>
                     <div className="font-body font-normal relative shrink-0 text-[#aaaaaa] text-[12px] w-full">
                       <p className="leading-[1.5]">Set your timezone for accurate booking and scheduling</p>
                     </div>
@@ -287,9 +284,7 @@ export default function Timezone() {
               <div className="basis-0 box-border content-stretch flex flex-col gap-10 grow items-center justify-start min-h-px min-w-px p-[40px] relative shrink-0 w-full">
                 <div className="content-stretch flex flex-col gap-8 items-center justify-start relative shrink-0 w-full">
                   <div className="content-stretch flex flex-col gap-0.5 items-start justify-start leading-[0] relative shrink-0 w-full">
-                    <div className="font-heading font-bold text-xl text-primary w-full">
-                      <p className="leading-[1.4]">Why Set Your Timezone?</p>
-                    </div>
+                    <H2 className="leading-[1.4]">Why Set Your Timezone?</H2>
                     <div className="font-body font-normal relative shrink-0 text-[#aaaaaa] text-[12px] w-full">
                       <p className="leading-[1.5]">Ensure accurate scheduling across time zones</p>
                     </div>
@@ -339,7 +334,7 @@ export default function Timezone() {
           <div className="mb-6">
             {/* Title Section */}
             <div className="mb-4">
-              <h2 className="text-xl sm:text-2xl font-bold text-black font-heading mb-1">Settings</h2>
+              <H2 className="mb-1">Settings</H2>
               <p className="text-sm text-gray-500 font-body">Manage your timezone preferences</p>
             </div>
             
@@ -368,9 +363,7 @@ export default function Timezone() {
             <div className="bg-white rounded-2xl border border-[#eeeeee] p-4 sm:p-6">
               {/* Timezone Section */}
               <div className="content-stretch flex flex-col gap-0.5 items-start justify-start leading-[0] relative shrink-0 w-full mb-6">
-                <div className="font-heading font-bold text-lg sm:text-xl text-primary w-full">
-                  <p className="leading-[1.4]">Timezone Settings</p>
-                </div>
+                <H2 className="leading-[1.4]">Timezone Settings</H2>
                 <div className="font-body font-normal relative shrink-0 text-[#aaaaaa] text-[12px] w-full">
                   <p className="leading-[1.5]">Set your timezone for accurate booking and scheduling</p>
                 </div>

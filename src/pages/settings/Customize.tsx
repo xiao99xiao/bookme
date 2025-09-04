@@ -11,6 +11,7 @@ import { Loader2, CheckCircle, XCircle, Settings, Copy, Check, Clock, Users } fr
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient } from '@/lib/api-migration';
 import { validateUsername, getUserPageUrl } from '@/lib/username';
+import { H2 } from '@/design-system';
 
 const customizeSchema = z.object({
   username: z.string().min(3, 'Username must be at least 3 characters').optional(),
@@ -188,9 +189,7 @@ export default function Customize() {
           <div className="w-64 flex-shrink-0">
             <div className="bg-neutral-50 box-border content-stretch flex flex-col gap-6 h-full items-start justify-start overflow-clip px-8 py-10 relative shrink-0 w-64 rounded-2xl">
               <div className="content-stretch flex flex-col gap-0.5 items-start justify-start leading-[0] relative shrink-0 w-full">
-                <div className="font-heading font-bold text-xl text-primary w-full">
-                  <p className="leading-[1.4]">Settings</p>
-                </div>
+                <H2 className="leading-[1.4]">Settings</H2>
                 <div className="font-body text-xs text-tertiary w-full">
                   <p className="leading-[1.5] text-tertiary">Customize your profile</p>
                 </div>
@@ -231,9 +230,7 @@ export default function Customize() {
                 <div className="content-stretch flex flex-col gap-8 items-start justify-start relative shrink-0 w-full">
                   {/* Username Section */}
                   <div className="content-stretch flex flex-col gap-0.5 items-start justify-start leading-[0] relative shrink-0 w-full">
-                    <div className="font-heading font-bold text-xl text-primary w-full">
-                      <p className="leading-[1.4]">Username & Profile URL</p>
-                    </div>
+                    <H2 className="leading-[1.4]">Username & Profile URL</H2>
                     <div className="font-body font-normal relative shrink-0 text-[#aaaaaa] text-[12px] w-full">
                       <p className="leading-[1.5]">Set your unique username for your public profile URL</p>
                     </div>
@@ -343,9 +340,7 @@ export default function Customize() {
               <div className="basis-0 box-border content-stretch flex flex-col gap-10 grow items-center justify-start min-h-px min-w-px p-[40px] relative shrink-0 w-full">
                 <div className="content-stretch flex flex-col gap-8 items-center justify-start relative shrink-0 w-full">
                   <div className="content-stretch flex flex-col gap-0.5 items-start justify-start leading-[0] relative shrink-0 w-full">
-                    <div className="font-heading font-bold text-xl text-primary w-full">
-                      <p className="leading-[1.4]">Public Profile</p>
-                    </div>
+                    <H2 className="leading-[1.4]">Public Profile</H2>
                     <div className="font-body font-normal relative shrink-0 text-[#aaaaaa] text-[12px] w-full">
                       <p className="leading-[1.5]">How others will find your profile</p>
                     </div>
@@ -398,7 +393,7 @@ export default function Customize() {
           <div className="mb-6">
             {/* Title Section */}
             <div className="mb-4">
-              <h2 className="text-xl sm:text-2xl font-bold text-black font-heading mb-1">Settings</h2>
+              <H2 className="mb-1">Settings</H2>
               <p className="text-sm text-gray-500 font-body">Customize your profile</p>
             </div>
             
@@ -427,9 +422,7 @@ export default function Customize() {
             <div className="bg-white rounded-2xl border border-[#eeeeee] p-4 sm:p-6">
               {/* Username Section */}
               <div className="content-stretch flex flex-col gap-0.5 items-start justify-start leading-[0] relative shrink-0 w-full mb-6">
-                <div className="font-heading font-bold text-lg sm:text-xl text-primary w-full">
-                  <p className="leading-[1.4]">Username & Profile URL</p>
-                </div>
+                <H2 className="leading-[1.4]">Username & Profile URL</H2>
                 <div className="font-body font-normal relative shrink-0 text-[#aaaaaa] text-[12px] w-full">
                   <p className="leading-[1.5]">Set your unique username for your public profile URL</p>
                 </div>

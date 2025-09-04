@@ -16,6 +16,7 @@ import { Loader2, Camera, Globe, Mail, Phone, MapPin, Calendar, Star, Video, Use
 import ReactMarkdown from 'react-markdown';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient } from '@/lib/api-migration';
+import { H2, H3 } from '@/design-system';
 
 const profileSchema = z.object({
   display_name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -151,9 +152,7 @@ export default function Profile() {
           <div className="w-64 flex-shrink-0">
             <div className="bg-neutral-50 box-border content-stretch flex flex-col gap-6 h-full items-start justify-start overflow-clip px-8 py-10 relative shrink-0 w-64 rounded-2xl">
               <div className="content-stretch flex flex-col gap-0.5 items-start justify-start leading-[0] relative shrink-0 w-full">
-                <div className="font-heading font-bold text-xl text-primary w-full">
-                  <p className="leading-[1.4]">Settings</p>
-                </div>
+                <H2 className="leading-[1.4]">Settings</H2>
                 <div className="font-body text-xs text-tertiary w-full">
                   <p className="leading-[1.5] text-tertiary">Update your profile picture</p>
                 </div>
@@ -194,9 +193,7 @@ export default function Profile() {
                 <div className="content-stretch flex flex-col gap-8 items-start justify-start relative shrink-0 w-full">
                   {/* Profile Picture Section */}
                   <div className="content-stretch flex flex-col gap-0.5 items-start justify-start leading-[0] relative shrink-0 w-full">
-                    <div className="font-heading font-bold text-xl text-primary w-full">
-                      <p className="leading-[1.4]">Profile Picture</p>
-                    </div>
+                    <H2 className="leading-[1.4]">Profile Picture</H2>
                     <div className="font-body font-normal relative shrink-0 text-[#aaaaaa] text-[12px] w-full">
                       <p className="leading-[1.5]">Update your profile picture</p>
                     </div>
@@ -246,9 +243,7 @@ export default function Profile() {
                 <div className="content-stretch flex flex-col gap-8 items-start justify-start relative shrink-0 w-full">
                   <div className="content-stretch flex gap-8 items-center justify-start relative shrink-0 w-full">
                     <div className="basis-0 content-stretch flex flex-col gap-0.5 grow items-start justify-start leading-[0] min-h-px min-w-px relative shrink-0">
-                      <div className="font-heading font-bold text-xl text-primary w-full">
-                        <p className="leading-[1.4]">Basic Information</p>
-                      </div>
+                      <H2 className="leading-[1.4]">Basic Information</H2>
                     </div>
                     <Button
                       type="submit"
@@ -386,9 +381,7 @@ export default function Profile() {
                 {/* Profile Preview */}
                 <div className="content-stretch flex flex-col gap-8 items-center justify-start relative shrink-0 w-full">
                   <div className="content-stretch flex flex-col gap-0.5 items-start justify-start leading-[0] relative shrink-0 w-full">
-                    <div className="font-heading font-bold text-xl text-primary w-full">
-                      <p className="leading-[1.4]">Profile Preview</p>
-                    </div>
+                    <H2 className="leading-[1.4]">Profile Preview</H2>
                     <div className="font-body font-normal relative shrink-0 text-[#aaaaaa] text-[12px] w-full">
                       <p className="leading-[1.5]">This is how others see your profile</p>
                     </div>
@@ -488,7 +481,7 @@ export default function Profile() {
           <div className="mb-6">
             {/* Title Section */}
             <div className="mb-4">
-              <h2 className="text-xl sm:text-2xl font-bold text-black font-heading mb-1">Settings</h2>
+              <H2 className="mb-1">Settings</H2>
               <p className="text-sm text-gray-500 font-body">Update your profile picture</p>
             </div>
             
@@ -517,7 +510,7 @@ export default function Profile() {
             {/* Profile Picture Card */}
             <div className="bg-white rounded-2xl border border-gray-200 p-6">
               <div className="mb-4">
-                <h3 className="text-xl font-bold text-black mb-1">Profile Picture</h3>
+                <H3 className="mb-1">Profile Picture</H3>
                 <p className="text-sm text-gray-500">Update your profile picture</p>
               </div>
               
@@ -559,7 +552,7 @@ export default function Profile() {
             <div className="bg-white rounded-2xl border border-gray-200 p-6">
               <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6">
                 <div>
-                  <h3 className="text-xl font-bold text-black mb-1">Basic Information</h3>
+                  <H3 className="mb-1">Basic Information</H3>
                 </div>
                 <Button
                   type="submit"

@@ -10,6 +10,7 @@ import { MapPin, Video, Users, Phone, Plus, Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/PrivyAuthContext';
+import { H1, H2, H3 } from '@/design-system';
 import { ApiClient } from '@/lib/api-migration';
 import { TimeSlotSelector } from '@/components/TimeSlotSelector';
 
@@ -47,7 +48,7 @@ interface Category {
 }
 
 export default function MyServices() {
-  const { user, profile } = useWeb3Auth();
+  const { user, profile } = useAuth();
   const [services, setServices] = useState<Service[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -248,7 +249,7 @@ export default function MyServices() {
       <div className="max-w-6xl mx-auto p-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">My Services</h1>
+            <H1 className="mb-2">My Services</H1>
             <p className="text-muted-foreground">
               Manage the services you offer to other users
             </p>
@@ -261,7 +262,7 @@ export default function MyServices() {
 
         {!profile?.is_provider ? (
           <div className="bg-card border rounded-lg p-8 text-center">
-            <h3 className="text-lg font-semibold mb-2">Become a Service Provider</h3>
+            <H3 className="mb-2">Become a Service Provider</H3>
             <p className="text-muted-foreground mb-4">
               Enable service provider mode in your profile to start offering services to other users.
             </p>
@@ -271,7 +272,7 @@ export default function MyServices() {
           </div>
         ) : services.length === 0 ? (
           <div className="bg-card border rounded-lg p-8 text-center">
-            <h3 className="text-lg font-semibold mb-2">No Services Yet</h3>
+            <H3 className="mb-2">No Services Yet</H3>
             <p className="text-muted-foreground mb-4">
               Create your first service to start offering your skills to other users.
             </p>
@@ -304,7 +305,7 @@ export default function MyServices() {
                   </div>
                 </div>
                 
-                <h3 className="text-lg font-semibold mb-2">{service.title}</h3>
+                <H3 className="mb-2">{service.title}</H3>
                 <p className="text-sm text-muted-foreground line-clamp-3 mb-4">{service.description}</p>
                 
                 {service.tags && service.tags.length > 0 && (
@@ -492,7 +493,7 @@ export default function MyServices() {
 
                     {/* Right side - Time Slots */}
                     <div className="w-1/2 border rounded-lg p-4 overflow-y-auto min-h-0">
-                      <h3 className="text-lg font-medium mb-4">Available Time Slots</h3>
+                      <H3 className="mb-4">Available Time Slots</H3>
                       <FormField
                         control={serviceForm.control}
                         name="timeSlots"

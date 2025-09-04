@@ -15,6 +15,7 @@ import StarRating from "@/components/StarRating";
 import { toast } from "sonner";
 import { getBrowserTimezone } from "@/lib/timezone";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { H1 } from '@/design-system';
 
 interface Service {
   id: string;
@@ -326,9 +327,9 @@ const Profile = () => {
                     {profile.display_name?.charAt(0) || profile.email?.charAt(0) || "U"}
                   </AvatarFallback>
                 </Avatar>
-                <h1 className="text-2xl font-medium text-foreground mb-2">
+                <H1 className="mb-2">
                   {profile.display_name || profile.email?.split('@')[0] || 'User'}
-                </h1>
+                </H1>
                 {profile.location && (
                   <div className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground mb-2">
                     <MapPin className="h-3.5 w-3.5" />
