@@ -8,6 +8,7 @@ import { ApiClient } from '@/lib/api-migration';
 import { ConversationItem } from '@/components/ConversationList';
 import MessageThread from '@/components/MessageThread';
 import { toast } from 'sonner';
+import { H2 } from '@/design-system';
 
 /**
  * Mobile-only chat page for customer conversations
@@ -113,7 +114,7 @@ export default function CustomerMobileChat() {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h2 className="ml-4 text-lg font-semibold">Messages</h2>
+          <H2 className="ml-4">Messages</H2>
         </div>
         
         <div className="flex-1 flex items-center justify-center p-6">
@@ -152,9 +153,9 @@ export default function CustomerMobileChat() {
           </AvatarFallback>
         </Avatar>
         
-        <h2 className="text-lg font-semibold truncate">
+        <H2 className="truncate">
           {conversation.otherUser.display_name}
-        </h2>
+        </H2>
       </div>
 
       {/* Message Thread - Reuse existing component */}

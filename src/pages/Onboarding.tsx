@@ -11,6 +11,7 @@ import { Upload, ArrowRight, ArrowLeft, MapPin, User, FileText, Briefcase, Searc
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/PrivyAuthContext";
 import { ApiClient } from "@/lib/api-migration";
+import { H1, H3 } from "@/design-system";
 
 const Onboarding = () => {
   const navigate = useNavigate();
@@ -263,7 +264,7 @@ const Onboarding = () => {
         return (
           <div className="space-y-8">
             <div className="space-y-4">
-              <h1 className="text-4xl font-bold tracking-tight text-foreground">Let's get to know you!</h1>
+              <H1 className="tracking-tight">Let's get to know you!</H1>
               <p className="text-lg text-muted-foreground leading-relaxed">
                 Your name helps others identify you when booking services or viewing your profile.
               </p>
@@ -329,7 +330,7 @@ const Onboarding = () => {
         return (
           <div className="space-y-8">
             <div className="space-y-4">
-              <h1 className="text-4xl font-bold tracking-tight text-foreground">Where are you located?</h1>
+              <H1 className="tracking-tight">Where are you located?</H1>
               <p className="text-lg text-muted-foreground leading-relaxed">
                 This helps match you with nearby services and lets others know your general area when you offer services.
               </p>
@@ -360,7 +361,7 @@ const Onboarding = () => {
         return (
           <div className="space-y-8">
             <div className="space-y-4">
-              <h1 className="text-4xl font-bold tracking-tight text-foreground">Tell us about yourself</h1>
+              <H1 className="tracking-tight">Tell us about yourself</H1>
               <p className="text-lg text-muted-foreground leading-relaxed">
                 A brief bio helps others understand who you are and what you're passionate about. This appears on your profile.
               </p>
@@ -392,7 +393,7 @@ const Onboarding = () => {
         return (
           <div className="space-y-8">
             <div className="space-y-4">
-              <h1 className="text-4xl font-bold tracking-tight text-foreground">Ready to share your expertise?</h1>
+              <H1 className="tracking-tight">Ready to share your expertise?</H1>
               <p className="text-lg text-muted-foreground leading-relaxed">
                 BookMe lets you earn by offering your skills and knowledge to others. You can always change this later.
               </p>

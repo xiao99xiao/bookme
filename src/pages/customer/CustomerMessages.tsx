@@ -9,6 +9,7 @@ import ConversationList, { ConversationItem } from '@/components/ConversationLis
 import MessageThread from '@/components/MessageThread';
 import { toast } from 'sonner';
 import PageLayout from '@/components/PageLayout';
+import { H1, H3 } from '@/design-system';
 
 export default function CustomerMessages() {
   const { userId } = useAuth();
@@ -119,9 +120,9 @@ export default function CustomerMessages() {
         <div className="bg-neutral-50 flex flex-col gap-6 h-full px-8 py-10 w-64 flex-shrink-0">
         {/* Title Section */}
         <div className="flex flex-col gap-0.5 flex-shrink-0">
-          <h1 className="font-['Spectral'] font-bold text-[20px] text-black leading-[1.4]">
+          <H1>
             Messages
-          </h1>
+          </H1>
           <p className="font-['Baloo_2'] font-normal text-[12px] text-[#aaaaaa] leading-[1.5]">
             Chat with customers and service providers
           </p>
@@ -167,7 +168,7 @@ export default function CustomerMessages() {
           <div className="h-full bg-white rounded-[24px] shadow-[0px_12px_16px_-4px_rgba(0,0,0,0.08),0px_4px_6px_-2px_rgba(0,0,0,0.03)] flex items-center justify-center">
             <div className="text-center">
               <MessageSquare className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-medium mb-2">Select a conversation</h3>
+              <H3 className="mb-2">Select a conversation</H3>
               <p className="text-muted-foreground">
                 Choose a conversation from the left to start messaging
               </p>
@@ -182,7 +183,7 @@ export default function CustomerMessages() {
       <div className="px-4 py-6">
         {/* Title */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">Messages</h1>
+          <H1 className="mb-1">Messages</H1>
           <p className="text-sm text-gray-500">Chat with service providers</p>
         </div>
 
@@ -209,7 +210,7 @@ export default function CustomerMessages() {
           ) : conversations.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-lg">
               <MessageSquare className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <h3 className="font-semibold text-gray-900 mb-2">No conversations yet</h3>
+              <H3 className="mb-2">No conversations yet</H3>
               <p className="text-sm text-gray-500">Your messages will appear here</p>
             </div>
           ) : (
@@ -254,9 +255,9 @@ export default function CustomerMessages() {
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <h3 className="font-semibold text-gray-900 truncate">
+                      <H3 className="truncate">
                         {conversation.otherUser.display_name}
-                      </h3>
+                      </H3>
                       {conversation.lastMessage && (
                         <span className="text-xs text-gray-500 flex-shrink-0">
                           {(() => {

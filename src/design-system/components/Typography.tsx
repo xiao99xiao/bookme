@@ -17,14 +17,15 @@ export function Heading({ children, className, as, level, ...props }: HeadingPro
   // Determine component type based on level or as prop
   const Component = as || `h${level || 1}` as keyof JSX.IntrinsicElements;
   
-  // Define heading sizes based on level
+  // Define heading sizes using appropriate Tailwind classes
+  // Tailwind reference: text-sm=14px, text-base=16px, text-lg=18px, text-xl=20px, text-2xl=24px, text-3xl=30px, text-4xl=36px
   const headingSizes = {
-    1: 'text-4xl sm:text-5xl lg:text-6xl', // Hero headings
-    2: 'text-3xl sm:text-4xl',            // Section headings  
-    3: 'text-2xl sm:text-3xl',            // Subsection headings
-    4: 'text-xl sm:text-2xl',             // Card/Component headings
-    5: 'text-lg sm:text-xl',              // Small headings
-    6: 'text-[20px]',                     // Smallest headings (design system base)
+    1: 'text-2xl',      // H1: 24px (was text-4xl+ which was too big)
+    2: 'text-xl',       // H2: 20px (was text-3xl+ which was too big)
+    3: 'text-lg',       // H3: 18px (was text-2xl+ which was too big)
+    4: 'text-base',     // H4: 16px
+    5: 'text-sm',       // H5: 14px
+    6: 'text-sm',       // H6: 14px
   };
   
   const currentLevel = level || (Component.toString().match(/h(\d)/) ? parseInt(Component.toString().match(/h(\d)/)![1]) : 1) as 1 | 2 | 3 | 4 | 5 | 6;

@@ -37,11 +37,19 @@ export const tokens = {
   },
   
   fontSizes: {
+    // Text sizes
     tiny: '12px',      // Text/Tiny
     small: '14px',     // Text/Small
     regular: '16px',   // Text/Regular
     medium: '18px',    // Text/Medium
-    h6: '20px',        // Heading/Desktop/H6
+    
+    // Heading sizes (based on your requirements)
+    h1: '32px',        // Heading/Desktop/H1
+    h2: '24px',        // Heading/Desktop/H2
+    h3: '20px',        // Heading/Desktop/H3
+    h4: '18px',        // Heading/Desktop/H4
+    h5: '16px',        // Heading/Desktop/H5
+    h6: '14px',        // Heading/Desktop/H6
   },
   
   fontWeights: {

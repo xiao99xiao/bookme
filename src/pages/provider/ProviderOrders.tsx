@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient, Booking } from '@/lib/api-migration';
 import ChatModal from '@/components/ChatModal';
 import ReviewDialog from '@/components/ReviewDialog';
+import { H2, H3 } from '@/design-system';
 
 export default function ProviderOrders() {
   const { userId, user } = useAuth();
@@ -168,7 +169,7 @@ export default function ProviderOrders() {
           <div className="w-64 flex-shrink-0">
             <div className="mb-6">
               {/* Title - Spectral font */}
-              <h2 className="text-2xl font-bold text-black font-heading mb-2">Orders</h2>
+              <H2 className="mb-2">Orders</H2>
               {/* Subtitle - Baloo 2 font */}
               <p className="text-sm text-gray-500 font-body">Manage orders from your customers</p>
             </div>
@@ -215,9 +216,9 @@ export default function ProviderOrders() {
                       <div className="flex items-start justify-between mb-6">
                         <div className="flex-1">
                           {/* Service Title */}
-                          <h3 className="text-lg font-semibold text-black font-body mb-1">
+                          <H3 className="mb-1">
                             {booking.service?.title || 'Online Teaching'}
-                          </h3>
+                          </H3>
                           {/* Booked date */}
                           <p className="text-xs text-[#aaaaaa] font-body">
                             Booked {format(new Date(booking.created_at), 'MMM d,yyyy')}
@@ -432,7 +433,7 @@ export default function ProviderOrders() {
           <div className="mb-6">
             {/* Title Section */}
             <div className="mb-4">
-              <h2 className="text-xl sm:text-2xl font-bold text-black font-heading mb-1">Orders</h2>
+              <H2 className="mb-1">Orders</H2>
               <p className="text-sm text-gray-500 font-body">Manage orders from your customers</p>
             </div>
             
@@ -478,9 +479,9 @@ export default function ProviderOrders() {
                       <div className="flex items-start justify-between mb-4 sm:mb-6">
                         <div className="flex-1 min-w-0">
                           {/* Service Title */}
-                          <h3 className="text-base sm:text-lg font-semibold text-black font-body mb-1 truncate">
+                          <H3 className="mb-1 truncate">
                             {booking.service?.title || 'Online Teaching'}
-                          </h3>
+                          </H3>
                           {/* Booked date */}
                           <p className="text-xs text-[#aaaaaa] font-body">
                             Booked {format(new Date(booking.created_at), 'MMM d,yyyy')}
