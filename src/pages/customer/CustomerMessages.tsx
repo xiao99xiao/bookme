@@ -9,7 +9,7 @@ import ConversationList, { ConversationItem } from '@/components/ConversationLis
 import MessageThread from '@/components/MessageThread';
 import { toast } from 'sonner';
 import PageLayout from '@/components/PageLayout';
-import { H1, H3 } from '@/design-system';
+import { H1, H3, Text, Description } from '@/design-system';
 
 export default function CustomerMessages() {
   const { userId } = useAuth();
@@ -123,9 +123,9 @@ export default function CustomerMessages() {
           <H1>
             Messages
           </H1>
-          <p className="font-['Baloo_2'] font-normal text-[12px] text-[#aaaaaa] leading-[1.5]">
+          <Description className="leading-[1.5]">
             Chat with customers and service providers
-          </p>
+          </Description>
         </div>
 
         {/* Search Box */}
@@ -169,9 +169,9 @@ export default function CustomerMessages() {
             <div className="text-center">
               <MessageSquare className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
               <H3 className="mb-2">Select a conversation</H3>
-              <p className="text-muted-foreground">
+              <Text color="secondary">
                 Choose a conversation from the left to start messaging
-              </p>
+              </Text>
             </div>
           </div>
         )}
@@ -184,7 +184,7 @@ export default function CustomerMessages() {
         {/* Title */}
         <div className="mb-6">
           <H1 className="mb-1">Messages</H1>
-          <p className="text-sm text-gray-500">Chat with service providers</p>
+          <Text variant="small" color="secondary">Chat with service providers</Text>
         </div>
 
         {/* Search */}
@@ -205,13 +205,13 @@ export default function CustomerMessages() {
         <div className="space-y-3">
           {loading ? (
             <div className="text-center py-12">
-              <p className="text-gray-500">Loading conversations...</p>
+              <Text color="secondary">Loading conversations...</Text>
             </div>
           ) : conversations.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-lg">
               <MessageSquare className="h-12 w-12 text-gray-300 mx-auto mb-4" />
               <H3 className="mb-2">No conversations yet</H3>
-              <p className="text-sm text-gray-500">Your messages will appear here</p>
+              <Text variant="small" color="secondary">Your messages will appear here</Text>
             </div>
           ) : (
             conversations
@@ -277,14 +277,14 @@ export default function CustomerMessages() {
                       )}
                     </div>
                     {conversation.booking?.service?.title && (
-                      <p className="text-xs text-gray-500 mb-1">
+                      <Description className="mb-1">
                         {conversation.booking.service.title}
-                      </p>
+                      </Description>
                     )}
                     {conversation.lastMessage && (
-                      <p className="text-sm text-gray-600 line-clamp-1">
+                      <Text variant="small" className="text-gray-600 line-clamp-1">
                         {conversation.lastMessage.content}
-                      </p>
+                      </Text>
                     )}
                   </div>
                 </div>

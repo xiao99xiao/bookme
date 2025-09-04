@@ -15,7 +15,7 @@ import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient, Booking } from '@/lib/api-migration';
 import ChatModal from '@/components/ChatModal';
 import ReviewDialog from '@/components/ReviewDialog';
-import { H2, H3 } from '@/design-system';
+import { H2, H3, Text, Description, Label } from '@/design-system';
 
 export default function CustomerBookings() {
   const { userId } = useAuth();
@@ -290,7 +290,7 @@ export default function CustomerBookings() {
               {/* Title - Spectral font */}
               <H2 className="mb-2">My Bookings</H2>
               {/* Subtitle - Baloo 2 font */}
-              <p className="text-sm text-gray-500 font-body">Services you have booked from providers</p>
+              <Text variant="small" color="secondary">Services you have booked from providers</Text>
             </div>
             
             {/* Vertical Navigation - Baloo 2 font */}
@@ -315,16 +315,16 @@ export default function CustomerBookings() {
           <div className="flex-1">
             {loading ? (
               <div className="text-center py-12">
-                <p className="text-gray-500 font-body">Loading bookings...</p>
+                <Text color="secondary">Loading bookings...</Text>
               </div>
             ) : filteredBookings.length === 0 ? (
               <div className="text-center py-12">
                 <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 font-body">No {activeTab === 'all' ? '' : activeTab} bookings</p>
+                <Text color="secondary">No {activeTab === 'all' ? '' : activeTab} bookings</Text>
                 {activeTab === 'upcoming' && (
-                  <p className="text-sm text-gray-400 mt-1 font-body">
+                  <Text variant="small" color="tertiary" className="mt-1">
                     Browse services and make your first booking
-                  </p>
+                  </Text>
                 )}
               </div>
             ) : (
@@ -349,9 +349,9 @@ export default function CustomerBookings() {
                             {booking.service?.title || 'Service'}
                           </H3>
                           {/* Booked date */}
-                          <p className="text-xs text-[#aaaaaa] font-body">
+                          <Description>
                             Booked {format(new Date(booking.created_at), 'MMM d, yyyy')}
-                          </p>
+                          </Description>
                         </div>
                         
                         {/* Top Right Icons */}
@@ -493,9 +493,9 @@ export default function CustomerBookings() {
                         <>
                           <div className="border-t border-[#eeeeee] my-4"></div>
                           <div className="mb-4">
-                            <p className="text-sm text-[#666666] font-body">
+                            <Text variant="small" className="text-[#666666]">
                               <span className="font-medium text-black">Your notes:</span> {booking.customer_notes}
-                            </p>
+                            </Text>
                           </div>
                         </>
                       )}
@@ -586,17 +586,17 @@ export default function CustomerBookings() {
                           <div className="flex items-start justify-between gap-4">
                             {/* Review Text */}
                             <div className="flex-1">
-                              <p className="text-sm font-medium text-black font-body mb-0.5">
+                              <Text variant="small" weight="medium" className="text-black mb-0.5">
                                 {review ? 'Your Review' : 'Leave a Review'}
-                              </p>
+                              </Text>
                               {review ? (
-                                <p className="text-sm text-[#666666] font-body">
+                                <Text variant="small" className="text-[#666666]">
                                   "{review.comment}"
-                                </p>
+                                </Text>
                               ) : (
-                                <p className="text-sm text-[#999999] font-body">
+                                <Text variant="small" className="text-[#999999]">
                                   Share your experience with this service
-                                </p>
+                                </Text>
                               )}
                             </div>
                             
@@ -660,7 +660,7 @@ export default function CustomerBookings() {
             {/* Title Section */}
             <div className="mb-4">
               <H2 className="mb-1">My Bookings</H2>
-              <p className="text-sm text-gray-500 font-body">Services you have booked from providers</p>
+              <Text variant="small" color="secondary">Services you have booked from providers</Text>
             </div>
             
             {/* Horizontal Tab Navigation */}
@@ -685,16 +685,16 @@ export default function CustomerBookings() {
           <div>
             {loading ? (
               <div className="text-center py-12">
-                <p className="text-gray-500 font-body">Loading bookings...</p>
+                <Text color="secondary">Loading bookings...</Text>
               </div>
             ) : filteredBookings.length === 0 ? (
               <div className="text-center py-12">
                 <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 font-body">No {activeTab === 'all' ? '' : activeTab} bookings</p>
+                <Text color="secondary">No {activeTab === 'all' ? '' : activeTab} bookings</Text>
                 {activeTab === 'upcoming' && (
-                  <p className="text-sm text-gray-400 mt-1 font-body">
+                  <Text variant="small" color="tertiary" className="mt-1">
                     Browse services and make your first booking
-                  </p>
+                  </Text>
                 )}
               </div>
             ) : (
@@ -719,9 +719,9 @@ export default function CustomerBookings() {
                             {booking.service?.title || 'Service'}
                           </H3>
                           {/* Booked date */}
-                          <p className="text-xs text-[#aaaaaa] font-body">
+                          <Description>
                             Booked {format(new Date(booking.created_at), 'MMM d, yyyy')}
-                          </p>
+                          </Description>
                         </div>
                         
                         {/* Top Right Icons - Smaller on mobile */}
@@ -860,9 +860,9 @@ export default function CustomerBookings() {
                       {/* Customer Notes - Same as desktop */}
                       {booking.customer_notes && (
                         <div className="mb-4 sm:mb-6 p-3 bg-[#f8f8f8] rounded-xl">
-                          <p className="text-sm text-[#666666] font-body">
+                          <Text variant="small" className="text-[#666666]">
                             <span className="font-semibold text-black">Your notes:</span> {booking.customer_notes}
-                          </p>
+                          </Text>
                         </div>
                       )}
 
@@ -941,17 +941,17 @@ export default function CustomerBookings() {
                           <div className="flex items-start justify-between gap-4">
                             {/* Review Text */}
                             <div className="flex-1">
-                              <p className="text-sm font-medium text-black font-body mb-0.5">
+                              <Text variant="small" weight="medium" className="text-black mb-0.5">
                                 {review ? 'Your Review' : 'Leave a Review'}
-                              </p>
+                              </Text>
                               {review ? (
-                                <p className="text-sm text-[#666666] font-body">
+                                <Text variant="small" className="text-[#666666]">
                                   "{review.comment}"
-                                </p>
+                                </Text>
                               ) : (
-                                <p className="text-sm text-[#999999] font-body">
+                                <Text variant="small" className="text-[#999999]">
                                   Share your experience with this service
-                                </p>
+                                </Text>
                               )}
                             </div>
                             

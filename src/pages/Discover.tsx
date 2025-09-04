@@ -12,7 +12,7 @@ import { ApiClient } from "@/lib/api-migration";
 import { useAuth } from "@/contexts/PrivyAuthContext";
 import { getBrowserTimezone } from "@/lib/timezone";
 import { toast } from "sonner";
-import { H1, H2 } from "@/design-system";
+import { H1, H2, Text, Description } from "@/design-system";
 
 interface Service {
   id: string;
@@ -155,9 +155,9 @@ const Discover = () => {
             <H1 className="mb-6">
               Discover Expert Services
             </H1>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
+            <Text variant="medium" color="secondary" className="max-w-3xl mx-auto mb-8">
               Browse thousands of professionals offering their expertise. Find the perfect expert for your needs and book instantly with secure payment protection.
-            </p>
+            </Text>
           </div>
 
           {/* Search and Filter Section */}
@@ -196,14 +196,14 @@ const Discover = () => {
 
           {/* Results Count */}
           <div className="text-center mb-6">
-            <p className="text-muted-foreground">
+            <Text color="secondary">
               {loading ? 'Loading services...' : (
                 <>
                   Showing {services.length} service{services.length !== 1 ? 's' : ''}
                   {selectedCategory && selectedCategory !== "all" && ` in ${selectedCategory}`}
                 </>
               )}
-            </p>
+            </Text>
           </div>
         </div>
       </section>
