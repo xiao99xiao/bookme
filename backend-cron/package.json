@@ -1,0 +1,22 @@
+{
+  "name": "bookme-cron",
+  "version": "1.0.0",
+  "description": "BookMe booking automation cron service for Railway",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.7",
+    "dotenv": "^16.4.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": ["cron", "booking", "automation", "railway"],
+  "author": "BookMe Team",
+  "license": "MIT"
+}

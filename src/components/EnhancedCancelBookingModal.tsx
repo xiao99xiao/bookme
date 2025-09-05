@@ -9,6 +9,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, AlertCircle, DollarSign, Clock, User } from "lucide-react";
 import { toast } from "sonner";
 import { Button as DSButton } from '@/design-system';
+import { Card as DSCard, Stack } from '@/design-system/components/Layout';
+import { Heading, Text } from '@/design-system/components/Typography';
+import { useAuth } from "@/contexts/PrivyAuthContext";
+import { ApiClient } from "@/lib/api-migration";
 
 interface CancellationPolicy {
   id: string;
@@ -68,6 +72,7 @@ export const EnhancedCancelBookingModal = ({
   onClose, 
   onConfirm 
 }: EnhancedCancelBookingModalProps) => {
+  const { authenticated } = useAuth();
   const [policies, setPolicies] = useState<CancellationPolicy[]>([]);
   const [selectedPolicyId, setSelectedPolicyId] = useState<string>('');
   const [explanation, setExplanation] = useState<string>('');
@@ -97,41 +102,7 @@ export const EnhancedCancelBookingModal = ({
     
     setLoadingPolicies(true);
     try {
-      const token = localStorage.getItem('privy:token');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://localhost:4443';
-      const response = await fetch(`${backendUrl}/api/bookings/${booking.id}/cancellation-policies`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        let errorMessage = 'Failed to load cancellation policies';
-        try {
-          const error = await response.json();
-          errorMessage = error.error || errorMessage;
-        } catch (parseError) {
-          console.error('Failed to parse error response:', parseError);
-          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-        }
-        throw new Error(errorMessage);
-      }
-
-      const responseText = await response.text();
-      console.log('Raw response:', responseText);
-      
-      let policiesData;
-      try {
-        policiesData = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error('Failed to parse JSON response:', parseError);
-        console.error('Response text:', responseText);
-        throw new Error('Invalid response format from server');
-      }
+      const policiesData = await ApiClient.getCancellationPolicies(booking.id);
       setPolicies(policiesData);
 
       // Auto-select first policy if only one is available
@@ -151,27 +122,7 @@ export const EnhancedCancelBookingModal = ({
     
     setLoadingBreakdown(true);
     try {
-      const token = localStorage.getItem('privy:token');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://localhost:4443';
-      const response = await fetch(`${backendUrl}/api/bookings/${booking.id}/refund-breakdown`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ policyId: selectedPolicyId }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to calculate refund breakdown');
-      }
-
-      const breakdown = await response.json();
+      const breakdown = await ApiClient.calculateRefundBreakdown(booking.id, selectedPolicyId);
       setRefundBreakdown(breakdown);
     } catch (error) {
       console.error('Error calculating breakdown:', error);
@@ -192,30 +143,11 @@ export const EnhancedCancelBookingModal = ({
 
     setCancelling(true);
     try {
-      const token = localStorage.getItem('privy:token');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://localhost:4443';
-      const response = await fetch(`${backendUrl}/api/bookings/${booking.id}/cancel-with-policy`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ 
-          policyId: selectedPolicyId, 
-          explanation: explanation.trim() || null 
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to cancel booking');
-      }
-
-      const result = await response.json();
+      const result = await ApiClient.cancelBookingWithPolicy(
+        booking.id, 
+        selectedPolicyId, 
+        explanation.trim() || null
+      );
       toast.success('Booking cancelled successfully');
       onConfirm(result);
       handleClose();
@@ -308,36 +240,54 @@ export const EnhancedCancelBookingModal = ({
 
           {/* Refund Breakdown */}
           {refundBreakdown && (
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <DollarSign className="w-4 h-4 text-green-600" />
-                  <h4 className="font-medium">Refund Breakdown</h4>
+            <DSCard>
+              <Stack direction="column" spacing="md">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="w-5 h-5 text-green-600" />
+                  <Heading level={4} className="m-0">Refund Breakdown</Heading>
                 </div>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>Original Amount:</span>
-                    <span>${refundBreakdown.totalAmount.toFixed(2)}</span>
+                
+                <Stack direction="column" spacing="sm">
+                  <div className="flex justify-between items-center">
+                    <Text variant="regular" color="secondary">Original Amount:</Text>
+                    <Text variant="regular" weight="medium">${refundBreakdown.totalAmount.toFixed(2)}</Text>
                   </div>
-                  <div className="border-t pt-2 space-y-1">
-                    <div className="flex justify-between text-green-600">
-                      <span>Customer Refund ({refundBreakdown.percentages.customerRefundPercentage}%):</span>
-                      <span>${refundBreakdown.breakdown.customerRefund.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-blue-600">
-                      <span>Provider Earnings ({refundBreakdown.percentages.providerEarningsPercentage}%):</span>
-                      <span>${refundBreakdown.breakdown.providerEarnings.toFixed(2)}</span>
-                    </div>
-                    {refundBreakdown.breakdown.platformFee > 0 && (
-                      <div className="flex justify-between text-gray-600">
-                        <span>Platform Fee ({refundBreakdown.percentages.platformFeePercentage}%):</span>
-                        <span>${refundBreakdown.breakdown.platformFee.toFixed(2)}</span>
+                  
+                  <div className="border-t pt-3 mt-3">
+                    <Stack direction="column" spacing="xs">
+                      <div className="flex justify-between items-center">
+                        <Text variant="regular" className="text-green-600">
+                          Customer Refund ({refundBreakdown.percentages.customerRefundPercentage}%):
+                        </Text>
+                        <Text variant="regular" weight="medium" className="text-green-600">
+                          ${refundBreakdown.breakdown.customerRefund.toFixed(2)}
+                        </Text>
                       </div>
-                    )}
+                      
+                      <div className="flex justify-between items-center">
+                        <Text variant="regular" className="text-blue-600">
+                          Provider Earnings ({refundBreakdown.percentages.providerEarningsPercentage}%):
+                        </Text>
+                        <Text variant="regular" weight="medium" className="text-blue-600">
+                          ${refundBreakdown.breakdown.providerEarnings.toFixed(2)}
+                        </Text>
+                      </div>
+                      
+                      {refundBreakdown.breakdown.platformFee > 0 && (
+                        <div className="flex justify-between items-center">
+                          <Text variant="regular" color="tertiary">
+                            Platform Fee ({refundBreakdown.percentages.platformFeePercentage}%):
+                          </Text>
+                          <Text variant="regular" weight="medium" color="tertiary">
+                            ${refundBreakdown.breakdown.platformFee.toFixed(2)}
+                          </Text>
+                        </div>
+                      )}
+                    </Stack>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </Stack>
+              </Stack>
+            </DSCard>
           )}
 
           {/* Explanation Field */}

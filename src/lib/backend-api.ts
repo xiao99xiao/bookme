@@ -277,4 +277,23 @@ export class BackendAPI {
 
     return response.json();
   }
+
+  // Enhanced Cancellation
+  async getCancellationPolicies(bookingId: string): Promise<any[]> {
+    return this.request(`/api/bookings/${bookingId}/cancellation-policies`);
+  }
+
+  async calculateRefundBreakdown(bookingId: string, policyId: string): Promise<any> {
+    return this.request(`/api/bookings/${bookingId}/refund-breakdown`, {
+      method: 'POST',
+      body: JSON.stringify({ policyId }),
+    });
+  }
+
+  async cancelBookingWithPolicy(bookingId: string, policyId: string, explanation: string | null): Promise<any> {
+    return this.request(`/api/bookings/${bookingId}/cancel-with-policy`, {
+      method: 'POST',
+      body: JSON.stringify({ policyId, explanation }),
+    });
+  }
 }

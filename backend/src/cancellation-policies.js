@@ -21,6 +21,7 @@ export async function getApplicableCancellationPolicies(bookingId, userId) {
       .single();
 
     if (bookingError || !booking) {
+      console.error('Booking not found:', bookingError);
       throw new Error('Booking not found');
     }
 
@@ -48,6 +49,7 @@ export async function getApplicableCancellationPolicies(bookingId, userId) {
       .eq('is_active', true);
 
     if (policiesError) {
+      console.error('Failed to fetch cancellation policies:', policiesError);
       throw new Error('Failed to fetch cancellation policies');
     }
 
@@ -62,7 +64,15 @@ export async function getApplicableCancellationPolicies(bookingId, userId) {
       for (const condition of conditions) {
         switch (condition.condition_type) {
           case 'booking_status':
-            if (booking.status !== condition.condition_value) {
+            let statusMatches = booking.status === condition.condition_value;
+            
+            // Special case: if condition requires 'ongoing' but booking is 'confirmed' and past scheduled time,
+            // treat it as ongoing for cancellation purposes
+            if (!statusMatches && condition.condition_value === 'ongoing' && booking.status === 'confirmed' && minutesUntilStart <= 0) {
+              statusMatches = true;
+            }
+            
+            if (!statusMatches) {
               isApplicable = false;
             }
             break;
