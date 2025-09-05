@@ -97,9 +97,14 @@ export const EnhancedCancelBookingModal = ({
     
     setLoadingPolicies(true);
     try {
+      const token = localStorage.getItem('privy:token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
       const response = await fetch(`/api/bookings/${booking.id}/cancellation-policies`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('privy:token')}`,
+          'Authorization': `Bearer ${token}`,
         },
       });
 
@@ -128,11 +133,16 @@ export const EnhancedCancelBookingModal = ({
     
     setLoadingBreakdown(true);
     try {
+      const token = localStorage.getItem('privy:token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
       const response = await fetch(`/api/bookings/${booking.id}/refund-breakdown`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('privy:token')}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ policyId: selectedPolicyId }),
       });
@@ -163,11 +173,16 @@ export const EnhancedCancelBookingModal = ({
 
     setCancelling(true);
     try {
+      const token = localStorage.getItem('privy:token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
       const response = await fetch(`/api/bookings/${booking.id}/cancel-with-policy`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('privy:token')}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ 
           policyId: selectedPolicyId, 

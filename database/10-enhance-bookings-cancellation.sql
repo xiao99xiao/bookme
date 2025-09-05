@@ -15,10 +15,32 @@ ADD COLUMN IF NOT EXISTS platform_fee DECIMAL(10,2);
 CREATE INDEX IF NOT EXISTS bookings_cancellation_policy_id_idx ON public.bookings(cancellation_policy_id);
 
 -- Add constraint to ensure refund amounts are non-negative
-ALTER TABLE public.bookings 
-ADD CONSTRAINT IF NOT EXISTS refund_amount_non_negative CHECK (refund_amount >= 0),
-ADD CONSTRAINT IF NOT EXISTS provider_earnings_non_negative CHECK (provider_earnings >= 0),
-ADD CONSTRAINT IF NOT EXISTS platform_fee_non_negative CHECK (platform_fee >= 0);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint 
+        WHERE conname = 'refund_amount_non_negative' 
+        AND conrelid = 'public.bookings'::regclass
+    ) THEN
+        ALTER TABLE public.bookings ADD CONSTRAINT refund_amount_non_negative CHECK (refund_amount >= 0);
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint 
+        WHERE conname = 'provider_earnings_non_negative' 
+        AND conrelid = 'public.bookings'::regclass
+    ) THEN
+        ALTER TABLE public.bookings ADD CONSTRAINT provider_earnings_non_negative CHECK (provider_earnings >= 0);
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint 
+        WHERE conname = 'platform_fee_non_negative' 
+        AND conrelid = 'public.bookings'::regclass
+    ) THEN
+        ALTER TABLE public.bookings ADD CONSTRAINT platform_fee_non_negative CHECK (platform_fee >= 0);
+    END IF;
+END $$;
 
 -- Add comment to document the enhanced cancellation system
 COMMENT ON COLUMN public.bookings.cancellation_policy_id IS 'References the cancellation policy used for this cancellation';
