@@ -22,46 +22,81 @@ INSERT INTO public.cancellation_policy_conditions (policy_id, condition_type, co
 SELECT id, 'booking_status', 'ongoing' 
 FROM public.cancellation_policies 
 WHERE reason_key = 'customer_no_show'
-ON CONFLICT DO NOTHING;
+AND NOT EXISTS (
+    SELECT 1 FROM public.cancellation_policy_conditions cpc
+    WHERE cpc.policy_id = public.cancellation_policies.id 
+    AND cpc.condition_type = 'booking_status' 
+    AND cpc.condition_value = 'ongoing'
+);
 
 -- Insert conditions for Customer Early Cancel
 INSERT INTO public.cancellation_policy_conditions (policy_id, condition_type, condition_value) 
 SELECT id, 'booking_status', 'confirmed' 
 FROM public.cancellation_policies 
 WHERE reason_key = 'customer_early_cancel'
-ON CONFLICT DO NOTHING;
+AND NOT EXISTS (
+    SELECT 1 FROM public.cancellation_policy_conditions cpc
+    WHERE cpc.policy_id = public.cancellation_policies.id 
+    AND cpc.condition_type = 'booking_status' 
+    AND cpc.condition_value = 'confirmed'
+);
 
 INSERT INTO public.cancellation_policy_conditions (policy_id, condition_type, condition_value) 
 SELECT id, 'min_time_before_start', '720' 
 FROM public.cancellation_policies 
 WHERE reason_key = 'customer_early_cancel'
-ON CONFLICT DO NOTHING;
+AND NOT EXISTS (
+    SELECT 1 FROM public.cancellation_policy_conditions cpc
+    WHERE cpc.policy_id = public.cancellation_policies.id 
+    AND cpc.condition_type = 'min_time_before_start' 
+    AND cpc.condition_value = '720'
+);
 
 -- Insert conditions for Customer Late Cancel
 INSERT INTO public.cancellation_policy_conditions (policy_id, condition_type, condition_value) 
 SELECT id, 'booking_status', 'confirmed' 
 FROM public.cancellation_policies 
 WHERE reason_key = 'customer_late_cancel'
-ON CONFLICT DO NOTHING;
+AND NOT EXISTS (
+    SELECT 1 FROM public.cancellation_policy_conditions cpc
+    WHERE cpc.policy_id = public.cancellation_policies.id 
+    AND cpc.condition_type = 'booking_status' 
+    AND cpc.condition_value = 'confirmed'
+);
 
 INSERT INTO public.cancellation_policy_conditions (policy_id, condition_type, condition_value) 
 SELECT id, 'max_time_before_start', '720' 
 FROM public.cancellation_policies 
 WHERE reason_key = 'customer_late_cancel'
-ON CONFLICT DO NOTHING;
+AND NOT EXISTS (
+    SELECT 1 FROM public.cancellation_policy_conditions cpc
+    WHERE cpc.policy_id = public.cancellation_policies.id 
+    AND cpc.condition_type = 'max_time_before_start' 
+    AND cpc.condition_value = '720'
+);
 
 -- Insert conditions for Provider Cancel (can cancel at any time before start)
 INSERT INTO public.cancellation_policy_conditions (policy_id, condition_type, condition_value) 
 SELECT id, 'booking_status', 'confirmed' 
 FROM public.cancellation_policies 
 WHERE reason_key = 'provider_cancel'
-ON CONFLICT DO NOTHING;
+AND NOT EXISTS (
+    SELECT 1 FROM public.cancellation_policy_conditions cpc
+    WHERE cpc.policy_id = public.cancellation_policies.id 
+    AND cpc.condition_type = 'booking_status' 
+    AND cpc.condition_value = 'confirmed'
+);
 
 INSERT INTO public.cancellation_policy_conditions (policy_id, condition_type, condition_value) 
 SELECT id, 'booking_status', 'ongoing' 
 FROM public.cancellation_policies 
 WHERE reason_key = 'provider_cancel'
-ON CONFLICT DO NOTHING;
+AND NOT EXISTS (
+    SELECT 1 FROM public.cancellation_policy_conditions cpc
+    WHERE cpc.policy_id = public.cancellation_policies.id 
+    AND cpc.condition_type = 'booking_status' 
+    AND cpc.condition_value = 'ongoing'
+);
 
 -- Note: The 'ongoing' status for provider cancel covers the case where provider cancels during the session
 -- The 'confirmed' status covers cancellation before the appointment starts
