@@ -1,7 +1,7 @@
 import { Video, ExternalLink, Copy, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { GoogleMeetIcon, ZoomIcon, TeamsIcon } from '@/components/icons/MeetingPlatformIcons';
+import { MeetingStatusBadge } from '@/design-system';
 import { toast } from 'sonner';
 
 interface MeetingLinkDisplayProps {
@@ -64,18 +64,8 @@ export default function MeetingLinkDisplay({
           <div>
             <div className="flex items-center space-x-2">
               <h4 className="font-medium text-gray-900">Meeting Link</h4>
-              {isLive && (
-                <Badge variant="destructive" className="text-xs">
-                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse mr-1" />
-                  LIVE
-                </Badge>
-              )}
-              {isStartingSoon && (
-                <Badge variant="default" className="text-xs">
-                  <Clock className="w-3 h-3 mr-1" />
-                  Starting soon
-                </Badge>
-              )}
+              {isLive && <MeetingStatusBadge status="live" size="small" />}
+              {isStartingSoon && <MeetingStatusBadge status="starting_soon" size="small" />}
             </div>
             <p className="text-sm text-gray-600 mt-1">
               {platformLabel} • Ready when you are

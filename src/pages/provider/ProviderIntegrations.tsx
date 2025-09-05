@@ -4,7 +4,7 @@ import { Settings, ExternalLink, Trash2, AlertCircle, CheckCircle, Loader2 } fro
 import { toast } from 'sonner';
 import { Button as DSButton } from '@/design-system';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge as DSBadge } from '@/design-system';
+import { Badge as DSBadge, IntegrationStatusBadge } from '@/design-system';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient } from '@/lib/api-migration';
 import { GoogleAuth } from '@/lib/google-auth';
@@ -152,23 +152,10 @@ export default function ProviderIntegrations() {
               </div>
             </div>
             
-            {connected ? (
-              <DSBadge variant={status === 'connected' ? 'default' : 'default'} className={status === 'connected' ? '' : 'bg-brand-light-red text-brand-red'}>
-                {status === 'connected' ? (
-                  <>
-                    <CheckCircle className="w-3 h-3 mr-1" />
-                    Connected
-                  </>
-                ) : (
-                  <>
-                    <AlertCircle className="w-3 h-3 mr-1" />
-                    Expired
-                  </>
-                )}
-              </DSBadge>
-            ) : (
-              <DSBadge variant="outline">Not Connected</DSBadge>
-            )}
+            <IntegrationStatusBadge 
+              status={connected ? (status === 'connected' ? 'connected' : 'expired') : 'disconnected'} 
+              size="small" 
+            />
           </div>
         </CardHeader>
 
@@ -183,9 +170,9 @@ export default function ProviderIntegrations() {
                   </p>
                 </div>
                 {status === 'expired' && (
-                  <DSBadge variant="default" size="small" className="bg-brand-light-red text-brand-red">
+                  <IntegrationStatusBadge status="expired" size="small">
                     Needs Reconnection
-                  </DSBadge>
+                  </IntegrationStatusBadge>
                 )}
               </div>
               

@@ -15,7 +15,7 @@ import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient, Booking } from '@/lib/api-migration';
 import ChatModal from '@/components/ChatModal';
 import ReviewDialog from '@/components/ReviewDialog';
-import { H2, H3, Text, Description, Label, Button as DSButton, BookingEmptyState, Loading } from '@/design-system';
+import { H2, H3, Text, Description, Label, Button as DSButton, BookingEmptyState, Loading, StatusBadge, OnlineBadge, DurationBadge } from '@/design-system';
 
 export default function CustomerBookings() {
   const { userId } = useAuth();
@@ -446,47 +446,13 @@ export default function CustomerBookings() {
                       <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-2">
                           {/* Status Badge */}
-                          {booking.status === 'confirmed' && (
-                            <div className="bg-[#eff7ff] px-1.5 py-1 rounded-lg flex items-center gap-1">
-                              <CheckCircle className="w-4 h-4 text-[#3B9EF9]" />
-                              <span className="text-sm text-black font-body">Confirmed</span>
-                            </div>
-                          )}
-                          {booking.status === 'pending' && (
-                            <div className="bg-[#fcf9f4] px-1.5 py-1 rounded-lg flex items-center gap-1">
-                              <span className="w-2 h-2 bg-[#FFD43C] rounded-full"></span>
-                              <span className="text-sm text-black font-body">Pending</span>
-                            </div>
-                          )}
-                          {booking.status === 'completed' && (
-                            <div className="bg-[#e7fded] px-1.5 py-1 rounded-lg flex items-center gap-1">
-                              <CheckCircle className="w-4 h-4 text-[#36D267]" />
-                              <span className="text-sm text-black font-body">Completed</span>
-                            </div>
-                          )}
-                          {booking.status === 'cancelled' && (
-                            <div className="bg-[#ffeff0] px-1.5 py-1 rounded-lg flex items-center gap-1">
-                              <XCircle className="w-4 h-4 text-[#F1343D]" />
-                              <span className="text-sm text-black font-body">Cancelled</span>
-                            </div>
-                          )}
+                          <StatusBadge status={booking.status as any} />
                           
                           {/* Online Badge */}
-                          {booking.is_online && (
-                            <div className="bg-[#f3f3f3] px-1.5 py-1 rounded-lg flex items-center gap-1">
-                              <svg className="w-5 h-5" viewBox="0 0 20 20" fill="none">
-                                <rect x="3" y="5" width="14" height="10" rx="1" stroke="#666666" strokeWidth="1.5"/>
-                                <line x1="7" y1="18" x2="13" y2="18" stroke="#666666" strokeWidth="1.5" strokeLinecap="round"/>
-                              </svg>
-                              <span className="text-sm text-[#666666] font-body">Online</span>
-                            </div>
-                          )}
+                          {booking.is_online && <OnlineBadge isOnline={booking.is_online} />}
                           
                           {/* Duration Badge */}
-                          <div className="bg-[#f3f3f3] px-1.5 py-1 rounded-lg flex items-center gap-1">
-                            <Clock className="w-5 h-5 text-[#666666]" />
-                            <span className="text-sm text-[#666666] font-body">{booking.duration_minutes} min</span>
-                          </div>
+                          <DurationBadge minutes={booking.duration_minutes} />
                         </div>
 
                         {/* Total Price */}
@@ -821,47 +787,13 @@ export default function CustomerBookings() {
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
                         <div className="flex items-center gap-2 flex-wrap">
                           {/* Status Badge */}
-                          {booking.status === 'confirmed' && (
-                            <div className="bg-[#eff7ff] px-1.5 py-1 rounded-lg flex items-center gap-1">
-                              <CheckCircle className="w-4 h-4 text-[#3B9EF9]" />
-                              <span className="text-sm text-black font-body">Confirmed</span>
-                            </div>
-                          )}
-                          {booking.status === 'pending' && (
-                            <div className="bg-[#fcf9f4] px-1.5 py-1 rounded-lg flex items-center gap-1">
-                              <span className="w-2 h-2 bg-[#FFD43C] rounded-full"></span>
-                              <span className="text-sm text-black font-body">Pending</span>
-                            </div>
-                          )}
-                          {booking.status === 'completed' && (
-                            <div className="bg-[#e7fded] px-1.5 py-1 rounded-lg flex items-center gap-1">
-                              <CheckCircle className="w-4 h-4 text-[#36D267]" />
-                              <span className="text-sm text-black font-body">Completed</span>
-                            </div>
-                          )}
-                          {booking.status === 'cancelled' && (
-                            <div className="bg-[#ffeff0] px-1.5 py-1 rounded-lg flex items-center gap-1">
-                              <XCircle className="w-4 h-4 text-[#F1343D]" />
-                              <span className="text-sm text-black font-body">Cancelled</span>
-                            </div>
-                          )}
+                          <StatusBadge status={booking.status as any} />
                           
                           {/* Online Badge */}
-                          {booking.is_online && (
-                            <div className="bg-[#f3f3f3] px-1.5 py-1 rounded-lg flex items-center gap-1">
-                              <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 20 20" fill="none">
-                                <rect x="3" y="5" width="14" height="10" rx="1" stroke="#666666" strokeWidth="1.5"/>
-                                <line x1="7" y1="18" x2="13" y2="18" stroke="#666666" strokeWidth="1.5" strokeLinecap="round"/>
-                              </svg>
-                              <span className="text-sm text-[#666666] font-body">Online</span>
-                            </div>
-                          )}
+                          {booking.is_online && <OnlineBadge isOnline={booking.is_online} />}
                           
                           {/* Duration Badge */}
-                          <div className="bg-[#f3f3f3] px-1.5 py-1 rounded-lg flex items-center gap-1">
-                            <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-[#666666]" />
-                            <span className="text-sm text-[#666666] font-body">{booking.duration_minutes} min</span>
-                          </div>
+                          <DurationBadge minutes={booking.duration_minutes} />
                         </div>
 
                         {/* Total Price */}

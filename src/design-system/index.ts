@@ -12,7 +12,29 @@ export { Input, Textarea } from './components/Input';
 
 // Interactive Components
 export { Button } from './components/Button';
-export { Badge } from './components/Badge';
+
+// Badge Components (now includes all badge types from Figma)
+export { 
+  Badge,
+  StatusBadge, 
+  BookingStatusBadge, 
+  OnlineBadge,
+  DurationBadge,
+  MeetingStatusBadge, 
+  TransactionStatusBadge, 
+  IntegrationStatusBadge 
+} from './components/Badge';
+export type { 
+  BadgeProps,
+  BadgeVariant,
+  BadgeSize,
+  StatusBadgeProps, 
+  OnlineBadgeProps,
+  DurationBadgeProps,
+  MeetingStatusBadgeProps,
+  BookingStatus, 
+  MeetingStatus
+} from './components/Badge';
 
 // Loading Components
 export { Loading, PageLoading, CardSkeleton, ButtonLoading } from './components/Loading';
