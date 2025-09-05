@@ -102,18 +102,36 @@ export const EnhancedCancelBookingModal = ({
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch(`/api/bookings/${booking.id}/cancellation-policies`, {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://localhost:4443';
+      const response = await fetch(`${backendUrl}/api/bookings/${booking.id}/cancellation-policies`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to load cancellation policies');
+        let errorMessage = 'Failed to load cancellation policies';
+        try {
+          const error = await response.json();
+          errorMessage = error.error || errorMessage;
+        } catch (parseError) {
+          console.error('Failed to parse error response:', parseError);
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
       }
 
-      const policiesData = await response.json();
+      const responseText = await response.text();
+      console.log('Raw response:', responseText);
+      
+      let policiesData;
+      try {
+        policiesData = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('Failed to parse JSON response:', parseError);
+        console.error('Response text:', responseText);
+        throw new Error('Invalid response format from server');
+      }
       setPolicies(policiesData);
 
       // Auto-select first policy if only one is available
@@ -138,7 +156,8 @@ export const EnhancedCancelBookingModal = ({
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch(`/api/bookings/${booking.id}/refund-breakdown`, {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://localhost:4443';
+      const response = await fetch(`${backendUrl}/api/bookings/${booking.id}/refund-breakdown`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -178,7 +197,8 @@ export const EnhancedCancelBookingModal = ({
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch(`/api/bookings/${booking.id}/cancel-with-policy`, {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://localhost:4443';
+      const response = await fetch(`${backendUrl}/api/bookings/${booking.id}/cancel-with-policy`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
