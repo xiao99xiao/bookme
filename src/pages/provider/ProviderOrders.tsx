@@ -13,6 +13,7 @@ import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient, Booking } from '@/lib/api-migration';
 import ChatModal from '@/components/ChatModal';
 import { H2, H3, Text, Loading, EmptyState, Button as DSButton, StatusBadge, OnlineBadge, DurationBadge } from '@/design-system';
+import { calculatePlatformFee } from '@/lib/config';
 
 export default function ProviderOrders() {
   const { userId, user } = useAuth();
@@ -268,7 +269,8 @@ export default function ProviderOrders() {
                 {/* Each booking is a separate CARD */}
                 {filteredBookings.map((booking) => {
                   const review = bookingReviews[booking.id];
-                  const earnings = booking.total_price - (booking.service_fee || 0);
+                  const fee = booking.service_fee || calculatePlatformFee(booking.total_price);
+                  const earnings = booking.total_price - fee;
                   
                   return (
                     <div key={booking.id} className="bg-white rounded-2xl border border-[#eeeeee] p-6">
@@ -376,9 +378,14 @@ export default function ProviderOrders() {
                           <DurationBadge minutes={booking.duration_minutes} />
                         </div>
 
-                        {/* Total Price */}
-                        <div className="text-lg font-bold text-black font-body">
-                          Total: ${booking.total_price}
+                        {/* Total Price & Earnings */}
+                        <div className="flex flex-col items-end">
+                          <div className="text-sm text-[#666666] font-body">
+                            Total: ${booking.total_price}
+                          </div>
+                          <div className="text-lg font-bold text-black font-body">
+                            You earn: ${earnings.toFixed(2)}
+                          </div>
                         </div>
                       </div>
 
@@ -533,7 +540,8 @@ export default function ProviderOrders() {
                 {/* Mobile Order Cards - Same content as desktop */}
                 {filteredBookings.map((booking) => {
                   const review = bookingReviews[booking.id];
-                  const earnings = booking.total_price - (booking.service_fee || 0);
+                  const fee = booking.service_fee || calculatePlatformFee(booking.total_price);
+                  const earnings = booking.total_price - fee;
                   
                   return (
                     <div key={booking.id} className="bg-white rounded-2xl border border-[#eeeeee] p-4 sm:p-6">
@@ -652,9 +660,14 @@ export default function ProviderOrders() {
                           </div>
                         </div>
 
-                        {/* Total Price */}
-                        <div className="text-base sm:text-lg font-bold text-black font-body">
-                          Total: ${booking.total_price}
+                        {/* Total Price & Earnings */}
+                        <div className="flex flex-col items-end">
+                          <div className="text-xs sm:text-sm text-[#666666] font-body">
+                            Total: ${booking.total_price}
+                          </div>
+                          <div className="text-base sm:text-lg font-bold text-black font-body">
+                            You earn: ${earnings.toFixed(2)}
+                          </div>
                         </div>
                       </div>
 
