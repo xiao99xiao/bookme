@@ -55,6 +55,14 @@ lsof -i :8080
 ps aux | grep vite | grep -v grep
 ```
 
+### CRITICAL DEV SERVER RULE
+**NEVER RESTART THE DEV SERVER UNLESS EXPLICITLY ASKED BY THE USER.**
+- Do NOT kill or restart `npm run dev:all` or any dev server processes
+- Do NOT use KillBash tool on development servers
+- If there are compilation errors, fix the code - do NOT restart the server
+- The dev server has hot module replacement and will recover from most errors automatically
+- Only restart if the user explicitly requests it
+
 ## Architecture Overview
 
 ### Backend Service (Hono)

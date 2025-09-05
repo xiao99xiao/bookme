@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Calendar, CheckCircle, MessageSquare, Copy, Video, Star, XCircle } from 'lucide-react';
+import { Calendar, CheckCircle, MessageSquare, Copy, Video, Star, XCircle, X } from 'lucide-react';
 import { GoogleMeetIcon, ZoomIcon, TeamsIcon } from '@/components/icons/MeetingPlatformIcons';
 import { toast } from 'sonner';
 import {
@@ -86,6 +86,21 @@ export default function ProviderOrders() {
     } catch (error) {
       console.error('Failed to update booking:', error);
       toast.error('Failed to update booking status');
+    }
+  };
+
+  const handleCancelBooking = async (bookingId: string) => {
+    if (!confirm('Are you sure you want to cancel this booking? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await ApiClient.cancelBooking(bookingId, userId!, 'Provider cancelled');
+      toast.success('Booking cancelled successfully');
+      loadBookings();
+    } catch (error) {
+      console.error('Failed to cancel booking:', error);
+      toast.error('Failed to cancel booking');
     }
   };
 
@@ -289,7 +304,7 @@ export default function ProviderOrders() {
                         
                         {/* Top Right Icons */}
                         <div className="flex items-center gap-2">
-                          {booking.status === 'confirmed' ? (
+                          {(booking.status === 'confirmed' || booking.status === 'ongoing') ? (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <DSButton 
@@ -389,22 +404,31 @@ export default function ProviderOrders() {
                         </div>
                       </div>
 
-                      {/* Bottom Section: Timer and Actions - only for confirmed and pending bookings */}
-                      {(booking.status === 'confirmed' || booking.status === 'pending') && (
+                      {/* Bottom Section: Timer and Actions - only for confirmed, ongoing and pending bookings */}
+                      {(booking.status === 'confirmed' || booking.status === 'ongoing' || booking.status === 'pending') && (
                         <>
                           {/* Divider Line */}
                           <div className="border-t border-[#eeeeee] my-6"></div>
 
                           <div className="flex items-center justify-between">
-                            {/* Timer or Status Text */}
+                            {/* Cancel Button or Status Text */}
                             <div className="text-sm font-medium text-black font-body">
-                              {booking.status === 'confirmed' && '02:03:06'}
+                              {(booking.status === 'confirmed' || booking.status === 'ongoing') && (
+                                <DSButton
+                                  variant="link"
+                                  size="small"
+                                  onClick={() => handleCancelBooking(booking.id)}
+                                  icon={<X className="w-5 h-5" />}
+                                >
+                                  Cancel
+                                </DSButton>
+                              )}
                               {booking.status === 'pending' && 'New order'}
                             </div>
 
                             {/* Action Buttons */}
                             <div className="flex items-center gap-3">
-                              {booking.status === 'confirmed' && (
+                              {(booking.status === 'confirmed' || booking.status === 'ongoing') && (
                                 <>
                                   <DSButton
                                     variant="outline"
@@ -560,7 +584,7 @@ export default function ProviderOrders() {
                         
                         {/* Top Right Icons - Smaller on mobile */}
                         <div className="flex items-center gap-2 ml-2">
-                          {booking.status === 'confirmed' ? (
+                          {(booking.status === 'confirmed' || booking.status === 'ongoing') ? (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <DSButton 
@@ -671,22 +695,31 @@ export default function ProviderOrders() {
                         </div>
                       </div>
 
-                      {/* Bottom Section: Timer and Actions - only for confirmed and pending bookings */}
-                      {(booking.status === 'confirmed' || booking.status === 'pending') && (
+                      {/* Bottom Section: Timer and Actions - only for confirmed, ongoing and pending bookings */}
+                      {(booking.status === 'confirmed' || booking.status === 'ongoing' || booking.status === 'pending') && (
                         <>
                           {/* Divider Line */}
                           <div className="border-t border-[#eeeeee] my-6"></div>
 
                           <div className="flex items-center justify-between">
-                            {/* Timer or Status Text */}
+                            {/* Cancel Button or Status Text */}
                             <div className="text-sm font-medium text-black font-body">
-                              {booking.status === 'confirmed' && '02:03:06'}
+                              {(booking.status === 'confirmed' || booking.status === 'ongoing') && (
+                                <DSButton
+                                  variant="link"
+                                  size="small"
+                                  onClick={() => handleCancelBooking(booking.id)}
+                                  icon={<X className="w-5 h-5" />}
+                                >
+                                  Cancel
+                                </DSButton>
+                              )}
                               {booking.status === 'pending' && 'New order'}
                             </div>
 
                             {/* Action Buttons */}
                             <div className="flex items-center gap-3 flex-wrap justify-end">
-                              {booking.status === 'confirmed' && (
+                              {(booking.status === 'confirmed' || booking.status === 'ongoing') && (
                                 <>
                                   <DSButton
                                     variant="outline"
