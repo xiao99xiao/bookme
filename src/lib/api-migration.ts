@@ -351,6 +351,61 @@ export class ApiClient {
     return this.backendApi!.cancelBooking(bookingId, reason)
   }
 
+  // Enhanced cancellation methods
+  static async getCancellationPolicies(bookingId: string): Promise<any[]> {
+    await this.waitForInitialization()
+    const response = await fetch(`/api/bookings/${bookingId}/cancellation-policies`, {
+      headers: {
+        'Authorization': `Bearer ${await this.backendApi!.getAuthToken()}`,
+      },
+    })
+    
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Failed to get cancellation policies')
+    }
+    
+    return response.json()
+  }
+
+  static async calculateRefundBreakdown(bookingId: string, policyId: string): Promise<any> {
+    await this.waitForInitialization()
+    const response = await fetch(`/api/bookings/${bookingId}/refund-breakdown`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${await this.backendApi!.getAuthToken()}`,
+      },
+      body: JSON.stringify({ policyId }),
+    })
+    
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Failed to calculate refund breakdown')
+    }
+    
+    return response.json()
+  }
+
+  static async cancelBookingWithPolicy(bookingId: string, policyId: string, explanation?: string): Promise<any> {
+    await this.waitForInitialization()
+    const response = await fetch(`/api/bookings/${bookingId}/cancel-with-policy`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${await this.backendApi!.getAuthToken()}`,
+      },
+      body: JSON.stringify({ policyId, explanation }),
+    })
+    
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Failed to cancel booking with policy')
+    }
+    
+    return response.json()
+  }
+
   static async completeBooking(bookingId: string, userId: string): Promise<Booking> {
     await this.waitForInitialization()
     return this.backendApi!.completeBooking(bookingId)

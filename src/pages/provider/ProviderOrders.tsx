@@ -12,6 +12,7 @@ import {
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient, Booking } from '@/lib/api-migration';
 import ChatModal from '@/components/ChatModal';
+import { EnhancedCancelBookingModal } from '@/components/EnhancedCancelBookingModal';
 import { H2, H3, Text, Loading, EmptyState, Button as DSButton, StatusBadge, OnlineBadge, DurationBadge } from '@/design-system';
 import { calculatePlatformFee } from '@/lib/config';
 
@@ -34,6 +35,13 @@ export default function ProviderOrders() {
     isReadOnly: false
   });
   const [bookingReviews, setBookingReviews] = useState<Record<string, any>>({});
+  const [cancelModal, setCancelModal] = useState<{
+    isOpen: boolean;
+    booking: Booking | null;
+  }>({
+    isOpen: false,
+    booking: null
+  });
 
   useEffect(() => {
     if (userId) {
@@ -89,19 +97,30 @@ export default function ProviderOrders() {
     }
   };
 
-  const handleCancelBooking = async (bookingId: string) => {
-    if (!confirm('Are you sure you want to cancel this booking? This action cannot be undone.')) {
-      return;
+  const handleCancelBooking = (bookingId: string) => {
+    const booking = bookings.find(b => b.id === bookingId);
+    if (booking) {
+      setCancelModal({
+        isOpen: true,
+        booking
+      });
     }
+  };
 
-    try {
-      await ApiClient.cancelBooking(bookingId, userId!, 'Provider cancelled');
-      toast.success('Booking cancelled successfully');
-      loadBookings();
-    } catch (error) {
-      console.error('Failed to cancel booking:', error);
-      toast.error('Failed to cancel booking');
-    }
+  const handleCancelConfirm = (result: any) => {
+    toast.success('Booking cancelled successfully');
+    loadBookings();
+    setCancelModal({
+      isOpen: false,
+      booking: null
+    });
+  };
+
+  const handleCancelClose = () => {
+    setCancelModal({
+      isOpen: false,
+      booking: null
+    });
   };
 
   const handleCopyMeetingLink = (link: string) => {
@@ -810,6 +829,14 @@ export default function ProviderOrders() {
           </div>
         </div>
       </div>
+
+      {/* Enhanced Cancel Modal */}
+      <EnhancedCancelBookingModal
+        booking={cancelModal.booking}
+        isOpen={cancelModal.isOpen}
+        onClose={handleCancelClose}
+        onConfirm={handleCancelConfirm}
+      />
 
       {/* Chat Modal */}
       <ChatModal

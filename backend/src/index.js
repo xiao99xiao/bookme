@@ -8,6 +8,12 @@ import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv'
 import { createServer } from 'http'
 import { setupWebSocket, getIO } from './websocket.js'
+import { 
+  getApplicableCancellationPolicies, 
+  calculateRefundBreakdown, 
+  processCancellation,
+  validatePolicySelection 
+} from './cancellation-policies.js'
 
 // Load environment variables
 dotenv.config({ path: '../.env.local' })
@@ -1092,6 +1098,92 @@ app.post('/api/bookings/:id/cancel', verifyPrivyAuth, async (c) => {
   } catch (error) {
     console.error('Booking cancel error:', error)
     return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Get applicable cancellation policies for a booking
+app.get('/api/bookings/:id/cancellation-policies', verifyPrivyAuth, async (c) => {
+  try {
+    const userId = c.get('userId')
+    const bookingId = c.req.param('id')
+    
+    const policies = await getApplicableCancellationPolicies(bookingId, userId)
+    
+    return c.json(policies)
+  } catch (error) {
+    console.error('Get cancellation policies error:', error)
+    if (error.message === 'Booking not found') {
+      return c.json({ error: 'Booking not found' }, 404)
+    }
+    if (error.message === 'Unauthorized to cancel this booking') {
+      return c.json({ error: 'Unauthorized' }, 403)
+    }
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Get refund breakdown for a specific policy
+app.post('/api/bookings/:id/refund-breakdown', verifyPrivyAuth, async (c) => {
+  try {
+    const bookingId = c.req.param('id')
+    const { policyId } = await c.req.json()
+    
+    if (!policyId) {
+      return c.json({ error: 'Policy ID is required' }, 400)
+    }
+    
+    const breakdown = await calculateRefundBreakdown(bookingId, policyId)
+    
+    return c.json(breakdown)
+  } catch (error) {
+    console.error('Calculate refund breakdown error:', error)
+    if (error.message === 'Booking not found') {
+      return c.json({ error: 'Booking not found' }, 404)
+    }
+    if (error.message === 'Cancellation policy not found') {
+      return c.json({ error: 'Invalid policy selected' }, 400)
+    }
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Enhanced cancellation with policy selection
+app.post('/api/bookings/:id/cancel-with-policy', verifyPrivyAuth, async (c) => {
+  try {
+    const userId = c.get('userId')
+    const bookingId = c.req.param('id')
+    const { policyId, explanation } = await c.req.json()
+    
+    if (!policyId) {
+      return c.json({ error: 'Policy ID is required' }, 400)
+    }
+    
+    // Validate that the policy is applicable
+    const isValid = await validatePolicySelection(bookingId, userId, policyId)
+    if (!isValid) {
+      return c.json({ error: 'Selected policy is not applicable' }, 400)
+    }
+    
+    const result = await processCancellation(bookingId, userId, policyId, explanation)
+    
+    return c.json(result)
+  } catch (error) {
+    console.error('Enhanced cancellation error:', error)
+    
+    if (error.message === 'Selected cancellation policy is not applicable to this booking') {
+      return c.json({ error: 'Policy not applicable' }, 400)
+    }
+    if (error.message === 'An explanation is required for this type of cancellation') {
+      return c.json({ error: 'Explanation required' }, 400)
+    }
+    if (error.message === 'Booking not found') {
+      return c.json({ error: 'Booking not found' }, 404)
+    }
+    if (error.message === 'Unauthorized to cancel this booking') {
+      return c.json({ error: 'Unauthorized' }, 403)
+    }
+    
+    return c.json({ error: 'Failed to process cancellation' }, 500)
   }
 })
 
