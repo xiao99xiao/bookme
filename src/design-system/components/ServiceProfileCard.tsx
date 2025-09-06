@@ -37,12 +37,14 @@ export function ServiceProfileCard({
   };
 
   return (
-    <Card 
-      padding="lg"
-      radius="lg"
+    <div 
       className="transition-colors cursor-pointer hover:bg-muted/50"
       onClick={() => onClick?.(service)}
     >
+      <Card 
+        padding="lg"
+        radius="lg"
+      >
       <Stack spacing="md">
         {/* Header Row */}
         <Stack direction="row" justify="between" align="start">
@@ -51,19 +53,19 @@ export function ServiceProfileCard({
             <Badge variant="secondary" size="small">
               {service.categories?.name || 'General'}
             </Badge>
-            <Stack direction="row" spacing="xs" align="center">
+            <div className="flex items-center gap-1">
               {getLocationIcon(service.is_online, !!service.location)}
               <Text variant="tiny" color="tertiary">
                 {getLocationText(service.is_online, !!service.location)}
               </Text>
-            </Stack>
+            </div>
           </Stack>
           
           {/* Right: Price and Duration */}
-          <Stack align="end" spacing="xs">
-            <Text variant="small" weight="medium">${service.price}</Text>
-            <Text variant="tiny" color="tertiary">{service.duration_minutes}m</Text>
-          </Stack>
+          <div className="text-right">
+            <Text variant="small" weight="medium" className="block">${service.price}</Text>
+            <Text variant="tiny" color="tertiary" className="block">{service.duration_minutes}m</Text>
+          </div>
         </Stack>
         
         {/* Service Title */}
@@ -87,6 +89,7 @@ export function ServiceProfileCard({
           </Stack>
         )}
       </Stack>
-    </Card>
+      </Card>
+    </div>
   );
 }

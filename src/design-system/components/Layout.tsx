@@ -78,6 +78,7 @@ interface StackProps {
   spacing?: keyof typeof tokens.spacing;
   align?: 'start' | 'center' | 'end' | 'stretch';
   justify?: 'start' | 'center' | 'end' | 'between' | 'around';
+  wrap?: boolean;
 }
 
 export function Stack({ 
@@ -86,7 +87,8 @@ export function Stack({
   direction = 'column',
   spacing = 'lg',
   align = 'start',
-  justify = 'start'
+  justify = 'start',
+  wrap = false
 }: StackProps) {
   const alignClasses = {
     start: 'items-start',
@@ -108,6 +110,7 @@ export function Stack({
       className={cn(
         'flex',
         direction === 'row' ? 'flex-row' : 'flex-col',
+        wrap && 'flex-wrap',
         alignClasses[align],
         justifyClasses[justify],
         className
