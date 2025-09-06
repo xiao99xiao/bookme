@@ -1,15 +1,13 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Settings, ExternalLink, Trash2, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { Settings, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button as DSButton } from '@/design-system';
+import { PageHeader, IntegrationCard, Loading, Container } from '@/design-system';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge as DSBadge, IntegrationStatusBadge } from '@/design-system';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient } from '@/lib/api-migration';
 import { GoogleAuth } from '@/lib/google-auth';
 import { GoogleMeetIcon, ZoomIcon, TeamsIcon } from '@/components/icons/MeetingPlatformIcons';
-import PageLayout from '@/components/PageLayout';
 
 interface MeetingIntegration {
   id: string;
@@ -130,127 +128,50 @@ export default function ProviderIntegrations() {
     return { connected: true, status: 'connected', integration };
   };
 
-  const renderIntegrationCard = (platformKey: string) => {
-    const platform = PLATFORM_INFO[platformKey as keyof typeof PLATFORM_INFO];
-    const connectionStatus = getConnectionStatus(platformKey);
-    const { connected, status, integration } = connectionStatus;
-    const IconComponent = platform.icon;
 
-    return (
-      <Card key={platformKey} className={`${platform.color} transition-colors hover:shadow-md`}>
-        <CardHeader className="pb-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="flex-shrink-0">
-                <IconComponent className="w-8 h-8" />
-              </div>
-              <div>
-                <CardTitle className="text-lg">{platform.name}</CardTitle>
-                <CardDescription className="text-sm">
-                  {platform.description}
-                </CardDescription>
-              </div>
-            </div>
-            
-            <IntegrationStatusBadge 
-              status={connected ? (status === 'connected' ? 'connected' : 'expired') : 'disconnected'} 
-              size="small" 
-            />
-          </div>
-        </CardHeader>
+  const renderIntegrationCards = () => {
+    return Object.keys(PLATFORM_INFO).map((platformKey) => {
+      const platform = PLATFORM_INFO[platformKey as keyof typeof PLATFORM_INFO];
+      const connectionStatus = getConnectionStatus(platformKey);
+      const { connected, status, integration } = connectionStatus;
+      const IconComponent = platform.icon;
 
-        <CardContent>
-          {connected && integration ? (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="text-sm">
-                  <p className="font-medium text-gray-900">{integration.platform_user_email}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Connected {format(new Date(integration.created_at), 'MMM dd, yyyy')}
-                  </p>
-                </div>
-                {status === 'expired' && (
-                  <IntegrationStatusBadge status="expired" size="small">
-                    Needs Reconnection
-                  </IntegrationStatusBadge>
-                )}
-              </div>
-              
-              <div className="flex space-x-2">
-                {status === 'expired' ? (
-                  <DSButton
-                    size="small"
-                    variant="primary"
-                    onClick={() => handleConnect(platformKey)}
-                    disabled={connectingPlatform === platformKey}
-                    icon={connectingPlatform === platformKey ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <ExternalLink className="w-4 h-4" />
-                    )}
-                  >
-                    Reconnect
-                  </DSButton>
-                ) : (
-                  <DSButton
-                    size="small"
-                    variant="secondary"
-                    onClick={() => handleDisconnect(integration.id, platformKey)}
-                    icon={<Trash2 className="w-4 h-4" />}
-                  >
-                    Disconnect
-                  </DSButton>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {platform.comingSoon ? (
-                <div className="text-sm text-gray-500">
-                  Coming soon! We're working on integrating with {platform.name}.
-                </div>
-              ) : (
-                <div className="text-sm text-gray-600">
-                  Connect your {platform.name} account to automatically generate meeting links for your online services.
-                </div>
-              )}
-              
-              <DSButton
-                size="small"
-                onClick={() => handleConnect(platformKey)}
-                disabled={connectingPlatform === platformKey || platform.comingSoon}
-                variant={platform.comingSoon ? "secondary" : "primary"}
-                icon={connectingPlatform === platformKey ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <ExternalLink className="w-4 h-4" />
-                )}
-              >
-                {platform.comingSoon ? 'Coming Soon' : `Connect ${platform.name}`}
-              </DSButton>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    );
+      return (
+        <IntegrationCard
+          key={platformKey}
+          icon={<IconComponent className="w-12 h-12" />}
+          title={platform.name}
+          description={platform.description}
+          status={
+            platform.comingSoon ? 'coming_soon' : 
+            connected ? 'connected' : 'not_connected'
+          }
+          connectionEmail={integration?.platform_user_email}
+          connectionDate={integration ? format(new Date(integration.created_at), 'MMM dd, yyyy') : undefined}
+          onConnect={() => handleConnect(platformKey)}
+          onDisconnect={() => integration && handleDisconnect(integration.id, platformKey)}
+          isLoading={connectingPlatform === platformKey}
+          comingSoonText={platform.comingSoon ? `Coming soon! We're working on integrating with ${platform.name}.` : undefined}
+        />
+      );
+    });
   };
 
   return (
-    <PageLayout 
-      title="Meeting Integrations" 
-      description="Connect your meeting platforms to automatically generate meeting links for online services."
-      maxWidth="narrow"
-    >
+    <Container maxWidth="narrow" className="py-8">
+      {/* Page Header */}
+      <PageHeader
+        title="Meeting Integrations"
+        description="Connect your meeting platforms to automatically generate meeting links for online services."
+      />
 
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
+        <Loading />
       ) : (
         <div className="space-y-6">
           {/* Integration Cards */}
-          <div className="grid gap-6">
-            {Object.keys(PLATFORM_INFO).map(renderIntegrationCard)}
+          <div className="space-y-4">
+            {renderIntegrationCards()}
           </div>
 
           {/* Help Section */}
@@ -263,7 +184,7 @@ export default function ProviderIntegrations() {
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div className="space-y-2">
-                <p><strong>1. Connect your accounts:</strong> Authorize Timee to create meetings on your behalf</p>
+                <p><strong>1. Connect your accounts:</strong> Authorize BookMe to create meetings on your behalf</p>
                 <p><strong>2. Create online services:</strong> When creating services, select your preferred meeting platform</p>
                 <p><strong>3. Automatic meeting creation:</strong> When bookings are confirmed, meeting links are automatically generated</p>
                 <p><strong>4. Share with customers:</strong> Meeting links appear in booking confirmations and customer dashboards</p>
@@ -279,6 +200,6 @@ export default function ProviderIntegrations() {
           </Card>
         </div>
       )}
-    </PageLayout>
+    </Container>
   );
 }

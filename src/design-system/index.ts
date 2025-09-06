@@ -45,6 +45,10 @@ export { EmptyState, BookingEmptyState, NoResultsFound, NoDataYet, EmptyListStat
 // Card Components
 export { ServiceDiscoverCard } from './components/ServiceDiscoverCard';
 export { ServiceProfileCard } from './components/ServiceProfileCard';
+export { IntegrationCard } from './components/IntegrationCard';
+
+// Page Components
+export { PageHeader } from './components/PageHeader';
 
 // Re-export design tokens for easy access
 export type { DesignTokens } from './tokens';
