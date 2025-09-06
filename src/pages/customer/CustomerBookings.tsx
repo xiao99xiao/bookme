@@ -444,15 +444,28 @@ export default function CustomerBookings() {
 
                       {/* Status Pills and Price Row */}
                       <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-2">
-                          {/* Status Badge */}
-                          <StatusBadge status={booking.status as any} />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            {/* Status Badge */}
+                            <StatusBadge status={booking.status as any} />
+                            
+                            {/* Online Badge */}
+                            {booking.is_online && <OnlineBadge isOnline={booking.is_online} />}
+                            
+                            {/* Duration Badge */}
+                            <DurationBadge minutes={booking.duration_minutes} />
+                          </div>
                           
-                          {/* Online Badge */}
-                          {booking.is_online && <OnlineBadge isOnline={booking.is_online} />}
-                          
-                          {/* Duration Badge */}
-                          <DurationBadge minutes={booking.duration_minutes} />
+                          {/* Auto-completion explanation for ongoing bookings */}
+                          {booking.status === 'ongoing' && (
+                            <Text variant="small" color="tertiary" className="mt-1">
+                              Will auto-complete {(() => {
+                                const endTime = new Date(new Date(booking.scheduled_at).getTime() + (booking.duration_minutes * 60 * 1000));
+                                const autoCompleteTime = new Date(endTime.getTime() + (30 * 60 * 1000));
+                                return format(autoCompleteTime, 'MMM d \'at\' h:mm a');
+                              })()}
+                            </Text>
+                          )}
                         </div>
 
                         {/* Total Price */}
@@ -785,15 +798,28 @@ export default function CustomerBookings() {
 
                       {/* Status Pills and Price Row - Responsive layout */}
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {/* Status Badge */}
-                          <StatusBadge status={booking.status as any} />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {/* Status Badge */}
+                            <StatusBadge status={booking.status as any} />
+                            
+                            {/* Online Badge */}
+                            {booking.is_online && <OnlineBadge isOnline={booking.is_online} />}
+                            
+                            {/* Duration Badge */}
+                            <DurationBadge minutes={booking.duration_minutes} />
+                          </div>
                           
-                          {/* Online Badge */}
-                          {booking.is_online && <OnlineBadge isOnline={booking.is_online} />}
-                          
-                          {/* Duration Badge */}
-                          <DurationBadge minutes={booking.duration_minutes} />
+                          {/* Auto-completion explanation for ongoing bookings */}
+                          {booking.status === 'ongoing' && (
+                            <Text variant="small" color="tertiary" className="mt-1">
+                              Will auto-complete {(() => {
+                                const endTime = new Date(new Date(booking.scheduled_at).getTime() + (booking.duration_minutes * 60 * 1000));
+                                const autoCompleteTime = new Date(endTime.getTime() + (30 * 60 * 1000));
+                                return format(autoCompleteTime, 'MMM d \'at\' h:mm a');
+                              })()}
+                            </Text>
+                          )}
                         </div>
 
                         {/* Total Price */}

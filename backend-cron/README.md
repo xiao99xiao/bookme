@@ -7,6 +7,7 @@ Railway-based cron service for booking automation and time-based status transiti
 - **Status Transitions**: Automatically updates booking statuses based on time
   - `confirmed` → `in_progress` when start time is reached
   - `in_progress` → `completed` when end time is reached
+  - `ongoing` → `completed` when end time + 30 minutes grace period is reached
 - **Reminder Notifications**: Tracks and sends upcoming booking reminders (placeholder)
 - **Runs Every 15 Minutes**: Cost-effective scheduling on Railway
 
@@ -81,11 +82,14 @@ This runs every 15 minutes.
 🏁 Checking in_progress bookings to complete...
 📋 Found 1 bookings to complete
 ✅ Successfully completed 1 bookings
+🏁 Checking ongoing bookings to auto-complete (past end time + 30 min)...
+📋 Found 2 bookings to auto-complete
+✅ Successfully auto-completed 2 ongoing bookings
 📧 Checking for upcoming booking reminders...
 📧 Found 3 bookings needing reminders
 ✅ Successfully sent 3 reminders
 ✅ Automation job completed in 1250ms
-📊 Summary: 2 started, 1 completed, 3 reminders sent
+📊 Summary: 2 started, 1 in_progress->completed, 2 ongoing->completed, 3 reminders sent
 ✅ Cron job completed successfully
 ```
 

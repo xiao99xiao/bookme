@@ -65,10 +65,12 @@ COMMENT ON COLUMN public.bookings.auto_status_updated IS 'Flag to track if booki
 📋 No confirmed bookings to start
 🏁 Checking in_progress bookings to complete...
 📋 No in_progress bookings to check
+🏁 Checking ongoing bookings to auto-complete (past end time + 30 min)...
+📋 No ongoing bookings to check
 📧 Checking for upcoming booking reminders...
 📧 No upcoming bookings need reminders
 ✅ Automation job completed in 1250ms
-📊 Summary: 0 started, 0 completed, 0 reminders sent
+📊 Summary: 0 started, 0 in_progress->completed, 0 ongoing->completed, 0 reminders sent
 ✅ Cron job completed successfully
 ```
 

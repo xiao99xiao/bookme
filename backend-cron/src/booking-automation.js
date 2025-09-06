@@ -25,12 +25,15 @@ export async function updateBookingStatuses() {
     // Step 2: Update in_progress bookings to completed (when end time has passed)
     const inProgressToCompleted = await transitionInProgressToCompleted(nowISO);
     
-    // Step 3: Send upcoming booking reminders (placeholder for now)
+    // Step 3: Auto-complete ongoing bookings that are past end time + 30 minutes
+    const ongoingToCompleted = await transitionOngoingToCompleted(nowISO);
+    
+    // Step 4: Send upcoming booking reminders (placeholder for now)
     const remindersSent = await sendUpcomingReminders(now);
     
     const duration = Date.now() - startTime;
     console.log(`✅ Automation job completed in ${duration}ms`);
-    console.log(`📊 Summary: ${confirmedToInProgress} started, ${inProgressToCompleted} completed, ${remindersSent} reminders sent`);
+    console.log(`📊 Summary: ${confirmedToInProgress} started, ${inProgressToCompleted} in_progress->completed, ${ongoingToCompleted} ongoing->completed, ${remindersSent} reminders sent`);
     
     return {
       success: true,
@@ -38,6 +41,7 @@ export async function updateBookingStatuses() {
       transitions: {
         confirmedToInProgress,
         inProgressToCompleted,
+        ongoingToCompleted,
         remindersSent
       }
     };
@@ -164,6 +168,79 @@ async function transitionInProgressToCompleted(nowISO) {
 
   } catch (error) {
     console.error('Error in transitionInProgressToCompleted:', error);
+    return 0;
+  }
+}
+
+/**
+ * Transition ongoing bookings to completed when end time + 30 minutes has passed
+ * This gives a grace period for providers to mark bookings complete manually
+ */
+async function transitionOngoingToCompleted(nowISO) {
+  console.log('🏁 Checking ongoing bookings to auto-complete (past end time + 30 min)...');
+  
+  try {
+    // Find ongoing bookings
+    const { data: ongoingBookings, error: fetchError } = await supabaseAdmin
+      .from('bookings')
+      .select('id, scheduled_at, duration_minutes')
+      .eq('status', 'ongoing');
+
+    if (fetchError) {
+      console.error('Error fetching ongoing bookings:', fetchError);
+      return 0;
+    }
+
+    if (!ongoingBookings || ongoingBookings.length === 0) {
+      console.log('📋 No ongoing bookings to check');
+      return 0;
+    }
+
+    // Filter bookings that should be completed (end time + 30 min has passed)
+    const now = new Date();
+    const bookingsToComplete = [];
+    const GRACE_PERIOD_MINUTES = 30;
+
+    for (const booking of ongoingBookings) {
+      const startTime = new Date(booking.scheduled_at);
+      const endTime = new Date(startTime.getTime() + (booking.duration_minutes * 60 * 1000));
+      const gracePeriodEnd = new Date(endTime.getTime() + (GRACE_PERIOD_MINUTES * 60 * 1000));
+      
+      if (gracePeriodEnd <= now) {
+        bookingsToComplete.push(booking);
+        console.log(`📋 Booking ${booking.id.slice(0, 8)}... should auto-complete (grace period ended at ${gracePeriodEnd.toISOString()})`);
+      }
+    }
+
+    if (bookingsToComplete.length === 0) {
+      console.log('📋 No ongoing bookings to auto-complete yet');
+      return 0;
+    }
+
+    console.log(`📋 Found ${bookingsToComplete.length} bookings to auto-complete`);
+
+    // Update status to completed
+    const bookingIds = bookingsToComplete.map(b => b.id);
+    const { error: updateError, count } = await supabaseAdmin
+      .from('bookings')
+      .update({ 
+        status: 'completed',
+        completed_at: nowISO,
+        updated_at: nowISO,
+        auto_status_updated: true  // Mark that this was auto-completed
+      })
+      .in('id', bookingIds);
+
+    if (updateError) {
+      console.error('Error updating ongoing bookings to completed:', updateError);
+      return 0;
+    }
+
+    console.log(`✅ Successfully auto-completed ${count || bookingIds.length} ongoing bookings`);
+    return count || bookingIds.length;
+
+  } catch (error) {
+    console.error('Error in transitionOngoingToCompleted:', error);
     return 0;
   }
 }
