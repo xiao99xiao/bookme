@@ -14,8 +14,8 @@ import BookingTimeSlots from "@/components/BookingTimeSlots";
 import StarRating from "@/components/StarRating";
 import { toast } from "sonner";
 import { getBrowserTimezone } from "@/lib/timezone";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { H1, Text, Description, ServiceProfileCard, Loading } from '@/design-system';
+import { H1, Text, Description, ServiceProfileCard, Loading, Card, Stack, Badge } from '@/design-system';
+import ReviewCommentDialog from "@/components/ReviewCommentDialog";
 
 interface Service {
   id: string;
@@ -94,6 +94,7 @@ const Profile = () => {
   const [error, setError] = useState<string | null>(null);
   const [customerNotes, setCustomerNotes] = useState('');
   const [isBooking, setIsBooking] = useState(false);
+  const [selectedReview, setSelectedReview] = useState<Review | null>(null);
 
   // State for resolved user data
   const [resolvedUserId, setResolvedUserId] = useState<string | null>(null);
@@ -172,13 +173,11 @@ const Profile = () => {
           console.log('Services fetched:', servicesData?.length || 0, 'services');
           setServices(servicesData);
           
-          // Fetch reviews for the provider
-          if (profileData.is_provider) {
-            console.log('Fetching reviews for provider:', targetUserId);
-            const reviewsData = await ApiClient.getProviderReviews(targetUserId);
-            console.log('Reviews fetched:', reviewsData?.length || 0, 'reviews');
-            setReviews(reviewsData);
-          }
+          // Fetch reviews for the user (if they have services, they might have reviews)
+          console.log('Fetching reviews for user:', targetUserId);
+          const reviewsData = await ApiClient.getProviderReviews(targetUserId);
+          console.log('Reviews fetched:', reviewsData?.length || 0, 'reviews');
+          setReviews(reviewsData);
           
           clearTimeout(loadTimeout);
         } catch (apiError) {
@@ -237,6 +236,15 @@ const Profile = () => {
     if (isOnline) return "Online";
     if (hasLocation) return "In Person";
     return "Phone Call";
+  };
+
+  const truncateComment = (comment: string, maxLength: number = 150) => {
+    if (comment.length <= maxLength) return comment;
+    return comment.slice(0, maxLength).trim() + '...';
+  };
+
+  const shouldTruncateComment = (comment: string, maxLength: number = 150) => {
+    return comment.length > maxLength;
   };
 
   const handleServiceClick = (service: Service) => {
@@ -376,7 +384,7 @@ const Profile = () => {
             )}
 
             {/* Reviews Section */}
-            {profile?.is_provider && reviews.length > 0 && (
+            {((profile?.is_provider || services.length > 0) && reviews.length > 0) && (
               <div className="mt-12">
                 <div className="mb-6">
                   <h2 className="text-lg font-medium text-foreground mb-1">Reviews</h2>
@@ -385,45 +393,61 @@ const Profile = () => {
                   </p>
                 </div>
                 
-                <div className="space-y-4">
+                <Stack spacing="md">
                   {reviews.slice(0, reviewsDisplayCount).map((review) => (
-                    <Card key={review.id} className="hover:bg-muted/50 transition-colors">
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-3">
+                    <Card key={review.id} padding="lg" radius="lg" className="transition-colors hover:bg-muted/50">
+                      <Stack spacing="md">
+                        {/* Header Row */}
+                        <Stack direction="row" justify="between" align="start">
+                          {/* Left: Avatar and Info */}
+                          <Stack direction="row" spacing="sm" align="center">
                             <Avatar className="h-10 w-10">
                               <AvatarImage src={review.reviewer?.avatar} />
                               <AvatarFallback>
                                 {review.reviewer?.display_name?.charAt(0) || 'U'}
                               </AvatarFallback>
                             </Avatar>
-                            <div>
-                              <p className="font-medium text-sm">
+                            <Stack spacing="xs">
+                              <Text variant="small" weight="medium">
                                 {review.reviewer?.display_name || 'Anonymous'}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
+                              </Text>
+                              <Text variant="tiny" color="tertiary">
                                 {review.services?.title}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex flex-col items-end">
+                              </Text>
+                            </Stack>
+                          </Stack>
+                          
+                          {/* Right: Rating and Date */}
+                          <Stack align="end" spacing="xs">
                             <StarRating value={review.rating} readonly size="sm" />
-                            <p className="text-xs text-muted-foreground mt-1">
+                            <Text variant="tiny" color="tertiary">
                               {new Date(review.created_at).toLocaleDateString()}
-                            </p>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      {review.comment && (
-                        <CardContent className="pt-0">
-                          <p className="text-sm text-muted-foreground leading-relaxed">
-                            {review.comment}
-                          </p>
-                        </CardContent>
-                      )}
+                            </Text>
+                          </Stack>
+                        </Stack>
+                        
+                        {/* Comment */}
+                        {review.comment && (
+                          <Stack spacing="xs">
+                            <Text variant="small" color="secondary" className="leading-relaxed">
+                              {truncateComment(review.comment)}
+                            </Text>
+                            {shouldTruncateComment(review.comment) && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setSelectedReview(review)}
+                                className="self-start h-auto p-0 text-blue-600 hover:text-blue-700 hover:bg-transparent"
+                              >
+                                Reveal full comment
+                              </Button>
+                            )}
+                          </Stack>
+                        )}
+                      </Stack>
                     </Card>
                   ))}
-                </div>
+                </Stack>
                 
                 {/* Load More Button */}
                 {reviews.length > reviewsDisplayCount && (
@@ -575,6 +599,15 @@ const Profile = () => {
           </div>
         )}
       </div>
+
+      {/* Review Comment Dialog */}
+      {selectedReview && (
+        <ReviewCommentDialog
+          isOpen={!!selectedReview}
+          onClose={() => setSelectedReview(null)}
+          review={selectedReview}
+        />
+      )}
     </div>
   );
 };

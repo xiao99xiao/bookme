@@ -187,7 +187,7 @@ export default function Profile() {
 
           {/* Main Content Area - Desktop */}
           <div className="flex-1">
-            <div className="bg-neutral-50 box-border content-stretch flex flex-col gap-6 h-full items-start justify-start min-h-px min-w-px px-10 py-0 relative shrink-0 rounded-2xl">
+            <div className="bg-neutral-50 box-border content-stretch flex flex-col gap-6 h-full items-start justify-start min-h-px min-w-px py-0 relative shrink-0 rounded-2xl">
               <div className="box-border content-stretch flex flex-col gap-10 items-start justify-start p-[40px] relative rounded-[16px] shrink-0 w-full">
                 <div className="content-stretch flex flex-col gap-8 items-start justify-start relative shrink-0 w-full">
                   {/* Profile Picture Section */}
@@ -270,14 +270,11 @@ export default function Profile() {
                           <span className="font-body font-normal text-[#b42318]"> *</span>
                         </p>
                       </div>
-                      <div className="bg-white box-border content-stretch flex gap-2 items-center justify-start p-[12px] relative rounded-[8px] shrink-0 w-full">
-                        <div aria-hidden="true" className="absolute border border-[#eeeeee] border-solid inset-[-1px] pointer-events-none rounded-[9px]" />
-                        <Input fullWidth
-                          {...form.register('display_name')}
-                          placeholder="Your display name"
-                          className="basis-0 font-body font-normal grow leading-[0] min-h-px min-w-px relative shrink-0 text-[16px] text-black border-0 focus:ring-0 p-0 bg-transparent placeholder:text-[#666666]"
-                        />
-                      </div>
+                      <Input fullWidth
+                        {...form.register('display_name')}
+                        placeholder="Your display name"
+                        className="text-[16px] text-black placeholder:text-[#666666]"
+                      />
                       {form.formState.errors.display_name && (
                         <p className="text-[#b42318] text-sm">{form.formState.errors.display_name.message}</p>
                       )}
@@ -291,15 +288,12 @@ export default function Profile() {
                           <span className="font-body font-normal text-[#b42318]"> *</span>
                         </p>
                       </div>
-                      <div className="bg-white box-border content-stretch flex gap-2 items-center justify-start p-[12px] relative rounded-[8px] shrink-0 w-full">
-                        <div aria-hidden="true" className="absolute border border-[#eeeeee] border-solid inset-[-1px] pointer-events-none rounded-[9px]" />
-                        <Input fullWidth
-                          placeholder="your@email.com"
-                          className="basis-0 font-body font-normal grow leading-[0] min-h-px min-w-px relative shrink-0 text-[16px] text-black border-0 focus:ring-0 p-0 bg-transparent placeholder:text-[#666666]"
-                          value={getUserEmail() || ''}
-                          disabled
-                        />
-                      </div>
+                      <Input fullWidth
+                        placeholder="your@email.com"
+                        className="text-[16px] text-black placeholder:text-[#666666] bg-gray-50"
+                        value={getUserEmail() || ''}
+                        disabled
+                      />
                     </div>
                     
                     {/* Bio */}
@@ -310,14 +304,11 @@ export default function Profile() {
                           <span className="font-body font-normal text-[#b42318]"> *</span>
                         </p>
                       </div>
-                      <div className="bg-white box-border content-stretch flex h-[120px] items-start justify-start p-[12px] relative rounded-[8px] shrink-0 w-full">
-                        <div aria-hidden="true" className="absolute border border-[#eeeeee] border-solid inset-[-1px] pointer-events-none rounded-[9px]" />
-                        <Textarea fullWidth rows={4}
-                          {...form.register('bio')}
-                          placeholder="Type your message..."
-                          className="basis-0 font-body font-normal grow leading-[1.5] min-h-full min-w-px relative shrink-0 text-[16px] text-black border-0 focus:ring-0 p-0 resize-none bg-transparent placeholder:text-[#666666]"
-                        />
-                      </div>
+                      <Textarea fullWidth rows={4}
+                        {...form.register('bio')}
+                        placeholder="Type your message..."
+                        className="text-[16px] text-black placeholder:text-[#666666]"
+                      />
                       {form.formState.errors.bio && (
                         <p className="text-[#b42318] text-sm">{form.formState.errors.bio.message}</p>
                       )}
@@ -329,27 +320,21 @@ export default function Profile() {
                         <div className="font-body font-normal leading-[0] relative shrink-0 text-[#666666] text-[14px] w-full">
                           <p className="leading-[1.5]">Phone</p>
                         </div>
-                        <div className="bg-white box-border content-stretch flex gap-2 items-center justify-start p-[12px] relative rounded-[8px] shrink-0 w-full">
-                          <div aria-hidden="true" className="absolute border border-[#eeeeee] border-solid inset-[-1px] pointer-events-none rounded-[9px]" />
-                          <Input fullWidth
-                            {...form.register('phone')}
-                            placeholder="+1 (555) 000-0000"
-                            className="basis-0 font-body font-normal grow leading-[0] min-h-px min-w-px relative shrink-0 text-[16px] text-black border-0 focus:ring-0 p-0 bg-transparent placeholder:text-[#666666]"
-                          />
-                        </div>
+                        <Input fullWidth
+                          {...form.register('phone')}
+                          placeholder="+1 (555) 000-0000"
+                          className="text-[16px] text-black placeholder:text-[#666666]"
+                        />
                       </div>
                       <div className="basis-0 content-stretch flex flex-col gap-2 grow items-start justify-start min-h-px min-w-px relative shrink-0">
                         <div className="font-body font-normal leading-[0] relative shrink-0 text-[#666666] text-[14px] w-full">
                           <p className="leading-[1.5]">Location</p>
                         </div>
-                        <div className="bg-white box-border content-stretch flex gap-2 items-center justify-start p-[12px] relative rounded-[8px] shrink-0 w-full">
-                          <div aria-hidden="true" className="absolute border border-[#eeeeee] border-solid inset-[-1px] pointer-events-none rounded-[9px]" />
-                          <Input fullWidth
-                            {...form.register('location')}
-                            placeholder="Japan"
-                            className="basis-0 font-body font-normal grow leading-[0] min-h-px min-w-px relative shrink-0 text-[16px] text-black border-0 focus:ring-0 p-0 bg-transparent placeholder:text-[#666666]"
-                          />
-                        </div>
+                        <Input fullWidth
+                          {...form.register('location')}
+                          placeholder="Japan"
+                          className="text-[16px] text-black placeholder:text-[#666666]"
+                        />
                       </div>
                     </div>
                     
@@ -358,14 +343,11 @@ export default function Profile() {
                       <div className="font-body font-normal leading-[0] relative shrink-0 text-[#666666] text-[14px] w-full">
                         <p className="leading-[1.5]">Website</p>
                       </div>
-                      <div className="bg-white box-border content-stretch flex gap-2 items-center justify-start p-[12px] relative rounded-[8px] shrink-0 w-full">
-                        <div aria-hidden="true" className="absolute border border-[#eeeeee] border-solid inset-[-1px] pointer-events-none rounded-[9px]" />
-                        <Input fullWidth
-                          {...form.register('website')}
-                          placeholder="https://example.com"
-                          className="basis-0 font-body font-normal grow leading-[0] min-h-px min-w-px relative shrink-0 text-[16px] text-black border-0 focus:ring-0 p-0 bg-transparent placeholder:text-[#666666]"
-                        />
-                      </div>
+                      <Input fullWidth
+                        {...form.register('website')}
+                        placeholder="https://example.com"
+                        className="text-[16px] text-black placeholder:text-[#666666]"
+                      />
                     </div>
                   </form>
                 </div>
