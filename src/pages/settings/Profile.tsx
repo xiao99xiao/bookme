@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input, Textarea } from '@/design-system/components/Input';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -47,27 +48,19 @@ export default function Profile() {
   });
 
 
-  // Effect to populate form with profile data whenever profile changes or component mounts
+  // Effect to populate form and avatar when profile loads
   useEffect(() => {
-    const populateForm = () => {
-      if (profile && userId) {
-        // Always reset form when profile data is available
-        const formData = {
-          display_name: profile.display_name || '',
-          bio: profile.bio || '',
-          phone: profile.phone || '',
-          location: profile.location || '',
-          website: profile.website || '',
-        };
-        
-        form.reset(formData);
-        setAvatarUrl(profile.avatar || '');
-      }
-    };
-
-    // Populate form immediately if profile is available
-    populateForm();
-  }, [profile, userId, form]);
+    if (profile) {
+      // Populate form fields (avoiding form.watch() to prevent reactive loops)
+      form.setValue('display_name', profile.display_name || '');
+      form.setValue('bio', profile.bio || '');
+      form.setValue('phone', profile.phone || '');
+      form.setValue('location', profile.location || '');
+      form.setValue('website', profile.website || '');
+      
+      setAvatarUrl(profile.avatar || '');
+    }
+  }, [profile]);
 
   useEffect(() => {
     if (userId) {
@@ -245,7 +238,7 @@ export default function Profile() {
                       <H2 className="leading-[1.4]">Basic Information</H2>
                     </div>
                     <Button
-                      type="submit"
+                      type="button"
                       disabled={loading}
                       className="bg-black box-border content-stretch flex gap-2 items-center justify-center opacity-40 px-6 py-3 relative rounded-[40px] shrink-0 w-40 hover:bg-gray-900"
                       onClick={form.handleSubmit(onSubmit)}
@@ -270,14 +263,15 @@ export default function Profile() {
                           <span className="font-body font-normal text-[#b42318]"> *</span>
                         </p>
                       </div>
-                      <Input fullWidth
-                        {...form.register('display_name')}
+                      <Input 
                         placeholder="Your display name"
                         className="text-[16px] text-black placeholder:text-[#666666]"
+                        {...form.register('display_name')}
                       />
                       {form.formState.errors.display_name && (
                         <p className="text-[#b42318] text-sm">{form.formState.errors.display_name.message}</p>
                       )}
+                      
                     </div>
                     
                     {/* Email */}
@@ -288,7 +282,7 @@ export default function Profile() {
                           <span className="font-body font-normal text-[#b42318]"> *</span>
                         </p>
                       </div>
-                      <Input fullWidth
+                      <Input
                         placeholder="your@email.com"
                         className="text-[16px] text-black placeholder:text-[#666666] bg-gray-50"
                         value={getUserEmail() || ''}
@@ -304,10 +298,11 @@ export default function Profile() {
                           <span className="font-body font-normal text-[#b42318]"> *</span>
                         </p>
                       </div>
-                      <Textarea fullWidth rows={4}
-                        {...form.register('bio')}
+                      <Textarea 
+                        rows={4}
                         placeholder="Type your message..."
                         className="text-[16px] text-black placeholder:text-[#666666]"
+                        {...form.register('bio')}
                       />
                       {form.formState.errors.bio && (
                         <p className="text-[#b42318] text-sm">{form.formState.errors.bio.message}</p>
@@ -320,20 +315,20 @@ export default function Profile() {
                         <div className="font-body font-normal leading-[0] relative shrink-0 text-[#666666] text-[14px] w-full">
                           <p className="leading-[1.5]">Phone</p>
                         </div>
-                        <Input fullWidth
-                          {...form.register('phone')}
+                        <Input 
                           placeholder="+1 (555) 000-0000"
                           className="text-[16px] text-black placeholder:text-[#666666]"
+                          {...form.register('phone')}
                         />
                       </div>
                       <div className="basis-0 content-stretch flex flex-col gap-2 grow items-start justify-start min-h-px min-w-px relative shrink-0">
                         <div className="font-body font-normal leading-[0] relative shrink-0 text-[#666666] text-[14px] w-full">
                           <p className="leading-[1.5]">Location</p>
                         </div>
-                        <Input fullWidth
-                          {...form.register('location')}
+                        <Input 
                           placeholder="Japan"
                           className="text-[16px] text-black placeholder:text-[#666666]"
+                          {...form.register('location')}
                         />
                       </div>
                     </div>
@@ -343,10 +338,10 @@ export default function Profile() {
                       <div className="font-body font-normal leading-[0] relative shrink-0 text-[#666666] text-[14px] w-full">
                         <p className="leading-[1.5]">Website</p>
                       </div>
-                      <Input fullWidth
-                        {...form.register('website')}
+                      <Input 
                         placeholder="https://example.com"
                         className="text-[16px] text-black placeholder:text-[#666666]"
+                        {...form.register('website')}
                       />
                     </div>
                   </form>
@@ -379,13 +374,13 @@ export default function Profile() {
                     
                     <div className="content-stretch flex flex-col gap-2 items-start justify-start relative shrink-0 w-full">
                       <div className="font-heading font-bold leading-[0] not-italic relative shrink-0 text-[20px] text-black text-center w-full">
-                        <p className="leading-[1.4]">{form.watch('display_name') || getUserDisplayName() || 'Your Name'}</p>
+                        <p className="leading-[1.4]">{getUserDisplayName() || profile?.display_name || 'Your Name'}</p>
                       </div>
                       <div className="content-stretch flex gap-2 items-start justify-center relative shrink-0 w-full">
                         <div className="bg-[#fcf9f4] box-border content-stretch flex gap-1 items-center justify-start px-4 py-2 relative rounded-[12px] shrink-0">
                           <MapPin className="w-5 h-5 text-[#666666]" />
                           <div className="font-body font-normal leading-[0] relative shrink-0 text-[#666666] text-[14px] text-center text-nowrap">
-                            <p className="leading-[1.5] whitespace-pre">{form.watch('location') || 'Location'}</p>
+                            <p className="leading-[1.5] whitespace-pre">{profile?.location || 'Location'}</p>
                           </div>
                         </div>
                         <div className="bg-[#fcf9f4] box-border content-stretch flex gap-1 items-center justify-start px-4 py-2 relative rounded-[12px] shrink-0">
@@ -399,7 +394,7 @@ export default function Profile() {
                     
                     <div className="font-body font-normal leading-[1.5] min-w-full relative shrink-0 text-[16px] text-black text-center prose prose-sm max-w-none [&>p]:leading-[1.5] [&>p]:my-0 [&>strong]:font-semibold [&>em]:italic [&>ul]:text-left [&>ol]:text-left [&>blockquote]:text-left">
                       <ReactMarkdown>
-                        {form.watch('bio') || 'Your bio will appear here.'}
+{profile?.bio || 'Your bio will appear here.'}
                       </ReactMarkdown>
                     </div>
                   </div>
@@ -536,7 +531,7 @@ export default function Profile() {
                   <H3 className="mb-1">Basic Information</H3>
                 </div>
                 <Button
-                  type="submit"
+                  type="button"
                   disabled={loading}
                   className="bg-black text-white px-6 py-3 rounded-full w-full sm:w-auto hover:bg-gray-900"
                   onClick={form.handleSubmit(onSubmit)}
@@ -558,7 +553,7 @@ export default function Profile() {
                   <Label htmlFor="display_name" className="text-sm font-medium text-gray-700">
                     Display Name <span className="text-red-500">*</span>
                   </Label>
-                  <Input fullWidth
+                  <Input
                     id="display_name"
                     {...form.register('display_name')}
                     placeholder="Your display name"
@@ -574,7 +569,7 @@ export default function Profile() {
                   <Label htmlFor="email" className="text-sm font-medium text-gray-700">
                     Email <span className="text-red-500">*</span>
                   </Label>
-                  <Input fullWidth
+                  <Input
                     id="email"
                     placeholder="your@email.com"
                     className="w-full p-3 border border-gray-200 rounded-lg bg-gray-50"
@@ -588,7 +583,7 @@ export default function Profile() {
                   <Label htmlFor="bio" className="text-sm font-medium text-gray-700">
                     Bio
                   </Label>
-                  <Textarea fullWidth rows={4}
+                  <Textarea rows={4}
                     id="bio"
                     {...form.register('bio')}
                     placeholder="Tell us about yourself..."
@@ -604,7 +599,7 @@ export default function Profile() {
                   <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
                     Phone
                   </Label>
-                  <Input fullWidth
+                  <Input
                     id="phone"
                     {...form.register('phone')}
                     placeholder="+1 (555) 000-0000"
@@ -617,7 +612,7 @@ export default function Profile() {
                   <Label htmlFor="location" className="text-sm font-medium text-gray-700">
                     Location
                   </Label>
-                  <Input fullWidth
+                  <Input
                     id="location"
                     {...form.register('location')}
                     placeholder="New York, NY"
@@ -630,7 +625,7 @@ export default function Profile() {
                   <Label htmlFor="website" className="text-sm font-medium text-gray-700">
                     Website
                   </Label>
-                  <Input fullWidth
+                  <Input
                     id="website"
                     {...form.register('website')}
                     placeholder="https://example.com"

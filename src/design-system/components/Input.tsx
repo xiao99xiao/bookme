@@ -8,32 +8,33 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, error, fullWidth, ...props }, ref) => {
+  ({ className, error, fullWidth, disabled, type = 'text', ...props }, ref) => {
     return (
-      <div className={cn('relative', fullWidth && 'w-full')}>
-        <div 
-          className="absolute inset-[-1px] pointer-events-none"
-          style={{
-            border: `1px solid ${error ? tokens.colors.borderError : tokens.colors.neutralLightest}`,
-            borderRadius: `calc(${tokens.borderRadius.sm} + 1px)`,
-          }}
-        />
-        <input
-          ref={ref}
-          className={cn(
-            'bg-white flex w-full items-center justify-start border-0 focus:ring-0 p-3',
-            'text-base text-textPrimary placeholder:text-textSecondary',
-            'focus:outline-none',
-            className
-          )}
-          style={{
-            fontFamily: tokens.fonts.body,
-            borderRadius: tokens.borderRadius.sm,
-            padding: tokens.spacing.md,
-          }}
-          {...props}
-        />
-      </div>
+      <input
+        type={type}
+        ref={ref}
+        className={cn(
+          'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base',
+          'file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground',
+          'placeholder:text-muted-foreground',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+          'disabled:cursor-not-allowed disabled:opacity-50',
+          'md:text-sm transition-colors',
+          // Design system overrides
+          'text-textPrimary placeholder:text-textSecondary',
+          'border-neutralLightest focus-visible:ring-gray-500',
+          error && 'border-red-500 focus-visible:ring-red-500',
+          disabled && 'bg-gray-50',
+          fullWidth && 'w-full',
+          className
+        )}
+        style={{
+          fontFamily: tokens.fonts.body,
+          borderRadius: tokens.borderRadius.sm,
+        }}
+        disabled={disabled}
+        {...props}
+      />
     );
   }
 );
@@ -46,34 +47,32 @@ interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
 }
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ className, error, fullWidth, rows = 4, ...props }, ref) => {
+  ({ className, error, fullWidth, rows = 4, disabled, ...props }, ref) => {
     return (
-      <div className={cn('relative', fullWidth && 'w-full')}>
-        <div 
-          className="absolute inset-[-1px] pointer-events-none"
-          style={{
-            border: `1px solid ${error ? tokens.colors.borderError : tokens.colors.neutralLightest}`,
-            borderRadius: `calc(${tokens.borderRadius.sm} + 1px)`,
-          }}
-        />
-        <textarea
-          ref={ref}
-          rows={rows}
-          className={cn(
-            'bg-white flex w-full items-start justify-start border-0 focus:ring-0 p-3',
-            'text-base text-textPrimary placeholder:text-textSecondary',
-            'focus:outline-none resize-none',
-            className
-          )}
-          style={{
-            fontFamily: tokens.fonts.body,
-            borderRadius: tokens.borderRadius.sm,
-            padding: tokens.spacing.md,
-            minHeight: `${20 * rows}px`,
-          }}
-          {...props}
-        />
-      </div>
+      <textarea
+        rows={rows}
+        ref={ref}
+        className={cn(
+          'flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-base',
+          'placeholder:text-muted-foreground resize-none',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+          'disabled:cursor-not-allowed disabled:opacity-50',
+          'md:text-sm transition-colors',
+          // Design system overrides
+          'text-textPrimary placeholder:text-textSecondary',
+          'border-neutralLightest focus-visible:ring-gray-500',
+          error && 'border-red-500 focus-visible:ring-red-500',
+          disabled && 'bg-gray-50',
+          fullWidth && 'w-full',
+          className
+        )}
+        style={{
+          fontFamily: tokens.fonts.body,
+          borderRadius: tokens.borderRadius.sm,
+        }}
+        disabled={disabled}
+        {...props}
+      />
     );
   }
 );
