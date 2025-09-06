@@ -16,6 +16,9 @@ import { toast } from "sonner";
 import { getBrowserTimezone } from "@/lib/timezone";
 import { H1, Text, Description, ServiceProfileCard, Loading, Card, Stack, Badge } from '@/design-system';
 import ReviewCommentDialog from "@/components/ReviewCommentDialog";
+import { ProfileHeader } from "@/components/ProfileHeader";
+import { SimpleServiceCard } from "@/components/SimpleServiceCard";
+import { SimpleReviewItem } from "@/components/SimpleReviewItem";
 
 interface Service {
   id: string;
@@ -322,149 +325,88 @@ const Profile = () => {
           "transition-all duration-300 ease-in-out h-screen overflow-y-auto pt-20",
           selectedService ? "w-1/2" : "w-full"
         )}>
-          <div className="max-w-lg mx-auto py-8 px-6">
-            {/* User Profile Section */}
-            <div className="mb-12">
-              <div className="text-center mb-10">
-                <Avatar className="h-20 w-20 mx-auto mb-6">
-                  <AvatarImage src={profile.avatar || ""} alt={profile.display_name || "User"} />
-                  <AvatarFallback className="text-lg bg-muted text-foreground">
-                    {profile.display_name?.charAt(0) || profile.email?.charAt(0) || "U"}
-                  </AvatarFallback>
-                </Avatar>
-                <H1 className="mb-2">
-                  {profile.display_name || profile.email?.split('@')[0] || 'User'}
-                </H1>
-                {profile.location && (
-                  <div className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground mb-2">
-                    <MapPin className="h-3.5 w-3.5" />
-                    <span>{profile.location}</span>
-                  </div>
-                )}
-                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                  <StarRating value={profile.rating} readonly size="sm" />
-                  <span className="font-medium">{profile.rating.toFixed(1)}</span>
-                  <span>({profile.review_count} {profile.review_count === 1 ? 'review' : 'reviews'})</span>
+          <div className="max-w-2xl mx-auto p-6">
+            <div className="flex flex-col gap-16">
+              {/* User Profile Section */}
+              <div className="flex flex-col gap-10 items-center">
+                <div className="w-full">
+                  <ProfileHeader profile={profile} />
                 </div>
               </div>
               
+              {/* Bio Section */}
               {profile.bio && (
-                <div className="prose prose-sm max-w-none text-muted-foreground leading-relaxed">
-                  <ReactMarkdown>{profile.bio}</ReactMarkdown>
+                <div>
+                  <Text className="font-['Baloo_2'] text-[16px] font-normal text-black leading-[1.5] w-full">
+                    {profile.bio}
+                  </Text>
                 </div>
               )}
-            </div>
+              
+              {/* Divider Line */}
+              <div className="w-full h-px bg-[#eeeeee]"></div>
 
-            {/* Services Section */}
-            {(profile.is_provider || services.length > 0) && (
-              <div>
-                <div className="mb-6">
-                  <h2 className="text-lg font-medium text-foreground mb-1">Services</h2>
-                  <p className="text-sm text-muted-foreground">
-                    {isOwnProfile ? "Your services" : "Choose a service to book"}
-                  </p>
+              {/* Services Section */}
+              {(profile.is_provider || services.length > 0) && (
+                <div className="flex flex-col gap-8">
+                  <div className="flex flex-col gap-1">
+                    <h2 className="font-['Spectral'] text-[20px] font-bold text-black leading-[1.4]">Services</h2>
+                  </div>
+                  
+                  {services.filter(service => service.is_visible !== false).length > 0 ? (
+                    <div className="flex flex-col gap-4">
+                      {services.filter(service => service.is_visible !== false).map((service) => (
+                        <SimpleServiceCard
+                          key={service.id}
+                          service={service}
+                          onClick={handleServiceClick}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <p>{isOwnProfile ? "You haven't created any services yet." : "No services available."}</p>
+                    </div>
+                  )}
                 </div>
-                
-                {services.filter(service => service.is_visible !== false).length > 0 ? (
-                  <div className="space-y-3">
-                    {services.filter(service => service.is_visible !== false).map((service) => (
-                      <ServiceProfileCard
-                        key={service.id}
-                        service={service}
-                        onClick={handleServiceClick}
+              )}
+              
+              {/* Reviews Section */}
+              {((profile?.is_provider || services.length > 0) && reviews.length > 0) && (
+                <div className="flex flex-col gap-8">
+                  <div className="flex flex-col gap-1">
+                    <h2 className="font-['Spectral'] text-[20px] font-bold text-black leading-[1.4]">Customer Review</h2>
+                  </div>
+                  
+                  <div className="flex flex-col gap-10">
+                    {reviews.slice(0, reviewsDisplayCount).map((review) => (
+                      <SimpleReviewItem
+                        key={review.id}
+                        review={review}
+                        onRevealComment={() => setSelectedReview(review)}
+                        isCommentTruncated={shouldTruncateComment(review.comment)}
                       />
                     ))}
                   </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <p>{isOwnProfile ? "You haven't created any services yet." : "No services available."}</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Reviews Section */}
-            {((profile?.is_provider || services.length > 0) && reviews.length > 0) && (
-              <div className="mt-12">
-                <div className="mb-6">
-                  <h2 className="text-lg font-medium text-foreground mb-1">Reviews</h2>
-                  <p className="text-sm text-muted-foreground">
-                    What customers are saying ({reviews.length} {reviews.length === 1 ? 'review' : 'reviews'})
-                  </p>
+                  
+                  {/* Load More Button */}
+                  {reviews.length > reviewsDisplayCount && (
+                    <div className="text-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setReviewsDisplayCount(prev => prev + 5)}
+                        className="gap-2"
+                      >
+                        <span>Load more reviews</span>
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
-                
-                <Stack spacing="md">
-                  {reviews.slice(0, reviewsDisplayCount).map((review) => (
-                    <Card key={review.id} padding="lg" radius="lg" className="transition-colors hover:bg-muted/50">
-                      <Stack spacing="md">
-                        {/* Header Row */}
-                        <Stack direction="row" justify="between" align="start">
-                          {/* Left: Avatar and Info */}
-                          <Stack direction="row" spacing="sm" align="center">
-                            <Avatar className="h-10 w-10">
-                              <AvatarImage src={review.reviewer?.avatar} />
-                              <AvatarFallback>
-                                {review.reviewer?.display_name?.charAt(0) || 'U'}
-                              </AvatarFallback>
-                            </Avatar>
-                            <Stack spacing="xs">
-                              <Text variant="small" weight="medium">
-                                {review.reviewer?.display_name || 'Anonymous'}
-                              </Text>
-                              <Text variant="tiny" color="tertiary">
-                                {review.services?.title}
-                              </Text>
-                            </Stack>
-                          </Stack>
-                          
-                          {/* Right: Rating and Date */}
-                          <Stack align="end" spacing="xs">
-                            <StarRating value={review.rating} readonly size="sm" />
-                            <Text variant="tiny" color="tertiary">
-                              {new Date(review.created_at).toLocaleDateString()}
-                            </Text>
-                          </Stack>
-                        </Stack>
-                        
-                        {/* Comment */}
-                        {review.comment && (
-                          <Stack spacing="xs">
-                            <Text variant="small" color="secondary" className="leading-relaxed">
-                              {truncateComment(review.comment)}
-                            </Text>
-                            {shouldTruncateComment(review.comment) && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setSelectedReview(review)}
-                                className="self-start h-auto p-0 text-blue-600 hover:text-blue-700 hover:bg-transparent"
-                              >
-                                Reveal full comment
-                              </Button>
-                            )}
-                          </Stack>
-                        )}
-                      </Stack>
-                    </Card>
-                  ))}
-                </Stack>
-                
-                {/* Load More Button */}
-                {reviews.length > reviewsDisplayCount && (
-                  <div className="mt-6 text-center">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setReviewsDisplayCount(prev => prev + 5)}
-                      className="gap-2"
-                    >
-                      <span>Load more reviews</span>
-                      <ChevronDown className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
+              )}
+
+            </div>
           </div>
         </div>
 
