@@ -45,3 +45,9 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# Smart Contracts (Foundry)
+contracts/out/
+contracts/cache/
+contracts/lib/*/
+contracts/.env
