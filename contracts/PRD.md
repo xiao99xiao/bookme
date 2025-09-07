@@ -34,10 +34,11 @@ The BookMe smart contract system provides a decentralized escrow solution for se
 - **Responsibilities**: Deliver services, handle cancellations
 - **Trust Level**: Self-interested party
 
-### 5. **Provider's Inviter (Wallet)**
-- **Role**: Referral partner earning commissions
+### 5. **Provider's Inviter (Wallet)** - *Optional*
+- **Role**: Referral partner earning commissions (when applicable)
 - **Responsibilities**: Refer providers to platform
 - **Trust Level**: Self-interested party
+- **Note**: Not all providers have inviters; this role is optional
 
 ### 6. **Platform Fee Wallet**
 - **Role**: Platform revenue collection
@@ -54,7 +55,7 @@ The BookMe smart contract system provides a decentralized escrow solution for se
 4. Customer marks service as completed → Smart Contract distributes:
    - Provider: 70-90% (configurable)
    - Platform: 5-20% (configurable)
-   - Inviter: 5-10% (configurable)
+   - Inviter: 0-10% (configurable, only if inviter exists)
 ```
 
 ### Cancellation Path: Provider Cancels
@@ -74,8 +75,10 @@ struct Booking {
     bytes32 id;              // Unique booking identifier
     address customer;        // Customer wallet address
     address provider;        // Provider wallet address  
-    address inviter;         // Inviter wallet (can be zero)
+    address inviter;         // Inviter wallet (address(0) if no inviter)
     uint256 amount;          // USDC amount in wei
+    uint256 platformFeeRate; // Platform fee rate for this booking (basis points)
+    uint256 inviterFeeRate;  // Inviter fee rate for this booking (basis points)
     BookingStatus status;    // Current booking state
     uint256 createdAt;      // Block timestamp
 }
@@ -97,13 +100,10 @@ function createBooking(
     bytes32 bookingId,
     address customer,
     address provider, 
-    address inviter,
-    uint256 amount
-) external onlyBackend
-
-function updateFeeRates(
-    uint256 platformFeeRate,
-    uint256 inviterFeeRate  
+    address inviter,         // Can be address(0) if no inviter
+    uint256 amount,
+    uint256 platformFeeRate, // Dynamic fee rate for this booking
+    uint256 inviterFeeRate   // Dynamic fee rate for this booking
 ) external onlyBackend
 ```
 
@@ -127,11 +127,17 @@ function unpause() external onlyOwner
 
 #### Events
 ```solidity
-event BookingCreated(bytes32 indexed bookingId, address customer, address provider, uint256 amount);
+event BookingCreated(
+    bytes32 indexed bookingId, 
+    address customer, 
+    address provider, 
+    uint256 amount, 
+    uint256 platformFeeRate, 
+    uint256 inviterFeeRate
+);
 event BookingPaid(bytes32 indexed bookingId, uint256 amount);
 event ServiceCompleted(bytes32 indexed bookingId, uint256 providerAmount, uint256 platformFee, uint256 inviterFee);
 event BookingCancelled(bytes32 indexed bookingId, uint256 refundAmount);
-event FeeRatesUpdated(uint256 platformFeeRate, uint256 inviterFeeRate);
 ```
 
 ## 🔒 Security Considerations
@@ -162,12 +168,18 @@ event FeeRatesUpdated(uint256 platformFeeRate, uint256 inviterFeeRate);
 
 ## 📊 Fee Structure & Distribution
 
-### Configurable Parameters
+### Dynamic Fee Rates Per Booking
+Each booking can have its own fee rates, allowing for:
+- **Promotional Rates**: Reduced fees for new providers or special campaigns
+- **Premium Services**: Higher platform fees for premium service categories
+- **Volume Discounts**: Lower fees for high-volume providers
+- **Special Partnerships**: Custom fee structures for strategic partners
+
+### Fee Rate Limits
 ```solidity
-uint256 public platformFeeRate = 1000;    // 10% (basis points: 1000/10000)
-uint256 public inviterFeeRate = 500;      // 5% (basis points: 500/10000)  
 uint256 public constant MAX_PLATFORM_FEE = 2000; // 20% maximum
 uint256 public constant MAX_INVITER_FEE = 1000;  // 10% maximum
+uint256 public constant MAX_TOTAL_FEE = 3000;    // 30% maximum combined
 ```
 
 ### Distribution Logic
@@ -176,17 +188,23 @@ function _distributeFunds(bytes32 bookingId) internal {
     Booking storage booking = bookings[bookingId];
     uint256 totalAmount = booking.amount;
     
-    // Calculate fees
-    uint256 platformFee = (totalAmount * platformFeeRate) / 10000;
-    uint256 inviterFee = booking.inviter != address(0) 
-        ? (totalAmount * inviterFeeRate) / 10000 
-        : 0;
+    // Use booking-specific fee rates (set during booking creation)
+    uint256 platformFee = (totalAmount * booking.platformFeeRate) / 10000;
+    
+    // Only calculate inviter fee if inviter exists
+    uint256 inviterFee = 0;
+    if (booking.inviter != address(0)) {
+        inviterFee = (totalAmount * booking.inviterFeeRate) / 10000;
+    }
+    
     uint256 providerAmount = totalAmount - platformFee - inviterFee;
     
     // Transfer funds
     USDC.transfer(booking.provider, providerAmount);
     USDC.transfer(platformFeeWallet, platformFee);
-    if (inviterFee > 0) {
+    
+    // Only transfer to inviter if they exist and have a fee
+    if (inviterFee > 0 && booking.inviter != address(0)) {
         USDC.transfer(booking.inviter, inviterFee);
     }
 }
@@ -216,13 +234,15 @@ Future: Paid → Disputed → Resolved
 - **Detection**: Check customer USDC balance before payment
 - **Response**: Revert with balance requirement message
 
-### 3. **Fee Rate Changes Mid-Booking**
-- **Solution**: Store fee rates at booking creation time
-- **Benefit**: Predictable costs for all parties
+### 3. **Dynamic Fee Rates Per Booking**
+- **Solution**: Each booking stores its own fee rates at creation time
+- **Benefit**: Flexibility for promotions, volume discounts, premium services
+- **Guarantee**: Fee rates locked at booking creation, no surprises mid-service
 
 ### 4. **Zero Address Handling**
 - **Validation**: Require non-zero addresses for customer/provider
-- **Flexibility**: Allow zero inviter address (no referral)
+- **Flexibility**: Allow zero inviter address (no referral for that provider)
+- **Logic**: Skip inviter fee calculation and distribution when inviter is address(0)
 
 ### 5. **Contract Upgrade Scenarios**
 - **Approach**: Transparent proxy pattern with timelock
