@@ -14,7 +14,7 @@ import CustomDatePicker from "@/components/CustomDatePicker";
 import StarRating from "@/components/StarRating";
 import { toast } from "sonner";
 import { getBrowserTimezone } from "@/lib/timezone";
-import { H1, Text, Description, ServiceProfileCard, Loading, Card, Stack, Badge } from '@/design-system';
+import { H1, Text, Description, ServiceProfileCard, Loading, Badge } from '@/design-system';
 import ReviewCommentDialog from "@/components/ReviewCommentDialog";
 import { ProfileHeader } from "@/components/ProfileHeader";
 import { SimpleServiceCard } from "@/components/SimpleServiceCard";

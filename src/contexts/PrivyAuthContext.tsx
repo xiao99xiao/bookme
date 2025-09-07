@@ -199,7 +199,7 @@ export const PrivyAuthProvider = ({ children }: PrivyAuthProviderProps) => {
   }, [ready, authenticated, privyUser?.id]);
 
 
-  const value = {
+  const value = useMemo(() => ({
     user: privyUser,
     profile,
     loading,
@@ -213,7 +213,19 @@ export const PrivyAuthProvider = ({ children }: PrivyAuthProviderProps) => {
     refreshProfile,
     getUserDisplayName: () => getUserDisplayName(privyUser),
     getUserEmail: () => getUserEmail(privyUser),
-  };
+  }), [
+    privyUser,
+    profile,
+    loading,
+    authenticated,
+    ready,
+    userId,
+    privyUserId,
+    needsOnboarding,
+    login,
+    logout,
+    refreshProfile
+  ]);
 
   return (
     <PrivyAuthContext.Provider value={value}>
