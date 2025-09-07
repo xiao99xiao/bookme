@@ -49,8 +49,8 @@ The BookMe smart contract system provides a decentralized escrow solution for se
 
 ### Happy Path: Service Completion
 ```
-1. Backend creates booking with service details
-2. Customer pays exact USDC amount → Smart Contract (ESCROWED)
+1. Backend signs booking authorization with service details
+2. Customer creates booking + pays in ONE transaction using signed data → Smart Contract (ESCROWED)
 3. Provider delivers service off-chain
 4. Customer marks service as completed → Smart Contract distributes:
    - Provider: 70-90% (configurable)
@@ -81,11 +81,23 @@ struct Booking {
     uint256 inviterFeeRate;  // Inviter fee rate for this booking (basis points)
     BookingStatus status;    // Current booking state
     uint256 createdAt;      // Block timestamp
+    uint256 expiry;          // Booking authorization expiry timestamp
+}
+
+struct BookingAuthorization {
+    bytes32 bookingId;
+    address customer;
+    address provider;
+    address inviter;
+    uint256 amount;
+    uint256 platformFeeRate;
+    uint256 inviterFeeRate;
+    uint256 expiry;          // Signature expiry time
+    uint256 nonce;           // Prevent replay attacks
 }
 
 enum BookingStatus {
-    Created,     // Initial state
-    Paid,        // Customer paid, funds escrowed
+    Paid,        // Customer paid, funds escrowed (initial state)
     Completed,   // Service done, funds distributed
     Cancelled,   // Provider cancelled, funds returned
     Disputed     // Future: under dispute resolution
@@ -94,22 +106,25 @@ enum BookingStatus {
 
 #### Key Functions
 
-**For Backend (Trusted Role)**
+**For Backend (Off-chain Signing)**
 ```solidity
-function createBooking(
-    bytes32 bookingId,
-    address customer,
-    address provider, 
-    address inviter,         // Can be address(0) if no inviter
-    uint256 amount,
-    uint256 platformFeeRate, // Dynamic fee rate for this booking
-    uint256 inviterFeeRate   // Dynamic fee rate for this booking
-) external onlyBackend
+// Backend signs BookingAuthorization struct off-chain using EIP-712
+// No on-chain function needed - just signature generation
 ```
 
 **For Customers**
 ```solidity
-function payForBooking(bytes32 bookingId) external
+// Create booking and pay in ONE transaction with backend signature
+function createAndPayBooking(
+    BookingAuthorization calldata auth,
+    bytes calldata signature
+) external {
+    // Verify backend signature
+    // Create booking with authorized data
+    // Transfer USDC from customer
+    // Mark as PAID status
+}
+
 function completeService(bytes32 bookingId) external
 ```
 
@@ -140,12 +155,45 @@ event ServiceCompleted(bytes32 indexed bookingId, uint256 providerAmount, uint25
 event BookingCancelled(bytes32 indexed bookingId, uint256 refundAmount);
 ```
 
+## 🔐 Signature-Based Authorization Flow
+
+### Overview
+Instead of requiring two separate transactions (create + pay), we use **EIP-712 typed data signing** for a seamless one-transaction flow:
+
+1. **Backend Creates Authorization**
+   - Backend server prepares `BookingAuthorization` struct with all booking details
+   - Signs the data using backend's private key (EIP-712 standard)
+   - Sends signature + data to frontend
+
+2. **Frontend/Customer Executes**
+   - Customer reviews booking details in wallet
+   - Calls `createAndPayBooking()` with authorization + signature
+   - Contract verifies signature is from authorized backend
+   - Creates booking and transfers USDC in single transaction
+
+### Benefits
+- **One Transaction**: Better UX, lower total gas cost
+- **Atomic Operation**: Booking creation and payment can't be separated
+- **Backend Control**: Only backend-signed bookings are accepted
+- **Expiry Protection**: Signatures expire to prevent stale bookings
+- **Replay Protection**: Nonce prevents signature reuse
+
+### EIP-712 Domain
+```solidity
+EIP712Domain({
+    name: "BookMe Escrow",
+    version: "1",
+    chainId: 84532,  // Base Sepolia (or 8453 for Base mainnet)
+    verifyingContract: address(this)
+})
+```
+
 ## 🔒 Security Considerations
 
 ### 1. **Access Control**
-- **Role-Based Access**: Only authorized addresses can perform specific actions
+- **Signature Verification**: Only backend-signed bookings can be created
 - **Multi-Signature**: Platform owner functions require multi-sig for production
-- **Backend Authentication**: Backend server has special trusted role
+- **EIP-712 Standard**: Type-safe signature verification prevents manipulation
 
 ### 2. **Reentrancy Protection**
 - **ReentrancyGuard**: Prevent recursive calls during fund transfers
@@ -213,16 +261,18 @@ function _distributeFunds(bytes32 bookingId) internal {
 ## 🔄 State Transition Diagram
 
 ```
-    [Backend]
-        ↓ createBooking()
-    Created
-        ↓ payForBooking() [Customer]
+    [Backend Signs Authorization]
+        ↓ 
+    [Customer: createAndPayBooking()]
+        ↓
     Paid ←→ Cancelled [cancelBooking() by Provider]
         ↓ completeService() [Customer]
     Completed
 
 Future: Paid → Disputed → Resolved
 ```
+
+Note: No "Created" state needed - booking goes directly to "Paid" status
 
 ## 🛡️ Error Handling & Edge Cases
 
