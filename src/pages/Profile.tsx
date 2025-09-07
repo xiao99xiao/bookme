@@ -10,7 +10,7 @@ import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/PrivyAuthContext";
 import { ApiClient } from "@/lib/api-migration";
-import BookingTimeSlots from "@/components/BookingTimeSlots";
+import CustomDatePicker from "@/components/CustomDatePicker";
 import StarRating from "@/components/StarRating";
 import { toast } from "sonner";
 import { getBrowserTimezone } from "@/lib/timezone";
@@ -322,7 +322,7 @@ const Profile = () => {
       <div className="flex">
         {/* Main Content */}
         <div className={cn(
-          "transition-all duration-300 ease-in-out h-screen overflow-y-auto pt-20",
+          "transition-all duration-300 ease-in-out h-screen overflow-y-auto pt-20 bg-white",
           selectedService ? "w-1/2" : "w-full"
         )}>
           <div className="max-w-2xl mx-auto p-6">
@@ -336,10 +336,26 @@ const Profile = () => {
               
               {/* Bio Section */}
               {profile.bio && (
-                <div>
-                  <Text className="font-['Baloo_2'] text-[16px] font-normal text-black leading-[1.5] w-full">
+                <div className="font-['Baloo_2'] text-[16px] font-normal text-black leading-[1.5] w-full prose prose-sm max-w-none">
+                  <ReactMarkdown
+                    components={{
+                      p: ({ children }) => <p className="font-['Baloo_2'] text-[16px] font-normal text-black leading-[1.5] mb-4">{children}</p>,
+                      strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                      em: ({ children }) => <em className="italic">{children}</em>,
+                      ul: ({ children }) => <ul className="list-disc pl-5 mb-4">{children}</ul>,
+                      ol: ({ children }) => <ol className="list-decimal pl-5 mb-4">{children}</ol>,
+                      li: ({ children }) => <li className="font-['Baloo_2'] text-[16px] font-normal text-black leading-[1.5] mb-1">{children}</li>,
+                      h1: ({ children }) => <h1 className="font-['Spectral'] text-2xl font-bold mb-3">{children}</h1>,
+                      h2: ({ children }) => <h2 className="font-['Spectral'] text-xl font-bold mb-2">{children}</h2>,
+                      h3: ({ children }) => <h3 className="font-['Spectral'] text-lg font-bold mb-2">{children}</h3>,
+                      a: ({ children, href }) => <a href={href} className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">{children}</a>,
+                      blockquote: ({ children }) => <blockquote className="border-l-4 border-gray-300 pl-4 italic my-4">{children}</blockquote>,
+                      code: ({ children }) => <code className="bg-gray-100 px-1 py-0.5 rounded text-sm">{children}</code>,
+                      pre: ({ children }) => <pre className="bg-gray-100 p-3 rounded overflow-x-auto mb-4">{children}</pre>,
+                    }}
+                  >
                     {profile.bio}
-                  </Text>
+                  </ReactMarkdown>
                 </div>
               )}
               
@@ -410,133 +426,133 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* Detail Panel - Original Design */}
+        {/* Detail Panel - Figma Design */}
         {selectedService && (
-          <div className="w-1/2 bg-background h-screen overflow-y-auto border-l">
-            <div className="p-6">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-8 pb-4">
-                <div className="flex items-center gap-3">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedService(null)}
-                    className="h-8 w-8 p-0 hover:bg-muted rounded"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                  </Button>
-                  <h2 className="text-lg font-medium text-foreground">{selectedService.title}</h2>
-                </div>
-              </div>
+          <div className="w-1/2 bg-neutral-50 h-screen overflow-y-auto border-l border-gray-200">
+            <div className="px-20 py-16 flex flex-col gap-10">
               
-              <div className="space-y-8">
-                {/* Service Details */}
-                <div className="space-y-6">
-                  <div className="flex items-center gap-3">
-                    <DSBadge 
-                      variant="secondary" 
-                      size="small"
-                      className="bg-muted text-foreground border-0 rounded font-normal"
-                    >
-                      {selectedService.categories?.name || 'General'}
-                    </DSBadge>
-                    <div className="flex items-center text-muted-foreground text-xs">
-                      {getLocationIcon(selectedService.is_online, !!selectedService.location)}
-                      <span className="ml-1">{getLocationText(selectedService.is_online, !!selectedService.location)}</span>
-                    </div>
+              {/* Header with Back Button */}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedService(null)}
+                  className="p-3 h-auto hover:bg-gray-100 rounded-[40px]"
+                >
+                  <ArrowLeft className="h-6 w-6" />
+                </Button>
+                <div className="flex flex-col gap-1 flex-1">
+                  <h2 className="font-['Spectral'] text-[20px] font-bold text-black leading-[1.4]">Detail</h2>
+                </div>
+              </div>
+
+              {/* Service Info Section */}
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1">
+                  <h1 className="font-['Spectral'] text-[20px] font-bold text-black leading-[1.4]">{selectedService.title}</h1>
+                </div>
+                <p className="font-['Baloo_2'] text-[16px] font-normal text-black leading-[1.5]">
+                  {selectedService.description}
+                </p>
+              </div>
+
+              {/* Price Card */}
+              <div className="bg-white border border-[#eeeeee] rounded-[16px] p-4 flex flex-col gap-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex gap-2 items-baseline text-[18px]">
+                    <span className="font-['Baloo_2'] font-semibold text-black leading-[1.5]">${selectedService.price}</span>
+                    <span className="font-['Baloo_2'] font-normal text-[#cccccc] text-center leading-[1.5]">|</span>
+                    <span className="font-['Baloo_2'] font-semibold text-black leading-[1.5]">{selectedService.duration_minutes} minutes</span>
                   </div>
-                  
-                  <div>
-                    <h3 className="text-sm font-medium text-foreground mb-2">About</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed mb-4">{selectedService.description}</p>
-                    
-                    {selectedService.tags && selectedService.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {selectedService.tags.map((tag) => (
-                          <DSBadge key={tag} variant="secondary" size="small">
-                            {tag}
-                          </DSBadge>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="border rounded-lg p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="text-xl font-medium text-foreground">${selectedService.price}</div>
-                        <div className="text-xs text-muted-foreground">Total price</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm font-medium text-foreground">{selectedService.duration_minutes} min</div>
-                        <div className="text-xs text-muted-foreground">Duration</div>
-                      </div>
-                    </div>
+                  <div className="bg-[#f3f3f3] flex gap-1 items-center px-2 py-1 rounded-[8px]">
+                    <Video className="h-5 w-5" />
+                    <span className="font-['Baloo_2'] font-normal text-[#666666] text-[16px] leading-[1.5]">
+                      {getLocationText(selectedService.is_online, !!selectedService.location)}
+                    </span>
                   </div>
                 </div>
-
-                {isOwnProfile ? (
-                  /* Own Service View */
-                  <div className="text-center py-8 text-muted-foreground">
-                    <p className="mb-2">This is your service</p>
-                    <p className="text-sm">Other users can book this service from your profile page</p>
-                  </div>
-                ) : (
-                  <>
-                    {/* Time Slot Selection */}
-                    <BookingTimeSlots
-                      onSlotSelect={setSelectedTimeSlot}
-                      selectedSlot={selectedTimeSlot}
-                      service={{
-                        duration_minutes: selectedService.duration_minutes,
-                        is_online: selectedService.is_online,
-                        location: selectedService.location
-                      }}
-                    />
-
-                    {/* Customer Notes */}
-                    <div>
-                      <Label htmlFor="customer-notes" className="text-sm font-medium">
-                        Additional Notes (Optional)
-                      </Label>
-                      <Textarea
-                        id="customer-notes"
-                        value={customerNotes}
-                        onChange={(e) => setCustomerNotes(e.target.value)}
-                        placeholder="Tell the provider anything specific about your booking..."
-                        className="mt-2 min-h-[80px]"
-                        maxLength={500}
-                      />
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {customerNotes.length}/500 characters
-                      </div>
-                    </div>
-
-                    {/* Confirm Button */}
-                    <div className="pt-6">
-                      <Button 
-                        className="w-full h-9 text-sm font-medium rounded disabled:opacity-50" 
-                        disabled={authLoading || !selectedTimeSlot || isBooking}
-                        onClick={handleBookingSubmit}
-                      >
-                        {authLoading ? (
-                          <Loading variant="inline" size="sm">
-                            Loading...
-                          </Loading>
-                        ) : isBooking ? (
-                          <Loading variant="inline" size="sm">
-                            Booking...
-                          </Loading>
-                        ) : selectedTimeSlot ? (
-                          'Confirm booking'
-                        ) : (
-                          'Select a time'
-                        )}
-                      </Button>
-                    </div>
-                  </>
-                )}
               </div>
+
+              {/* Divider */}
+              <div className="h-px bg-[#eeeeee]"></div>
+
+              {isOwnProfile ? (
+                /* Own Service View */
+                <div className="text-center py-12 text-gray-500">
+                  <p className="mb-2">This is your service</p>
+                  <p className="text-sm">Other users can book this service from your profile page</p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-6">
+                  {/* Select Date Section */}
+                  <div className="flex flex-col gap-6">
+                    <div className="flex flex-col gap-1">
+                      <h3 className="font-['Spectral'] text-[20px] font-bold text-black leading-[1.4]">Select Date</h3>
+                    </div>
+                    
+                    {/* Custom Date Picker Component */}
+                    <CustomDatePicker
+                      onDateTimeSelect={setSelectedTimeSlot}
+                      selectedDateTime={selectedTimeSlot}
+                      serviceDuration={selectedService.duration_minutes}
+                    />
+                  </div>
+
+                  {/* Divider */}
+                  <div className="h-px bg-[#eeeeee]"></div>
+
+                  {/* Additional Notes Section */}
+                  <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-1">
+                      <h3 className="font-['Spectral'] text-[20px] font-bold text-black leading-[1.4]">Additional Notes (Optional)</h3>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <div className="bg-white border border-[#eeeeee] rounded-[8px] p-3 h-[120px] relative group">
+                        <textarea
+                          value={customerNotes}
+                          onChange={(e) => setCustomerNotes(e.target.value)}
+                          placeholder="Tell the provider anything specific about your booking..."
+                          className="w-full h-full border-0 p-0 font-['Baloo_2'] text-[16px] font-normal leading-[1.5] text-black placeholder:text-[#aaaaaa] resize-none focus:ring-0 focus:outline-none bg-transparent"
+                          maxLength={500}
+                        />
+                        {/* Resize grip indicator */}
+                        <div className="absolute bottom-0.5 right-0.5 pointer-events-none">
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M11 11L1 1" stroke="#cccccc" strokeWidth="1.5" strokeLinecap="round" transform="rotate(45 6 6)"/>
+                            <path d="M11 7L7 3" stroke="#cccccc" strokeWidth="1.5" strokeLinecap="round" transform="rotate(45 6 6)"/>
+                          </svg>
+                        </div>
+                      </div>
+                      <p className="font-['Baloo_2'] text-[12px] font-normal text-[#aaaaaa] leading-[1.5]">
+                        {customerNotes.length}/500 characters
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Confirm Button */}
+                  <div className="flex flex-col items-end">
+                    <Button 
+                      className="bg-black border border-black rounded-[40px] px-6 py-3 w-60 font-['Baloo_2'] font-semibold text-[16px] text-white leading-[1.5] hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed" 
+                      disabled={authLoading || !selectedTimeSlot || isBooking}
+                      onClick={handleBookingSubmit}
+                    >
+                      {authLoading ? (
+                        <Loading variant="inline" size="sm">
+                          Loading...
+                        </Loading>
+                      ) : isBooking ? (
+                        <Loading variant="inline" size="sm">
+                          Booking...
+                        </Loading>
+                      ) : selectedTimeSlot ? (
+                        'Confirm booking'
+                      ) : (
+                        'Select a time'
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
