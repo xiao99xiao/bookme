@@ -352,6 +352,7 @@ const Profile = () => {
                       blockquote: ({ children }) => <blockquote className="border-l-4 border-gray-300 pl-4 italic my-4">{children}</blockquote>,
                       code: ({ children }) => <code className="bg-gray-100 px-1 py-0.5 rounded text-sm">{children}</code>,
                       pre: ({ children }) => <pre className="bg-gray-100 p-3 rounded overflow-x-auto mb-4">{children}</pre>,
+                      hr: () => <div className="w-full h-px bg-[#eeeeee] my-6"></div>,
                     }}
                   >
                     {profile.bio}
