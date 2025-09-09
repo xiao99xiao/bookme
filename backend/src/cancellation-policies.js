@@ -13,6 +13,8 @@ import { supabaseAdmin } from './supabase-admin.js';
  */
 export async function getApplicableCancellationPolicies(bookingId, userId) {
   try {
+    console.log('🔍 DEBUG: Getting cancellation policies for booking:', bookingId, 'user:', userId);
+    
     // First, get the booking details
     const { data: booking, error: bookingError } = await supabaseAdmin
       .from('bookings')
@@ -25,6 +27,14 @@ export async function getApplicableCancellationPolicies(bookingId, userId) {
       throw new Error('Booking not found');
     }
 
+    console.log('📋 DEBUG: Booking details:', {
+      id: booking.id,
+      status: booking.status,
+      scheduled_at: booking.scheduled_at,
+      customer_id: booking.customer_id,
+      provider_id: booking.provider_id
+    });
+
     // Verify user is authorized to cancel this booking
     if (booking.customer_id !== userId && booking.provider_id !== userId) {
       throw new Error('Unauthorized to cancel this booking');
@@ -34,10 +44,18 @@ export async function getApplicableCancellationPolicies(bookingId, userId) {
     const isProvider = booking.provider_id === userId;
     const isCustomer = booking.customer_id === userId;
 
+    console.log('👤 DEBUG: User role:', { isProvider, isCustomer });
+
     // Calculate time until booking start
     const now = new Date();
     const bookingStart = new Date(booking.scheduled_at);
     const minutesUntilStart = Math.floor((bookingStart.getTime() - now.getTime()) / (1000 * 60));
+    
+    console.log('⏰ DEBUG: Time details:', {
+      now: now.toISOString(),
+      bookingStart: bookingStart.toISOString(),
+      minutesUntilStart
+    });
 
     // Get all active policies with their conditions
     const { data: policies, error: policiesError } = await supabaseAdmin
@@ -53,6 +71,12 @@ export async function getApplicableCancellationPolicies(bookingId, userId) {
       throw new Error('Failed to fetch cancellation policies');
     }
 
+    console.log('📜 DEBUG: Found policies:', policies?.map(p => ({
+      reason_key: p.reason_key,
+      reason_title: p.reason_title,
+      conditions: p.cancellation_policy_conditions?.length || 0
+    })));
+
     // Filter policies based on conditions and user role
     const applicablePolicies = [];
 
@@ -60,17 +84,23 @@ export async function getApplicableCancellationPolicies(bookingId, userId) {
       const conditions = policy.cancellation_policy_conditions || [];
       let isApplicable = true;
 
+      console.log(`\n🔍 DEBUG: Checking policy "${policy.reason_key}" with ${conditions.length} conditions`);
+
       // Check each condition
       for (const condition of conditions) {
+        console.log(`  📋 Condition: ${condition.condition_type} = ${condition.condition_value}`);
+        
         switch (condition.condition_type) {
           case 'booking_status':
             let statusMatches = booking.status === condition.condition_value;
             
-            // Special case: if condition requires 'ongoing' but booking is 'confirmed' and past scheduled time,
-            // treat it as ongoing for cancellation purposes
-            if (!statusMatches && condition.condition_value === 'ongoing' && booking.status === 'confirmed' && minutesUntilStart <= 0) {
+            // Special case: if condition requires 'in_progress' but booking is 'confirmed' and past scheduled time,
+            // treat it as in_progress for cancellation purposes
+            if (!statusMatches && condition.condition_value === 'in_progress' && booking.status === 'confirmed' && minutesUntilStart <= 0) {
               statusMatches = true;
             }
+            
+            console.log(`    ✓ Status check: booking.status="${booking.status}" vs condition="${condition.condition_value}" → ${statusMatches}`);
             
             if (!statusMatches) {
               isApplicable = false;
@@ -79,7 +109,9 @@ export async function getApplicableCancellationPolicies(bookingId, userId) {
 
           case 'min_time_before_start':
             const minMinutes = parseInt(condition.condition_value);
-            if (minutesUntilStart < minMinutes) {
+            const meetsTimeRequirement = minutesUntilStart >= minMinutes;
+            console.log(`    ✓ Time check: ${minutesUntilStart} minutes >= ${minMinutes} → ${meetsTimeRequirement}`);
+            if (!meetsTimeRequirement) {
               isApplicable = false;
             }
             break;
@@ -120,6 +152,8 @@ export async function getApplicableCancellationPolicies(bookingId, userId) {
         }
       }
 
+      console.log(`  → Policy "${policy.reason_key}" is ${isApplicable ? 'APPLICABLE' : 'NOT APPLICABLE'}`);
+
       if (isApplicable) {
         applicablePolicies.push({
           ...policy,
@@ -128,6 +162,9 @@ export async function getApplicableCancellationPolicies(bookingId, userId) {
         });
       }
     }
+
+    console.log(`\n🎯 DEBUG: Final result: ${applicablePolicies.length} applicable policies`);
+    applicablePolicies.forEach(p => console.log(`  ✅ ${p.reason_key}: ${p.reason_title}`));
 
     return applicablePolicies;
   } catch (error) {

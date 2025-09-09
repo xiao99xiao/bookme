@@ -583,6 +583,11 @@ export class ApiClient {
     return this.backendApi!.cancelBookingWithPolicy(bookingId, policyId, explanation)
   }
 
+  static async authorizeCancellation(bookingId: string, policyId: string, explanation: string | null): Promise<any> {
+    await this.waitForInitialization()
+    return this.backendApi!.authorizeCancellation(bookingId, policyId, explanation)
+  }
+
   static async rejectPaidBooking(bookingId: string, reason?: string): Promise<any> {
     await this.waitForInitialization()
     

@@ -13,6 +13,9 @@ import { Card as DSCard, Stack } from '@/design-system/components/Layout';
 import { Heading, Text } from '@/design-system/components/Typography';
 import { useAuth } from "@/contexts/PrivyAuthContext";
 import { ApiClient } from "@/lib/api-migration";
+import { useBlockchainService } from "@/lib/blockchain-service";
+import { usePaymentTransaction } from "@/hooks/useTransaction";
+import { TransactionModal } from "@/components/TransactionModal";
 
 interface CancellationPolicy {
   id: string;
@@ -72,7 +75,8 @@ export const EnhancedCancelBookingModal = ({
   onClose, 
   onConfirm 
 }: EnhancedCancelBookingModalProps) => {
-  const { authenticated } = useAuth();
+  const { authenticated, user } = useAuth();
+  const { blockchainService, initializeService, isWalletConnected } = useBlockchainService();
   const [policies, setPolicies] = useState<CancellationPolicy[]>([]);
   const [selectedPolicyId, setSelectedPolicyId] = useState<string>('');
   const [explanation, setExplanation] = useState<string>('');
@@ -80,6 +84,29 @@ export const EnhancedCancelBookingModal = ({
   const [loadingPolicies, setLoadingPolicies] = useState(false);
   const [loadingBreakdown, setLoadingBreakdown] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [authData, setAuthData] = useState<any>(null);
+  const [showTransactionModal, setShowTransactionModal] = useState(false);
+  
+  const {
+    status: txStatus,
+    message: txMessage,
+    txHash,
+    error: txError,
+    isLoading: txIsLoading,
+    isSuccess: txIsSuccess,
+    isError: txIsError,
+    executePayment,
+    reset: resetTransaction
+  } = usePaymentTransaction({
+    onSuccess: (txHash) => {
+      toast.success('Booking cancelled successfully!');
+      onConfirm({ txHash, refundBreakdown, policy: selectedPolicy });
+      handleClose();
+    },
+    onError: (error) => {
+      toast.error(`Cancellation failed: ${error}`);
+    }
+  });
 
   // Load available cancellation policies
   useEffect(() => {
@@ -143,17 +170,43 @@ export const EnhancedCancelBookingModal = ({
 
     setCancelling(true);
     try {
-      const result = await ApiClient.cancelBookingWithPolicy(
-        booking.id, 
-        selectedPolicyId, 
+      // Step 1: Get cancellation authorization from backend
+      console.log('🔐 Getting cancellation authorization from backend...');
+      const authResult = await ApiClient.authorizeCancellation(
+        booking.id,
+        selectedPolicyId,
         explanation.trim() || null
       );
-      toast.success('Booking cancelled successfully');
-      onConfirm(result);
-      handleClose();
+
+      console.log('✅ Got cancellation authorization:', authResult);
+      setAuthData(authResult);
+      setShowTransactionModal(true);
+
+      // Step 2: Initialize blockchain service (always needed to set smart wallet client)
+      await initializeService();
+
+      // Step 3: Execute blockchain transaction
+      const isCustomer = selectedPolicy?.userRole === 'customer';
+      await executePayment(async (onStatusChange) => {
+        if (isCustomer) {
+          return await blockchainService.cancelBookingAsCustomer(
+            authResult.authorization,
+            authResult.signature,
+            onStatusChange
+          );
+        } else {
+          return await blockchainService.cancelBookingAsProvider(
+            authResult.authorization,
+            authResult.signature,
+            onStatusChange
+          );
+        }
+      });
+
     } catch (error) {
       console.error('Error cancelling booking:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to cancel booking');
+      setShowTransactionModal(false);
     } finally {
       setCancelling(false);
     }
@@ -164,6 +217,9 @@ export const EnhancedCancelBookingModal = ({
     setExplanation('');
     setRefundBreakdown(null);
     setPolicies([]);
+    setAuthData(null);
+    setShowTransactionModal(false);
+    resetTransaction();
     onClose();
   };
 
@@ -347,6 +403,19 @@ export const EnhancedCancelBookingModal = ({
           </div>
         </div>
       </DialogContent>
+      
+      {/* Transaction Modal */}
+      <TransactionModal
+        isOpen={showTransactionModal}
+        onClose={() => setShowTransactionModal(false)}
+        status={txStatus}
+        message={txMessage}
+        txHash={txHash}
+        error={txError}
+        title="Processing Cancellation"
+        description="Cancelling your booking and processing refund according to the selected policy."
+        explorerUrl={txHash ? blockchainService.getTransactionUrl(txHash) : undefined}
+      />
     </Dialog>
   );
 };

@@ -51,19 +51,25 @@ fi
 mkdir -p certs
 cd certs
 
-# Install local CA (first time only)
-echo -e "${BLUE}Installing local Certificate Authority...${NC}"
-mkcert -install
+# Check if certificates already exist
+if [ -f "cert.pem" ] && [ -f "key.pem" ]; then
+    echo -e "${GREEN}✅ SSL certificates already exist${NC}"
+    echo -e "${BLUE}Skipping certificate generation...${NC}"
+else
+    # Install local CA (first time only)
+    echo -e "${BLUE}Installing local Certificate Authority...${NC}"
+    mkcert -install
 
-# Generate certificates for IP address
-echo -e "${BLUE}Generating SSL certificates for ${LOCAL_IP}...${NC}"
-mkcert $LOCAL_IP localhost 127.0.0.1 ::1
+    # Generate certificates for IP address
+    echo -e "${BLUE}Generating SSL certificates for ${LOCAL_IP}...${NC}"
+    mkcert $LOCAL_IP localhost 127.0.0.1 ::1
 
-# Rename certificates to standard names
-mv "${LOCAL_IP}+3.pem" cert.pem
-mv "${LOCAL_IP}+3-key.pem" key.pem
+    # Rename certificates to standard names
+    mv "${LOCAL_IP}+3.pem" cert.pem 2>/dev/null || true
+    mv "${LOCAL_IP}+3-key.pem" key.pem 2>/dev/null || true
 
-echo -e "${GREEN}✅ SSL certificates generated in ./certs/${NC}"
+    echo -e "${GREEN}✅ SSL certificates generated in ./certs/${NC}"
+fi
 echo ""
 
 # Create .env.local if it doesn't exist

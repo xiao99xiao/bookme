@@ -125,8 +125,6 @@ class BlockchainEventMonitor {
         platformFeeRate: platformFeeRate.toString(),
         inviterFeeRate: inviterFeeRate.toString(),
         transactionHash: event.transactionHash || event.log?.transactionHash,
-        blockNumber: event.blockNumber || event.log?.blockNumber,
-        logIndex: event.logIndex || event.log?.logIndex,
         timestamp: Date.now()
       })
     })
@@ -142,9 +140,7 @@ class BlockchainEventMonitor {
         providerAmount: providerAmount.toString(),
         platformFee: platformFee.toString(),
         inviterFee: inviterFee.toString(),
-        transactionHash: event.transactionHash,
-        blockNumber: event.blockNumber,
-        logIndex: event.logIndex,
+        transactionHash: event.transactionHash || event.log?.transactionHash,
         timestamp: Date.now()
       })
     })
@@ -162,9 +158,7 @@ class BlockchainEventMonitor {
         platformAmount: platformAmount.toString(),
         inviterAmount: inviterAmount.toString(),
         reason,
-        transactionHash: event.transactionHash,
-        blockNumber: event.blockNumber,
-        logIndex: event.logIndex,
+        transactionHash: event.transactionHash || event.log?.transactionHash,
         timestamp: Date.now()
       })
     })
@@ -281,7 +275,6 @@ class BlockchainEventMonitor {
       .upsert({
         event_type: eventData.type,
         transaction_hash: txHash,
-        block_number: eventData.blockNumber,
         booking_id: eventData.bookingId,
         event_data: eventData,
         processing_status: 'PROCESSED'
@@ -302,7 +295,6 @@ class BlockchainEventMonitor {
       .upsert({
         event_type: eventData.type,
         transaction_hash: eventData.transactionHash,
-        block_number: eventData.blockNumber,
         booking_id: eventData.bookingId,
         event_data: eventData,
         processing_status: 'FAILED',

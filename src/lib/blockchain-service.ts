@@ -340,44 +340,157 @@ export class BlockchainService {
   }
 
   /**
-   * Cancel a booking
+   * Cancel a booking as customer using blockchain
    */
-  async cancelBooking(
-    bookingId: string,
-    reason: string,
+  async cancelBookingAsCustomer(
+    authorization: any,
+    signature: string,
     onStatusChange?: (status: TransactionStatus) => void
   ): Promise<string> {
-    if (!this.contract) {
-      throw new Error('Service not initialized')
+    if (!this.smartWalletClient) {
+      throw new Error('Smart wallet not connected')
     }
 
     try {
       onStatusChange?.({
-        status: 'prompting',
-        message: 'Please confirm booking cancellation...'
+        status: 'preparing',
+        message: 'Preparing cancellation transaction...'
       })
 
-      // Convert booking ID to bytes32
-      const bookingIdBytes = ethers.keccak256(ethers.toUtf8Bytes(bookingId))
-      const tx = await this.contract.cancelBooking(bookingIdBytes, reason)
+      onStatusChange?.({
+        status: 'prompting',
+        message: 'Please confirm the cancellation transaction...'
+      })
+
+      // Extract bookingId from authorization (it's already in the authorization object)
+      const bookingIdBytes = authorization.bookingId
+
+      // Prepare the transaction data using viem's encodeFunctionData
+      const txData = encodeFunctionData({
+        abi: contractABI,
+        functionName: 'cancelBookingAsCustomer',
+        args: [bookingIdBytes, authorization, signature]
+      })
+
+      console.log('🚫 Cancelling booking as customer')
+      console.log('🔍 Authorization:', authorization)
+      
+      // Send transaction through smart wallet
+      const txHash = await this.smartWalletClient.sendTransaction({
+        calls: [
+          {
+            to: CONTRACT_ADDRESS,
+            data: txData,
+            value: 0
+          }
+        ]
+      }, {
+        uiOptions: {
+          title: 'Cancel Booking',
+          description: 'Cancel your booking and process refund according to cancellation policy',
+          buttonText: 'Confirm Cancellation'
+        }
+      })
 
       onStatusChange?.({
         status: 'pending',
-        message: 'Transaction submitted. Cancelling booking...',
-        txHash: tx.hash
+        message: 'Transaction submitted. Processing cancellation...',
+        txHash: txHash
       })
 
-      const receipt = await tx.wait()
-
+      // Transaction is already confirmed when using smart wallets
       onStatusChange?.({
         status: 'success',
-        message: 'Booking cancelled successfully! Refund processed.',
-        txHash: receipt.hash
+        message: 'Booking cancelled successfully! Refund has been processed.',
+        txHash: txHash
       })
 
-      return receipt.hash
+      console.log('✅ Customer cancellation transaction hash:', txHash)
+      return txHash
     } catch (error: any) {
-      console.error('❌ Booking cancellation error:', error)
+      console.error('❌ Customer cancellation error:', error)
+      
+      const errorMessage = this.parseTransactionError(error)
+      onStatusChange?.({
+        status: 'error',
+        message: errorMessage,
+        error: error.message
+      })
+      
+      throw new Error(errorMessage)
+    }
+  }
+
+  /**
+   * Cancel a booking as provider using blockchain
+   */
+  async cancelBookingAsProvider(
+    authorization: any,
+    signature: string,
+    onStatusChange?: (status: TransactionStatus) => void
+  ): Promise<string> {
+    if (!this.smartWalletClient) {
+      throw new Error('Smart wallet not connected')
+    }
+
+    try {
+      onStatusChange?.({
+        status: 'preparing',
+        message: 'Preparing cancellation transaction...'
+      })
+
+      onStatusChange?.({
+        status: 'prompting',
+        message: 'Please confirm the cancellation transaction...'
+      })
+
+      // Extract bookingId from authorization (it's already in the authorization object)
+      const bookingIdBytes = authorization.bookingId
+
+      // Prepare the transaction data using viem's encodeFunctionData
+      const txData = encodeFunctionData({
+        abi: contractABI,
+        functionName: 'cancelBookingAsProvider',
+        args: [bookingIdBytes, authorization, signature]
+      })
+
+      console.log('🚫 Cancelling booking as provider')
+      console.log('🔍 Authorization:', authorization)
+      
+      // Send transaction through smart wallet
+      const txHash = await this.smartWalletClient.sendTransaction({
+        calls: [
+          {
+            to: CONTRACT_ADDRESS,
+            data: txData,
+            value: 0
+          }
+        ]
+      }, {
+        uiOptions: {
+          title: 'Cancel Booking',
+          description: 'Cancel the booking and process refund according to cancellation policy',
+          buttonText: 'Confirm Cancellation'
+        }
+      })
+
+      onStatusChange?.({
+        status: 'pending',
+        message: 'Transaction submitted. Processing cancellation...',
+        txHash: txHash
+      })
+
+      // Transaction is already confirmed when using smart wallets
+      onStatusChange?.({
+        status: 'success',
+        message: 'Booking cancelled successfully! Refund has been distributed.',
+        txHash: txHash
+      })
+
+      console.log('✅ Provider cancellation transaction hash:', txHash)
+      return txHash
+    } catch (error: any) {
+      console.error('❌ Provider cancellation error:', error)
       
       const errorMessage = this.parseTransactionError(error)
       onStatusChange?.({

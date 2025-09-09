@@ -120,7 +120,44 @@ async function verifyPrivyAuth(c, next) {
     
     // Add user to context
     c.set('privyUser', user)
-    c.set('userId', privyDidToUuid(user.userId))
+    const userId = privyDidToUuid(user.userId)
+    c.set('userId', userId)
+    
+    // Store/update wallet address on each authenticated request
+    try {
+      console.log('🔍 Fetching wallet address for user:', user.userId)
+      const userDetails = await privyClient.getUser(user.userId)
+      const smartWallet = userDetails.linkedAccounts?.find(acc => acc.type === 'smart_wallet')
+      const embeddedWallet = userDetails.linkedAccounts?.find(acc => acc.type === 'wallet')
+      const walletAddress = smartWallet?.address || embeddedWallet?.address
+
+      console.log('💰 Smart wallet:', smartWallet?.address || 'Not found')
+      console.log('💰 Embedded wallet:', embeddedWallet?.address || 'Not found')
+      console.log('💰 Using wallet address:', walletAddress)
+
+      if (walletAddress) {
+        console.log('💾 Updating wallet address in database for user:', userId)
+        // Update existing user's wallet address (don't create new users)
+        const { data, error } = await supabaseAdmin
+          .from('users')
+          .update({ 
+            wallet_address: walletAddress 
+          })
+          .eq('id', userId)
+        
+        if (error) {
+          console.error('❌ Database update error:', error)
+        } else {
+          console.log('✅ Wallet address updated successfully:', walletAddress)
+        }
+      } else {
+        console.warn('⚠️ No wallet address found for user:', user.userId)
+      }
+    } catch (walletError) {
+      // Don't fail auth if wallet update fails, just log warning
+      console.warn('⚠️ Failed to update user wallet address:', walletError.message)
+      console.error('Full wallet error:', walletError)
+    }
     
     await next()
   } catch (error) {
@@ -409,49 +446,37 @@ app.post('/api/bookings', verifyPrivyAuth, async (c) => {
     
     try {
     
-    // Get customer wallet address from Privy user
-    const privyUserId = c.get('privyUser').userId
-    console.log('🔍 Fetching wallet for Privy user:', privyUserId)
+    // Get customer wallet address from database
+    const { data: customerUser } = await supabaseAdmin
+      .from('users')
+      .select('wallet_address')
+      .eq('id', userId)
+      .single()
     
-    // Fetch user details from Privy to get wallet address
-    const privyUserDetails = await privyClient.getUser(privyUserId)
-    console.log('👤 Privy user details:', JSON.stringify(privyUserDetails, null, 2))
-    
-    // Get wallet address - prioritize smart wallet for blockchain transactions
-    const smartWallet = privyUserDetails.linkedAccounts?.find(acc => acc.type === 'smart_wallet')
-    const embeddedWallet = privyUserDetails.linkedAccounts?.find(acc => acc.type === 'wallet')
-    
-    // IMPORTANT: Use smart wallet address for blockchain payments since that's what the frontend uses
-    const customerWallet = smartWallet?.address || embeddedWallet?.address || privyUserDetails.wallet?.address
-    
-    console.log('🔍 Smart wallet:', smartWallet?.address || 'Not found')
-    console.log('🔍 Embedded wallet:', embeddedWallet?.address || 'Not found')
-    console.log('💰 Using customer wallet:', customerWallet)
+    const customerWallet = customerUser?.wallet_address
+    console.log('💰 Customer wallet address:', customerWallet)
     
     if (!customerWallet) {
-      return c.json({ error: 'No wallet found for user. Please ensure wallet is connected.' }, 400)
+      return c.json({ error: 'No wallet found for customer. Please ensure wallet is connected and try logging in again.' }, 400)
     }
 
-    // Get provider's wallet address - we need to fetch their Privy user data too
-    // For demo purposes, get provider from our users table with their privy DID
+    // Get provider's wallet address from database
     const { data: providerUser } = await supabaseAdmin
       .from('users')
-      .select('id')
+      .select('wallet_address')
       .eq('id', service.provider_id)
       .single()
+    
+    const providerWallet = providerUser?.wallet_address
+    console.log('💰 Provider wallet address:', providerWallet)
     
     if (!providerUser) {
       return c.json({ error: 'Provider not found' }, 400)
     }
     
-    // Convert provider UUID back to Privy DID format
-    // TODO: Store Privy DIDs in database or use proper mapping
-    const providerPrivyDID = `did:privy:${providerUser.id.replace(/-/g, '').substring(0, 25)}`
-    console.log('🔍 Fetching wallet for provider:', providerPrivyDID)
-    
-    // For development, use customer wallet as provider wallet since we need real addresses
-    const providerWallet = customerWallet
-    console.log('💰 Provider wallet address (using customer for demo):', providerWallet)
+    if (!providerWallet) {
+      return c.json({ error: 'No wallet found for provider. Provider must log in to register their wallet address.' }, 400)
+    }
     
     // Calculate fee structure
     const hasInviter = false // TODO: Add inviter logic when implemented
@@ -1781,6 +1806,133 @@ app.post('/api/bookings/:id/cancel-with-policy', verifyPrivyAuth, async (c) => {
     }
     
     return c.json({ error: 'Failed to process cancellation' }, 500)
+  }
+})
+
+// Blockchain authorization for cancellation
+app.post('/api/bookings/:id/authorize-cancellation', verifyPrivyAuth, async (c) => {
+  try {
+    const userId = c.get('userId')
+    const bookingId = c.req.param('id')
+    const { policyId, explanation } = await c.req.json()
+    
+    if (!policyId) {
+      return c.json({ error: 'Policy ID is required' }, 400)
+    }
+
+
+    console.log('🔐 Authorizing cancellation for booking:', bookingId)
+
+    // Get booking first to debug
+    console.log('🔍 Looking for booking:', bookingId)
+    
+    const { data: booking, error: bookingError } = await supabaseAdmin
+      .from('bookings')
+      .select('*')
+      .eq('id', bookingId)
+      .single()
+    
+    console.log('🔍 Basic booking result:', booking ? 'FOUND' : 'NOT FOUND', bookingError)
+    
+    if (bookingError || !booking) {
+      console.error('❌ Basic booking query failed:', bookingError)
+      return c.json({ error: 'Booking not found' }, 404)
+    }
+    
+    // Get service data
+    const { data: service } = await supabaseAdmin
+      .from('services')
+      .select('*')
+      .eq('id', booking.service_id)
+      .single()
+    
+    booking.service = service
+    
+    // Get customer wallet address from database
+    const { data: customerUser } = await supabaseAdmin
+      .from('users')
+      .select('wallet_address')
+      .eq('id', booking.customer_id)
+      .single()
+    
+    const customerWallet = customerUser?.wallet_address
+    console.log('💰 Customer wallet address:', customerWallet)
+    
+    // Get provider wallet address from database  
+    const { data: providerUser } = await supabaseAdmin
+      .from('users')
+      .select('wallet_address')
+      .eq('id', booking.provider_id)
+      .single()
+    
+    const providerWallet = providerUser?.wallet_address
+    console.log('💰 Provider wallet address:', providerWallet)
+
+    // Validate user can cancel this booking
+    const isCustomer = booking.customer_id === userId
+    const isProvider = booking.provider_id === userId
+    
+    if (!isCustomer && !isProvider) {
+      return c.json({ error: 'Unauthorized to cancel this booking' }, 403)
+    }
+
+    // Validate that the policy is applicable
+    const isValid = await validatePolicySelection(bookingId, userId, policyId)
+    if (!isValid) {
+      return c.json({ error: 'Selected policy is not applicable' }, 400)
+    }
+
+    // Calculate refund breakdown
+    const refundBreakdown = await calculateRefundBreakdown(bookingId, policyId)
+    
+    // Validate we have wallet addresses
+    if (!customerWallet || !providerWallet) {
+      console.error('❌ Wallet addresses not found:', { customerWallet, providerWallet })
+      return c.json({ error: 'Wallet addresses not configured. Please ensure wallet is connected.' }, 400)
+    }
+
+    console.log('✅ Using wallet addresses from Privy API')
+
+    // Generate EIP-712 authorization signature
+    const eip712Signer = new EIP712Signer()
+    const authorization = await eip712Signer.signCancellationAuthorization({
+      bookingId: booking.id,
+      customerAmount: refundBreakdown.breakdown.customerRefund,
+      providerAmount: refundBreakdown.breakdown.providerEarnings,
+      platformAmount: refundBreakdown.breakdown.platformFee,
+      inviterAmount: 0, // TODO: Handle inviter fees if applicable
+      reason: explanation || refundBreakdown.policyTitle,
+      expiryMinutes: 5
+    })
+
+    console.log('✅ Generated cancellation authorization')
+
+    // Convert BigInt values to strings for JSON serialization
+    const serializableAuthorization = {
+      ...authorization.authorization,
+      customerAmount: authorization.authorization.customerAmount.toString(),
+      providerAmount: authorization.authorization.providerAmount.toString(),
+      platformAmount: authorization.authorization.platformAmount.toString(),
+      inviterAmount: authorization.authorization.inviterAmount.toString(),
+      expiry: authorization.authorization.expiry.toString(),
+      nonce: authorization.authorization.nonce.toString()
+    }
+
+    // Determine current user's wallet address
+    const currentUserWallet = isCustomer ? customerWallet : providerWallet
+
+    return c.json({
+      authorization: serializableAuthorization,
+      signature: authorization.signature,
+      refundBreakdown,
+      walletAddress: currentUserWallet,
+      expiry: authorization.expiry,
+      nonce: authorization.nonce
+    })
+
+  } catch (error) {
+    console.error('❌ Cancellation authorization error:', error)
+    return c.json({ error: 'Failed to generate cancellation authorization' }, 500)
   }
 })
 

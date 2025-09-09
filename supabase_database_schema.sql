@@ -1,12 +1,25 @@
 -- WARNING: This schema is for context only and is not meant to be run.
 -- Table order and constraints may not be valid for execution.
 
+CREATE TABLE public.blockchain_events (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  event_type character varying NOT NULL,
+  transaction_hash character varying NOT NULL,
+  block_number bigint NOT NULL,
+  booking_id character varying,
+  event_data jsonb NOT NULL,
+  processed_at timestamp with time zone DEFAULT now(),
+  processing_status character varying DEFAULT 'PROCESSED'::character varying CHECK (processing_status::text = ANY (ARRAY['PROCESSED'::character varying, 'FAILED'::character varying, 'RETRY'::character varying]::text[])),
+  error_message text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT blockchain_events_pkey PRIMARY KEY (id)
+);
 CREATE TABLE public.bookings (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   service_id uuid NOT NULL,
   customer_id uuid NOT NULL,
   provider_id uuid NOT NULL,
-  status text NOT NULL DEFAULT 'pending'::text CHECK (status = ANY (ARRAY['pending'::text, 'confirmed'::text, 'in_progress'::text, 'completed'::text, 'cancelled'::text, 'refunded'::text])),
+  status text NOT NULL DEFAULT 'pending'::text CHECK (status = ANY (ARRAY['pending'::text, 'confirmed'::text, 'in_progress'::text, 'completed'::text, 'cancelled'::text, 'refunded'::text, 'pending_payment'::text, 'paid'::text, 'pending_completion'::text, 'pending_cancellation'::text, 'failed'::text])),
   scheduled_at timestamp with time zone NOT NULL,
   duration_minutes integer NOT NULL,
   total_price numeric NOT NULL,
@@ -25,11 +38,50 @@ CREATE TABLE public.bookings (
   meeting_platform character varying,
   meeting_id text,
   meeting_settings jsonb DEFAULT '{}'::jsonb,
+  cancellation_policy_id uuid,
+  cancellation_explanation text,
+  refund_amount numeric CHECK (refund_amount >= 0::numeric),
+  provider_earnings numeric CHECK (provider_earnings >= 0::numeric),
+  platform_fee numeric CHECK (platform_fee >= 0::numeric),
+  reminder_24h_sent timestamp with time zone,
+  reminder_1h_sent timestamp with time zone,
+  reminder_15m_sent timestamp with time zone,
+  auto_status_updated boolean DEFAULT false,
+  blockchain_booking_id character varying CHECK (blockchain_booking_id IS NULL OR blockchain_booking_id::text ~ '^0x[a-fA-F0-9]{64}$'::text),
+  blockchain_tx_hash character varying CHECK (blockchain_tx_hash IS NULL OR blockchain_tx_hash::text ~ '^0x[a-fA-F0-9]{64}$'::text),
+  blockchain_confirmed_at timestamp with time zone,
+  completion_tx_hash character varying CHECK (completion_tx_hash IS NULL OR completion_tx_hash::text ~ '^0x[a-fA-F0-9]{64}$'::text),
+  cancellation_tx_hash character varying CHECK (cancellation_tx_hash IS NULL OR cancellation_tx_hash::text ~ '^0x[a-fA-F0-9]{64}$'::text),
+  blockchain_data jsonb,
   CONSTRAINT bookings_pkey PRIMARY KEY (id),
-  CONSTRAINT bookings_provider_id_fkey FOREIGN KEY (provider_id) REFERENCES public.users(id),
   CONSTRAINT bookings_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id),
+  CONSTRAINT bookings_cancellation_policy_id_fkey FOREIGN KEY (cancellation_policy_id) REFERENCES public.cancellation_policies(id),
   CONSTRAINT bookings_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.users(id),
+  CONSTRAINT bookings_provider_id_fkey FOREIGN KEY (provider_id) REFERENCES public.users(id),
   CONSTRAINT bookings_cancelled_by_fkey FOREIGN KEY (cancelled_by) REFERENCES public.users(id)
+);
+CREATE TABLE public.cancellation_policies (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  reason_key text NOT NULL UNIQUE,
+  reason_title text NOT NULL,
+  reason_description text NOT NULL,
+  customer_refund_percentage integer NOT NULL CHECK (customer_refund_percentage >= 0 AND customer_refund_percentage <= 100),
+  provider_earnings_percentage integer NOT NULL CHECK (provider_earnings_percentage >= 0 AND provider_earnings_percentage <= 100),
+  platform_fee_percentage integer NOT NULL CHECK (platform_fee_percentage >= 0 AND platform_fee_percentage <= 100),
+  requires_explanation boolean DEFAULT false,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT cancellation_policies_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.cancellation_policy_conditions (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  policy_id uuid NOT NULL,
+  condition_type text NOT NULL CHECK (condition_type = ANY (ARRAY['booking_status'::text, 'time_before_start'::text, 'min_time_before_start'::text, 'max_time_before_start'::text])),
+  condition_value text NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT cancellation_policy_conditions_pkey PRIMARY KEY (id),
+  CONSTRAINT cancellation_policy_conditions_policy_id_fkey FOREIGN KEY (policy_id) REFERENCES public.cancellation_policies(id)
 );
 CREATE TABLE public.categories (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -72,8 +124,8 @@ CREATE TABLE public.messages (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT messages_pkey PRIMARY KEY (id),
-  CONSTRAINT messages_conversation_id_fkey FOREIGN KEY (conversation_id) REFERENCES public.conversations(id),
-  CONSTRAINT messages_sender_id_fkey FOREIGN KEY (sender_id) REFERENCES public.users(id)
+  CONSTRAINT messages_sender_id_fkey FOREIGN KEY (sender_id) REFERENCES public.users(id),
+  CONSTRAINT messages_conversation_id_fkey FOREIGN KEY (conversation_id) REFERENCES public.conversations(id)
 );
 CREATE TABLE public.notifications (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -134,10 +186,10 @@ CREATE TABLE public.reviews (
   created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT reviews_pkey PRIMARY KEY (id),
-  CONSTRAINT reviews_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES public.bookings(id),
-  CONSTRAINT reviews_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id),
+  CONSTRAINT reviews_reviewer_id_fkey FOREIGN KEY (reviewer_id) REFERENCES public.users(id),
   CONSTRAINT reviews_reviewee_id_fkey FOREIGN KEY (reviewee_id) REFERENCES public.users(id),
-  CONSTRAINT reviews_reviewer_id_fkey FOREIGN KEY (reviewer_id) REFERENCES public.users(id)
+  CONSTRAINT reviews_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id),
+  CONSTRAINT reviews_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES public.bookings(id)
 );
 CREATE TABLE public.services (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -150,7 +202,6 @@ CREATE TABLE public.services (
   duration_minutes integer NOT NULL,
   location text,
   is_online boolean DEFAULT false,
-  is_active boolean DEFAULT true,
   rating numeric DEFAULT 0.00,
   review_count integer DEFAULT 0,
   total_bookings integer DEFAULT 0,
@@ -164,9 +215,19 @@ CREATE TABLE public.services (
   meeting_platform character varying CHECK (meeting_platform::text = ANY (ARRAY['google_meet'::character varying, 'zoom'::character varying, 'teams'::character varying]::text[])),
   meeting_settings jsonb DEFAULT '{}'::jsonb,
   service_timezone text DEFAULT 'UTC'::text,
+  is_visible boolean DEFAULT true,
   CONSTRAINT services_pkey PRIMARY KEY (id),
-  CONSTRAINT services_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories(id),
-  CONSTRAINT services_provider_id_fkey FOREIGN KEY (provider_id) REFERENCES public.users(id)
+  CONSTRAINT services_provider_id_fkey FOREIGN KEY (provider_id) REFERENCES public.users(id),
+  CONSTRAINT services_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories(id)
+);
+CREATE TABLE public.signature_nonces (
+  id integer NOT NULL DEFAULT nextval('signature_nonces_id_seq'::regclass),
+  nonce bigint NOT NULL UNIQUE,
+  used_at timestamp with time zone DEFAULT now(),
+  booking_id uuid,
+  signature_type character varying NOT NULL,
+  CONSTRAINT signature_nonces_pkey PRIMARY KEY (id),
+  CONSTRAINT signature_nonces_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES public.bookings(id)
 );
 CREATE TABLE public.user_favorites (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -174,8 +235,8 @@ CREATE TABLE public.user_favorites (
   service_id uuid NOT NULL,
   created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT user_favorites_pkey PRIMARY KEY (id),
-  CONSTRAINT user_favorites_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id),
-  CONSTRAINT user_favorites_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+  CONSTRAINT user_favorites_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT user_favorites_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id)
 );
 CREATE TABLE public.user_meeting_integrations (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -211,5 +272,6 @@ CREATE TABLE public.users (
   created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
   updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
   timezone text DEFAULT 'UTC'::text,
+  username text CHECK (username ~ '^[a-zA-Z0-9_-]{3,30}$'::text),
   CONSTRAINT users_pkey PRIMARY KEY (id)
 );

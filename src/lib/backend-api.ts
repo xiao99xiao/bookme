@@ -297,6 +297,13 @@ export class BackendAPI {
     });
   }
 
+  async authorizeCancellation(bookingId: string, policyId: string, explanation: string | null): Promise<any> {
+    return this.request(`/api/bookings/${bookingId}/authorize-cancellation`, {
+      method: 'POST',
+      body: JSON.stringify({ policyId, explanation }),
+    });
+  }
+
   // Blockchain Service Completion
   async completeService(bookingId: string): Promise<any> {
     return this.request(`/api/bookings/${bookingId}/complete-service`, {
