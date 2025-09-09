@@ -6,7 +6,7 @@ const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 
 // You need to set these in your environment variables
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
-const CLIENT_SECRET = import.meta.env.VITE_GOOGLE_CLIENT_SECRET || ''; // Note: This should ideally be in a backend
+// Client secret is now handled securely on the backend
 // Don't evaluate window.location at module load time
 const getRedirectUri = () => `${window.location.origin}/provider/integrations/callback`;
 
@@ -46,54 +46,18 @@ export class GoogleAuth {
   
   /**
    * Handles the OAuth callback
+   * @deprecated This method is deprecated. The callback is now handled by IntegrationsCallback.tsx using the secure backend endpoint.
    */
   static async handleCallback(code: string, state: string): Promise<any> {
-    // Validate state to prevent CSRF attacks
-    const savedState = sessionStorage.getItem('google_oauth_state');
-    if (state !== savedState) {
-      throw new Error('Invalid state parameter');
-    }
-    
-    // Clear the state
-    sessionStorage.removeItem('google_oauth_state');
-    
-    // Exchange code for tokens
-    const tokenResponse = await this.exchangeCodeForToken(code);
-    
-    // Get user info
-    const userInfo = await this.getUserInfo(tokenResponse.access_token);
-    
-    return {
-      ...tokenResponse,
-      userInfo
-    };
+    throw new Error('OAuth callback is now handled by IntegrationsCallback.tsx using the secure backend endpoint /api/oauth/google-callback');
   }
   
   /**
    * Exchange authorization code for access token
+   * @deprecated This method is insecure and should not be used. Use backend OAuth endpoint instead.
    */
   static async exchangeCodeForToken(code: string): Promise<any> {
-    const params = new URLSearchParams({
-      code: code,
-      client_id: CLIENT_ID,
-      client_secret: CLIENT_SECRET, // This should be done server-side in production
-      redirect_uri: getRedirectUri(),
-      grant_type: 'authorization_code'
-    });
-    
-    const response = await fetch(GOOGLE_TOKEN_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: params.toString()
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to exchange code for token');
-    }
-    
-    return response.json();
+    throw new Error('Token exchange is now handled securely on the backend. Use /api/oauth/google-callback instead.');
   }
   
   /**
@@ -115,33 +79,10 @@ export class GoogleAuth {
   
   /**
    * Refresh the access token
+   * @deprecated This method is insecure and should not be used. Token refresh is now handled on the backend.
    */
   static async refreshToken(refreshToken: string): Promise<any> {
-    const params = new URLSearchParams({
-      refresh_token: refreshToken,
-      client_id: CLIENT_ID,
-      client_secret: CLIENT_SECRET, // This should be done server-side in production
-      grant_type: 'refresh_token'
-    });
-    
-    const response = await fetch(GOOGLE_TOKEN_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: params.toString()
-    });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Token refresh failed with status:', response.status);
-      console.error('Token refresh error response:', errorText);
-      throw new Error(`Failed to refresh token: ${response.status} - ${errorText}`);
-    }
-    
-    const result = await response.json();
-    console.log('Token refresh response:', result);
-    return result;
+    throw new Error('Token refresh is now handled securely on the backend. The meeting-generation.js handles refresh automatically.');
   }
   
   /**

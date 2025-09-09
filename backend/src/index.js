@@ -2583,6 +2583,122 @@ app.delete('/api/integrations/:id', verifyPrivyAuth, async (c) => {
   }
 })
 
+// Secure Google OAuth callback handler
+app.post('/api/oauth/google-callback', verifyPrivyAuth, async (c) => {
+  try {
+    const userId = c.get('userId')
+    const { code, redirectUri } = await c.req.json()
+    
+    if (!code) {
+      return c.json({ error: 'Authorization code is required' }, 400)
+    }
+    
+    console.log('🔐 Processing Google OAuth callback for user:', userId)
+    
+    // Exchange code for tokens securely on backend
+    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        code,
+        client_id: process.env.GOOGLE_CLIENT_ID,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET,
+        redirect_uri: redirectUri,
+        grant_type: 'authorization_code',
+      }),
+    })
+    
+    const tokenData = await tokenResponse.json()
+    
+    if (tokenData.error) {
+      console.error('Google token exchange failed:', tokenData.error_description || tokenData.error)
+      return c.json({ 
+        error: `Token exchange failed: ${tokenData.error_description || tokenData.error}` 
+      }, 400)
+    }
+    
+    if (!tokenData.access_token) {
+      console.error('No access token received from Google')
+      return c.json({ error: 'No access token received' }, 400)
+    }
+    
+    // Get user info from Google
+    const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+      headers: {
+        Authorization: `Bearer ${tokenData.access_token}`,
+      },
+    })
+    
+    if (!userInfoResponse.ok) {
+      console.error('Failed to get Google user info')
+      return c.json({ error: 'Failed to get user info from Google' }, 400)
+    }
+    
+    const userInfo = await userInfoResponse.json()
+    
+    // Save the integration to database
+    const integrationData = {
+      user_id: userId,
+      platform: 'google_meet',
+      access_token: tokenData.access_token,
+      refresh_token: tokenData.refresh_token,
+      expires_at: tokenData.expires_in 
+        ? new Date(Date.now() + tokenData.expires_in * 1000).toISOString()
+        : null,
+      scope: tokenData.scope?.split(' ') || [],
+      platform_user_id: userInfo.id,
+      platform_user_email: userInfo.email,
+      is_active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+    
+    // Check if integration already exists for this user and platform
+    const { data: existingIntegration } = await supabaseAdmin
+      .from('user_meeting_integrations')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('platform', 'google_meet')
+      .single()
+    
+    if (existingIntegration) {
+      // Update existing integration
+      const { error } = await supabaseAdmin
+        .from('user_meeting_integrations')
+        .update(integrationData)
+        .eq('id', existingIntegration.id)
+      
+      if (error) {
+        console.error('Failed to update Google integration:', error)
+        return c.json({ error: 'Failed to save integration' }, 500)
+      }
+    } else {
+      // Create new integration
+      const { error } = await supabaseAdmin
+        .from('user_meeting_integrations')
+        .insert(integrationData)
+      
+      if (error) {
+        console.error('Failed to save Google integration:', error)
+        return c.json({ error: 'Failed to save integration' }, 500)
+      }
+    }
+    
+    console.log('✅ Google integration saved successfully for user:', userId)
+    return c.json({ 
+      success: true,
+      userEmail: userInfo.email,
+      message: 'Google Meet integration connected successfully!' 
+    })
+    
+  } catch (error) {
+    console.error('Google OAuth callback error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
 // Export app for use in HTTPS server
 export default app
 

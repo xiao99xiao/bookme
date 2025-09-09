@@ -4,11 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button as DSButton } from '@/design-system';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { ApiClient } from '@/lib/api-migration';
+import { usePrivy } from '@privy-io/react-auth';
 
 export default function IntegrationsCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { getAccessToken } = usePrivy();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState<string>('');
 
@@ -33,54 +34,35 @@ export default function IntegrationsCallback() {
           return;
         }
 
-        // Exchange the authorization code for tokens
-        // This would typically be done on the backend for security
-        const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+        // Get the redirect URI that was used for this request
+        const redirectUri = `${window.location.origin}/provider/integrations/callback`;
+        
+        // Send the authorization code to our secure backend
+        const accessToken = await getAccessToken();
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/oauth/google-callback`, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
           },
-          body: new URLSearchParams({
+          body: JSON.stringify({
             code,
-            client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-            client_secret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
-            redirect_uri: `${window.location.origin}/provider/integrations/callback`,
-            grant_type: 'authorization_code',
+            redirectUri
           }),
         });
 
-        const tokenData = await tokenResponse.json();
+        const result = await response.json();
 
-        if (tokenData.error) {
+        if (!response.ok || result.error) {
           setStatus('error');
-          setMessage(`Token exchange failed: ${tokenData.error_description || tokenData.error}`);
+          setMessage(result.error || 'Failed to connect Google integration');
           toast.error('Integration failed');
           return;
         }
 
-        // Get user info from Google
-        const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-          headers: {
-            Authorization: `Bearer ${tokenData.access_token}`,
-          },
-        });
-
-        const userInfo = await userInfoResponse.json();
-
-        // Save the integration
-        await ApiClient.saveIntegration({
-          platform: 'google_meet',
-          access_token: tokenData.access_token,
-          refresh_token: tokenData.refresh_token,
-          expires_at: new Date(Date.now() + tokenData.expires_in * 1000).toISOString(),
-          scope: tokenData.scope?.split(' ') || [],
-          platform_user_id: userInfo.id,
-          platform_user_email: userInfo.email,
-        });
-
         setStatus('success');
-        setMessage('Google Meet integration connected successfully!');
-        toast.success('Google Meet connected successfully!');
+        setMessage(result.message || 'Google Meet integration connected successfully!');
+        toast.success(`Google Meet connected: ${result.userEmail}`);
 
       } catch (error) {
         console.error('Integration callback error:', error);
@@ -91,7 +73,7 @@ export default function IntegrationsCallback() {
     };
 
     handleCallback();
-  }, [searchParams]);
+  }, [searchParams, getAccessToken]);
 
   const handleGoBack = () => {
     navigate('/provider/integrations');
