@@ -1,11 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
 import dotenv from 'dotenv'
 
-// Load environment variables
-dotenv.config({ path: '../.env.local' })
+// Load environment variables (local development only)
+dotenv.config({ path: '.env' })
 
 const supabaseAdmin = createClient(
-  process.env.VITE_SUPABASE_URL,
+  process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
