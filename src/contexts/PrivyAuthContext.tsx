@@ -37,6 +37,8 @@ interface PrivyAuthContextType {
   login: () => void;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  getUserDisplayName: () => string;
+  getUserEmail: () => string | null;
 }
 
 const PrivyAuthContext = createContext<PrivyAuthContextType>({

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Calendar, CheckCircle, MessageSquare, Copy, Video, Star, XCircle, X } from 'lucide-react';
+import { Calendar, CheckCircle, MessageSquare, Copy, Video, Star, XCircle, X, Link } from 'lucide-react';
 import { GoogleMeetIcon, ZoomIcon, TeamsIcon } from '@/components/icons/MeetingPlatformIcons';
 import { toast } from 'sonner';
 import {
@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient, Booking } from '@/lib/api-migration';
+import { usePrivy } from '@privy-io/react-auth';
 import ChatModal from '@/components/ChatModal';
 import { EnhancedCancelBookingModal } from '@/components/EnhancedCancelBookingModal';
 import { H2, H3, Text, Loading, EmptyState, Button as DSButton, StatusBadge, OnlineBadge, DurationBadge } from '@/design-system';
@@ -18,6 +19,7 @@ import { calculatePlatformFee } from '@/lib/config';
 
 export default function ProviderOrders() {
   const { userId, user } = useAuth();
+  const { getAccessToken } = usePrivy();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
@@ -97,6 +99,17 @@ export default function ProviderOrders() {
     }
   };
 
+  const handleRejectPaidBooking = async (bookingId: string) => {
+    try {
+      await ApiClient.rejectPaidBooking(bookingId, 'Booking declined by provider');
+      toast.success('Paid booking rejected and refund processed');
+      loadBookings();
+    } catch (error) {
+      console.error('Failed to reject paid booking:', error);
+      toast.error('Failed to reject booking');
+    }
+  };
+
   const handleCancelBooking = (bookingId: string) => {
     const booking = bookings.find(b => b.id === bookingId);
     if (booking) {
@@ -124,8 +137,70 @@ export default function ProviderOrders() {
   };
 
   const handleCopyMeetingLink = (link: string) => {
+    console.log('🔗 Provider Copy Link clicked:', link);
+    if (!link) {
+      console.error('❌ No meeting link provided');
+      toast.error('No meeting link available');
+      return;
+    }
     navigator.clipboard.writeText(link);
     toast.success('Meeting link copied to clipboard');
+  };
+
+  const handleJoinMeeting = (link: string) => {
+    console.log('🚀 Provider Join Meeting clicked:', link);
+    if (!link) {
+      console.error('❌ No meeting link provided');
+      toast.error('No meeting link available');
+      return;
+    }
+    window.open(link, '_blank');
+  };
+
+  const handleGenerateMeetingLink = async (bookingId: string) => {
+    try {
+      console.log('🔗 Generate Meeting Link clicked for booking:', bookingId);
+      toast.loading('Generating meeting link...');
+      
+      const accessToken = await getAccessToken();
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/meeting/generate`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ bookingId })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate meeting link');
+      }
+      
+      if (data.meetingLink) {
+        toast.success('Meeting link generated successfully!');
+        loadBookings(); // Refresh to show the new meeting link
+      } else {
+        toast.error('Failed to generate meeting link - no link returned');
+      }
+    } catch (error) {
+      console.error('Failed to generate meeting link:', error);
+      
+      // Show user-friendly error messages
+      let errorMessage = error.message || 'Failed to generate meeting link';
+      if (errorMessage.includes('Google') || errorMessage.includes('authentication') || errorMessage.includes('authorization')) {
+        toast.error(errorMessage + ' Go to Integrations to reconnect.', {
+          duration: 6000,
+          action: {
+            label: 'Go to Integrations',
+            onClick: () => window.location.href = '/provider/integrations'
+          }
+        });
+      } else {
+        toast.error(errorMessage);
+      }
+    }
   };
 
   const getMeetingIcon = (platform?: string) => {
@@ -148,6 +223,13 @@ export default function ProviderOrders() {
           <span className="inline-flex items-center gap-1.5 text-xs text-gray-700 font-body">
             <span className="w-2 h-2 bg-yellow-400 rounded-full"></span>
             Pending
+          </span>
+        );
+      case 'paid':
+        return (
+          <span className="inline-flex items-center gap-1.5 text-xs text-gray-700 font-body">
+            <CheckCircle className="w-3.5 h-3.5 text-green-600 fill-green-600" />
+            Paid
           </span>
         );
       case 'confirmed':
@@ -242,6 +324,7 @@ export default function ProviderOrders() {
 
   const filteredBookings = bookings.filter(booking => {
     if (activeTab === 'all') return true;
+    if (activeTab === 'pending') return booking.status === 'pending' || booking.status === 'paid';
     return booking.status === activeTab;
   });
 
@@ -323,7 +406,7 @@ export default function ProviderOrders() {
                         
                         {/* Top Right Icons */}
                         <div className="flex items-center gap-2">
-                          {(booking.status === 'confirmed' || booking.status === 'ongoing') ? (
+                          {(booking.status === 'confirmed' || booking.status === 'in_progress') ? (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <DSButton 
@@ -403,7 +486,7 @@ export default function ProviderOrders() {
                       <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-2">
                           {/* Status Badge */}
-                          <StatusBadge status={booking.status === 'confirmed' ? 'ongoing' : booking.status as any} />
+                          <StatusBadge status={booking.status === 'confirmed' ? 'in_progress' : booking.status as any} />
                           
                           {/* Online Badge */}
                           {booking.is_online && <OnlineBadge isOnline={booking.is_online} />}
@@ -423,8 +506,8 @@ export default function ProviderOrders() {
                         </div>
                       </div>
 
-                      {/* Bottom Section: Timer and Actions - only for confirmed, ongoing and pending bookings */}
-                      {(booking.status === 'confirmed' || booking.status === 'ongoing' || booking.status === 'pending') && (
+                      {/* Bottom Section: Timer and Actions - only for confirmed, in_progress, pending and paid bookings */}
+                      {(booking.status === 'confirmed' || booking.status === 'in_progress' || booking.status === 'pending' || booking.status === 'paid') && (
                         <>
                           {/* Divider Line */}
                           <div className="border-t border-[#eeeeee] my-6"></div>
@@ -432,7 +515,7 @@ export default function ProviderOrders() {
                           <div className="flex items-center justify-between">
                             {/* Cancel Button or Status Text */}
                             <div className="text-sm font-medium text-black font-body">
-                              {(booking.status === 'confirmed' || booking.status === 'ongoing') && (
+                              {(booking.status === 'confirmed' || booking.status === 'in_progress') && (
                                 <DSButton
                                   variant="link"
                                   size="small"
@@ -442,17 +525,17 @@ export default function ProviderOrders() {
                                   Cancel
                                 </DSButton>
                               )}
-                              {booking.status === 'pending' && 'New order'}
+                              {(booking.status === 'pending' || booking.status === 'paid') && 'New order'}
                             </div>
 
                             {/* Action Buttons */}
                             <div className="flex items-center gap-3">
-                              {(booking.status === 'confirmed' || booking.status === 'ongoing') && (
+                              {(booking.status === 'confirmed' || booking.status === 'in_progress') && booking.is_online && booking.meeting_link && (
                                 <>
                                   <DSButton
                                     variant="outline"
                                     size="small"
-                                    onClick={() => booking.meeting_link && handleCopyMeetingLink(booking.meeting_link)}
+                                    onClick={() => handleCopyMeetingLink(booking.meeting_link)}
                                     icon={<Copy className="w-5 h-5" />}
                                   >
                                     Copy
@@ -460,19 +543,37 @@ export default function ProviderOrders() {
                                   <DSButton
                                     variant="primary"
                                     size="small"
+                                    onClick={() => handleJoinMeeting(booking.meeting_link)}
                                     icon={getMeetingIcon(booking.meeting_platform)}
                                   >
                                     Join
                                   </DSButton>
                                 </>
                               )}
+                              
+                              {(booking.status === 'confirmed' || booking.status === 'in_progress') && booking.is_online && !booking.meeting_link && (
+                                <DSButton
+                                  variant="primary"
+                                  size="small"
+                                  onClick={() => handleGenerateMeetingLink(booking.id)}
+                                  icon={<Link className="w-5 h-5" />}
+                                >
+                                  Generate Meeting Link
+                                </DSButton>
+                              )}
 
-                              {booking.status === 'pending' && (
+                              {(booking.status === 'pending' || booking.status === 'paid') && (
                                 <>
                                   <DSButton
                                     variant="outline"
                                     size="small"
-                                    onClick={() => handleUpdateStatus(booking.id, 'cancelled')}
+                                    onClick={() => {
+                                      if (booking.status === 'paid') {
+                                        handleRejectPaidBooking(booking.id);
+                                      } else {
+                                        handleUpdateStatus(booking.id, 'cancelled');
+                                      }
+                                    }}
                                   >
                                     Decline
                                   </DSButton>
@@ -603,7 +704,7 @@ export default function ProviderOrders() {
                         
                         {/* Top Right Icons - Smaller on mobile */}
                         <div className="flex items-center gap-2 ml-2">
-                          {(booking.status === 'confirmed' || booking.status === 'ongoing') ? (
+                          {(booking.status === 'confirmed' || booking.status === 'in_progress') ? (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <DSButton 
@@ -683,7 +784,7 @@ export default function ProviderOrders() {
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
                         <div className="flex items-center gap-2 flex-wrap">
                           {/* Status Badge */}
-                          <StatusBadge status={booking.status === 'confirmed' ? 'ongoing' : booking.status as any} />
+                          <StatusBadge status={booking.status === 'confirmed' ? 'in_progress' : booking.status as any} />
                           
                           {/* Online Badge */}
                           {booking.is_online && (
@@ -714,8 +815,8 @@ export default function ProviderOrders() {
                         </div>
                       </div>
 
-                      {/* Bottom Section: Timer and Actions - only for confirmed, ongoing and pending bookings */}
-                      {(booking.status === 'confirmed' || booking.status === 'ongoing' || booking.status === 'pending') && (
+                      {/* Bottom Section: Timer and Actions - only for confirmed, in_progress, pending and paid bookings */}
+                      {(booking.status === 'confirmed' || booking.status === 'in_progress' || booking.status === 'pending' || booking.status === 'paid') && (
                         <>
                           {/* Divider Line */}
                           <div className="border-t border-[#eeeeee] my-6"></div>
@@ -723,7 +824,7 @@ export default function ProviderOrders() {
                           <div className="flex items-center justify-between">
                             {/* Cancel Button or Status Text */}
                             <div className="text-sm font-medium text-black font-body">
-                              {(booking.status === 'confirmed' || booking.status === 'ongoing') && (
+                              {(booking.status === 'confirmed' || booking.status === 'in_progress') && (
                                 <DSButton
                                   variant="link"
                                   size="small"
@@ -733,17 +834,17 @@ export default function ProviderOrders() {
                                   Cancel
                                 </DSButton>
                               )}
-                              {booking.status === 'pending' && 'New order'}
+                              {(booking.status === 'pending' || booking.status === 'paid') && 'New order'}
                             </div>
 
                             {/* Action Buttons */}
                             <div className="flex items-center gap-3 flex-wrap justify-end">
-                              {(booking.status === 'confirmed' || booking.status === 'ongoing') && (
+                              {(booking.status === 'confirmed' || booking.status === 'in_progress') && booking.is_online && booking.meeting_link && (
                                 <>
                                   <DSButton
                                     variant="outline"
                                     size="small"
-                                    onClick={() => booking.meeting_link && handleCopyMeetingLink(booking.meeting_link)}
+                                    onClick={() => handleCopyMeetingLink(booking.meeting_link)}
                                     icon={<Copy className="w-5 h-5" />}
                                   >
                                     Copy
@@ -751,19 +852,37 @@ export default function ProviderOrders() {
                                   <DSButton
                                     variant="primary"
                                     size="small"
+                                    onClick={() => handleJoinMeeting(booking.meeting_link)}
                                     icon={getMeetingIcon(booking.meeting_platform)}
                                   >
                                     Join
                                   </DSButton>
                                 </>
                               )}
+                              
+                              {(booking.status === 'confirmed' || booking.status === 'in_progress') && booking.is_online && !booking.meeting_link && (
+                                <DSButton
+                                  variant="primary"
+                                  size="small"
+                                  onClick={() => handleGenerateMeetingLink(booking.id)}
+                                  icon={<Link className="w-5 h-5" />}
+                                >
+                                  Generate Meeting Link
+                                </DSButton>
+                              )}
 
-                              {booking.status === 'pending' && (
+                              {(booking.status === 'pending' || booking.status === 'paid') && (
                                 <>
                                   <DSButton
                                     variant="outline"
                                     size="small"
-                                    onClick={() => handleUpdateStatus(booking.id, 'cancelled')}
+                                    onClick={() => {
+                                      if (booking.status === 'paid') {
+                                        handleRejectPaidBooking(booking.id);
+                                      } else {
+                                        handleUpdateStatus(booking.id, 'cancelled');
+                                      }
+                                    }}
                                   >
                                     Decline
                                   </DSButton>

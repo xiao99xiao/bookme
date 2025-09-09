@@ -582,6 +582,26 @@ export class ApiClient {
     await this.waitForInitialization()
     return this.backendApi!.cancelBookingWithPolicy(bookingId, policyId, explanation)
   }
+
+  static async rejectPaidBooking(bookingId: string, reason?: string): Promise<any> {
+    await this.waitForInitialization()
+    
+    const response = await fetch(`${this.backendApi!.baseUrl}/api/bookings/${bookingId}/reject`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.backendApi!.token}`
+      },
+      body: JSON.stringify({ reason })
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Failed to reject booking')
+    }
+
+    return response.json()
+  }
 }
 
 // Export for backwards compatibility

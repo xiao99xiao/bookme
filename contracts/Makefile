@@ -1,5 +1,5 @@
 # BookMe Smart Contracts
-# Make sure to have .env file with PRIVATE_KEY and BASESCAN_API_KEY
+# Make sure to have .env file with PRIVATE_KEY and ETHERSCAN_API_KEY
 
 # Load environment variables
 ifneq (,$(wildcard ./.env))
@@ -40,11 +40,11 @@ deploy-base: ## Deploy to Base mainnet
 # Verification commands (if deployment verification failed)
 verify-base-sepolia: ## Verify contract on Base Sepolia
 	@echo "Usage: make verify-base-sepolia CONTRACT=<contract_address> CONTRACT_NAME=<ContractName>"
-	forge verify-contract $(CONTRACT) $(CONTRACT_NAME) --chain-id 84532 --etherscan-api-key $(BASESCAN_API_KEY)
+	forge verify-contract $(CONTRACT) $(CONTRACT_NAME) --chain-id 84532 --etherscan-api-key $(ETHERSCAN_API_KEY)
 
 verify-base: ## Verify contract on Base mainnet
 	@echo "Usage: make verify-base CONTRACT=<contract_address> CONTRACT_NAME=<ContractName>"
-	forge verify-contract $(CONTRACT) $(CONTRACT_NAME) --chain-id 8453 --etherscan-api-key $(BASESCAN_API_KEY)
+	forge verify-contract $(CONTRACT) $(CONTRACT_NAME) --chain-id 8453 --etherscan-api-key $(ETHERSCAN_API_KEY)
 
 # Development commands
 fork-base-sepolia: ## Fork Base Sepolia for local testing

@@ -21,7 +21,11 @@ createRoot(document.getElementById("root")!).render(
       }
     }}
   >
-    <SmartWalletsProvider>
+    <SmartWalletsProvider
+      config={{
+        sponsorGas: true
+      }}
+    >
       <App />
     </SmartWalletsProvider>
   </PrivyProvider>

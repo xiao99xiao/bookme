@@ -22,18 +22,15 @@ export async function updateBookingStatuses() {
     // Step 1: Update confirmed bookings to in_progress (when start time has passed)
     const confirmedToInProgress = await transitionConfirmedToInProgress(nowISO);
     
-    // Step 2: Update in_progress bookings to completed (when end time has passed)
+    // Step 2: Update in_progress bookings to completed (when end time has passed) via blockchain
     const inProgressToCompleted = await transitionInProgressToCompleted(nowISO);
     
-    // Step 3: Auto-complete ongoing bookings that are past end time + 30 minutes
-    const ongoingToCompleted = await transitionOngoingToCompleted(nowISO);
-    
-    // Step 4: Send upcoming booking reminders (placeholder for now)
+    // Step 3: Send upcoming booking reminders (placeholder for now)
     const remindersSent = await sendUpcomingReminders(now);
     
     const duration = Date.now() - startTime;
     console.log(`✅ Automation job completed in ${duration}ms`);
-    console.log(`📊 Summary: ${confirmedToInProgress} started, ${inProgressToCompleted} in_progress->completed, ${ongoingToCompleted} ongoing->completed, ${remindersSent} reminders sent`);
+    console.log(`📊 Summary: ${confirmedToInProgress} started, ${inProgressToCompleted} blockchain-completed, ${remindersSent} reminders sent`);
     
     return {
       success: true,
@@ -41,7 +38,6 @@ export async function updateBookingStatuses() {
       transitions: {
         confirmedToInProgress,
         inProgressToCompleted,
-        ongoingToCompleted,
         remindersSent
       }
     };
@@ -62,7 +58,7 @@ async function transitionConfirmedToInProgress(nowISO) {
     // Find confirmed bookings whose start time has passed
     const { data: bookingsToStart, error: fetchError } = await supabaseAdmin
       .from('bookings')
-      .select('id, scheduled_at, duration_minutes, customer_id, provider_id, service_id')
+      .select('id, scheduled_at, duration_minutes, customer_id, provider_id, service_id, is_online, meeting_link')
       .eq('status', 'confirmed')
       .lte('scheduled_at', nowISO);
 
@@ -95,6 +91,31 @@ async function transitionConfirmedToInProgress(nowISO) {
     }
 
     console.log(`✅ Successfully started ${count || bookingIds.length} bookings`);
+    
+    // Generate meeting links for online bookings that don't have one yet (fallback)
+    const onlineBookingsWithoutLink = bookingsToStart.filter(b => b.is_online && !b.meeting_link);
+    if (onlineBookingsWithoutLink.length > 0) {
+      console.log(`🔗 Generating meeting links for ${onlineBookingsWithoutLink.length} online bookings without links (fallback)...`);
+      
+      // Process meeting links in parallel
+      await Promise.allSettled(
+        onlineBookingsWithoutLink.map(async (booking) => {
+          try {
+            // Import meeting generation function
+            const { generateMeetingLinkForBooking } = await import('../../backend/src/meeting-generation.js');
+            const meetingLink = await generateMeetingLinkForBooking(booking.id);
+            if (meetingLink) {
+              console.log(`✅ Meeting link generated for booking ${booking.id.slice(0, 8)}... (fallback)`);
+            } else {
+              console.log(`⚠️ No meeting link generated for booking ${booking.id.slice(0, 8)}... (provider may not have integrations)`);
+            }
+          } catch (error) {
+            console.error(`❌ Failed to generate meeting link for booking ${booking.id}:`, error);
+          }
+        })
+      );
+    }
+    
     return count || bookingIds.length;
 
   } catch (error) {
@@ -147,24 +168,67 @@ async function transitionInProgressToCompleted(nowISO) {
 
     console.log(`📋 Found ${bookingsToComplete.length} bookings to complete`);
 
-    // Update status to completed
-    const bookingIds = bookingsToComplete.map(b => b.id);
-    const { error: updateError, count } = await supabaseAdmin
-      .from('bookings')
-      .update({ 
-        status: 'completed',
-        completed_at: nowISO,
-        updated_at: nowISO
-      })
-      .in('id', bookingIds);
+    // Complete services via blockchain (backend will call smart contract)
+    let completedCount = 0;
+    for (const booking of bookingsToComplete) {
+      try {
+        console.log(`🎉 Auto-completing booking ${booking.id.slice(0, 8)}... via blockchain`);
+        
+        // Call backend endpoint to complete service on blockchain
+        const response = await fetch(`http://localhost:4001/api/bookings/${booking.id}/complete-service-backend`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
 
-    if (updateError) {
-      console.error('Error updating bookings to completed:', updateError);
-      return 0;
+        if (response.ok) {
+          const result = await response.json();
+          console.log(`✅ Blockchain completion successful for ${booking.id.slice(0, 8)}...: ${result.txHash}`);
+          completedCount++;
+        } else {
+          const error = await response.text();
+          console.error(`❌ Blockchain completion failed for ${booking.id.slice(0, 8)}...:`, error);
+          
+          // Fallback: Update database directly if blockchain fails
+          await supabaseAdmin
+            .from('bookings')
+            .update({ 
+              status: 'completed',
+              completed_at: nowISO,
+              updated_at: nowISO,
+              auto_status_updated: true,
+              completion_notes: 'Auto-completed by cron (blockchain completion failed)'
+            })
+            .eq('id', booking.id);
+          
+          completedCount++;
+        }
+      } catch (error) {
+        console.error(`❌ Error completing booking ${booking.id}:`, error);
+        
+        // Fallback: Update database directly if request fails
+        try {
+          await supabaseAdmin
+            .from('bookings')
+            .update({ 
+              status: 'completed',
+              completed_at: nowISO,
+              updated_at: nowISO,
+              auto_status_updated: true,
+              completion_notes: 'Auto-completed by cron (blockchain call failed)'
+            })
+            .eq('id', booking.id);
+          
+          completedCount++;
+        } catch (dbError) {
+          console.error(`❌ Failed to update booking ${booking.id} as fallback:`, dbError);
+        }
+      }
     }
 
-    console.log(`✅ Successfully completed ${count || bookingIds.length} bookings`);
-    return count || bookingIds.length;
+    console.log(`✅ Successfully completed ${completedCount} bookings (${bookingsToComplete.length - completedCount} failures handled with fallback)`);
+    return completedCount;
 
   } catch (error) {
     console.error('Error in transitionInProgressToCompleted:', error);
@@ -172,78 +236,6 @@ async function transitionInProgressToCompleted(nowISO) {
   }
 }
 
-/**
- * Transition ongoing bookings to completed when end time + 30 minutes has passed
- * This gives a grace period for providers to mark bookings complete manually
- */
-async function transitionOngoingToCompleted(nowISO) {
-  console.log('🏁 Checking ongoing bookings to auto-complete (past end time + 30 min)...');
-  
-  try {
-    // Find ongoing bookings
-    const { data: ongoingBookings, error: fetchError } = await supabaseAdmin
-      .from('bookings')
-      .select('id, scheduled_at, duration_minutes')
-      .eq('status', 'ongoing');
-
-    if (fetchError) {
-      console.error('Error fetching ongoing bookings:', fetchError);
-      return 0;
-    }
-
-    if (!ongoingBookings || ongoingBookings.length === 0) {
-      console.log('📋 No ongoing bookings to check');
-      return 0;
-    }
-
-    // Filter bookings that should be completed (end time + 30 min has passed)
-    const now = new Date();
-    const bookingsToComplete = [];
-    const GRACE_PERIOD_MINUTES = 30;
-
-    for (const booking of ongoingBookings) {
-      const startTime = new Date(booking.scheduled_at);
-      const endTime = new Date(startTime.getTime() + (booking.duration_minutes * 60 * 1000));
-      const gracePeriodEnd = new Date(endTime.getTime() + (GRACE_PERIOD_MINUTES * 60 * 1000));
-      
-      if (gracePeriodEnd <= now) {
-        bookingsToComplete.push(booking);
-        console.log(`📋 Booking ${booking.id.slice(0, 8)}... should auto-complete (grace period ended at ${gracePeriodEnd.toISOString()})`);
-      }
-    }
-
-    if (bookingsToComplete.length === 0) {
-      console.log('📋 No ongoing bookings to auto-complete yet');
-      return 0;
-    }
-
-    console.log(`📋 Found ${bookingsToComplete.length} bookings to auto-complete`);
-
-    // Update status to completed
-    const bookingIds = bookingsToComplete.map(b => b.id);
-    const { error: updateError, count } = await supabaseAdmin
-      .from('bookings')
-      .update({ 
-        status: 'completed',
-        completed_at: nowISO,
-        updated_at: nowISO,
-        auto_status_updated: true  // Mark that this was auto-completed
-      })
-      .in('id', bookingIds);
-
-    if (updateError) {
-      console.error('Error updating ongoing bookings to completed:', updateError);
-      return 0;
-    }
-
-    console.log(`✅ Successfully auto-completed ${count || bookingIds.length} ongoing bookings`);
-    return count || bookingIds.length;
-
-  } catch (error) {
-    console.error('Error in transitionOngoingToCompleted:', error);
-    return 0;
-  }
-}
 
 /**
  * Send upcoming booking reminders (placeholder implementation)

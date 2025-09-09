@@ -9,6 +9,7 @@ import { MapPin, Clock, DollarSign, Calendar, Phone, Video, Users, X, Star, Arro
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/PrivyAuthContext";
+import { usePrivy } from "@privy-io/react-auth";
 import { ApiClient } from "@/lib/api-migration";
 import CustomDatePicker from "@/components/CustomDatePicker";
 import StarRating from "@/components/StarRating";
@@ -19,6 +20,10 @@ import ReviewCommentDialog from "@/components/ReviewCommentDialog";
 import { ProfileHeader } from "@/components/ProfileHeader";
 import { SimpleServiceCard } from "@/components/SimpleServiceCard";
 import { SimpleReviewItem } from "@/components/SimpleReviewItem";
+import { useBlockchainService } from "@/lib/blockchain-service";
+import { usePaymentTransaction } from "@/hooks/useTransaction";
+import { PaymentModal } from "@/components/TransactionModal";
+import { BlockchainErrorHandler } from "@/lib/blockchain-errors";
 
 interface Service {
   id: string;
@@ -86,6 +91,7 @@ const Profile = () => {
   const { userId, username } = useParams<{ userId?: string; username?: string }>();
   const [searchParams] = useSearchParams();
   const { user: currentUser, profile: currentProfile, loading: authLoading, userId: currentUserId } = useAuth();
+  const { getAccessToken } = usePrivy();
   
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<Date | null>(null);
@@ -98,6 +104,11 @@ const Profile = () => {
   const [customerNotes, setCustomerNotes] = useState('');
   const [isBooking, setIsBooking] = useState(false);
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
+
+  // Blockchain payment integration
+  const { blockchainService, initializeService } = useBlockchainService();
+  const paymentTransaction = usePaymentTransaction();
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   // State for resolved user data
   const [resolvedUserId, setResolvedUserId] = useState<string | null>(null);
@@ -262,8 +273,10 @@ const Profile = () => {
       return;
     }
 
+    // Users automatically have smart wallets via Privy - no need to check wallet connection
     setIsBooking(true);
     try {
+      // Step 1: Create booking and get payment authorization
       const bookingData = {
         service_id: selectedService.id,
         provider_id: profile.id,
@@ -275,23 +288,47 @@ const Profile = () => {
         is_online: selectedService.is_online
       };
 
-      console.log('Booking data:', bookingData);
-      const booking = await ApiClient.createBooking(bookingData, currentUserId);
+      console.log('Creating booking with blockchain payment...', bookingData);
       
-      toast.success('Booking request submitted successfully!');
+      // Create booking - backend should return both booking and payment authorization
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/bookings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${await getAccessToken()}`
+        },
+        body: JSON.stringify(bookingData)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create booking');
+      }
+
+      const { authorization, signature } = await response.json();
+      console.log('Booking created, starting payment...', { authorization });
+
+      // Step 2: Initialize blockchain service
+      await initializeService();
+
+      // Step 3: Show payment modal and execute blockchain payment
+      setShowPaymentModal(true);
       
-      // Reset form
-      setSelectedService(null);
-      setSelectedTimeSlot(null);
-      setCustomerNotes('');
-      
-      // Optional: Redirect to bookings page
-      // navigate('/my-bookings');
+      await paymentTransaction.executePayment(async (onStatusChange) => {
+        return await blockchainService.payForBooking(
+          authorization,
+          signature,
+          onStatusChange
+        );
+      });
     } catch (error) {
       console.error('Booking error:', error);
-      toast.error('Failed to create booking. Please try again.');
-    } finally {
+      BlockchainErrorHandler.logError(error, 'Booking Creation');
+      
+      const errorMessage = BlockchainErrorHandler.getErrorMessage(error);
+      toast.error(errorMessage);
+      
       setIsBooking(false);
+      setShowPaymentModal(false);
     }
   };
 
@@ -543,10 +580,10 @@ const Profile = () => {
                         </Loading>
                       ) : isBooking ? (
                         <Loading variant="inline" size="sm">
-                          Booking...
+                          Processing...
                         </Loading>
                       ) : selectedTimeSlot ? (
-                        'Confirm booking'
+                        `Pay ${selectedService.price} USDC`
                       ) : (
                         'Select a time'
                       )}
@@ -567,6 +604,28 @@ const Profile = () => {
           review={selectedReview}
         />
       )}
+      
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => {
+          setShowPaymentModal(false);
+          setIsBooking(false);
+        }}
+        amount={selectedService?.price || 0}
+        currency="USDC"
+        status={{
+          status: paymentTransaction.status,
+          txHash: paymentTransaction.txHash,
+          error: paymentTransaction.error,
+          message: paymentTransaction.error || ''
+        }}
+        onRetry={() => {
+          if (selectedService && selectedTimeSlot) {
+            handleBookingSubmit();
+          }
+        }}
+      />
     </div>
   );
 };

@@ -5,16 +5,16 @@ import { v5 as uuidv5 } from 'uuid'
 import dotenv from 'dotenv'
 
 // Load environment variables
-dotenv.config({ path: '../.env.local' })
+dotenv.config({ path: '.env' })
 
 // Initialize clients
 const privyClient = new PrivyClient(
-  process.env.VITE_PRIVY_APP_ID,
+  process.env.PRIVY_APP_ID,
   process.env.PRIVY_APP_SECRET
 )
 
 const supabaseAdmin = createClient(
-  process.env.VITE_SUPABASE_URL,
+  process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 

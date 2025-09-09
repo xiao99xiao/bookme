@@ -156,7 +156,7 @@ export class BackendAPI {
   }
 
   async completeBooking(bookingId: string): Promise<any> {
-    return this.request(`/api/bookings/${bookingId}/complete`, {
+    return this.request(`/api/bookings/${bookingId}/complete-service`, {
       method: 'POST',
     });
   }
@@ -295,5 +295,16 @@ export class BackendAPI {
       method: 'POST',
       body: JSON.stringify({ policyId, explanation }),
     });
+  }
+
+  // Blockchain Service Completion
+  async completeService(bookingId: string): Promise<any> {
+    return this.request(`/api/bookings/${bookingId}/complete-service`, {
+      method: 'POST',
+    });
+  }
+
+  async getBlockchainStatus(bookingId: string): Promise<any> {
+    return this.request(`/api/bookings/${bookingId}/blockchain-status`);
   }
 }

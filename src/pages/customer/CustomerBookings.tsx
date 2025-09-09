@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, isPast } from 'date-fns';
-import { Calendar, Clock, MapPin, User, DollarSign, CheckCircle, XCircle, AlertCircle, MessageSquare, Star, Copy, Video } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, DollarSign, CheckCircle, XCircle, AlertCircle, MessageSquare, Star, Copy, Video, CreditCard } from 'lucide-react';
 import { GoogleMeetIcon, ZoomIcon, TeamsIcon } from '@/components/icons/MeetingPlatformIcons';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -12,13 +12,19 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/PrivyAuthContext';
+import { usePrivy } from '@privy-io/react-auth';
 import { ApiClient, Booking } from '@/lib/api-migration';
 import ChatModal from '@/components/ChatModal';
 import ReviewDialog from '@/components/ReviewDialog';
 import { H2, H3, Text, Description, Label, Button as DSButton, BookingEmptyState, Loading, StatusBadge, OnlineBadge, DurationBadge } from '@/design-system';
+import { useBlockchainService } from '@/lib/blockchain-service';
+import { usePaymentTransaction } from '@/hooks/useTransaction';
+import { PaymentModal } from '@/components/TransactionModal';
+import { BlockchainErrorHandler } from '@/lib/blockchain-errors';
 
 export default function CustomerBookings() {
-  const { userId } = useAuth();
+  const { userId, user } = useAuth();
+  const { getAccessToken } = usePrivy();
   const navigate = useNavigate();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,6 +52,49 @@ export default function CustomerBookings() {
     existingReview: null
   });
   const [bookingReviews, setBookingReviews] = useState<Record<string, { rating: number; comment: string }>>({});
+
+  // Blockchain integration
+  const { blockchainService, initializeService, isWalletConnected } = useBlockchainService();
+  const [payingBookingId, setPayingBookingId] = useState<string | null>(null);
+  const paymentTransaction = usePaymentTransaction({
+    onSuccess: (txHash) => {
+      toast.success('Payment successful! Booking confirmed.');
+      setPayingBookingId(null);
+      loadBookings(); // Refresh bookings to show updated status
+    },
+    onError: (error) => {
+      toast.error(`Payment failed: ${error}`);
+      setPayingBookingId(null);
+    }
+  });
+  
+  // Completion transaction - separate from payment
+  const completionTransaction = usePaymentTransaction({
+    onSuccess: (txHash) => {
+      toast.success('Service completed successfully! Funds have been distributed.');
+      setPayingBookingId(null);
+      setShowPaymentModal(false);
+      
+      // Show review dialog after successful completion
+      const booking = bookings.find(b => b.id === payingBookingId);
+      if (booking) {
+        setReviewDialog({
+          isOpen: true,
+          booking,
+          existingReview: null
+        });
+      }
+      
+      loadBookings(); // Refresh bookings to show updated status
+    },
+    onError: (error) => {
+      toast.error(`Service completion failed: ${error}`);
+      setPayingBookingId(null);
+      setShowPaymentModal(false);
+    }
+  });
+  
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   useEffect(() => {
     if (userId) {
@@ -100,28 +149,119 @@ export default function CustomerBookings() {
   };
 
   const handleCompleteBooking = async (bookingId: string) => {
+    if (!user || !isWalletConnected) {
+      toast.error('Please connect your wallet to complete service');
+      return;
+    }
+
+    const booking = bookings.find(b => b.id === bookingId);
+    if (!booking) {
+      toast.error('Booking not found');
+      return;
+    }
+
     try {
-      await ApiClient.updateBookingStatus(
-        bookingId, 
-        'completed',
-        undefined,
-        userId
-      );
-      toast.success('Booking marked as completed');
-      
-      const booking = bookings.find(b => b.id === bookingId);
-      if (booking) {
-        setReviewDialog({
-          isOpen: true,
-          booking,
-          existingReview: null
-        });
+      console.log('🎉 Starting service completion for booking:', bookingId);
+
+      // Step 1: Validate with backend that completion is allowed
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/bookings/${bookingId}/complete-service`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${await getAccessToken()}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to validate service completion');
       }
+
+      const completionData = await response.json();
+      console.log('✅ Backend validation successful:', completionData);
       
-      loadBookings();
+      if (!completionData.blockchain_booking_id) {
+        toast.error('This booking was not paid via blockchain and cannot be completed this way');
+        return;
+      }
+
+      // Step 2: Initialize blockchain service
+      await initializeService();
+
+      // Step 3: Show payment modal and execute blockchain completion
+      setPayingBookingId(bookingId); // Set the booking being completed
+      setShowPaymentModal(true);
+      
+      await completionTransaction.executePayment(async (onStatusChange) => {
+        return await blockchainService.completeService(
+          bookingId,
+          onStatusChange
+        );
+      });
+
+    } catch (error: any) {
+      console.error('❌ Service completion failed:', error);
+      BlockchainErrorHandler.logError(error, 'Service Completion');
+      
+      const errorMessage = BlockchainErrorHandler.getErrorMessage(error);
+      toast.error(errorMessage);
+      setPayingBookingId(null);
+      setShowPaymentModal(false);
+    }
+  };
+
+  const handlePayNow = async (bookingId: string) => {
+    if (!user || !isWalletConnected) {
+      toast.error('Please connect your wallet to continue');
+      return;
+    }
+
+    const booking = bookings.find(b => b.id === bookingId);
+    if (!booking) {
+      toast.error('Booking not found');
+      return;
+    }
+
+    setPayingBookingId(bookingId);
+    
+    try {
+      // Step 1: Get payment authorization from backend
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/bookings/${bookingId}/authorize-payment`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${await getAccessToken()}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get payment authorization');
+      }
+
+      const { authorization, signature } = await response.json();
+      console.log('Got payment authorization for booking:', bookingId);
+
+      // Step 2: Initialize blockchain service
+      await initializeService();
+
+      // Step 3: Show payment modal and execute blockchain payment
+      setShowPaymentModal(true);
+      
+      await paymentTransaction.executePayment(async (onStatusChange) => {
+        return await blockchainService.payForBooking(
+          authorization,
+          signature,
+          onStatusChange
+        );
+      });
+
     } catch (error) {
-      console.error('Failed to complete booking:', error);
-      toast.error('Failed to complete booking');
+      console.error('Payment error:', error);
+      BlockchainErrorHandler.logError(error, 'Booking Payment');
+      
+      const errorMessage = BlockchainErrorHandler.getErrorMessage(error);
+      toast.error(errorMessage);
+      
+      setPayingBookingId(null);
+      setShowPaymentModal(false);
     }
   };
 
@@ -166,11 +306,23 @@ export default function CustomerBookings() {
   };
 
   const handleCopyMeetingLink = (link: string) => {
+    console.log('🔗 Copy Link clicked:', link);
+    if (!link) {
+      console.error('❌ No meeting link provided');
+      toast.error('No meeting link available');
+      return;
+    }
     navigator.clipboard.writeText(link);
     toast.success('Meeting link copied to clipboard');
   };
 
   const handleJoinMeeting = (link: string) => {
+    console.log('🚀 Join Meeting clicked:', link);
+    if (!link) {
+      console.error('❌ No meeting link provided');
+      toast.error('No meeting link available');
+      return;
+    }
     window.open(link, '_blank');
   };
 
@@ -260,11 +412,13 @@ export default function CustomerBookings() {
     
     switch (activeTab) {
       case 'upcoming':
-        return bookingDateTime > now && booking.status !== 'cancelled' && booking.status !== 'completed';
+        return bookingDateTime > now && booking.status !== 'cancelled' && booking.status !== 'rejected' && booking.status !== 'completed';
       case 'past':
         return bookingDateTime <= now || booking.status === 'completed';
       case 'cancelled':
-        return booking.status === 'cancelled';
+        return booking.status === 'cancelled' || booking.status === 'rejected';
+      case 'paid':
+        return booking.status === 'paid';
       case 'all':
       default:
         return true;
@@ -274,6 +428,7 @@ export default function CustomerBookings() {
   const tabLabels = {
     all: 'All',
     upcoming: 'Upcoming',
+    paid: 'Paid',
     past: 'Past',
     cancelled: 'Cancelled'
   };
@@ -456,8 +611,8 @@ export default function CustomerBookings() {
                             <DurationBadge minutes={booking.duration_minutes} />
                           </div>
                           
-                          {/* Auto-completion explanation for ongoing bookings */}
-                          {booking.status === 'ongoing' && (
+                          {/* Auto-completion explanation for in_progress bookings */}
+                          {booking.status === 'in_progress' && (
                             <Text variant="small" color="tertiary" className="mt-1">
                               Will auto-complete {(() => {
                                 const endTime = new Date(new Date(booking.scheduled_at).getTime() + (booking.duration_minutes * 60 * 1000));
@@ -470,7 +625,7 @@ export default function CustomerBookings() {
 
                         {/* Total Price */}
                         <div className="text-lg font-bold text-black font-body">
-                          Total: ${booking.total_price}
+                          Total: {booking.status === 'pending_payment' ? `${booking.total_price} USDC` : `$${booking.total_price}`}
                         </div>
                       </div>
 
@@ -487,7 +642,7 @@ export default function CustomerBookings() {
                       )}
 
                       {/* Action Section - only for bookings that have actions */}
-                      {(booking.status === 'confirmed' || booking.status === 'pending') && (
+                      {(booking.status === 'confirmed' || booking.status === 'in_progress' || booking.status === 'pending' || booking.status === 'pending_payment' || booking.status === 'paid' || booking.status === 'rejected') && (
                         <>
                           <div className="border-t border-[#eeeeee] my-6"></div>
                           
@@ -495,38 +650,63 @@ export default function CustomerBookings() {
                           <div className="flex items-center justify-between">
                             {/* Left Status Text */}
                             <div className="text-sm font-medium text-black font-body">
-                              {booking.status === 'confirmed' && (hasStarted ? 'In Progress' : 'Upcoming')}
+                              {booking.status === 'confirmed' && 'Upcoming'}
+                              {booking.status === 'in_progress' && 'In Progress'}
                               {booking.status === 'pending' && 'Awaiting Confirmation'}
+                              {booking.status === 'pending_payment' && 'Payment Required'}
+                              {booking.status === 'paid' && 'Pending Provider\'s Confirmation'}
+                              {booking.status === 'rejected' && 'Rejected by Provider'}
                             </div>
 
                             {/* Action Buttons */}
                             <div className="flex items-center gap-3">
-                          {booking.status === 'confirmed' && (
+                          {booking.status === 'confirmed' && booking.is_online && booking.meeting_link && (
                             <>
-                              {hasStarted ? (
-                                <DSButton
-                                  variant="success"
-                                  size="small"
-                                  onClick={() => handleCompleteBooking(booking.id)}
-                                  icon={<CheckCircle className="w-5 h-5" />}
-                                >
-                                  Mark Complete
-                                </DSButton>
-                              ) : (
-                                <DSButton
-                                  variant="danger"
-                                  size="small"
-                                  onClick={() => handleCancelBooking(booking.id)}
-                                >
-                                  Cancel
-                                </DSButton>
-                              )}
-                              {booking.meeting_link && (
+                              <DSButton
+                                variant="outline"
+                                size="small"
+                                onClick={() => {
+                                  console.log('🔗 Copy button clicked (confirmed):', booking.id, 'meeting_link:', booking.meeting_link);
+                                  handleCopyMeetingLink(booking.meeting_link!);
+                                }}
+                                icon={<Copy className="w-5 h-5" />}
+                              >
+                                Copy Link
+                              </DSButton>
+                              <DSButton
+                                variant="primary"
+                                size="small"
+                                onClick={() => {
+                                  console.log('🚀 Join button clicked (confirmed):', booking.id, 'meeting_link:', booking.meeting_link);
+                                  handleJoinMeeting(booking.meeting_link!);
+                                }}
+                                icon={getMeetingIcon(booking.meeting_platform)}
+                              >
+                                Join
+                              </DSButton>
+                            </>
+                          )}
+
+
+                          {booking.status === 'in_progress' && (
+                            <>
+                              <DSButton
+                                variant="success"
+                                size="small"
+                                onClick={() => handleCompleteBooking(booking.id)}
+                                icon={<CheckCircle className="w-5 h-5" />}
+                              >
+                                Mark Complete
+                              </DSButton>
+                              {booking.is_online && booking.meeting_link && (
                                 <>
                                   <DSButton
                                     variant="outline"
                                     size="small"
-                                    onClick={() => handleCopyMeetingLink(booking.meeting_link!)}
+                                    onClick={() => {
+                                      console.log('🔗 Copy button clicked (in_progress):', booking.id, 'meeting_link:', booking.meeting_link);
+                                      handleCopyMeetingLink(booking.meeting_link!);
+                                    }}
                                     icon={<Copy className="w-5 h-5" />}
                                   >
                                     Copy Link
@@ -534,7 +714,10 @@ export default function CustomerBookings() {
                                   <DSButton
                                     variant="primary"
                                     size="small"
-                                    onClick={() => handleJoinMeeting(booking.meeting_link!)}
+                                    onClick={() => {
+                                      console.log('🚀 Join button clicked (in_progress):', booking.id, 'meeting_link:', booking.meeting_link);
+                                      handleJoinMeeting(booking.meeting_link!);
+                                    }}
                                     icon={getMeetingIcon(booking.meeting_platform)}
                                   >
                                     Join
@@ -545,14 +728,35 @@ export default function CustomerBookings() {
                           )}
 
                           {booking.status === 'pending' && (
-                            <Button
-                              variant="outline"
-                              size="sm"
+                            <DSButton
+                              variant="danger"
+                              size="small"
                               onClick={() => handleCancelBooking(booking.id)}
-                              className="text-sm font-semibold px-4 py-1.5 h-8 rounded-xl border border-[#cccccc] text-[#F1343D] hover:bg-[#ffeff0] font-body"
                             >
                               Cancel Request
-                            </Button>
+                            </DSButton>
+                          )}
+
+                          {booking.status === 'pending_payment' && (
+                            <>
+                              <DSButton
+                                variant="danger"
+                                size="small"
+                                onClick={() => handleCancelBooking(booking.id)}
+                                disabled={payingBookingId === booking.id}
+                              >
+                                Cancel
+                              </DSButton>
+                              <DSButton
+                                variant="primary"
+                                size="small"
+                                onClick={() => handlePayNow(booking.id)}
+                                disabled={!isWalletConnected || payingBookingId === booking.id}
+                                icon={<CreditCard className="w-5 h-5" />}
+                              >
+                                {payingBookingId === booking.id ? 'Processing...' : `Pay ${booking.total_price} USDC`}
+                              </DSButton>
+                            </>
                           )}
 
                             </div>
@@ -810,8 +1014,8 @@ export default function CustomerBookings() {
                             <DurationBadge minutes={booking.duration_minutes} />
                           </div>
                           
-                          {/* Auto-completion explanation for ongoing bookings */}
-                          {booking.status === 'ongoing' && (
+                          {/* Auto-completion explanation for in_progress bookings */}
+                          {booking.status === 'in_progress' && (
                             <Text variant="small" color="tertiary" className="mt-1">
                               Will auto-complete {(() => {
                                 const endTime = new Date(new Date(booking.scheduled_at).getTime() + (booking.duration_minutes * 60 * 1000));
@@ -842,46 +1046,24 @@ export default function CustomerBookings() {
                       {(booking.status === 'confirmed' || booking.status === 'pending') && (
                         <div className="pt-4 sm:pt-6 border-t border-[#eeeeee]">
                           <div className="flex items-center justify-end gap-2 flex-wrap">
-                            {booking.status === 'confirmed' && (
+                            {booking.status === 'confirmed' && booking.is_online && booking.meeting_link && (
                               <>
-                                {hasStarted ? (
-                                  <DSButton
-                                    variant="success"
-                                    size="small"
-                                    onClick={() => handleCompleteBooking(booking.id)}
-                                    icon={<CheckCircle className="w-5 h-5" />}
-                                  >
-                                    Mark Complete
-                                  </DSButton>
-                                ) : (
-                                  <DSButton
-                                    variant="danger"
-                                    size="small"
-                                    onClick={() => handleCancelBooking(booking.id)}
-                                  >
-                                    Cancel
-                                  </DSButton>
-                                )}
-                                {booking.meeting_link && (
-                                  <>
-                                    <DSButton
-                                      variant="outline"
-                                      size="small"
-                                      onClick={() => handleCopyMeetingLink(booking.meeting_link!)}
-                                      icon={<Copy className="w-5 h-5" />}
-                                    >
-                                      Copy Link
-                                    </DSButton>
-                                    <DSButton
-                                      variant="primary"
-                                      size="small"
-                                      onClick={() => handleJoinMeeting(booking.meeting_link!)}
-                                      icon={getMeetingIcon(booking.meeting_platform)}
-                                    >
-                                      Join
-                                    </DSButton>
-                                  </>
-                                )}
+                                <DSButton
+                                  variant="outline"
+                                  size="small"
+                                  onClick={() => handleCopyMeetingLink(booking.meeting_link!)}
+                                  icon={<Copy className="w-5 h-5" />}
+                                >
+                                  Copy Link
+                                </DSButton>
+                                <DSButton
+                                  variant="primary"
+                                  size="small"
+                                  onClick={() => handleJoinMeeting(booking.meeting_link!)}
+                                  icon={getMeetingIcon(booking.meeting_platform)}
+                                >
+                                  Join
+                                </DSButton>
                               </>
                             )}
 
@@ -1002,6 +1184,30 @@ export default function CustomerBookings() {
           booking={reviewDialog.booking}
           existingReview={reviewDialog.existingReview}
           onSubmit={handleSubmitReview}
+        />
+      )}
+
+      {/* Payment Modal */}
+      {payingBookingId && (
+        <PaymentModal
+          isOpen={showPaymentModal}
+          onClose={() => {
+            setShowPaymentModal(false);
+            setPayingBookingId(null);
+          }}
+          amount={bookings.find(b => b.id === payingBookingId)?.total_price || 0}
+          currency="USDC"
+          status={{
+            status: paymentTransaction.status,
+            message: paymentTransaction.message,
+            txHash: paymentTransaction.txHash,
+            error: paymentTransaction.error
+          }}
+          onRetry={() => {
+            if (payingBookingId) {
+              handlePayNow(payingBookingId);
+            }
+          }}
         />
       )}
     </div>

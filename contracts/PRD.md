@@ -58,11 +58,35 @@ The BookMe smart contract system provides a decentralized escrow solution for se
    - Inviter: 0-10% (configurable, only if inviter exists)
 ```
 
-### Cancellation Path: Provider Cancels
+### Cancellation Paths
+
+#### Provider Cancellation (Backend-Signed)
 ```
-1. Provider cancels booking before service delivery
-2. Smart Contract returns 100% of USDC to Customer
-3. No fees charged to anyone
+1. Backend creates CancellationAuthorization with distribution amounts
+2. Provider calls cancelBookingAsProvider() with backend signature and auth data
+3. Smart Contract verifies backend signature and distributes USDC according to auth:
+   - Example A: 100% to Customer (early cancellation)
+   - Example B: 50% Customer, 50% Provider (late cancellation with penalty)
+   - Example C: 90% Provider, 5% Platform, 5% Inviter (provider emergency with partial fees)
+4. Platform + inviter fees limited to max 20% of total amount
+```
+
+#### Customer Cancellation (Backend-Signed)
+```
+1. Backend creates CancellationAuthorization with distribution amounts
+2. Customer calls cancelBookingAsCustomer() with backend signature and auth data
+3. Smart Contract verifies backend signature and distributes USDC according to auth:
+   - Example A: 80% to Customer, 20% to Provider (early customer cancellation)
+   - Example B: 60% Customer, 30% Provider, 10% Platform (late customer cancellation)
+4. Platform + inviter fees limited to max 20% of total amount
+```
+
+#### Backend Emergency Cancellation
+```
+1. Backend detects issue (fraud, compliance, error)
+2. Backend cancels booking with reason code
+3. Smart Contract returns 100% of USDC to Customer
+4. Event emitted with cancellation reason for transparency
 ```
 
 ## 🏗️ Smart Contract Architecture
@@ -80,8 +104,8 @@ struct Booking {
     uint256 platformFeeRate; // Platform fee rate for this booking (basis points)
     uint256 inviterFeeRate;  // Inviter fee rate for this booking (basis points)
     BookingStatus status;    // Current booking state
-    uint256 createdAt;      // Block timestamp
-    uint256 expiry;          // Booking authorization expiry timestamp
+    uint256 createdAt;      // Block timestamp when booking was created
+    // Note: No expiry field needed - authorization expiry is only for signature validation
 }
 
 struct BookingAuthorization {
@@ -92,8 +116,19 @@ struct BookingAuthorization {
     uint256 amount;
     uint256 platformFeeRate;
     uint256 inviterFeeRate;
-    uint256 expiry;          // Signature expiry time
-    uint256 nonce;           // Prevent replay attacks
+    uint256 expiry;          // Signature expiry timestamp - must be > block.timestamp
+    uint256 nonce;           // Global nonce from backend to prevent replay attacks
+}
+
+struct CancellationAuthorization {
+    bytes32 bookingId;
+    uint256 customerAmount;  // Amount to send to customer (wei)
+    uint256 providerAmount;  // Amount to send to provider (wei)
+    uint256 platformAmount;  // Amount to send to platform (wei)
+    uint256 inviterAmount;   // Amount to send to inviter (wei)
+    string reason;           // Cancellation reason code
+    uint256 expiry;          // Signature expiry timestamp - must be > block.timestamp
+    uint256 nonce;           // Global nonce from backend to prevent replay attacks
 }
 
 enum BookingStatus {
@@ -102,6 +137,16 @@ enum BookingStatus {
     Cancelled,   // Provider cancelled, funds returned
     Disputed     // Future: under dispute resolution
 }
+
+// Nonce management for replay protection
+mapping(uint256 => bool) public usedNonces;  // Track used nonces globally
+uint256 public currentNonce;                 // Current backend nonce counter
+
+// Access control
+address public owner;                        // Contract owner (can set critical parameters)
+address public backendSigner;               // Authorized backend signer address
+address public platformFeeWallet;           // Receives platform fees
+bool public paused;                          // Emergency pause state
 ```
 
 #### Key Functions
@@ -119,48 +164,166 @@ function createAndPayBooking(
     BookingAuthorization calldata auth,
     bytes calldata signature
 ) external {
-    // Verify backend signature
+    // Verify signature not expired and nonce not used
+    require(auth.expiry > block.timestamp, "Authorization expired");
+    require(!usedNonces[auth.nonce], "Nonce already used");
+    
+    // Validate fee rates don't exceed limits
+    require(auth.platformFeeRate <= MAX_PLATFORM_FEE, "Platform fee too high");
+    require(auth.inviterFeeRate <= MAX_INVITER_FEE, "Inviter fee too high");
+    require(
+        auth.platformFeeRate + auth.inviterFeeRate <= MAX_TOTAL_FEE,
+        "Combined fees exceed maximum"
+    );
+    
+    // Verify backend signature using EIP-712 (must be from backendSigner address)
+    _verifyBackendSignature(auth, signature);
+    
     // Create booking with authorized data
     // Transfer USDC from customer
+    // Mark nonce as used
+    usedNonces[auth.nonce] = true;
+    
     // Mark as PAID status
 }
 
 function completeService(bytes32 bookingId) external
 ```
 
+**For Customers**
+```solidity
+// Customer cancellation requires backend signature for distribution
+function cancelBookingAsCustomer(
+    bytes32 bookingId,
+    CancellationAuthorization calldata auth,
+    bytes calldata signature
+) external
+```
+
 **For Providers** 
 ```solidity
-function cancelBooking(bytes32 bookingId) external
+// Provider cancellation requires backend signature for distribution
+function cancelBookingAsProvider(
+    bytes32 bookingId,
+    CancellationAuthorization calldata auth,
+    bytes calldata signature
+) external
+```
+
+**For Backend (Emergency Actions)**
+```solidity
+// Backend can cancel bookings in emergency situations
+function emergencyCancelBooking(
+    bytes32 bookingId,
+    string calldata reason
+) external onlyBackend
 ```
 
 **For Platform Owner**
 ```solidity
-function setPlatformFeeWallet(address newWallet) external onlyOwner
-function pause() external onlyOwner  
-function unpause() external onlyOwner
+// Critical parameter updates (requires owner)
+function setPlatformFeeWallet(address newWallet) external onlyOwner {
+    require(newWallet != address(0), "Invalid wallet address");
+    platformFeeWallet = newWallet;
+}
+
+function setBackendSigner(address newSigner) external onlyOwner {
+    require(newSigner != address(0), "Invalid signer address");
+    backendSigner = newSigner;
+}
+
+// Emergency controls
+function pause() external onlyOwner {
+    paused = true;
+}
+
+function unpause() external onlyOwner {
+    paused = false;
+}
+
+// Ownership transfer (2-step for safety)
+function transferOwnership(address newOwner) external onlyOwner {
+    require(newOwner != address(0), "Invalid owner address");
+    // Implementation would use 2-step transfer pattern
+}
+
+// View functions
+function getContractInfo() external view returns (
+    address currentOwner,
+    address currentBackendSigner,
+    address currentPlatformWallet,
+    bool isPaused
+) {
+    return (owner, backendSigner, platformFeeWallet, paused);
+}
+```
+
+**Internal Helper Functions**
+```solidity
+function _verifyBackendSignature(
+    BookingAuthorization calldata auth,
+    bytes calldata signature
+) internal view {
+    // Recover signer from EIP-712 signature
+    address recoveredSigner = _recoverSigner(auth, signature);
+    require(recoveredSigner == backendSigner, "Invalid backend signature");
+}
+
+modifier onlyOwner() {
+    require(msg.sender == owner, "Not the owner");
+    _;
+}
+
+modifier whenNotPaused() {
+    require(!paused, "Contract is paused");
+    _;
+}
 ```
 
 #### Events
 ```solidity
-event BookingCreated(
+event BookingCreatedAndPaid(
     bytes32 indexed bookingId, 
     address customer, 
     address provider, 
+    address inviter,
     uint256 amount, 
     uint256 platformFeeRate, 
     uint256 inviterFeeRate
 );
-event BookingPaid(bytes32 indexed bookingId, uint256 amount);
-event ServiceCompleted(bytes32 indexed bookingId, uint256 providerAmount, uint256 platformFee, uint256 inviterFee);
-event BookingCancelled(bytes32 indexed bookingId, uint256 refundAmount);
+
+event ServiceCompleted(
+    bytes32 indexed bookingId, 
+    uint256 providerAmount, 
+    uint256 platformFee, 
+    uint256 inviterFee
+);
+
+event BookingCancelled(
+    bytes32 indexed bookingId, 
+    address cancelledBy,     // Who initiated the cancellation
+    uint256 customerAmount, 
+    uint256 providerAmount, 
+    uint256 platformAmount, 
+    uint256 inviterAmount, 
+    string reason
+);
+
+// Administrative events
+event BackendSignerUpdated(address indexed oldSigner, address indexed newSigner);
+event PlatformFeeWalletUpdated(address indexed oldWallet, address indexed newWallet);
+event ContractPaused(address indexed by);
+event ContractUnpaused(address indexed by);
+event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 ```
 
 ## 🔐 Signature-Based Authorization Flow
 
 ### Overview
-Instead of requiring two separate transactions (create + pay), we use **EIP-712 typed data signing** for a seamless one-transaction flow:
+We use **EIP-712 typed data signing** for secure backend-authorized operations:
 
-1. **Backend Creates Authorization**
+#### Booking Creation Flow
+1. **Backend Creates BookingAuthorization**
    - Backend server prepares `BookingAuthorization` struct with all booking details
    - Signs the data using backend's private key (EIP-712 standard)
    - Sends signature + data to frontend
@@ -171,12 +334,44 @@ Instead of requiring two separate transactions (create + pay), we use **EIP-712 
    - Contract verifies signature is from authorized backend
    - Creates booking and transfers USDC in single transaction
 
+#### Cancellation Flows (Provider & Customer)
+1. **Backend Creates CancellationAuthorization**
+   - Backend determines appropriate fund distribution based on cancellation timing/reason and initiator
+   - Prepares `CancellationAuthorization` struct with specific amounts for each party
+   - Signs the data using backend's private key (EIP-712 standard)
+   - Sends signature + data to frontend
+
+2. **Frontend/User Executes**
+   - Provider calls `cancelBookingAsProvider()` OR Customer calls `cancelBookingAsCustomer()`
+   - User reviews cancellation terms in wallet
+   - Contract verifies signature is from authorized backend
+   - Contract validates nonce not used and signature not expired
+   - Distributes funds according to backend-specified amounts (max 20% to platform+inviter)
+
 ### Benefits
-- **One Transaction**: Better UX, lower total gas cost
-- **Atomic Operation**: Booking creation and payment can't be separated
-- **Backend Control**: Only backend-signed bookings are accepted
-- **Expiry Protection**: Signatures expire to prevent stale bookings
-- **Replay Protection**: Nonce prevents signature reuse
+- **One Transaction**: Better UX, lower total gas cost for bookings
+- **Atomic Operations**: Booking creation/payment and cancellations can't be separated
+- **Backend Control**: Only backend-signed operations are accepted
+- **Flexible Cancellation**: Different distribution rules based on circumstances
+- **Expiry Protection**: Signatures expire to prevent stale operations
+- **Replay Protection**: Global nonce system prevents signature reuse
+
+### Nonce Management System
+Backend maintains a sequential nonce counter and tracks used nonces:
+```solidity
+// Backend generates increasing nonces: 1, 2, 3, 4...
+// Contract tracks used nonces to prevent replay attacks
+function _validateNonce(uint256 nonce) internal {
+    require(!usedNonces[nonce], "Nonce already used");
+    usedNonces[nonce] = true;
+}
+```
+
+**Benefits**:
+- **Global Scope**: One nonce system for all operations (booking, cancellation)
+- **Sequential**: Backend can use simple incrementing counter  
+- **Efficient**: Single mapping lookup for validation
+- **Permanent**: Once used, nonce cannot be reused (prevents replay attacks)
 
 ### EIP-712 Domain
 ```solidity
@@ -191,8 +386,10 @@ EIP712Domain({
 ## 🔒 Security Considerations
 
 ### 1. **Access Control**
-- **Signature Verification**: Only backend-signed bookings can be created
-- **Multi-Signature**: Platform owner functions require multi-sig for production
+- **Owner-Only Functions**: Critical parameters (backend signer, fee wallet) only changeable by owner
+- **Backend Signature Verification**: Only authorized backend signer can create valid authorizations
+- **2-Step Ownership Transfer**: Prevents accidental ownership transfer
+- **Emergency Pause**: Owner can pause all operations in emergencies
 - **EIP-712 Standard**: Type-safe signature verification prevents manipulation
 
 ### 2. **Reentrancy Protection**
@@ -228,6 +425,9 @@ Each booking can have its own fee rates, allowing for:
 uint256 public constant MAX_PLATFORM_FEE = 2000; // 20% maximum
 uint256 public constant MAX_INVITER_FEE = 1000;  // 10% maximum
 uint256 public constant MAX_TOTAL_FEE = 3000;    // 30% maximum combined
+
+// Cancellation distribution limits
+uint256 public constant MAX_CANCELLATION_NON_PARTIES = 2000; // 20% max to platform+inviter on cancellations
 ```
 
 ### Distribution Logic
@@ -256,6 +456,39 @@ function _distributeFunds(bytes32 bookingId) internal {
         USDC.transfer(booking.inviter, inviterFee);
     }
 }
+
+function _distributeCancellationFunds(
+    bytes32 bookingId,
+    CancellationAuthorization calldata auth
+) internal {
+    Booking storage booking = bookings[bookingId];
+    
+    // Validate total distribution equals escrowed amount
+    uint256 totalDistribution = auth.customerAmount + auth.providerAmount + 
+                               auth.platformAmount + auth.inviterAmount;
+    require(totalDistribution == booking.amount, "Invalid distribution amounts");
+    
+    // Validate cancellation limits: platform + inviter cannot exceed 20% of total
+    uint256 nonPartiesAmount = auth.platformAmount + auth.inviterAmount;
+    require(
+        nonPartiesAmount <= (booking.amount * MAX_CANCELLATION_NON_PARTIES) / 10000,
+        "Cancellation fees exceed 20% limit"
+    );
+    
+    // Transfer funds according to backend authorization
+    if (auth.customerAmount > 0) {
+        USDC.transfer(booking.customer, auth.customerAmount);
+    }
+    if (auth.providerAmount > 0) {
+        USDC.transfer(booking.provider, auth.providerAmount);
+    }
+    if (auth.platformAmount > 0) {
+        USDC.transfer(platformFeeWallet, auth.platformAmount);
+    }
+    if (auth.inviterAmount > 0 && booking.inviter != address(0)) {
+        USDC.transfer(booking.inviter, auth.inviterAmount);
+    }
+}
 ```
 
 ## 🔄 State Transition Diagram
@@ -265,7 +498,7 @@ function _distributeFunds(bytes32 bookingId) internal {
         ↓ 
     [Customer: createAndPayBooking()]
         ↓
-    Paid ←→ Cancelled [cancelBooking() by Provider]
+    Paid ←→ Cancelled [cancelBookingAsProvider() or cancelBookingAsCustomer() with backend signature]
         ↓ completeService() [Customer]
     Completed
 

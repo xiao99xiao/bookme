@@ -7,7 +7,7 @@ export type BadgeVariant = 'status' | 'info' | 'outline';
 export type BadgeSize = 'small' | 'medium';
 
 // Status-specific types
-export type BookingStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'ongoing';
+export type BookingStatus = 'pending' | 'paid' | 'confirmed' | 'completed' | 'cancelled' | 'in_progress';
 export type MeetingStatus = 'live' | 'starting_soon' | 'scheduled' | 'ended';
 
 export interface BadgeProps {
@@ -71,6 +71,13 @@ export function StatusBadge({ status, size = 'medium', className }: StatusBadgeP
           bgColor: 'bg-[#fcf9f4]',
           textColor: 'text-[#B8860B]'
         };
+      case 'paid':
+        return {
+          icon: <CheckCircle className="w-5 h-5 text-[#36D267]" />,
+          label: 'Paid',
+          bgColor: 'bg-[#e7fded]',
+          textColor: 'text-black'
+        };
       case 'confirmed':
         return {
           icon: <CheckCircle className="w-5 h-5 text-[#3B9EF9]" />,
@@ -78,10 +85,10 @@ export function StatusBadge({ status, size = 'medium', className }: StatusBadgeP
           bgColor: 'bg-[#eff7ff]',
           textColor: 'text-black'
         };
-      case 'ongoing':
+      case 'in_progress':
         return {
           icon: <CheckCircle className="w-5 h-5 text-[#3B9EF9]" />,
-          label: 'Ongoing',
+          label: 'In Progress',
           bgColor: 'bg-[#eff7ff]',
           textColor: 'text-black'
         };

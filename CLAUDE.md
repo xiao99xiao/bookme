@@ -2,6 +2,12 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## ⚠️ IMPORTANT: Always Check Working Directory
+**ALWAYS run `pwd` before executing commands to ensure you're in the correct directory.**
+- Root directory: `/Users/xiao99xiao/Developer/bookme`
+- Backend directory: `/Users/xiao99xiao/Developer/bookme/backend`
+- Commands assume you're in the correct directory unless explicitly stated
+
 ## Project Overview
 BookMe is a peer-to-peer booking platform where users can offer services and book time slots from others. Built with Vite, React, TypeScript, and Supabase.
 
@@ -116,19 +122,42 @@ src/
 Tables in Supabase (see `/database/*.sql`):
 - `users`: User profiles with timezone, ratings, earnings, usernames
 - `services`: Service offerings with availability schedules and visibility controls
-- `bookings`: Booking records with meeting links
+- `bookings`: Booking records with meeting links, blockchain integration fields
 - `categories`: Service categories
 - `chats` & `messages`: Real-time messaging
 - `reviews`: Service reviews
 - `meeting_integrations`: OAuth connections for Google Meet/Zoom
+- `blockchain_events`: Tracks blockchain events for audit and synchronization
+- `signature_nonces`: Prevents EIP-712 signature replay attacks
 
 ### Smart Wallets & Blockchain
+
+#### Smart Contract Integration
+- **Contract Address**: `0x1D59b8DD5b1f6bE31C48a7AB82eaA322752880C7` (Base Sepolia)
 - **Smart Wallets**: Automatically created via Privy's SmartWalletsProvider
 - **Networks**: Base (production) and Base Sepolia (development)
 - **USDC Addresses**: 
   - Base: `0x833589fcd6edb6e08f4c7c32d4f71b54bda02913`
   - Base Sepolia: `0x036CbD53842c5426634e7929541eC2318f3dCF7e`
 - **Funding**: Integrated with Privy's `useFundWallet` for card purchases
+
+#### Blockchain Payment Flow
+1. **Booking Creation**: User selects service → Backend creates booking + EIP-712 payment authorization
+2. **Payment Execution**: Frontend prompts wallet transaction → USDC payment to smart contract
+3. **3-Minute Timeout**: If no payment within 3 minutes → booking status becomes `pending_payment`
+4. **Pay Later**: Pending payments show "Pay Now" button in My Bookings page
+5. **Service Completion**: Customer marks complete → Smart contract distributes funds (90% provider, 10% platform)
+
+#### Backend Blockchain Services
+- **EIP-712 Signer** (`backend/src/eip712-signer.js`): Creates signed payment authorizations
+- **Event Monitor** (`backend/src/event-monitor.js`): WebSocket monitoring of blockchain events
+- **Blockchain Service** (`backend/src/blockchain-service.js`): Contract interaction utilities
+
+#### Frontend Blockchain Components
+- **BlockchainService** (`src/lib/blockchain-service.ts`): Contract interaction with ethers.js
+- **Transaction Hooks** (`src/hooks/useTransaction.ts`): Transaction lifecycle management
+- **TransactionModal** (`src/components/TransactionModal.tsx`): Payment UI components
+- **BlockchainErrorHandler** (`src/lib/blockchain-errors.ts`): User-friendly error messages
 
 ### State Management
 - **React Query**: For data fetching and caching
@@ -209,10 +238,12 @@ static async methodName(userId: string, data: any) {
 4. **src/lib/username.ts**: Username validation, URL generation, and navigation utilities
 5. **src/main.tsx**: App initialization with Privy and Smart Wallets
 6. **vite.config.ts**: Node polyfills configuration for crypto operations
+7. **BOOKING_CARD_SPECIFICATIONS.md**: Booking card behavior specifications and required fixes
 
 ## Environment Variables
-Required in `.env.local`:
-```
+
+### Frontend (.env.local)
+```bash
 # Frontend variables (VITE_ prefix for browser access)
 VITE_SUPABASE_URL=
 VITE_SUPABASE_ANON_KEY=
@@ -221,13 +252,48 @@ VITE_GOOGLE_CLIENT_ID=
 VITE_GOOGLE_CLIENT_SECRET=
 VITE_BACKEND_URL=  # Backend URL (use Cloudflare tunnel URL for SSL in dev)
 
-# Backend-only variables (in .env.local)
-PRIVY_APP_SECRET=
-SUPABASE_SERVICE_ROLE_KEY=  # Note: NO VITE_ prefix (backend only!)
+# Blockchain Configuration
+VITE_CONTRACT_ADDRESS=0x1D59b8DD5b1f6bE31C48a7AB82eaA322752880C7
+VITE_USDC_ADDRESS=0x036CbD53842c5426634e7929541eC2318f3dCF7e
+VITE_CHAIN_ID=84532
+VITE_BLOCKCHAIN_EXPLORER=https://sepolia.basescan.org
 
 # SSL Development (set when using SSL)
 VITE_HTTPS=true
 VITE_BACKEND_URL=https://192.168.0.10:4443  # Your local IP with HTTPS
+```
+
+### Backend (.env)
+```bash
+# Supabase Configuration (NO VITE_ prefix in backend!)
+SUPABASE_URL=
+SUPABASE_SERVICE_ROLE_KEY=
+
+# Privy Configuration
+PRIVY_APP_ID=
+PRIVY_APP_SECRET=
+
+# Server port
+PORT=4000
+
+# Smart Contract Configuration
+CONTRACT_ADDRESS=0x1D59b8DD5b1f6bE31C48a7AB82eaA322752880C7
+CONTRACT_CHAIN_ID=84532
+BLOCKCHAIN_RPC_URL=https://sepolia.base.org
+BLOCKCHAIN_WEBSOCKET_URL=wss://base-sepolia.g.alchemy.com/v2/YOUR_ALCHEMY_API_KEY
+
+# Backend Signer (SECURE - DO NOT COMMIT!)
+BACKEND_SIGNER_PRIVATE_KEY=your_private_key_here
+BACKEND_SIGNER_ADDRESS=0x941bcd9063550a584348BC0366E93Dcb08FEcC5d
+
+# USDC Token
+USDC_ADDRESS=0x036CbD53842c5426634e7929541eC2318f3dCF7e
+
+# Redis (Railway addon or local)
+REDIS_URL=redis://localhost:6379
+
+# Blockchain Event Monitoring
+ENABLE_BLOCKCHAIN_MONITORING=false
 ```
 
 ## Development Gotchas

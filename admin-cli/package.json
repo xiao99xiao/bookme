@@ -1,0 +1,28 @@
+{
+  "name": "bookme-admin-cli",
+  "version": "1.0.0",
+  "description": "BookMe Admin CLI for smart contract management",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "list": "node src/index.js list",
+    "cancel": "node src/index.js cancel",
+    "cancel-all": "node src/index.js cancel-all"
+  },
+  "bin": {
+    "bookme-admin": "src/index.js"
+  },
+  "dependencies": {
+    "ethers": "^6.8.0",
+    "dotenv": "^16.3.1",
+    "commander": "^11.1.0",
+    "chalk": "^5.3.0",
+    "inquirer": "^9.2.11",
+    "@supabase/supabase-js": "^2.38.0"
+  },
+  "devDependencies": {},
+  "keywords": ["bookme", "admin", "cli", "smart-contract"],
+  "author": "BookMe Team",
+  "license": "MIT"
+}

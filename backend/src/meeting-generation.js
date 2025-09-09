@@ -12,11 +12,13 @@ const supabaseAdmin = createClient(
 // Google OAuth helper
 class GoogleAuth {
   static async refreshToken(refreshToken) {
+    console.log('🔄 Refreshing Google OAuth token with client_id:', process.env.GOOGLE_CLIENT_ID ? 'PRESENT' : 'MISSING')
+    
     const response = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
-        client_id: process.env.VITE_GOOGLE_CLIENT_ID,
+        client_id: process.env.GOOGLE_CLIENT_ID,
         client_secret: process.env.GOOGLE_CLIENT_SECRET,
         refresh_token: refreshToken,
         grant_type: 'refresh_token'
@@ -137,8 +139,10 @@ export async function generateMeetingLinkForBooking(bookingId) {
     // 2. Check if service uses a meeting platform
     const meetingPlatform = booking.services?.meeting_platform
     
+    console.log('🔍 Service meeting platform:', meetingPlatform)
+    
     if (!meetingPlatform) {
-      console.log('Service does not use a meeting platform')
+      console.log('❌ Service does not use a meeting platform')
       return null
     }
 
@@ -151,10 +155,21 @@ export async function generateMeetingLinkForBooking(bookingId) {
       .eq('is_active', true)
       .single()
 
+    console.log('🔍 Integration query result:', integration, 'Error:', integrationError)
+    
     if (integrationError || !integration) {
-      console.error('Provider does not have active integration:', integrationError)
+      console.error('❌ Provider does not have active integration for platform:', meetingPlatform, 'Error:', integrationError)
       return null
     }
+    
+    console.log('✅ Found integration:', {
+      id: integration.id,
+      platform: integration.platform,
+      is_active: integration.is_active,
+      has_access_token: !!integration.access_token,
+      has_refresh_token: !!integration.refresh_token,
+      expires_at: integration.expires_at
+    })
 
     // 4. Generate meeting based on platform
     let meetingLink = null
