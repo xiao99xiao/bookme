@@ -2,6 +2,7 @@ import { ethers } from 'ethers'
 import Redis from 'ioredis'
 import dotenv from 'dotenv'
 import contractABI from './contract-abi.json' with { type: 'json' }
+import { deleteMeetingForBooking } from './meeting-generation.js'
 
 // Load environment variables
 dotenv.config()
@@ -419,6 +420,16 @@ class BlockchainEventMonitor {
     
     if (updateError) {
       throw updateError
+    }
+    
+    // Delete associated Google Meet/Zoom meeting if exists
+    try {
+      console.log('🗑️ Attempting to delete meeting for cancelled booking:', booking.id)
+      await deleteMeetingForBooking(booking.id)
+      console.log('✅ Successfully deleted meeting for booking:', booking.id)
+    } catch (meetingError) {
+      console.warn('⚠️ Failed to delete meeting for booking:', booking.id, meetingError.message)
+      // Don't throw error - meeting deletion failure shouldn't prevent cancellation processing
     }
     
     console.log('❌ Booking cancelled:', booking.id, 'Reason:', eventData.reason)

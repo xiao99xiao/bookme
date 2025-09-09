@@ -1714,7 +1714,14 @@ app.post('/api/bookings/:id/cancel', verifyPrivyAuth, async (c) => {
       return c.json({ error: 'Failed to cancel booking' }, 500)
     }
     
-    // TODO: Delete meeting if exists (requires meeting module)
+    // Delete meeting if exists
+    try {
+      const { deleteMeetingForBooking } = await import('./meeting-generation.js')
+      await deleteMeetingForBooking(bookingId)
+      console.log('✅ Successfully deleted meeting for cancelled booking:', bookingId)
+    } catch (meetingError) {
+      console.warn('⚠️ Failed to delete meeting for cancelled booking:', bookingId, meetingError.message)
+    }
     
     return c.json(data)
   } catch (error) {
