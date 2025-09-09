@@ -38,9 +38,9 @@ git push
 ### C. Set Environment Variables:
 In Railway dashboard → Variables:
 ```env
-VITE_SUPABASE_URL=https://esfowzdgituqktemrmle.supabase.co
-VITE_SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
-VITE_PRIVY_APP_ID=cmeoebdro017hl50bj7c1mcui
+SUPABASE_URL=https://esfowzdgituqktemrmle.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
+PRIVY_APP_ID=cmeoebdro017hl50bj7c1mcui
 PRIVY_APP_SECRET=<your-privy-secret>
 PORT=4000
 ```
