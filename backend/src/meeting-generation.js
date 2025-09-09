@@ -223,13 +223,18 @@ export async function generateMeetingLinkForBooking(bookingId) {
       // Get provider's timezone
       const providerTimezone = booking.providers?.timezone || 'UTC'
       
+      // Use the provider's Google email from integration (they are the meeting host)
+      // The customer will get the meeting link via the booking system, not email invite
+      const providerGoogleEmail = integration.platform_user_email
+      console.log('📧 Provider Google email (meeting host):', providerGoogleEmail)
+      
       try {
         const result = await calendar.createMeetingEvent({
           summary: `${booking.services.title} - Meeting`,
-          description: `Meeting for ${booking.services.title}\nCustomer: ${booking.customers?.display_name || 'Customer'}`,
+          description: `Meeting for ${booking.services.title}\nCustomer: ${booking.customers?.display_name || 'Customer'}\nBooking ID: ${bookingId}`,
           startTime,
           endTime,
-          attendees: booking.customers?.email ? [booking.customers.email] : [],
+          attendees: [], // No email invites - customer gets link via the app
           timeZone: providerTimezone
         })
 
