@@ -2,6 +2,9 @@
 
 # dependencies
 /node_modules
+/backend/node_modules
+/backend-cron/node_modules
+/admin-cli/node_modules
 /.pnp
 .pnp.*
 .yarn/*
