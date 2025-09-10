@@ -58,7 +58,32 @@ const supabaseAdmin = getSupabaseAdmin();
 - User context injection
 
 ### Routes
-*To be updated as each route module is extracted*
+
+#### Authentication Routes (`src/routes/auth.js`)
+**Extracted:** 2025-09-10
+**Purpose:** Handles authentication-related endpoints
+
+**Endpoints:**
+- `POST /api/auth/token` - Generate Supabase-compatible JWT from Privy token
+
+**Usage:**
+```javascript
+// In main app file
+import authRoutes from './routes/auth.js';
+authRoutes(app);
+```
+
+**Dependencies:**
+- Uses auth middleware for client instances
+- Requires JWT secret in environment variables
+- Creates/retrieves user profiles automatically
+
+**Request/Response:**
+```
+POST /api/auth/token
+Headers: Authorization: Bearer {privyToken}
+Response: { token, user_id, expires_in }
+```
 
 ---
 

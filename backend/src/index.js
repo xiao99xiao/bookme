@@ -3,6 +3,8 @@ import { serve } from '@hono/node-server'
 import { cors } from 'hono/cors'
 // REFACTORED: Auth middleware moved to src/middleware/auth.js
 import { verifyPrivyAuth, privyDidToUuid, getPrivyClient, getSupabaseAdmin } from './middleware/auth.js'
+// REFACTORED: Auth routes moved to src/routes/auth.js
+import authRoutes from './routes/auth.js'
 // import { PrivyClient } from '@privy-io/server-auth' // MOVED TO auth.js
 // import { createClient } from '@supabase/supabase-js' // MOVED TO auth.js
 // import { v5 as uuidv5 } from 'uuid' // MOVED TO auth.js
@@ -184,97 +186,101 @@ app.get('/health', (c) => {
   })
 })
 
-// Generate Supabase-compatible JWT token
-app.post('/api/auth/token', async (c) => {
-  try {
-    const authHeader = c.req.header('Authorization')
-    if (!authHeader?.startsWith('Bearer ')) {
-      return c.json({ error: 'Missing authorization header' }, 401)
-    }
-    
-    const privyToken = authHeader.substring(7)
-    const privyUser = await privyClient.verifyAuthToken(privyToken)
-    
-    if (!privyUser) {
-      return c.json({ error: 'Invalid token' }, 401)
-    }
-    
-    // Convert Privy DID to UUID
-    const userId = privyDidToUuid(privyUser.userId)
-    
-    // Get or create user profile
-    const { data: user } = await supabaseAdmin
-      .from('users')
-      .select('*')
-      .eq('id', userId)
-      .single()
-    
-    if (!user) {
-      // Create user if doesn't exist
-      const emailAccount = privyUser.linkedAccounts?.find(acc => acc.type === 'email')
-      const email = emailAccount?.address || `${privyUser.userId}@privy.user`
-      
-      await supabaseAdmin
-        .from('users')
-        .insert({
-          id: userId,
-          email: email,
-          display_name: email.split('@')[0],
-          timezone: 'UTC',
-          is_verified: false,
-          rating: 0,
-          review_count: 0,
-          total_earnings: 0,
-          total_spent: 0,
-          is_provider: false
-        })
-    }
-    
-    // Create Supabase-compatible JWT with all required claims
-    const jwtSecret = process.env.SUPABASE_JWT_SECRET;
-    
-    if (!jwtSecret) {
-      console.error('SUPABASE_JWT_SECRET not found in environment variables');
-      return c.json({ error: 'JWT secret not configured' }, 500)
-    }
-    
-    // Generate a session ID for this JWT
-    const sessionId = `${userId}-${Date.now()}`
-    
-    const supabaseJWT = jwt.sign(
-      {
-        sub: userId, // This becomes auth.uid() in RLS policies
-        aud: 'authenticated',
-        role: 'authenticated',
-        email: user?.email || `${privyUser.userId}@privy.user`,
-        phone: null,
-        app_metadata: {
-          provider: 'privy',
-          providers: ['privy']
-        },
-        user_metadata: {
-          privy_id: privyUser.userId
-        },
-        aal: 'aal1', // Authentication assurance level
-        amr: [{ method: 'privy', timestamp: Math.floor(Date.now() / 1000) }], // Authentication methods reference
-        session_id: sessionId,
-        iss: process.env.SUPABASE_URL + '/auth/v1',
-        iat: Math.floor(Date.now() / 1000),
-        exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24) // 24 hours
-      },
-      jwtSecret
-    )
-    
-    return c.json({ 
-      token: supabaseJWT,
-      user_id: userId,
-      expires_in: 86400 // 24 hours in seconds
-    })
-  } catch (error) {
-    console.error('Token generation error:', error)
-    return c.json({ error: 'Failed to generate token' }, 500)
-  }
-})
+// REFACTORED: Auth routes moved to src/routes/auth.js
+// Initialize auth routes
+authRoutes(app);
+
+// OLD CODE - COMMENTED OUT:
+// app.post('/api/auth/token', async (c) => {
+//   try {
+//     const authHeader = c.req.header('Authorization')
+//     if (!authHeader?.startsWith('Bearer ')) {
+//       return c.json({ error: 'Missing authorization header' }, 401)
+//     }
+//     
+//     const privyToken = authHeader.substring(7)
+//     const privyUser = await privyClient.verifyAuthToken(privyToken)
+//     
+//     if (!privyUser) {
+//       return c.json({ error: 'Invalid token' }, 401)
+//     }
+//     
+//     // Convert Privy DID to UUID
+//     const userId = privyDidToUuid(privyUser.userId)
+//     
+//     // Get or create user profile
+//     const { data: user } = await supabaseAdmin
+//       .from('users')
+//       .select('*')
+//       .eq('id', userId)
+//       .single()
+//     
+//     if (!user) {
+//       // Create user if doesn't exist
+//       const emailAccount = privyUser.linkedAccounts?.find(acc => acc.type === 'email')
+//       const email = emailAccount?.address || `${privyUser.userId}@privy.user`
+//       
+//       await supabaseAdmin
+//         .from('users')
+//         .insert({
+//           id: userId,
+//           email: email,
+//           display_name: email.split('@')[0],
+//           timezone: 'UTC',
+//           is_verified: false,
+//           rating: 0,
+//           review_count: 0,
+//           total_earnings: 0,
+//           total_spent: 0,
+//           is_provider: false
+//         })
+//     }
+//     
+//     // Create Supabase-compatible JWT with all required claims
+//     const jwtSecret = process.env.SUPABASE_JWT_SECRET;
+//     
+//     if (!jwtSecret) {
+//       console.error('SUPABASE_JWT_SECRET not found in environment variables');
+//       return c.json({ error: 'JWT secret not configured' }, 500)
+//     }
+//     
+//     // Generate a session ID for this JWT
+//     const sessionId = `${userId}-${Date.now()}`
+//     
+//     const supabaseJWT = jwt.sign(
+//       {
+//         sub: userId, // This becomes auth.uid() in RLS policies
+//         aud: 'authenticated',
+//         role: 'authenticated',
+//         email: user?.email || `${privyUser.userId}@privy.user`,
+//         phone: null,
+//         app_metadata: {
+//           provider: 'privy',
+//           providers: ['privy']
+//         },
+//         user_metadata: {
+//           privy_id: privyUser.userId
+//         },
+//         aal: 'aal1', // Authentication assurance level
+//         amr: [{ method: 'privy', timestamp: Math.floor(Date.now() / 1000) }], // Authentication methods reference
+//         session_id: sessionId,
+//         iss: process.env.SUPABASE_URL + '/auth/v1',
+//         iat: Math.floor(Date.now() / 1000),
+//         exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24) // 24 hours
+//       },
+//       jwtSecret
+//     )
+//     
+//     return c.json({ 
+//       token: supabaseJWT,
+//       user_id: userId,
+//       expires_in: 86400 // 24 hours in seconds
+//     })
+//   } catch (error) {
+//     console.error('Token generation error:', error)
+//     return c.json({ error: 'Failed to generate token' }, 500)
+//   }
+// })
 
 // Get or create user profile
 app.get('/api/profile', verifyPrivyAuth, async (c) => {
