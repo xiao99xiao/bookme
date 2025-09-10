@@ -5,6 +5,8 @@ import { cors } from 'hono/cors'
 import { verifyPrivyAuth, privyDidToUuid, getPrivyClient, getSupabaseAdmin } from './middleware/auth.js'
 // REFACTORED: Auth routes moved to src/routes/auth.js
 import authRoutes from './routes/auth.js'
+// REFACTORED: User/Profile routes moved to src/routes/users.js
+import userRoutes from './routes/users.js'
 // import { PrivyClient } from '@privy-io/server-auth' // MOVED TO auth.js
 // import { createClient } from '@supabase/supabase-js' // MOVED TO auth.js
 // import { v5 as uuidv5 } from 'uuid' // MOVED TO auth.js
@@ -189,6 +191,8 @@ app.get('/health', (c) => {
 // REFACTORED: Auth routes moved to src/routes/auth.js
 // Initialize auth routes
 authRoutes(app);
+// Register user/profile routes
+userRoutes(app);
 
 // OLD CODE - COMMENTED OUT:
 // app.post('/api/auth/token', async (c) => {
@@ -282,55 +286,55 @@ authRoutes(app);
 //   }
 // })
 
-// Get or create user profile
-app.get('/api/profile', verifyPrivyAuth, async (c) => {
-  try {
-    const userId = c.get('userId')
-    const privyUser = c.get('privyUser')
-    
-    // Check if user exists
-    const { data: existingUser, error: fetchError } = await supabaseAdmin
-      .from('users')
-      .select('*')
-      .eq('id', userId)
-      .single()
-    
-    if (existingUser) {
-      return c.json(existingUser)
-    }
-    
-    // Create new user if doesn't exist
-    const emailAccount = privyUser.linkedAccounts?.find(acc => acc.type === 'email')
-    const email = emailAccount?.address || `${privyUser.userId}@privy.user`
-    
-    const { data: newUser, error: createError } = await supabaseAdmin
-      .from('users')
-      .insert({
-        id: userId,
-        email: email,
-        display_name: email.split('@')[0],
-        timezone: 'UTC',
-        is_verified: false,
-        rating: 0,
-        review_count: 0,
-        total_earnings: 0,
-        total_spent: 0,
-        is_provider: false
-      })
-      .select()
-      .single()
-    
-    if (createError) {
-      console.error('Create user error:', createError)
-      return c.json({ error: 'Failed to create user' }, 500)
-    }
-    
-    return c.json(newUser)
-  } catch (error) {
-    console.error('Profile error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// REFACTORED: Moved to src/routes/users.js - GET /api/profile
+// app.get('/api/profile', verifyPrivyAuth, async (c) => {
+//   try {
+//     const userId = c.get('userId')
+//     const privyUser = c.get('privyUser')
+//     
+//     // Check if user exists
+//     const { data: existingUser, error: fetchError } = await supabaseAdmin
+//       .from('users')
+//       .select('*')
+//       .eq('id', userId)
+//       .single()
+//     
+//     if (existingUser) {
+//       return c.json(existingUser)
+//     }
+//     
+//     // Create new user if doesn't exist
+//     const emailAccount = privyUser.linkedAccounts?.find(acc => acc.type === 'email')
+//     const email = emailAccount?.address || `${privyUser.userId}@privy.user`
+//     
+//     const { data: newUser, error: createError } = await supabaseAdmin
+//       .from('users')
+//       .insert({
+//         id: userId,
+//         email: email,
+//         display_name: email.split('@')[0],
+//         timezone: 'UTC',
+//         is_verified: false,
+//         rating: 0,
+//         review_count: 0,
+//         total_earnings: 0,
+//         total_spent: 0,
+//         is_provider: false
+//       })
+//       .select()
+//       .single()
+//     
+//     if (createError) {
+//       console.error('Create user error:', createError)
+//       return c.json({ error: 'Failed to create user' }, 500)
+//     }
+//     
+//     return c.json(newUser)
+//   } catch (error) {
+//     console.error('Profile error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
 // Get services (with optional filters)
 app.get('/api/services', verifyPrivyAuth, async (c) => {
@@ -891,37 +895,38 @@ app.post('/api/blockchain/stop-monitoring', async (c) => {
 // ========== END BLOCKCHAIN ENDPOINTS ==========
 
 // Update user profile
-app.patch('/api/profile', verifyPrivyAuth, async (c) => {
-  try {
-    const userId = c.get('userId')
-    const updates = await c.req.json()
-    
-    // Remove any fields that shouldn't be updated
-    delete updates.id
-    delete updates.email
-    delete updates.created_at
-    
-    const { data, error } = await supabaseAdmin
-      .from('users')
-      .update({
-        ...updates,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', userId)
-      .select()
-      .single()
-    
-    if (error) {
-      console.error('Profile update error:', error)
-      return c.json({ error: 'Failed to update profile' }, 500)
-    }
-    
-    return c.json(data)
-  } catch (error) {
-    console.error('Profile update error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// REFACTORED: Moved to src/routes/users.js - PATCH /api/profile
+// app.patch('/api/profile', verifyPrivyAuth, async (c) => {
+//   try {
+//     const userId = c.get('userId')
+//     const updates = await c.req.json()
+//     
+//     // Remove any fields that shouldn't be updated
+//     delete updates.id
+//     delete updates.email
+//     delete updates.created_at
+//     
+//     const { data, error } = await supabaseAdmin
+//       .from('users')
+//       .update({
+//         ...updates,
+//         updated_at: new Date().toISOString()
+//       })
+//       .eq('id', userId)
+//       .select()
+//       .single()
+//     
+//     if (error) {
+//       console.error('Profile update error:', error)
+//       return c.json({ error: 'Failed to update profile' }, 500)
+//     }
+//     
+//     return c.json(data)
+//   } catch (error) {
+//     console.error('Profile update error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
 // Get user's services
 app.get('/api/services/user/:userId', verifyPrivyAuth, async (c) => {
@@ -1306,27 +1311,28 @@ app.get('/api/categories', async (c) => {
 })
 
 // Get public user profile (no auth required)
-app.get('/api/profile/public/:userId', async (c) => {
-  try {
-    const userId = c.req.param('userId')
-    
-    const { data, error } = await supabaseAdmin
-      .from('users')
-      .select('*')
-      .eq('id', userId)
-      .single()
-    
-    if (error) {
-      console.error('Public profile fetch error:', error)
-      return c.json({ error: 'Profile not found' }, 404)
-    }
-    
-    return c.json(data)
-  } catch (error) {
-    console.error('Public profile error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// REFACTORED: Moved to src/routes/users.js - GET /api/profile/public/:userId
+// app.get('/api/profile/public/:userId', async (c) => {
+//   try {
+//     const userId = c.req.param('userId')
+//     
+//     const { data, error } = await supabaseAdmin
+//       .from('users')
+//       .select('*')
+//       .eq('id', userId)
+//       .single()
+//     
+//     if (error) {
+//       console.error('Public profile fetch error:', error)
+//       return c.json({ error: 'Profile not found' }, 404)
+//     }
+//     
+//     return c.json(data)
+//   } catch (error) {
+//     console.error('Public profile error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
 // Get public user services (no auth required)
 app.get('/api/services/public/user/:userId', async (c) => {
@@ -1428,155 +1434,156 @@ app.get('/api/services/public', async (c) => {
 })
 
 // Check username availability
-app.get('/api/username/check/:username', async (c) => {
-  try {
-    const username = c.req.param('username').toLowerCase()
-    
-    // Server-side validation
-    const blacklist = [
-      'admin', 'administrator', 'api', 'app', 'auth', 'balance', 'balances', 
-      'book', 'booking', 'bookings', 'chat', 'customer', 'dashboard', 
-      'discover', 'help', 'home', 'index', 'login', 'logout', 'message', 
-      'messages', 'order', 'orders', 'profile', 'provider', 'resume', 
-      'root', 'service', 'services', 'setting', 'settings', 'support', 
-      'user', 'wallet', 'wallets', 'www', 'mail', 'email', 'ftp', 
-      'blog', 'news', 'shop', 'store', 'test', 'demo', 'example',
-      'null', 'undefined', 'true', 'false', 'system', 'config', 'onboarding'
-    ]
-    
-    // Check format
-    if (!/^[a-zA-Z0-9_-]{3,30}$/.test(username)) {
-      return c.json({ 
-        available: false, 
-        error: 'Username must be 3-30 characters and contain only letters, numbers, underscores, and dashes' 
-      })
-    }
-    
-    // Check blacklist
-    if (blacklist.includes(username)) {
-      return c.json({ available: false, error: 'This username is reserved' })
-    }
-    
-    // Check if username exists
-    const { data, error } = await supabaseAdmin
-      .from('users')
-      .select('username')
-      .eq('username', username)
-      .single()
-    
-    if (error && error.code !== 'PGRST116') {
-      console.error('Username check error:', error)
-      return c.json({ error: 'Failed to check username' }, 500)
-    }
-    
-    return c.json({ available: !data })
-  } catch (error) {
-    console.error('Username check error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// REFACTORED: Moved to src/routes/users.js - GET /api/username/check/:username
+// app.get('/api/username/check/:username', async (c) => {
+//   try {
+//     const username = c.req.param('username').toLowerCase()
+//     
+//     // Server-side validation
+//     const blacklist = [
+//       'admin', 'administrator', 'api', 'app', 'auth', 'balance', 'balances', 
+//       'book', 'booking', 'bookings', 'chat', 'customer', 'dashboard', 
+//       'discover', 'help', 'home', 'index', 'login', 'logout', 'message', 
+//       'messages', 'order', 'orders', 'profile', 'provider', 'resume', 
+//       'root', 'service', 'services', 'setting', 'settings', 'support', 
+//       'user', 'wallet', 'wallets', 'www', 'mail', 'email', 'ftp', 
+//       'blog', 'news', 'shop', 'store', 'test', 'demo', 'example',
+//       'null', 'undefined', 'true', 'false', 'system', 'config', 'onboarding'
+//     ]
+//     
+//     // Check format
+//     if (!/^[a-zA-Z0-9_-]{3,30}$/.test(username)) {
+//       return c.json({ 
+//         available: false, 
+//         error: 'Username must be 3-30 characters and contain only letters, numbers, underscores, and dashes' 
+//       })
+//     }
+//     
+//     // Check blacklist
+//     if (blacklist.includes(username)) {
+//       return c.json({ available: false, error: 'This username is reserved' })
+//     }
+//     
+//     // Check if username exists
+//     const { data, error } = await supabaseAdmin
+//       .from('users')
+//       .select('username')
+//       .eq('username', username)
+//       .single()
+//     
+//     if (error && error.code !== 'PGRST116') {
+//       console.error('Username check error:', error)
+//       return c.json({ error: 'Failed to check username' }, 500)
+//     }
+//     
+//     return c.json({ available: !data })
+//   } catch (error) {
+//     console.error('Username check error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
-// Update user username
-app.patch('/api/username', verifyPrivyAuth, async (c) => {
-  try {
-    const userId = c.get('userId')
-    const { username } = await c.req.json()
-    
-    if (!username) {
-      return c.json({ error: 'Username is required' }, 400)
-    }
-    
-    const normalizedUsername = username.toLowerCase()
-    
-    // Server-side validation (same as check endpoint)
-    const blacklist = [
-      'admin', 'administrator', 'api', 'app', 'auth', 'balance', 'balances', 
-      'book', 'booking', 'bookings', 'chat', 'customer', 'dashboard', 
-      'discover', 'help', 'home', 'index', 'login', 'logout', 'message', 
-      'messages', 'order', 'orders', 'profile', 'provider', 'resume', 
-      'root', 'service', 'services', 'setting', 'settings', 'support', 
-      'user', 'wallet', 'wallets', 'www', 'mail', 'email', 'ftp', 
-      'blog', 'news', 'shop', 'store', 'test', 'demo', 'example',
-      'null', 'undefined', 'true', 'false', 'system', 'config', 'onboarding'
-    ]
-    
-    if (!/^[a-zA-Z0-9_-]{3,30}$/.test(normalizedUsername) || blacklist.includes(normalizedUsername)) {
-      return c.json({ error: 'Invalid username' }, 400)
-    }
-    
-    const { data, error } = await supabaseAdmin
-      .from('users')
-      .update({ username: normalizedUsername })
-      .eq('id', userId)
-      .select()
-      .single()
-    
-    if (error) {
-      if (error.code === '23505') { // Unique violation
-        return c.json({ error: 'Username already taken' }, 409)
-      }
-      console.error('Username update error:', error)
-      return c.json({ error: 'Failed to update username' }, 500)
-    }
-    
-    return c.json(data)
-  } catch (error) {
-    console.error('Username update error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// REFACTORED: Moved to src/routes/users.js - PATCH /api/username
+// app.patch('/api/username', verifyPrivyAuth, async (c) => {
+//   try {
+//     const userId = c.get('userId')
+//     const { username } = await c.req.json()
+//     
+//     if (!username) {
+//       return c.json({ error: 'Username is required' }, 400)
+//     }
+//     
+//     const normalizedUsername = username.toLowerCase()
+//     
+//     // Server-side validation (same as check endpoint)
+//     const blacklist = [
+//       'admin', 'administrator', 'api', 'app', 'auth', 'balance', 'balances', 
+//       'book', 'booking', 'bookings', 'chat', 'customer', 'dashboard', 
+//       'discover', 'help', 'home', 'index', 'login', 'logout', 'message', 
+//       'messages', 'order', 'orders', 'profile', 'provider', 'resume', 
+//       'root', 'service', 'services', 'setting', 'settings', 'support', 
+//       'user', 'wallet', 'wallets', 'www', 'mail', 'email', 'ftp', 
+//       'blog', 'news', 'shop', 'store', 'test', 'demo', 'example',
+//       'null', 'undefined', 'true', 'false', 'system', 'config', 'onboarding'
+//     ]
+//     
+//     if (!/^[a-zA-Z0-9_-]{3,30}$/.test(normalizedUsername) || blacklist.includes(normalizedUsername)) {
+//       return c.json({ error: 'Invalid username' }, 400)
+//     }
+//     
+//     const { data, error } = await supabaseAdmin
+//       .from('users')
+//       .update({ username: normalizedUsername })
+//       .eq('id', userId)
+//       .select()
+//       .single()
+//     
+//     if (error) {
+//       if (error.code === '23505') { // Unique violation
+//         return c.json({ error: 'Username already taken' }, 409)
+//       }
+//       console.error('Username update error:', error)
+//       return c.json({ error: 'Failed to update username' }, 500)
+//     }
+//     
+//     return c.json(data)
+//   } catch (error) {
+//     console.error('Username update error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
-// Get user by username (for public user pages)
-app.get('/api/user/username/:username', async (c) => {
-  try {
-    const username = c.req.param('username').toLowerCase()
-    
-    const { data, error } = await supabaseAdmin
-      .from('users')
-      .select('*')
-      .eq('username', username)
-      .single()
-    
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return c.json({ error: 'User not found' }, 404)
-      }
-      console.error('User lookup error:', error)
-      return c.json({ error: 'Failed to find user' }, 500)
-    }
-    
-    return c.json(data)
-  } catch (error) {
-    console.error('User lookup error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// REFACTORED: Moved to src/routes/users.js - GET /api/user/username/:username
+// app.get('/api/user/username/:username', async (c) => {
+//   try {
+//     const username = c.req.param('username').toLowerCase()
+//     
+//     const { data, error } = await supabaseAdmin
+//       .from('users')
+//       .select('*')
+//       .eq('username', username)
+//       .single()
+//     
+//     if (error) {
+//       if (error.code === 'PGRST116') {
+//         return c.json({ error: 'User not found' }, 404)
+//       }
+//       console.error('User lookup error:', error)
+//       return c.json({ error: 'Failed to find user' }, 500)
+//     }
+//     
+//     return c.json(data)
+//   } catch (error) {
+//     console.error('User lookup error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
-// Get user by ID (public endpoint for profile pages)
-app.get('/api/user/:userId', async (c) => {
-  try {
-    const userId = c.req.param('userId')
-    
-    const { data, error } = await supabaseAdmin
-      .from('users')
-      .select('*')
-      .eq('id', userId)
-      .single()
-    
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return c.json({ error: 'User not found' }, 404)
-      }
-      console.error('User lookup error:', error)
-      return c.json({ error: 'Failed to find user' }, 500)
-    }
-    
-    return c.json(data)
-  } catch (error) {
-    console.error('User lookup error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// REFACTORED: Moved to src/routes/users.js - GET /api/user/:userId
+// app.get('/api/user/:userId', async (c) => {
+//   try {
+//     const userId = c.req.param('userId')
+//     
+//     const { data, error } = await supabaseAdmin
+//       .from('users')
+//       .select('*')
+//       .eq('id', userId)
+//       .single()
+//     
+//     if (error) {
+//       if (error.code === 'PGRST116') {
+//         return c.json({ error: 'User not found' }, 404)
+//       }
+//       console.error('User lookup error:', error)
+//       return c.json({ error: 'Failed to find user' }, 500)
+//     }
+//     
+//     return c.json(data)
+//   } catch (error) {
+//     console.error('User lookup error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
 // Get public services by provider (no auth required)
 app.get('/api/services/public/:providerId', async (c) => {

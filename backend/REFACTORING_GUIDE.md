@@ -85,6 +85,37 @@ Headers: Authorization: Bearer {privyToken}
 Response: { token, user_id, expires_in }
 ```
 
+#### User/Profile Routes (`src/routes/users.js`)
+**Extracted:** 2025-09-10
+**Purpose:** Handles user profile management and username system endpoints
+
+**Endpoints:**
+- `GET /api/profile` - Get or create authenticated user's profile
+- `PATCH /api/profile` - Update authenticated user's profile
+- `GET /api/profile/public/:userId` - Get public user profile by ID (no auth)
+- `GET /api/username/check/:username` - Check username availability (no auth)
+- `PATCH /api/username` - Update authenticated user's username
+- `GET /api/user/username/:username` - Get user by username (no auth)
+- `GET /api/user/:userId` - Get user by ID (no auth)
+
+**Usage:**
+```javascript
+// In main app file
+import userRoutes from './routes/users.js';
+userRoutes(app);
+```
+
+**Dependencies:**
+- Uses auth middleware for authenticated endpoints
+- Validates username format and blacklist
+- Handles public user lookups
+
+**Key Features:**
+- Username validation with blacklist checking
+- Public profile access without authentication
+- Profile auto-creation for new users
+- Username uniqueness enforcement
+
 ---
 
 ## Migration Patterns

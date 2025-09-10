@@ -24,38 +24,38 @@ This document tracks the progress of splitting the monolithic `index.js` (2,882 
 - [ ] Test all configuration loading
 - [ ] Commit: "Extract configuration system"
 
-### [ ] 2. Middleware Extraction (`src/middleware/`)
-- [ ] Create `src/middleware/auth.js` - Extract verifyPrivyAuth middleware
+### [✓] 2. Middleware Extraction (`src/middleware/`)
+- [✓] Create `src/middleware/auth.js` - Extract verifyPrivyAuth middleware
 - [ ] Create `src/middleware/error-handler.js` - Centralized error handling
 - [ ] Create `src/middleware/validation.js` - Request validation helpers
 - [ ] Create `src/middleware/logging.js` - Request/response logging
-- [ ] Update all routes to use extracted middleware
-- [ ] Test authentication flow
-- [ ] Commit: "Extract middleware layer"
+- [✓] Update all routes to use extracted middleware
+- [✓] Test authentication flow
+- [✓] Commit: "Extract middleware layer" (Partial - auth only)
 
 ---
 
 ## Phase 1.2: Route Extraction (Split 47 endpoints)
 
-### [ ] 3. Authentication Routes (`src/routes/auth.js`)
+### [✓] 3. Authentication Routes (`src/routes/auth.js`)
 **Endpoints to extract (1):**
-- [ ] POST `/api/auth/token` (lines ~178-268)
-- [ ] Update imports in index.js
-- [ ] Test authentication flow
-- [ ] Commit: "Extract authentication routes"
+- [✓] POST `/api/auth/token` (lines ~188-277)
+- [✓] Update imports in index.js
+- [✓] Test authentication flow
+- [✓] Commit: "Extract authentication routes"
 
-### [ ] 4. User/Profile Routes (`src/routes/users.js`)
-**Endpoints to extract (6):**
-- [ ] GET `/api/profile` (lines ~270-318)
-- [ ] PATCH `/api/profile` (lines ~878-909)
-- [ ] GET `/api/profile/public/:userId` (lines ~1293-1314)
-- [ ] GET `/api/user/:userId` (lines ~1540-1564)
-- [ ] GET `/api/username/check/:username` (lines ~1415-1462)
-- [ ] PATCH `/api/username` (lines ~1464-1512)
-- [ ] GET `/api/user/username/:username` (lines ~1514-1538)
-- [ ] Update all user-related imports
-- [ ] Test profile operations
-- [ ] Commit: "Extract user/profile routes"
+### [✓] 4. User/Profile Routes (`src/routes/users.js`)
+**Endpoints to extract (7):**
+- [✓] GET `/api/profile` (lines ~286-333)
+- [✓] PATCH `/api/profile` (lines ~894-924)
+- [✓] GET `/api/profile/public/:userId` (lines ~1309-1329)
+- [✓] GET `/api/username/check/:username` (lines ~1431-1477)
+- [✓] PATCH `/api/username` (lines ~1480-1527)
+- [✓] GET `/api/user/username/:username` (lines ~1530-1553)
+- [✓] GET `/api/user/:userId` (lines ~1556-1579)
+- [✓] Update all user-related imports
+- [✓] Test profile operations
+- [✓] Commit: "Extract user/profile routes"
 
 ### [ ] 5. Service Routes (`src/routes/services.js`)
 **Endpoints to extract (12):**
