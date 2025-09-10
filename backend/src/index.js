@@ -13,6 +13,8 @@ import serviceRoutes from './routes/services.js'
 import bookingRoutes from './routes/bookings.js'
 // REFACTORED: Review routes moved to src/routes/reviews.js
 import reviewRoutes from './routes/reviews.js'
+// REFACTORED: Conversation routes moved to src/routes/conversations.js
+import conversationRoutes from './routes/conversations.js'
 // import { PrivyClient } from '@privy-io/server-auth' // MOVED TO auth.js
 // import { createClient } from '@supabase/supabase-js' // MOVED TO auth.js
 // import { v5 as uuidv5 } from 'uuid' // MOVED TO auth.js
@@ -205,6 +207,8 @@ serviceRoutes(app);
 bookingRoutes(app);
 // Register review routes
 reviewRoutes(app);
+// Register conversation routes
+conversationRoutes(app);
 
 // OLD CODE - COMMENTED OUT:
 // app.post('/api/auth/token', async (c) => {
@@ -1994,330 +1998,336 @@ app.get('/api/categories', async (c) => {
 // })
 
 
+// REFACTORED: Get conversations moved to src/routes/conversations.js
 // Get conversations
-app.get('/api/conversations', verifyPrivyAuth, async (c) => {
-  try {
-    const userId = c.get('userId')
-    
-    // First, try to get conversations with the current structure
-    // Note: We need to fetch conversations without the foreign key relationships first
-    const { data: conversations, error } = await supabaseAdmin
-      .from('conversations')
-      .select(`
-        *
-      `)
-      .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
-      .order('created_at', { ascending: false })
-    
-    if (error) {
-      console.error('Conversations fetch error:', error)
-      return c.json({ error: 'Failed to fetch conversations' }, 500)
-    }
+// app.get('/api/conversations', verifyPrivyAuth, async (c) => {
+//   try {
+//     const userId = c.get('userId')
+//     
+//     // First, try to get conversations with the current structure
+//     // Note: We need to fetch conversations without the foreign key relationships first
+//     const { data: conversations, error } = await supabaseAdmin
+//       .from('conversations')
+//       .select(`
+//         *
+//       `)
+//       .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
+//       .order('created_at', { ascending: false })
+//     
+//     if (error) {
+//       console.error('Conversations fetch error:', error)
+//       return c.json({ error: 'Failed to fetch conversations' }, 500)
+//     }
 
-    // Now enrich each conversation with user and message data
-    const enrichedConversations = await Promise.all(
-      (conversations || []).map(async (conv) => {
-        // For user1/user2 structure, get both users
-        let customer = null, provider = null;
-        
-        const { data: user1Data } = await supabaseAdmin
-          .from('users')
-          .select('id, display_name, avatar')
-          .eq('id', conv.user1_id)
-          .single()
-          
-        const { data: user2Data } = await supabaseAdmin
-          .from('users')
-          .select('id, display_name, avatar')
-          .eq('id', conv.user2_id)
-          .single()
-          
-        // Map to customer/provider structure for consistency
-        // The current user is "customer", the other user is "provider"
-        if (conv.user1_id === userId) {
-          customer = user1Data;
-          provider = user2Data;
-        } else {
-          customer = user2Data;
-          provider = user1Data;
-        }
-        
-        // Get booking data if exists (skip for now)
-        let booking = null;
-        
-        // Get last message
-        const { data: lastMessage } = await supabaseAdmin
-          .from('messages')
-          .select('content, created_at, sender_id')
-          .eq('conversation_id', conv.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single()
-        
-        return {
-          ...conv,
-          customer,
-          provider,
-          booking,
-          last_message: lastMessage ? [lastMessage] : []
-        }
-      })
-    )
-    
-    return c.json(enrichedConversations)
-  } catch (error) {
-    console.error('Conversations error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+//     // Now enrich each conversation with user and message data
+//     const enrichedConversations = await Promise.all(
+//       (conversations || []).map(async (conv) => {
+//         // For user1/user2 structure, get both users
+//         let customer = null, provider = null;
+//         
+//         const { data: user1Data } = await supabaseAdmin
+//           .from('users')
+//           .select('id, display_name, avatar')
+//           .eq('id', conv.user1_id)
+//           .single()
+//           
+//         const { data: user2Data } = await supabaseAdmin
+//           .from('users')
+//           .select('id, display_name, avatar')
+//           .eq('id', conv.user2_id)
+//           .single()
+//           
+//         // Map to customer/provider structure for consistency
+//         // The current user is "customer", the other user is "provider"
+//         if (conv.user1_id === userId) {
+//           customer = user1Data;
+//           provider = user2Data;
+//         } else {
+//           customer = user2Data;
+//           provider = user1Data;
+//         }
+//         
+//         // Get booking data if exists (skip for now)
+//         let booking = null;
+//         
+//         // Get last message
+//         const { data: lastMessage } = await supabaseAdmin
+//           .from('messages')
+//           .select('content, created_at, sender_id')
+//           .eq('conversation_id', conv.id)
+//           .order('created_at', { ascending: false })
+//           .limit(1)
+//           .single()
+//         
+//         return {
+//           ...conv,
+//           customer,
+//           provider,
+//           booking,
+//           last_message: lastMessage ? [lastMessage] : []
+//         }
+//       })
+//     )
+//     
+//     return c.json(enrichedConversations)
+//   } catch (error) {
+//     console.error('Conversations error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
+// REFACTORED: Get single conversation moved to src/routes/conversations.js
 // Get single conversation
-app.get('/api/conversations/:id', verifyPrivyAuth, async (c) => {
-  try {
-    const userId = c.get('userId')
-    const conversationId = c.req.param('id')
-    
-    const { data, error } = await supabaseAdmin
-      .from('conversations')
-      .select(`
-        *,
-        customer:users!customer_id(*),
-        provider:users!provider_id(*),
-        booking:bookings!booking_id(*)
-      `)
-      .eq('id', conversationId)
-      .single()
-    
-    if (error || !data) {
-      return c.json({ error: 'Conversation not found' }, 404)
-    }
-    
-    // Verify user is part of conversation
-    if (data.customer_id !== userId && data.provider_id !== userId) {
-      return c.json({ error: 'Unauthorized' }, 403)
-    }
-    
-    return c.json(data)
-  } catch (error) {
-    console.error('Conversation error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// app.get('/api/conversations/:id', verifyPrivyAuth, async (c) => {
+//   try {
+//     const userId = c.get('userId')
+//     const conversationId = c.req.param('id')
+//     
+//     const { data, error } = await supabaseAdmin
+//       .from('conversations')
+//       .select(`
+//         *,
+//         customer:users!customer_id(*),
+//         provider:users!provider_id(*),
+//         booking:bookings!booking_id(*)
+//       `)
+//       .eq('id', conversationId)
+//       .single()
+//     
+//     if (error || !data) {
+//       return c.json({ error: 'Conversation not found' }, 404)
+//     }
+//     
+//     // Verify user is part of conversation
+//     if (data.customer_id !== userId && data.provider_id !== userId) {
+//       return c.json({ error: 'Unauthorized' }, 403)
+//     }
+//     
+//     return c.json(data)
+//   } catch (error) {
+//     console.error('Conversation error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
+// REFACTORED: Create conversation moved to src/routes/conversations.js
 // Chat/Conversation endpoints
-app.post('/api/conversations', verifyPrivyAuth, async (c) => {
-  try {
-    const userId = c.get('userId')
-    const { otherUserId } = await c.req.json()
-    
-    if (!otherUserId) {
-      return c.json({ error: 'Other user ID required' }, 400)
-    }
-    
-    // Check if conversation already exists
-    // Try both possible combinations
-    const { data: existing1 } = await supabaseAdmin
-      .from('conversations')
-      .select('*')
-      .eq('user1_id', userId)
-      .eq('user2_id', otherUserId)
-      .single()
-    
-    if (existing1) {
-      return c.json(existing1)
-    }
-    
-    const { data: existing2 } = await supabaseAdmin
-      .from('conversations')
-      .select('*')
-      .eq('user1_id', otherUserId)
-      .eq('user2_id', userId)
-      .single()
-    
-    if (existing2) {
-      return c.json(existing2)
-    }
-    
-    // Create new conversation
-    const { data, error } = await supabaseAdmin
-      .from('conversations')
-      .insert({
-        user1_id: userId,
-        user2_id: otherUserId,
-        last_message_at: new Date().toISOString()
-      })
-      .select()
-      .single()
-    
-    if (error) {
-      console.error('Conversation creation error:', error)
-      return c.json({ error: 'Failed to create conversation' }, 500)
-    }
-    
-    return c.json(data)
-  } catch (error) {
-    console.error('Conversation error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// app.post('/api/conversations', verifyPrivyAuth, async (c) => {
+//   try {
+//     const userId = c.get('userId')
+//     const { otherUserId } = await c.req.json()
+//     
+//     if (!otherUserId) {
+//       return c.json({ error: 'Other user ID required' }, 400)
+//     }
+//     
+//     // Check if conversation already exists
+//     // Try both possible combinations
+//     const { data: existing1 } = await supabaseAdmin
+//       .from('conversations')
+//       .select('*')
+//       .eq('user1_id', userId)
+//       .eq('user2_id', otherUserId)
+//       .single()
+//     
+//     if (existing1) {
+//       return c.json(existing1)
+//     }
+//     
+//     const { data: existing2 } = await supabaseAdmin
+//       .from('conversations')
+//       .select('*')
+//       .eq('user1_id', otherUserId)
+//       .eq('user2_id', userId)
+//       .single()
+//     
+//     if (existing2) {
+//       return c.json(existing2)
+//     }
+//     
+//     // Create new conversation
+//     const { data, error } = await supabaseAdmin
+//       .from('conversations')
+//       .insert({
+//         user1_id: userId,
+//         user2_id: otherUserId,
+//         last_message_at: new Date().toISOString()
+//       })
+//       .select()
+//       .single()
+//     
+//     if (error) {
+//       console.error('Conversation creation error:', error)
+//       return c.json({ error: 'Failed to create conversation' }, 500)
+//     }
+//     
+//     return c.json(data)
+//   } catch (error) {
+//     console.error('Conversation error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
+// REFACTORED: Mark messages as read moved to src/routes/conversations.js
 // Mark messages as read
-app.put('/api/conversations/:conversationId/read', verifyPrivyAuth, async (c) => {
-  try {
-    const userId = c.get('userId')
-    const conversationId = c.req.param('conversationId')
-    
-    const { error } = await supabaseAdmin
-      .from('messages')
-      .update({ is_read: true })
-      .eq('conversation_id', conversationId)
-      .neq('sender_id', userId)
-      .eq('is_read', false)
-    
-    if (error) {
-      console.error('Mark as read error:', error)
-      return c.json({ error: 'Failed to mark messages as read' }, 500)
-    }
-    
-    return c.json({ success: true })
-  } catch (error) {
-    console.error('Mark as read error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// app.put('/api/conversations/:conversationId/read', verifyPrivyAuth, async (c) => {
+//   try {
+//     const userId = c.get('userId')
+//     const conversationId = c.req.param('conversationId')
+//     
+//     const { error } = await supabaseAdmin
+//       .from('messages')
+//       .update({ is_read: true })
+//       .eq('conversation_id', conversationId)
+//       .neq('sender_id', userId)
+//       .eq('is_read', false)
+//     
+//     if (error) {
+//       console.error('Mark as read error:', error)
+//       return c.json({ error: 'Failed to mark messages as read' }, 500)
+//     }
+//     
+//     return c.json({ success: true })
+//   } catch (error) {
+//     console.error('Mark as read error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
+// REFACTORED: Send message moved to src/routes/messages.js
 // Send message
-app.post('/api/messages', verifyPrivyAuth, async (c) => {
-  try {
-    const userId = c.get('userId')
-    const { conversationId, content } = await c.req.json()
-    
-    // Verify user is part of conversation
-    const { data: conversation, error: convError } = await supabaseAdmin
-      .from('conversations')
-      .select('user1_id, user2_id')
-      .eq('id', conversationId)
-      .single()
-    
-    if (convError || !conversation) {
-      return c.json({ error: 'Conversation not found' }, 404)
-    }
-    
-    if (conversation.user1_id !== userId && conversation.user2_id !== userId) {
-      return c.json({ error: 'Unauthorized' }, 403)
-    }
-    
-    // Create message
-    const { data, error } = await supabaseAdmin
-      .from('messages')
-      .insert({
-        conversation_id: conversationId,
-        sender_id: userId,
-        content,
-        is_read: false
-      })
-      .select()
-      .single()
-    
-    if (error) {
-      console.error('Message send error:', error)
-      return c.json({ error: 'Failed to send message' }, 500)
-    }
-    
-    // Update conversation last activity
-    await supabaseAdmin
-      .from('conversations')
-      .update({ last_message_at: new Date().toISOString() })
-      .eq('id', conversationId)
-    
-    // Fetch sender details to return with message
-    const { data: sender } = await supabaseAdmin
-      .from('users')
-      .select('id, display_name, avatar')
-      .eq('id', userId)
-      .single()
-    
-    const messageWithSender = { ...data, sender }
-    
-    // Broadcast message via WebSocket to conversation room
-    const io = getIO()
-    if (io) {
-      // Emit ONLY to conversation room (all users subscribed to this conversation)
-      // Don't emit to user rooms as they're already in the conversation room
-      io.to(`conversation:${conversationId}`).emit('new_message', messageWithSender)
-    }
-    
-    return c.json(messageWithSender)
-  } catch (error) {
-    console.error('Message error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// app.post('/api/messages', verifyPrivyAuth, async (c) => {
+//   try {
+//     const userId = c.get('userId')
+//     const { conversationId, content } = await c.req.json()
+//     
+//     // Verify user is part of conversation
+//     const { data: conversation, error: convError } = await supabaseAdmin
+//       .from('conversations')
+//       .select('user1_id, user2_id')
+//       .eq('id', conversationId)
+//       .single()
+//     
+//     if (convError || !conversation) {
+//       return c.json({ error: 'Conversation not found' }, 404)
+//     }
+//     
+//     if (conversation.user1_id !== userId && conversation.user2_id !== userId) {
+//       return c.json({ error: 'Unauthorized' }, 403)
+//     }
+//     
+//     // Create message
+//     const { data, error } = await supabaseAdmin
+//       .from('messages')
+//       .insert({
+//         conversation_id: conversationId,
+//         sender_id: userId,
+//         content,
+//         is_read: false
+//       })
+//       .select()
+//       .single()
+//     
+//     if (error) {
+//       console.error('Message send error:', error)
+//       return c.json({ error: 'Failed to send message' }, 500)
+//     }
+//     
+//     // Update conversation last activity
+//     await supabaseAdmin
+//       .from('conversations')
+//       .update({ last_message_at: new Date().toISOString() })
+//       .eq('id', conversationId)
+//     
+//     // Fetch sender details to return with message
+//     const { data: sender } = await supabaseAdmin
+//       .from('users')
+//       .select('id, display_name, avatar')
+//       .eq('id', userId)
+//       .single()
+//     
+//     const messageWithSender = { ...data, sender }
+//     
+//     // Broadcast message via WebSocket to conversation room
+//     const io = getIO()
+//     if (io) {
+//       // Emit ONLY to conversation room (all users subscribed to this conversation)
+//       // Don't emit to user rooms as they're already in the conversation room
+//       io.to(`conversation:${conversationId}`).emit('new_message', messageWithSender)
+//     }
+//     
+//     return c.json(messageWithSender)
+//   } catch (error) {
+//     console.error('Message error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
+// REFACTORED: Get messages for conversation moved to src/routes/messages.js
 // Get messages for conversation
-app.get('/api/messages/:conversationId', verifyPrivyAuth, async (c) => {
-  try {
-    const userId = c.get('userId')
-    const conversationId = c.req.param('conversationId')
-    const { limit = '50', before } = c.req.query()
-    
-    // Verify user is part of conversation
-    const { data: conversation, error: convError } = await supabaseAdmin
-      .from('conversations')
-      .select('user1_id, user2_id')
-      .eq('id', conversationId)
-      .single()
-    
-    if (convError || !conversation) {
-      return c.json({ error: 'Conversation not found' }, 404)
-    }
-    
-    if (conversation.user1_id !== userId && conversation.user2_id !== userId) {
-      return c.json({ error: 'Unauthorized' }, 403)
-    }
-    
-    // Fetch messages - simplified without join
-    let query = supabaseAdmin
-      .from('messages')
-      .select('*')
-      .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: false })
-      .limit(parseInt(limit))
-    
-    if (before) {
-      query = query.lt('created_at', before)
-    }
-    
-    const { data: messages, error } = await query
-    
-    if (error) {
-      console.error('Messages fetch error:', error)
-      return c.json({ error: 'Failed to fetch messages' }, 500)
-    }
-    
-    // Fetch sender details for each message
-    if (messages && messages.length > 0) {
-      const senderIds = [...new Set(messages.map(m => m.sender_id))]
-      const { data: senders } = await supabaseAdmin
-        .from('users')
-        .select('id, display_name, avatar')
-        .in('id', senderIds)
-      
-      // Map sender details to messages
-      const messagesWithSenders = messages.map(msg => ({
-        ...msg,
-        sender: senders?.find(s => s.id === msg.sender_id) || null
-      }))
-      
-      return c.json(messagesWithSenders)
-    }
-    
-    return c.json([])
-  } catch (error) {
-    console.error('Messages error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// app.get('/api/messages/:conversationId', verifyPrivyAuth, async (c) => {
+//   try {
+//     const userId = c.get('userId')
+//     const conversationId = c.req.param('conversationId')
+//     const { limit = '50', before } = c.req.query()
+//     
+//     // Verify user is part of conversation
+//     const { data: conversation, error: convError } = await supabaseAdmin
+//       .from('conversations')
+//       .select('user1_id, user2_id')
+//       .eq('id', conversationId)
+//       .single()
+//     
+//     if (convError || !conversation) {
+//       return c.json({ error: 'Conversation not found' }, 404)
+//     }
+//     
+//     if (conversation.user1_id !== userId && conversation.user2_id !== userId) {
+//       return c.json({ error: 'Unauthorized' }, 403)
+//     }
+//     
+//     // Fetch messages - simplified without join
+//     let query = supabaseAdmin
+//       .from('messages')
+//       .select('*')
+//       .eq('conversation_id', conversationId)
+//       .order('created_at', { ascending: false })
+//       .limit(parseInt(limit))
+//     
+//     if (before) {
+//       query = query.lt('created_at', before)
+//     }
+//     
+//     const { data: messages, error } = await query
+//     
+//     if (error) {
+//       console.error('Messages fetch error:', error)
+//       return c.json({ error: 'Failed to fetch messages' }, 500)
+//     }
+//     
+//     // Fetch sender details for each message
+//     if (messages && messages.length > 0) {
+//       const senderIds = [...new Set(messages.map(m => m.sender_id))]
+//       const { data: senders } = await supabaseAdmin
+//         .from('users')
+//         .select('id, display_name, avatar')
+//         .in('id', senderIds)
+//       
+//       // Map sender details to messages
+//       const messagesWithSenders = messages.map(msg => ({
+//         ...msg,
+//         sender: senders?.find(s => s.id === msg.sender_id) || null
+//       }))
+//       
+//       return c.json(messagesWithSenders)
+//     }
+//     
+//     return c.json([])
+//   } catch (error) {
+//     console.error('Messages error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
 // REFACTORED: Create or update review moved to src/routes/reviews.js
 // Create or update review
