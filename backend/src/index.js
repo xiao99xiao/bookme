@@ -9,6 +9,8 @@ import authRoutes from './routes/auth.js'
 import userRoutes from './routes/users.js'
 // REFACTORED: Service routes moved to src/routes/services.js
 import serviceRoutes from './routes/services.js'
+// REFACTORED: Booking routes moved to src/routes/bookings.js
+import bookingRoutes from './routes/bookings.js'
 // import { PrivyClient } from '@privy-io/server-auth' // MOVED TO auth.js
 // import { createClient } from '@supabase/supabase-js' // MOVED TO auth.js
 // import { v5 as uuidv5 } from 'uuid' // MOVED TO auth.js
@@ -197,6 +199,8 @@ authRoutes(app);
 userRoutes(app);
 // Register service routes
 serviceRoutes(app);
+// Register booking routes
+bookingRoutes(app);
 
 // OLD CODE - COMMENTED OUT:
 // app.post('/api/auth/token', async (c) => {
@@ -366,8 +370,9 @@ serviceRoutes(app);
 //   }
 // })
 
+// REFACTORED: Booking creation moved to src/routes/bookings.js
 // Create booking (optimized with combined operations)
-app.post('/api/bookings', verifyPrivyAuth, async (c) => {
+// app.post('/api/bookings', verifyPrivyAuth, async (c) => {
   try {
     const startTime = Date.now()
     const userId = c.get('userId')
@@ -578,282 +583,286 @@ app.post('/api/bookings', verifyPrivyAuth, async (c) => {
 
 // ========== BLOCKCHAIN PAYMENT ENDPOINTS ==========
 
+// REFACTORED: Payment authorization endpoint moved to src/routes/bookings.js
 // Generate payment authorization for booking
-app.post('/api/bookings/:id/authorize-payment', verifyPrivyAuth, async (c) => {
-  try {
-    const userId = c.get('userId')
-    const bookingId = c.req.param('id')
-    
-    console.log('🔐 Generating payment authorization for booking:', bookingId)
-    
-    // Get booking details
-    const { data: booking, error: bookingError } = await supabaseAdmin
-      .from('bookings')
-      .select(`
-        *,
-        customer:customer_id(id, wallet_address),
-        provider:provider_id(id, wallet_address),
-        service:service_id(*)
-      `)
-      .eq('id', bookingId)
-      .single()
-    
-    if (bookingError || !booking) {
-      console.error('Booking not found:', bookingId, bookingError)
-      return c.json({ error: 'Booking not found' }, 404)
-    }
-    
-    // Verify user is the customer
-    if (booking.customer_id !== userId) {
-      return c.json({ error: 'Unauthorized - not booking customer' }, 403)
-    }
-    
-    // Check booking status
-    if (booking.status !== 'pending' && booking.status !== 'pending_payment') {
-      return c.json({ error: 'Booking not eligible for payment' }, 400)
-    }
-    
-    // Check if we need customer/provider wallet addresses
-    if (!booking.customer?.wallet_address || !booking.provider?.wallet_address) {
-      return c.json({ error: 'Wallet addresses not configured for customer or provider' }, 400)
-    }
-    
-    // Calculate fee structure
-    const hasInviter = false // TODO: Add inviter logic when implemented
-    const feeData = eip712Signer.calculateFees(booking.total_price, hasInviter)
-    
-    // Generate blockchain booking ID
-    const blockchainBookingId = blockchainService.formatBookingId(booking.id)
-    
-    // Store blockchain booking ID in database
-    const { error: updateError } = await supabaseAdmin
-      .from('bookings')
-      .update({
-        blockchain_booking_id: blockchainBookingId,
-        status: 'pending_payment'
-      })
-      .eq('id', booking.id)
-    
-    if (updateError) {
-      console.error('Error updating booking with blockchain ID:', updateError)
-      return c.json({ error: 'Failed to prepare booking for payment' }, 500)
-    }
-    
-    // Generate EIP-712 signature
-    const authResult = await eip712Signer.signBookingAuthorization({
-      bookingId: booking.id,
-      customer: booking.customer.wallet_address,
-      provider: booking.provider.wallet_address,
-      inviter: ethers.ZeroAddress, // TODO: Add inviter support
-      amount: booking.total_price,
-      platformFeeRate: feeData.platformFeeRate,
-      inviterFeeRate: feeData.inviterFeeRate,
-      expiryMinutes: 5 // 5 minute expiry
-    })
-    
-    // Store nonce to prevent replay attacks
-    const { error: nonceError } = await supabaseAdmin
-      .from('signature_nonces')
-      .insert({
-        nonce: authResult.nonce,
-        booking_id: booking.id,
-        signature_type: 'booking_authorization'
-      })
-    
-    if (nonceError) {
-      console.error('Error storing nonce:', nonceError)
-      return c.json({ error: 'Failed to generate secure authorization' }, 500)
-    }
-    
-    console.log('✅ Payment authorization generated for booking:', bookingId)
-    
-    // Convert BigInt values to strings for JSON serialization
-    const serializableAuthorization = {
-      ...authResult.authorization,
-      bookingId: authResult.authorization.bookingId.toString(),
-      amount: authResult.authorization.amount.toString()
-    }
-    
-    return c.json({
-      authorization: serializableAuthorization,
-      signature: authResult.signature,
-      contractAddress: process.env.CONTRACT_ADDRESS,
-      usdcAddress: process.env.USDC_ADDRESS,
-      feeBreakdown: feeData,
-      expiresAt: new Date(authResult.expiry * 1000).toISOString()
-    })
-    
-  } catch (error) {
-    console.error('❌ Payment authorization error:', error)
-    return c.json({ error: 'Failed to generate payment authorization' }, 500)
-  }
-})
+// app.post('/api/bookings/:id/authorize-payment', verifyPrivyAuth, async (c) => {
+//   try {
+//     const userId = c.get('userId')
+//     const bookingId = c.req.param('id')
+//     
+//     console.log('🔐 Generating payment authorization for booking:', bookingId)
+//     
+//     // Get booking details
+//     const { data: booking, error: bookingError } = await supabaseAdmin
+//       .from('bookings')
+//       .select(`
+//         *,
+//         customer:customer_id(id, wallet_address),
+//         provider:provider_id(id, wallet_address),
+//         service:service_id(*)
+//       `)
+//       .eq('id', bookingId)
+//       .single()
+//     
+//     if (bookingError || !booking) {
+//       console.error('Booking not found:', bookingId, bookingError)
+//       return c.json({ error: 'Booking not found' }, 404)
+//     }
+//     
+//     // Verify user is the customer
+//     if (booking.customer_id !== userId) {
+//       return c.json({ error: 'Unauthorized - not booking customer' }, 403)
+//     }
+//     
+//     // Check booking status
+//     if (booking.status !== 'pending' && booking.status !== 'pending_payment') {
+//       return c.json({ error: 'Booking not eligible for payment' }, 400)
+//     }
+//     
+//     // Check if we need customer/provider wallet addresses
+//     if (!booking.customer?.wallet_address || !booking.provider?.wallet_address) {
+//       return c.json({ error: 'Wallet addresses not configured for customer or provider' }, 400)
+//     }
+//     
+//     // Calculate fee structure
+//     const hasInviter = false // TODO: Add inviter logic when implemented
+//     const feeData = eip712Signer.calculateFees(booking.total_price, hasInviter)
+//     
+//     // Generate blockchain booking ID
+//     const blockchainBookingId = blockchainService.formatBookingId(booking.id)
+//     
+//     // Store blockchain booking ID in database
+//     const { error: updateError } = await supabaseAdmin
+//       .from('bookings')
+//       .update({
+//         blockchain_booking_id: blockchainBookingId,
+//         status: 'pending_payment'
+//       })
+//       .eq('id', booking.id)
+//     
+//     if (updateError) {
+//       console.error('Error updating booking with blockchain ID:', updateError)
+//       return c.json({ error: 'Failed to prepare booking for payment' }, 500)
+//     }
+//     
+//     // Generate EIP-712 signature
+//     const authResult = await eip712Signer.signBookingAuthorization({
+//       bookingId: booking.id,
+//       customer: booking.customer.wallet_address,
+//       provider: booking.provider.wallet_address,
+//       inviter: ethers.ZeroAddress, // TODO: Add inviter support
+//       amount: booking.total_price,
+//       platformFeeRate: feeData.platformFeeRate,
+//       inviterFeeRate: feeData.inviterFeeRate,
+//       expiryMinutes: 5 // 5 minute expiry
+//     })
+//     
+//     // Store nonce to prevent replay attacks
+//     const { error: nonceError } = await supabaseAdmin
+//       .from('signature_nonces')
+//       .insert({
+//         nonce: authResult.nonce,
+//         booking_id: booking.id,
+//         signature_type: 'booking_authorization'
+//       })
+//     
+//     if (nonceError) {
+//       console.error('Error storing nonce:', nonceError)
+//       return c.json({ error: 'Failed to generate secure authorization' }, 500)
+//     }
+//     
+//     console.log('✅ Payment authorization generated for booking:', bookingId)
+//     
+//     // Convert BigInt values to strings for JSON serialization
+//     const serializableAuthorization = {
+//       ...authResult.authorization,
+//       bookingId: authResult.authorization.bookingId.toString(),
+//       amount: authResult.authorization.amount.toString()
+//     }
+//     
+//     return c.json({
+//       authorization: serializableAuthorization,
+//       signature: authResult.signature,
+//       contractAddress: process.env.CONTRACT_ADDRESS,
+//       usdcAddress: process.env.USDC_ADDRESS,
+//       feeBreakdown: feeData,
+//       expiresAt: new Date(authResult.expiry * 1000).toISOString()
+//     })
+//     
+//   } catch (error) {
+//     console.error('❌ Payment authorization error:', error)
+//     return c.json({ error: 'Failed to generate payment authorization' }, 500)
+//   }
+// })
 
+// REFACTORED: Service completion endpoint moved to src/routes/bookings.js
 // Mark booking as complete and trigger smart contract
-app.post('/api/bookings/:id/complete-service', verifyPrivyAuth, async (c) => {
-  try {
-    const userId = c.get('userId')
-    const bookingId = c.req.param('id')
-    
-    console.log('🎉 Processing service completion for booking:', bookingId)
-    
-    // Get booking details with blockchain data
-    const { data: booking, error: bookingError } = await supabaseAdmin
-      .from('bookings')
-      .select(`
-        *,
-        customer:customer_id(id, wallet_address),
-        provider:provider_id(id, wallet_address),
-        service:service_id(*)
-      `)
-      .eq('id', bookingId)
-      .single()
-    
-    if (bookingError || !booking) {
-      console.error('Booking not found:', bookingId, bookingError)
-      return c.json({ error: 'Booking not found' }, 404)
-    }
-    
-    // Verify user is the customer (only customer can mark as complete)
-    if (booking.customer_id !== userId) {
-      return c.json({ error: 'Unauthorized - only customer can complete service' }, 403)
-    }
-    
-    // Check booking status - must be in_progress to complete
-    if (booking.status !== 'in_progress') {
-      return c.json({ error: `Booking not eligible for completion (status: ${booking.status})` }, 400)
-    }
-    
-    // Check if blockchain booking ID exists (payment must be confirmed)
-    if (!booking.blockchain_booking_id) {
-      return c.json({ error: 'Booking not paid via blockchain - cannot complete' }, 400)
-    }
-    
-    // Check if customer has wallet address for blockchain interaction
-    if (!booking.customer?.wallet_address) {
-      return c.json({ error: 'Customer wallet address not configured' }, 400)
-    }
-    
-    console.log('✅ Service completion validated for booking:', bookingId)
-    
-    // Return data needed for frontend to call smart contract
-    return c.json({
-      bookingId: booking.id,
-      blockchain_booking_id: booking.blockchain_booking_id,
-      customer_wallet: booking.customer.wallet_address,
-      provider_wallet: booking.provider?.wallet_address,
-      amount: booking.total_price,
-      status: booking.status,
-      service_title: booking.service?.title,
-      message: 'Ready for blockchain completion. Frontend should call completeService on smart contract.'
-    })
-    
-  } catch (error) {
-    console.error('❌ Service completion error:', error)
-    return c.json({ error: 'Failed to process service completion' }, 500)
-  }
-})
+// app.post('/api/bookings/:id/complete-service', verifyPrivyAuth, async (c) => {
+//   try {
+//     const userId = c.get('userId')
+//     const bookingId = c.req.param('id')
+//     
+//     console.log('🎉 Processing service completion for booking:', bookingId)
+//     
+//     // Get booking details with blockchain data
+//     const { data: booking, error: bookingError } = await supabaseAdmin
+//       .from('bookings')
+//       .select(`
+//         *,
+//         customer:customer_id(id, wallet_address),
+//         provider:provider_id(id, wallet_address),
+//         service:service_id(*)
+//       `)
+//       .eq('id', bookingId)
+//       .single()
+//     
+//     if (bookingError || !booking) {
+//       console.error('Booking not found:', bookingId, bookingError)
+//       return c.json({ error: 'Booking not found' }, 404)
+//     }
+//     
+//     // Verify user is the customer (only customer can mark as complete)
+//     if (booking.customer_id !== userId) {
+//       return c.json({ error: 'Unauthorized - only customer can complete service' }, 403)
+//     }
+//     
+//     // Check booking status - must be in_progress to complete
+//     if (booking.status !== 'in_progress') {
+//       return c.json({ error: `Booking not eligible for completion (status: ${booking.status})` }, 400)
+//     }
+//     
+//     // Check if blockchain booking ID exists (payment must be confirmed)
+//     if (!booking.blockchain_booking_id) {
+//       return c.json({ error: 'Booking not paid via blockchain - cannot complete' }, 400)
+//     }
+//     
+//     // Check if customer has wallet address for blockchain interaction
+//     if (!booking.customer?.wallet_address) {
+//       return c.json({ error: 'Customer wallet address not configured' }, 400)
+//     }
+//     
+//     console.log('✅ Service completion validated for booking:', bookingId)
+//     
+//     // Return data needed for frontend to call smart contract
+//     return c.json({
+//       bookingId: booking.id,
+//       blockchain_booking_id: booking.blockchain_booking_id,
+//       customer_wallet: booking.customer.wallet_address,
+//       provider_wallet: booking.provider?.wallet_address,
+//       amount: booking.total_price,
+//       status: booking.status,
+//       service_title: booking.service?.title,
+//       message: 'Ready for blockchain completion. Frontend should call completeService on smart contract.'
+//     })
+//     
+//   } catch (error) {
+//     console.error('❌ Service completion error:', error)
+//     return c.json({ error: 'Failed to process service completion' }, 500)
+//   }
+// })
 
+// REFACTORED: Backend service completion endpoint moved to src/routes/bookings.js
 // Backend-triggered service completion (for cron/automation)
-app.post('/api/bookings/:id/complete-service-backend', async (c) => {
-  try {
-    const bookingId = c.req.param('id')
-    
-    console.log('🤖 Backend completing service for booking:', bookingId)
-    
-    // Get booking details
-    const { data: booking, error: bookingError } = await supabaseAdmin
-      .from('bookings')
-      .select('*')
-      .eq('id', bookingId)
-      .single()
-    
-    if (bookingError || !booking) {
-      console.error('Booking not found:', bookingId, bookingError)
-      return c.json({ error: 'Booking not found' }, 404)
-    }
-    
-    // Check booking status
-    if (booking.status !== 'in_progress') {
-      return c.json({ error: `Booking not eligible for completion (status: ${booking.status})` }, 400)
-    }
-    
-    // Check if blockchain booking ID exists
-    if (!booking.blockchain_booking_id) {
-      return c.json({ error: 'Booking not paid via blockchain - cannot complete' }, 400)
-    }
-    
-    // Backend will call smart contract directly using backendSigner
-    const blockchainBookingId = blockchainService.formatBookingId(booking.id)
-    
-    try {
-      // Call smart contract completeService as backend signer
-      const txHash = await blockchainService.completeServiceAsBackend(blockchainBookingId)
-      
-      console.log('✅ Backend completed service on blockchain:', txHash)
-      
-      // Update booking with completion transaction
-      await supabaseAdmin
-        .from('bookings')
-        .update({
-          completion_tx_hash: txHash,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', bookingId)
-      
-      return c.json({
-        success: true,
-        txHash,
-        message: 'Service completed by backend on blockchain'
-      })
-      
-    } catch (blockchainError) {
-      console.error('❌ Backend blockchain completion failed:', blockchainError)
-      return c.json({ error: 'Backend blockchain completion failed' }, 500)
-    }
-    
-  } catch (error) {
-    console.error('❌ Backend service completion error:', error)
-    return c.json({ error: 'Failed to complete service via backend' }, 500)
-  }
-})
+// app.post('/api/bookings/:id/complete-service-backend', async (c) => {
+//   try {
+//     const bookingId = c.req.param('id')
+//     
+//     console.log('🤖 Backend completing service for booking:', bookingId)
+//     
+//     // Get booking details
+//     const { data: booking, error: bookingError } = await supabaseAdmin
+//       .from('bookings')
+//       .select('*')
+//       .eq('id', bookingId)
+//       .single()
+//     
+//     if (bookingError || !booking) {
+//       console.error('Booking not found:', bookingId, bookingError)
+//       return c.json({ error: 'Booking not found' }, 404)
+//     }
+//     
+//     // Check booking status
+//     if (booking.status !== 'in_progress') {
+//       return c.json({ error: `Booking not eligible for completion (status: ${booking.status})` }, 400)
+//     }
+//     
+//     // Check if blockchain booking ID exists
+//     if (!booking.blockchain_booking_id) {
+//       return c.json({ error: 'Booking not paid via blockchain - cannot complete' }, 400)
+//     }
+//     
+//     // Backend will call smart contract directly using backendSigner
+//     const blockchainBookingId = blockchainService.formatBookingId(booking.id)
+//     
+//     try {
+//       // Call smart contract completeService as backend signer
+//       const txHash = await blockchainService.completeServiceAsBackend(blockchainBookingId)
+//       
+//       console.log('✅ Backend completed service on blockchain:', txHash)
+//       
+//       // Update booking with completion transaction
+//       await supabaseAdmin
+//         .from('bookings')
+//         .update({
+//           completion_tx_hash: txHash,
+//           updated_at: new Date().toISOString()
+//         })
+//         .eq('id', bookingId)
+//       
+//       return c.json({
+//         success: true,
+//         txHash,
+//         message: 'Service completed by backend on blockchain'
+//       })
+//       
+//     } catch (blockchainError) {
+//       console.error('❌ Backend blockchain completion failed:', blockchainError)
+//       return c.json({ error: 'Backend blockchain completion failed' }, 500)
+//     }
+//     
+//   } catch (error) {
+//     console.error('❌ Backend service completion error:', error)
+//     return c.json({ error: 'Failed to complete service via backend' }, 500)
+//   }
+// })
 
+// REFACTORED: Blockchain status endpoint moved to src/routes/bookings.js
 // Get booking blockchain status
-app.get('/api/bookings/:id/blockchain-status', verifyPrivyAuth, async (c) => {
-  try {
-    const userId = c.get('userId')
-    const bookingId = c.req.param('id')
-    
-    // Get booking with blockchain data
-    const { data: booking, error } = await supabaseAdmin
-      .from('bookings')
-      .select('*')
-      .eq('id', bookingId)
-      .single()
-    
-    if (error || !booking) {
-      return c.json({ error: 'Booking not found' }, 404)
-    }
-    
-    // Verify user has access to this booking
-    if (booking.customer_id !== userId && booking.provider_id !== userId) {
-      return c.json({ error: 'Unauthorized' }, 403)
-    }
-    
-    return c.json({
-      blockchain_booking_id: booking.blockchain_booking_id,
-      blockchain_tx_hash: booking.blockchain_tx_hash,
-      blockchain_confirmed_at: booking.blockchain_confirmed_at,
-      completion_tx_hash: booking.completion_tx_hash,
-      cancellation_tx_hash: booking.cancellation_tx_hash,
-      status: booking.status
-    })
-    
-  } catch (error) {
-    console.error('❌ Blockchain status error:', error)
-    return c.json({ error: 'Failed to get blockchain status' }, 500)
-  }
-})
+// app.get('/api/bookings/:id/blockchain-status', verifyPrivyAuth, async (c) => {
+//   try {
+//     const userId = c.get('userId')
+//     const bookingId = c.req.param('id')
+//     
+//     // Get booking with blockchain data
+//     const { data: booking, error } = await supabaseAdmin
+//       .from('bookings')
+//       .select('*')
+//       .eq('id', bookingId)
+//       .single()
+//     
+//     if (error || !booking) {
+//       return c.json({ error: 'Booking not found' }, 404)
+//     }
+//     
+//     // Verify user has access to this booking
+//     if (booking.customer_id !== userId && booking.provider_id !== userId) {
+//       return c.json({ error: 'Unauthorized' }, 403)
+//     }
+//     
+//     return c.json({
+//       blockchain_booking_id: booking.blockchain_booking_id,
+//       blockchain_tx_hash: booking.blockchain_tx_hash,
+//       blockchain_confirmed_at: booking.blockchain_confirmed_at,
+//       completion_tx_hash: booking.completion_tx_hash,
+//       cancellation_tx_hash: booking.cancellation_tx_hash,
+//       status: booking.status
+//     })
+//     
+//   } catch (error) {
+//     console.error('❌ Blockchain status error:', error)
+//     return c.json({ error: 'Failed to get blockchain status' }, 500)
+//   }
+// })
 
 // Get event monitoring status
 app.get('/api/blockchain/monitor-status', async (c) => {
@@ -1069,230 +1078,233 @@ app.post('/api/blockchain/stop-monitoring', async (c) => {
 //   }
 // })
 
+// REFACTORED: Get user's bookings endpoint moved to src/routes/bookings.js
 // Get user's bookings
-app.get('/api/bookings/user/:userId', verifyPrivyAuth, async (c) => {
-  try {
-    const startTime = Date.now()
-    const userId = c.get('userId')
-    const targetUserId = c.req.param('userId')
-    const { role } = c.req.query()
-    
-    let query = supabaseAdmin
-      .from('bookings')
-      .select(`
-        *,
-        service:services(*),
-        customer:users!customer_id(*),
-        provider:users!provider_id(*),
-        reviews!booking_id(
-          id,
-          rating,
-          comment,
-          created_at,
-          updated_at,
-          reviewer:users!reviewer_id(display_name, avatar),
-          reviewee:users!reviewee_id(display_name, avatar)
-        )
-      `)
-    
-    if (role === 'customer') {
-      query = query.eq('customer_id', targetUserId)
-    } else if (role === 'provider') {
-      query = query.eq('provider_id', targetUserId)
-    } else {
-      // Get both
-      query = query.or(`customer_id.eq.${targetUserId},provider_id.eq.${targetUserId}`)
-    }
-    
-    const { data, error } = await query.order('created_at', { ascending: false })
-    
-    if (error) {
-      console.error('Bookings fetch error:', error)
-      return c.json({ error: 'Failed to fetch bookings' }, 500)
-    }
-    
-    const endTime = Date.now()
-    const reviewCount = data ? data.reduce((acc, booking) => {
-      const reviews = Array.isArray(booking.reviews) ? booking.reviews.length : 0
-      return acc + reviews
-    }, 0) : 0
-    console.log(`✅ Optimized bookings query: ${endTime - startTime}ms | ${data?.length || 0} bookings | ${reviewCount} reviews | Role: ${role || 'all'}`)
-    
-    return c.json(data || [])
-  } catch (error) {
-    console.error('Bookings error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// app.get('/api/bookings/user/:userId', verifyPrivyAuth, async (c) => {
+//   try {
+//     const startTime = Date.now()
+//     const userId = c.get('userId')
+//     const targetUserId = c.req.param('userId')
+//     const { role } = c.req.query()
+//     
+//     let query = supabaseAdmin
+//       .from('bookings')
+//       .select(`
+//         *,
+//         service:services(*),
+//         customer:users!customer_id(*),
+//         provider:users!provider_id(*),
+//         reviews!booking_id(
+//           id,
+//           rating,
+//           comment,
+//           created_at,
+//           updated_at,
+//           reviewer:users!reviewer_id(display_name, avatar),
+//           reviewee:users!reviewee_id(display_name, avatar)
+//         )
+//       `)
+//     
+//     if (role === 'customer') {
+//       query = query.eq('customer_id', targetUserId)
+//     } else if (role === 'provider') {
+//       query = query.eq('provider_id', targetUserId)
+//     } else {
+//       // Get both
+//       query = query.or(`customer_id.eq.${targetUserId},provider_id.eq.${targetUserId}`)
+//     }
+//     
+//     const { data, error } = await query.order('created_at', { ascending: false })
+//     
+//     if (error) {
+//       console.error('Bookings fetch error:', error)
+//       return c.json({ error: 'Failed to fetch bookings' }, 500)
+//     }
+//     
+//     const endTime = Date.now()
+//     const reviewCount = data ? data.reduce((acc, booking) => {
+//       const reviews = Array.isArray(booking.reviews) ? booking.reviews.length : 0
+//       return acc + reviews
+//     }, 0) : 0
+//     console.log(`✅ Optimized bookings query: ${endTime - startTime}ms | ${data?.length || 0} bookings | ${reviewCount} reviews | Role: ${role || 'all'}`)
+//     
+//     return c.json(data || [])
+//   } catch (error) {
+//     console.error('Bookings error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
+// REFACTORED: Update booking status endpoint moved to src/routes/bookings.js
 // Update booking status
-app.patch('/api/bookings/:bookingId', verifyPrivyAuth, async (c) => {
-  try {
-    const userId = c.get('userId')
-    const bookingId = c.req.param('bookingId')
-    const updates = await c.req.json()
-    
-    // Verify user is either customer or provider
-    const { data: booking, error: fetchError } = await supabaseAdmin
-      .from('bookings')
-      .select('*')
-      .eq('id', bookingId)
-      .single()
-    
-    if (fetchError || !booking) {
-      return c.json({ error: 'Booking not found' }, 404)
-    }
-    
-    if (booking.customer_id !== userId && booking.provider_id !== userId) {
-      return c.json({ error: 'Unauthorized' }, 403)
-    }
-    
-    const { data, error } = await supabaseAdmin
-      .from('bookings')
-      .update(updates)
-      .eq('id', bookingId)
-      .select()
-      .single()
-    
-    if (error) {
-      console.error('Booking update error:', error)
-      return c.json({ error: 'Failed to update booking' }, 500)
-    }
-    
-    // Generate meeting link when booking is confirmed and is online
-    if (updates.status === 'confirmed' && data.is_online && !data.meeting_link) {
-      console.log('🔗 Booking confirmed, generating meeting link for booking:', bookingId)
-      try {
-        const { generateMeetingLinkForBooking } = await import('./meeting-generation.js')
-        const meetingLink = await generateMeetingLinkForBooking(bookingId)
-        if (meetingLink) {
-          console.log('✅ Meeting link generated successfully for confirmed booking:', meetingLink)
-          // Update the data object to include the meeting link
-          data.meeting_link = meetingLink
-        } else {
-          console.log('⚠️ Meeting link generation failed for confirmed booking - provider may not have integrations set up')
-        }
-      } catch (error) {
-        console.error('❌ Failed to generate meeting link for confirmed booking:', bookingId, error)
-        // Don't fail the confirmation, just log the error
-      }
-    }
-    
-    // Also generate meeting link when transitioning to in_progress (fallback for edge cases)
-    if (updates.status === 'in_progress' && data.is_online && !data.meeting_link) {
-      console.log('🔗 Booking starting (in_progress), generating meeting link as fallback for booking:', bookingId)
-      try {
-        const { generateMeetingLinkForBooking } = await import('./meeting-generation.js')
-        const meetingLink = await generateMeetingLinkForBooking(bookingId)
-        if (meetingLink) {
-          console.log('✅ Meeting link generated successfully for in_progress booking (fallback):', meetingLink)
-          // Update the data object to include the meeting link
-          data.meeting_link = meetingLink
-        } else {
-          console.log('⚠️ Meeting link generation failed for in_progress booking - provider may not have integrations set up')
-        }
-      } catch (error) {
-        console.error('❌ Failed to generate meeting link for in_progress booking:', bookingId, error)
-        // Don't fail the status update, just log the error
-      }
-    }
-    
-    return c.json(data)
-  } catch (error) {
-    console.error('Booking update error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// app.patch('/api/bookings/:bookingId', verifyPrivyAuth, async (c) => {
+//   try {
+//     const userId = c.get('userId')
+//     const bookingId = c.req.param('bookingId')
+//     const updates = await c.req.json()
+//     
+//     // Verify user is either customer or provider
+//     const { data: booking, error: fetchError } = await supabaseAdmin
+//       .from('bookings')
+//       .select('*')
+//       .eq('id', bookingId)
+//       .single()
+//     
+//     if (fetchError || !booking) {
+//       return c.json({ error: 'Booking not found' }, 404)
+//     }
+//     
+//     if (booking.customer_id !== userId && booking.provider_id !== userId) {
+//       return c.json({ error: 'Unauthorized' }, 403)
+//     }
+//     
+//     const { data, error } = await supabaseAdmin
+//       .from('bookings')
+//       .update(updates)
+//       .eq('id', bookingId)
+//       .select()
+//       .single()
+//     
+//     if (error) {
+//       console.error('Booking update error:', error)
+//       return c.json({ error: 'Failed to update booking' }, 500)
+//     }
+//     
+//     // Generate meeting link when booking is confirmed and is online
+//     if (updates.status === 'confirmed' && data.is_online && !data.meeting_link) {
+//       console.log('🔗 Booking confirmed, generating meeting link for booking:', bookingId)
+//       try {
+//         const { generateMeetingLinkForBooking } = await import('./meeting-generation.js')
+//         const meetingLink = await generateMeetingLinkForBooking(bookingId)
+//         if (meetingLink) {
+//           console.log('✅ Meeting link generated successfully for confirmed booking:', meetingLink)
+//           // Update the data object to include the meeting link
+//           data.meeting_link = meetingLink
+//         } else {
+//           console.log('⚠️ Meeting link generation failed for confirmed booking - provider may not have integrations set up')
+//         }
+//       } catch (error) {
+//         console.error('❌ Failed to generate meeting link for confirmed booking:', bookingId, error)
+//         // Don't fail the confirmation, just log the error
+//       }
+//     }
+//     
+//     // Also generate meeting link when transitioning to in_progress (fallback for edge cases)
+//     if (updates.status === 'in_progress' && data.is_online && !data.meeting_link) {
+//       console.log('🔗 Booking starting (in_progress), generating meeting link as fallback for booking:', bookingId)
+//       try {
+//         const { generateMeetingLinkForBooking } = await import('./meeting-generation.js')
+//         const meetingLink = await generateMeetingLinkForBooking(bookingId)
+//         if (meetingLink) {
+//           console.log('✅ Meeting link generated successfully for in_progress booking (fallback):', meetingLink)
+//           // Update the data object to include the meeting link
+//           data.meeting_link = meetingLink
+//         } else {
+//           console.log('⚠️ Meeting link generation failed for in_progress booking - provider may not have integrations set up')
+//         }
+//       } catch (error) {
+//         console.error('❌ Failed to generate meeting link for in_progress booking:', bookingId, error)
+//         // Don't fail the status update, just log the error
+//       }
+//     }
+//     
+//     return c.json(data)
+//   } catch (error) {
+//     console.error('Booking update error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
+// REFACTORED: Booking rejection endpoint moved to src/routes/bookings.js
 // Reject paid booking (calls smart contract cancellation)
-app.post('/api/bookings/:bookingId/reject', verifyPrivyAuth, async (c) => {
-  try {
-    const userId = c.get('userId')
-    const bookingId = c.req.param('bookingId')
-    const { reason = 'Booking rejected by provider' } = await c.req.json()
-    
-    // Get booking details
-    const { data: booking, error: fetchError } = await supabaseAdmin
-      .from('bookings')
-      .select('*')
-      .eq('id', bookingId)
-      .single()
-    
-    if (fetchError || !booking) {
-      return c.json({ error: 'Booking not found' }, 404)
-    }
-    
-    // Only provider can reject bookings
-    if (booking.provider_id !== userId) {
-      return c.json({ error: 'Only provider can reject bookings' }, 403)
-    }
-    
-    // Can only reject paid bookings
-    if (booking.status !== 'paid') {
-      return c.json({ error: 'Can only reject paid bookings' }, 400)
-    }
-    
-    // Check if we have blockchain booking ID
-    if (!booking.blockchain_booking_id) {
-      return c.json({ error: 'No blockchain booking ID found' }, 400)
-    }
-
-    console.log(`🚫 Provider ${userId} rejecting paid booking ${bookingId}`)
-    console.log(`Blockchain booking ID: ${booking.blockchain_booking_id}`)
-    console.log(`Reason: ${reason}`)
-    
-    // Generate cancellation authorization signature
-    // For provider rejection, give full refund to customer (100% refund policy)
-    const totalAmount = parseFloat(booking.total_price)
-    const cancellationAuth = await eip712Signer.signCancellationAuthorization({
-      bookingId: booking.blockchain_booking_id,
-      customerAmount: totalAmount, // Full refund to customer
-      providerAmount: 0,          // No compensation to provider since they rejected
-      platformAmount: 0,          // No platform fee retained
-      inviterAmount: 0,           // No inviter fee retained
-      reason: reason
-    })
-    
-    console.log(`✅ Generated cancellation authorization for booking ${bookingId}`)
-    
-    // Update booking status to rejected (will be updated to cancelled by event monitor)
-    const { error: updateError } = await supabaseAdmin
-      .from('bookings')
-      .update({
-        status: 'rejected',
-        cancelled_at: new Date().toISOString(),
-        cancellation_reason: reason,
-        blockchain_cancellation_auth: cancellationAuth.authorization,
-        blockchain_cancellation_signature: cancellationAuth.signature
-      })
-      .eq('id', bookingId)
-    
-    if (updateError) {
-      console.error('Error updating booking to rejected:', updateError)
-      return c.json({ error: 'Failed to update booking status' }, 500)
-    }
-    
-    return c.json({
-      success: true,
-      message: 'Booking rejected successfully',
-      authorization: {
-        ...cancellationAuth.authorization,
-        // Convert BigInts to strings for JSON serialization
-        bookingId: cancellationAuth.authorization.bookingId,
-        customerAmount: cancellationAuth.authorization.customerAmount.toString(),
-        providerAmount: cancellationAuth.authorization.providerAmount.toString(),
-        platformAmount: cancellationAuth.authorization.platformAmount.toString(),
-        inviterAmount: cancellationAuth.authorization.inviterAmount.toString(),
-        expiry: cancellationAuth.authorization.expiry.toString(),
-        nonce: cancellationAuth.authorization.nonce.toString()
-      },
-      signature: cancellationAuth.signature
-    })
-  } catch (error) {
-    console.error('❌ Error rejecting booking:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// app.post('/api/bookings/:bookingId/reject', verifyPrivyAuth, async (c) => {
+//   try {
+//     const userId = c.get('userId')
+//     const bookingId = c.req.param('bookingId')
+//     const { reason = 'Booking rejected by provider' } = await c.req.json()
+//     
+//     // Get booking details
+//     const { data: booking, error: fetchError } = await supabaseAdmin
+//       .from('bookings')
+//       .select('*')
+//       .eq('id', bookingId)
+//       .single()
+//     
+//     if (fetchError || !booking) {
+//       return c.json({ error: 'Booking not found' }, 404)
+//     }
+//     
+//     // Only provider can reject bookings
+//     if (booking.provider_id !== userId) {
+//       return c.json({ error: 'Only provider can reject bookings' }, 403)
+//     }
+//     
+//     // Can only reject paid bookings
+//     if (booking.status !== 'paid') {
+//       return c.json({ error: 'Can only reject paid bookings' }, 400)
+//     }
+//     
+//     // Check if we have blockchain booking ID
+//     if (!booking.blockchain_booking_id) {
+//       return c.json({ error: 'No blockchain booking ID found' }, 400)
+//     }
+//
+//     console.log(`🚫 Provider ${userId} rejecting paid booking ${bookingId}`)
+//     console.log(`Blockchain booking ID: ${booking.blockchain_booking_id}`)
+//     console.log(`Reason: ${reason}`)
+//     
+//     // Generate cancellation authorization signature
+//     // For provider rejection, give full refund to customer (100% refund policy)
+//     const totalAmount = parseFloat(booking.total_price)
+//     const cancellationAuth = await eip712Signer.signCancellationAuthorization({
+//       bookingId: booking.blockchain_booking_id,
+//       customerAmount: totalAmount, // Full refund to customer
+//       providerAmount: 0,          // No compensation to provider since they rejected
+//       platformAmount: 0,          // No platform fee retained
+//       inviterAmount: 0,           // No inviter fee retained
+//       reason: reason
+//     })
+//     
+//     console.log(`✅ Generated cancellation authorization for booking ${bookingId}`)
+//     
+//     // Update booking status to rejected (will be updated to cancelled by event monitor)
+//     const { error: updateError } = await supabaseAdmin
+//       .from('bookings')
+//       .update({
+//         status: 'rejected',
+//         cancelled_at: new Date().toISOString(),
+//         cancellation_reason: reason,
+//         blockchain_cancellation_auth: cancellationAuth.authorization,
+//         blockchain_cancellation_signature: cancellationAuth.signature
+//       })
+//       .eq('id', bookingId)
+//     
+//     if (updateError) {
+//       console.error('Error updating booking to rejected:', updateError)
+//       return c.json({ error: 'Failed to update booking status' }, 500)
+//     }
+//     
+//     return c.json({
+//       success: true,
+//       message: 'Booking rejected successfully',
+//       authorization: {
+//         ...cancellationAuth.authorization,
+//         // Convert BigInts to strings for JSON serialization
+//         bookingId: cancellationAuth.authorization.bookingId,
+//         customerAmount: cancellationAuth.authorization.customerAmount.toString(),
+//         providerAmount: cancellationAuth.authorization.providerAmount.toString(),
+//         platformAmount: cancellationAuth.authorization.platformAmount.toString(),
+//         inviterAmount: cancellationAuth.authorization.inviterAmount.toString(),
+//         expiry: cancellationAuth.authorization.expiry.toString(),
+//         nonce: cancellationAuth.authorization.nonce.toString()
+//       },
+//       signature: cancellationAuth.signature
+//     })
+//   } catch (error) {
+//     console.error('❌ Error rejecting booking:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
 // Get categories (public)
 app.get('/api/categories', async (c) => {
@@ -1702,274 +1714,279 @@ app.get('/api/reviews/public/provider/:providerId', async (c) => {
 //   }
 // })
 
+// REFACTORED: Cancel booking endpoint moved to src/routes/bookings.js
 // Cancel booking
-app.post('/api/bookings/:id/cancel', verifyPrivyAuth, async (c) => {
-  try {
-    const userId = c.get('userId')
-    const bookingId = c.req.param('id')
-    const { reason } = await c.req.json()
-    
-    // Verify user is part of the booking
-    const { data: booking, error: fetchError } = await supabaseAdmin
-      .from('bookings')
-      .select('*')
-      .eq('id', bookingId)
-      .single()
-    
-    if (fetchError || !booking) {
-      return c.json({ error: 'Booking not found' }, 404)
-    }
-    
-    if (booking.customer_id !== userId && booking.provider_id !== userId) {
-      return c.json({ error: 'Unauthorized' }, 403)
-    }
-    
-    // Update booking status
-    const { data, error } = await supabaseAdmin
-      .from('bookings')
-      .update({
-        status: 'cancelled',
-        cancelled_at: new Date().toISOString(),
-        cancellation_reason: reason || null,
-        cancelled_by: userId
-      })
-      .eq('id', bookingId)
-      .select()
-      .single()
-    
-    if (error) {
-      console.error('Booking cancel error:', error)
-      return c.json({ error: 'Failed to cancel booking' }, 500)
-    }
-    
-    // Delete meeting if exists
-    try {
-      const { deleteMeetingForBooking } = await import('./meeting-generation.js')
-      await deleteMeetingForBooking(bookingId)
-      console.log('✅ Successfully deleted meeting for cancelled booking:', bookingId)
-    } catch (meetingError) {
-      console.warn('⚠️ Failed to delete meeting for cancelled booking:', bookingId, meetingError.message)
-    }
-    
-    return c.json(data)
-  } catch (error) {
-    console.error('Booking cancel error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// app.post('/api/bookings/:id/cancel', verifyPrivyAuth, async (c) => {
+//   try {
+//     const userId = c.get('userId')
+//     const bookingId = c.req.param('id')
+//     const { reason } = await c.req.json()
+//     
+//     // Verify user is part of the booking
+//     const { data: booking, error: fetchError } = await supabaseAdmin
+//       .from('bookings')
+//       .select('*')
+//       .eq('id', bookingId)
+//       .single()
+//     
+//     if (fetchError || !booking) {
+//       return c.json({ error: 'Booking not found' }, 404)
+//     }
+//     
+//     if (booking.customer_id !== userId && booking.provider_id !== userId) {
+//       return c.json({ error: 'Unauthorized' }, 403)
+//     }
+//     
+//     // Update booking status
+//     const { data, error } = await supabaseAdmin
+//       .from('bookings')
+//       .update({
+//         status: 'cancelled',
+//         cancelled_at: new Date().toISOString(),
+//         cancellation_reason: reason || null,
+//         cancelled_by: userId
+//       })
+//       .eq('id', bookingId)
+//       .select()
+//       .single()
+//     
+//     if (error) {
+//       console.error('Booking cancel error:', error)
+//       return c.json({ error: 'Failed to cancel booking' }, 500)
+//     }
+//     
+//     // Delete meeting if exists
+//     try {
+//       const { deleteMeetingForBooking } = await import('./meeting-generation.js')
+//       await deleteMeetingForBooking(bookingId)
+//       console.log('✅ Successfully deleted meeting for cancelled booking:', bookingId)
+//     } catch (meetingError) {
+//       console.warn('⚠️ Failed to delete meeting for cancelled booking:', bookingId, meetingError.message)
+//     }
+//     
+//     return c.json(data)
+//   } catch (error) {
+//     console.error('Booking cancel error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
+// REFACTORED: Get cancellation policies endpoint moved to src/routes/bookings.js
 // Get applicable cancellation policies for a booking
-app.get('/api/bookings/:id/cancellation-policies', verifyPrivyAuth, async (c) => {
-  try {
-    const userId = c.get('userId')
-    const bookingId = c.req.param('id')
-    
-    const policies = await getApplicableCancellationPolicies(bookingId, userId)
-    
-    return c.json(policies)
-  } catch (error) {
-    console.error('Get cancellation policies error:', error)
-    if (error.message === 'Booking not found') {
-      return c.json({ error: 'Booking not found' }, 404)
-    }
-    if (error.message === 'Unauthorized to cancel this booking') {
-      return c.json({ error: 'Unauthorized' }, 403)
-    }
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// app.get('/api/bookings/:id/cancellation-policies', verifyPrivyAuth, async (c) => {
+//   try {
+//     const userId = c.get('userId')
+//     const bookingId = c.req.param('id')
+//     
+//     const policies = await getApplicableCancellationPolicies(bookingId, userId)
+//     
+//     return c.json(policies)
+//   } catch (error) {
+//     console.error('Get cancellation policies error:', error)
+//     if (error.message === 'Booking not found') {
+//       return c.json({ error: 'Booking not found' }, 404)
+//     }
+//     if (error.message === 'Unauthorized to cancel this booking') {
+//       return c.json({ error: 'Unauthorized' }, 403)
+//     }
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
+// REFACTORED: Get refund breakdown endpoint moved to src/routes/bookings.js
 // Get refund breakdown for a specific policy
-app.post('/api/bookings/:id/refund-breakdown', verifyPrivyAuth, async (c) => {
-  try {
-    const bookingId = c.req.param('id')
-    const { policyId } = await c.req.json()
-    
-    if (!policyId) {
-      return c.json({ error: 'Policy ID is required' }, 400)
-    }
-    
-    const breakdown = await calculateRefundBreakdown(bookingId, policyId)
-    
-    return c.json(breakdown)
-  } catch (error) {
-    console.error('Calculate refund breakdown error:', error)
-    if (error.message === 'Booking not found') {
-      return c.json({ error: 'Booking not found' }, 404)
-    }
-    if (error.message === 'Cancellation policy not found') {
-      return c.json({ error: 'Invalid policy selected' }, 400)
-    }
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// app.post('/api/bookings/:id/refund-breakdown', verifyPrivyAuth, async (c) => {
+//   try {
+//     const bookingId = c.req.param('id')
+//     const { policyId } = await c.req.json()
+//     
+//     if (!policyId) {
+//       return c.json({ error: 'Policy ID is required' }, 400)
+//     }
+//     
+//     const breakdown = await calculateRefundBreakdown(bookingId, policyId)
+//     
+//     return c.json(breakdown)
+//   } catch (error) {
+//     console.error('Calculate refund breakdown error:', error)
+//     if (error.message === 'Booking not found') {
+//       return c.json({ error: 'Booking not found' }, 404)
+//     }
+//     if (error.message === 'Cancellation policy not found') {
+//       return c.json({ error: 'Invalid policy selected' }, 400)
+//     }
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
+// REFACTORED: Enhanced cancellation with policy selection endpoint moved to src/routes/bookings.js
 // Enhanced cancellation with policy selection
-app.post('/api/bookings/:id/cancel-with-policy', verifyPrivyAuth, async (c) => {
-  try {
-    const userId = c.get('userId')
-    const bookingId = c.req.param('id')
-    const { policyId, explanation } = await c.req.json()
-    
-    if (!policyId) {
-      return c.json({ error: 'Policy ID is required' }, 400)
-    }
-    
-    // Validate that the policy is applicable
-    const isValid = await validatePolicySelection(bookingId, userId, policyId)
-    if (!isValid) {
-      return c.json({ error: 'Selected policy is not applicable' }, 400)
-    }
-    
-    const result = await processCancellation(bookingId, userId, policyId, explanation)
-    
-    return c.json(result)
-  } catch (error) {
-    console.error('Enhanced cancellation error:', error)
-    
-    if (error.message === 'Selected cancellation policy is not applicable to this booking') {
-      return c.json({ error: 'Policy not applicable' }, 400)
-    }
-    if (error.message === 'An explanation is required for this type of cancellation') {
-      return c.json({ error: 'Explanation required' }, 400)
-    }
-    if (error.message === 'Booking not found') {
-      return c.json({ error: 'Booking not found' }, 404)
-    }
-    if (error.message === 'Unauthorized to cancel this booking') {
-      return c.json({ error: 'Unauthorized' }, 403)
-    }
-    
-    return c.json({ error: 'Failed to process cancellation' }, 500)
-  }
-})
+// app.post('/api/bookings/:id/cancel-with-policy', verifyPrivyAuth, async (c) => {
+//   try {
+//     const userId = c.get('userId')
+//     const bookingId = c.req.param('id')
+//     const { policyId, explanation } = await c.req.json()
+//     
+//     if (!policyId) {
+//       return c.json({ error: 'Policy ID is required' }, 400)
+//     }
+//     
+//     // Validate that the policy is applicable
+//     const isValid = await validatePolicySelection(bookingId, userId, policyId)
+//     if (!isValid) {
+//       return c.json({ error: 'Selected policy is not applicable' }, 400)
+//     }
+//     
+//     const result = await processCancellation(bookingId, userId, policyId, explanation)
+//     
+//     return c.json(result)
+//   } catch (error) {
+//     console.error('Enhanced cancellation error:', error)
+//     
+//     if (error.message === 'Selected cancellation policy is not applicable to this booking') {
+//       return c.json({ error: 'Policy not applicable' }, 400)
+//     }
+//     if (error.message === 'An explanation is required for this type of cancellation') {
+//       return c.json({ error: 'Explanation required' }, 400)
+//     }
+//     if (error.message === 'Booking not found') {
+//       return c.json({ error: 'Booking not found' }, 404)
+//     }
+//     if (error.message === 'Unauthorized to cancel this booking') {
+//       return c.json({ error: 'Unauthorized' }, 403)
+//     }
+//     
+//     return c.json({ error: 'Failed to process cancellation' }, 500)
+//   }
+// })
 
+// REFACTORED: Blockchain authorization for cancellation endpoint moved to src/routes/bookings.js
 // Blockchain authorization for cancellation
-app.post('/api/bookings/:id/authorize-cancellation', verifyPrivyAuth, async (c) => {
-  try {
-    const userId = c.get('userId')
-    const bookingId = c.req.param('id')
-    const { policyId, explanation } = await c.req.json()
-    
-    if (!policyId) {
-      return c.json({ error: 'Policy ID is required' }, 400)
-    }
-
-
-    console.log('🔐 Authorizing cancellation for booking:', bookingId)
-
-    // Get booking first to debug
-    console.log('🔍 Looking for booking:', bookingId)
-    
-    const { data: booking, error: bookingError } = await supabaseAdmin
-      .from('bookings')
-      .select('*')
-      .eq('id', bookingId)
-      .single()
-    
-    console.log('🔍 Basic booking result:', booking ? 'FOUND' : 'NOT FOUND', bookingError)
-    
-    if (bookingError || !booking) {
-      console.error('❌ Basic booking query failed:', bookingError)
-      return c.json({ error: 'Booking not found' }, 404)
-    }
-    
-    // Get service data
-    const { data: service } = await supabaseAdmin
-      .from('services')
-      .select('*')
-      .eq('id', booking.service_id)
-      .single()
-    
-    booking.service = service
-    
-    // Get customer wallet address from database
-    const { data: customerUser } = await supabaseAdmin
-      .from('users')
-      .select('wallet_address')
-      .eq('id', booking.customer_id)
-      .single()
-    
-    const customerWallet = customerUser?.wallet_address
-    console.log('💰 Customer wallet address:', customerWallet)
-    
-    // Get provider wallet address from database  
-    const { data: providerUser } = await supabaseAdmin
-      .from('users')
-      .select('wallet_address')
-      .eq('id', booking.provider_id)
-      .single()
-    
-    const providerWallet = providerUser?.wallet_address
-    console.log('💰 Provider wallet address:', providerWallet)
-
-    // Validate user can cancel this booking
-    const isCustomer = booking.customer_id === userId
-    const isProvider = booking.provider_id === userId
-    
-    if (!isCustomer && !isProvider) {
-      return c.json({ error: 'Unauthorized to cancel this booking' }, 403)
-    }
-
-    // Validate that the policy is applicable
-    const isValid = await validatePolicySelection(bookingId, userId, policyId)
-    if (!isValid) {
-      return c.json({ error: 'Selected policy is not applicable' }, 400)
-    }
-
-    // Calculate refund breakdown
-    const refundBreakdown = await calculateRefundBreakdown(bookingId, policyId)
-    
-    // Validate we have wallet addresses
-    if (!customerWallet || !providerWallet) {
-      console.error('❌ Wallet addresses not found:', { customerWallet, providerWallet })
-      return c.json({ error: 'Wallet addresses not configured. Please ensure wallet is connected.' }, 400)
-    }
-
-    console.log('✅ Using wallet addresses from Privy API')
-
-    // Generate EIP-712 authorization signature
-    const eip712Signer = new EIP712Signer()
-    const authorization = await eip712Signer.signCancellationAuthorization({
-      bookingId: booking.id,
-      customerAmount: refundBreakdown.breakdown.customerRefund,
-      providerAmount: refundBreakdown.breakdown.providerEarnings,
-      platformAmount: refundBreakdown.breakdown.platformFee,
-      inviterAmount: 0, // TODO: Handle inviter fees if applicable
-      reason: explanation || refundBreakdown.policyTitle,
-      expiryMinutes: 5
-    })
-
-    console.log('✅ Generated cancellation authorization')
-
-    // Convert BigInt values to strings for JSON serialization
-    const serializableAuthorization = {
-      ...authorization.authorization,
-      customerAmount: authorization.authorization.customerAmount.toString(),
-      providerAmount: authorization.authorization.providerAmount.toString(),
-      platformAmount: authorization.authorization.platformAmount.toString(),
-      inviterAmount: authorization.authorization.inviterAmount.toString(),
-      expiry: authorization.authorization.expiry.toString(),
-      nonce: authorization.authorization.nonce.toString()
-    }
-
-    // Determine current user's wallet address
-    const currentUserWallet = isCustomer ? customerWallet : providerWallet
-
-    return c.json({
-      authorization: serializableAuthorization,
-      signature: authorization.signature,
-      refundBreakdown,
-      walletAddress: currentUserWallet,
-      expiry: authorization.expiry,
-      nonce: authorization.nonce
-    })
-
-  } catch (error) {
-    console.error('❌ Cancellation authorization error:', error)
-    return c.json({ error: 'Failed to generate cancellation authorization' }, 500)
-  }
-})
+// app.post('/api/bookings/:id/authorize-cancellation', verifyPrivyAuth, async (c) => {
+//   try {
+//     const userId = c.get('userId')
+//     const bookingId = c.req.param('id')
+//     const { policyId, explanation } = await c.req.json()
+//     
+//     if (!policyId) {
+//       return c.json({ error: 'Policy ID is required' }, 400)
+//     }
+//
+//
+//     console.log('🔐 Authorizing cancellation for booking:', bookingId)
+//
+//     // Get booking first to debug
+//     console.log('🔍 Looking for booking:', bookingId)
+//     
+//     const { data: booking, error: bookingError } = await supabaseAdmin
+//       .from('bookings')
+//       .select('*')
+//       .eq('id', bookingId)
+//       .single()
+//     
+//     console.log('🔍 Basic booking result:', booking ? 'FOUND' : 'NOT FOUND', bookingError)
+//     
+//     if (bookingError || !booking) {
+//       console.error('❌ Basic booking query failed:', bookingError)
+//       return c.json({ error: 'Booking not found' }, 404)
+//     }
+//     
+//     // Get service data
+//     const { data: service } = await supabaseAdmin
+//       .from('services')
+//       .select('*')
+//       .eq('id', booking.service_id)
+//       .single()
+//     
+//     booking.service = service
+//     
+//     // Get customer wallet address from database
+//     const { data: customerUser } = await supabaseAdmin
+//       .from('users')
+//       .select('wallet_address')
+//       .eq('id', booking.customer_id)
+//       .single()
+//     
+//     const customerWallet = customerUser?.wallet_address
+//     console.log('💰 Customer wallet address:', customerWallet)
+//     
+//     // Get provider wallet address from database  
+//     const { data: providerUser } = await supabaseAdmin
+//       .from('users')
+//       .select('wallet_address')
+//       .eq('id', booking.provider_id)
+//       .single()
+//     
+//     const providerWallet = providerUser?.wallet_address
+//     console.log('💰 Provider wallet address:', providerWallet)
+//
+//     // Validate user can cancel this booking
+//     const isCustomer = booking.customer_id === userId
+//     const isProvider = booking.provider_id === userId
+//     
+//     if (!isCustomer && !isProvider) {
+//       return c.json({ error: 'Unauthorized to cancel this booking' }, 403)
+//     }
+//
+//     // Validate that the policy is applicable
+//     const isValid = await validatePolicySelection(bookingId, userId, policyId)
+//     if (!isValid) {
+//       return c.json({ error: 'Selected policy is not applicable' }, 400)
+//     }
+//
+//     // Calculate refund breakdown
+//     const refundBreakdown = await calculateRefundBreakdown(bookingId, policyId)
+//     
+//     // Validate we have wallet addresses
+//     if (!customerWallet || !providerWallet) {
+//       console.error('❌ Wallet addresses not found:', { customerWallet, providerWallet })
+//       return c.json({ error: 'Wallet addresses not configured. Please ensure wallet is connected.' }, 400)
+//     }
+//
+//     console.log('✅ Using wallet addresses from Privy API')
+//
+//     // Generate EIP-712 authorization signature
+//     const eip712Signer = new EIP712Signer()
+//     const authorization = await eip712Signer.signCancellationAuthorization({
+//       bookingId: booking.id,
+//       customerAmount: refundBreakdown.breakdown.customerRefund,
+//       providerAmount: refundBreakdown.breakdown.providerEarnings,
+//       platformAmount: refundBreakdown.breakdown.platformFee,
+//       inviterAmount: 0, // TODO: Handle inviter fees if applicable
+//       reason: explanation || refundBreakdown.policyTitle,
+//       expiryMinutes: 5
+//     })
+//
+//     console.log('✅ Generated cancellation authorization')
+//
+//     // Convert BigInt values to strings for JSON serialization
+//     const serializableAuthorization = {
+//       ...authorization.authorization,
+//       customerAmount: authorization.authorization.customerAmount.toString(),
+//       providerAmount: authorization.authorization.providerAmount.toString(),
+//       platformAmount: authorization.authorization.platformAmount.toString(),
+//       inviterAmount: authorization.authorization.inviterAmount.toString(),
+//       expiry: authorization.authorization.expiry.toString(),
+//       nonce: authorization.authorization.nonce.toString()
+//     }
+//
+//     // Determine current user's wallet address
+//     const currentUserWallet = isCustomer ? customerWallet : providerWallet
+//
+//     return c.json({
+//       authorization: serializableAuthorization,
+//       signature: authorization.signature,
+//       refundBreakdown,
+//       walletAddress: currentUserWallet,
+//       expiry: authorization.expiry,
+//       nonce: authorization.nonce
+//     })
+//
+//   } catch (error) {
+//     console.error('❌ Cancellation authorization error:', error)
+//     return c.json({ error: 'Failed to generate cancellation authorization' }, 500)
+//   }
+// })
 
 
 // Get conversations
