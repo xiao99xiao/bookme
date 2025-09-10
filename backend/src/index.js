@@ -1,9 +1,11 @@
 import { Hono } from 'hono'
 import { serve } from '@hono/node-server'
 import { cors } from 'hono/cors'
-import { PrivyClient } from '@privy-io/server-auth'
-import { createClient } from '@supabase/supabase-js'
-import { v5 as uuidv5 } from 'uuid'
+// REFACTORED: Auth middleware moved to src/middleware/auth.js
+import { verifyPrivyAuth, privyDidToUuid, getPrivyClient, getSupabaseAdmin } from './middleware/auth.js'
+// import { PrivyClient } from '@privy-io/server-auth' // MOVED TO auth.js
+// import { createClient } from '@supabase/supabase-js' // MOVED TO auth.js
+// import { v5 as uuidv5 } from 'uuid' // MOVED TO auth.js
 import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv'
 import { ethers } from 'ethers'
@@ -67,16 +69,21 @@ blockchainService.testConnection().then(result => {
   }
 });
 
-// Initialize clients
-const privyClient = new PrivyClient(
-  process.env.PRIVY_APP_ID,
-  process.env.PRIVY_APP_SECRET
-)
+// REFACTORED: Client initialization moved to auth.js
+// Get clients from auth middleware
+const privyClient = getPrivyClient();
+const supabaseAdmin = getSupabaseAdmin();
 
-const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-)
+// OLD CODE - COMMENTED OUT:
+// const privyClient = new PrivyClient(
+//   process.env.PRIVY_APP_ID,
+//   process.env.PRIVY_APP_SECRET
+// )
+// 
+// const supabaseAdmin = createClient(
+//   process.env.SUPABASE_URL,
+//   process.env.SUPABASE_SERVICE_ROLE_KEY
+// )
 
 // Initialize blockchain event monitor
 eventMonitor = new BlockchainEventMonitor(supabaseAdmin);
@@ -92,79 +99,82 @@ if (process.env.NODE_ENV === 'production' || process.env.ENABLE_BLOCKCHAIN_MONIT
   console.log('⏸️ Blockchain event monitoring disabled (set ENABLE_BLOCKCHAIN_MONITORING=true to enable)');
 }
 
-// UUID namespace - same as frontend
-const PRIVY_NAMESPACE = '6ba7b810-9dad-11d1-80b4-00c04fd430c8'
+// REFACTORED: UUID conversion moved to auth.js
+// Now imported from auth middleware
+// OLD CODE - COMMENTED OUT:
+// const PRIVY_NAMESPACE = '6ba7b810-9dad-11d1-80b4-00c04fd430c8'
+// 
+// function privyDidToUuid(privyDid) {
+//   if (!privyDid) {
+//     throw new Error('Privy DID is required')
+//   }
+//   return uuidv5(privyDid, PRIVY_NAMESPACE)
+// }
 
-// Convert Privy DID to UUID (same logic as frontend)
-function privyDidToUuid(privyDid) {
-  if (!privyDid) {
-    throw new Error('Privy DID is required')
-  }
-  return uuidv5(privyDid, PRIVY_NAMESPACE)
-}
-
-// Middleware to verify Privy token
-async function verifyPrivyAuth(c, next) {
-  try {
-    const authHeader = c.req.header('Authorization')
-    if (!authHeader?.startsWith('Bearer ')) {
-      return c.json({ error: 'Missing authorization header' }, 401)
-    }
-    
-    const token = authHeader.substring(7)
-    const user = await privyClient.verifyAuthToken(token)
-    
-    if (!user) {
-      return c.json({ error: 'Invalid token' }, 401)
-    }
-    
-    // Add user to context
-    c.set('privyUser', user)
-    const userId = privyDidToUuid(user.userId)
-    c.set('userId', userId)
-    
-    // Store/update wallet address on each authenticated request
-    try {
-      console.log('🔍 Fetching wallet address for user:', user.userId)
-      const userDetails = await privyClient.getUser(user.userId)
-      const smartWallet = userDetails.linkedAccounts?.find(acc => acc.type === 'smart_wallet')
-      const embeddedWallet = userDetails.linkedAccounts?.find(acc => acc.type === 'wallet')
-      const walletAddress = smartWallet?.address || embeddedWallet?.address
-
-      console.log('💰 Smart wallet:', smartWallet?.address || 'Not found')
-      console.log('💰 Embedded wallet:', embeddedWallet?.address || 'Not found')
-      console.log('💰 Using wallet address:', walletAddress)
-
-      if (walletAddress) {
-        console.log('💾 Updating wallet address in database for user:', userId)
-        // Update existing user's wallet address (don't create new users)
-        const { data, error } = await supabaseAdmin
-          .from('users')
-          .update({ 
-            wallet_address: walletAddress 
-          })
-          .eq('id', userId)
-        
-        if (error) {
-          console.error('❌ Database update error:', error)
-        } else {
-          console.log('✅ Wallet address updated successfully:', walletAddress)
-        }
-      } else {
-        console.warn('⚠️ No wallet address found for user:', user.userId)
-      }
-    } catch (walletError) {
-      // Don't fail auth if wallet update fails, just log warning
-      console.warn('⚠️ Failed to update user wallet address:', walletError.message)
-      console.error('Full wallet error:', walletError)
-    }
-    
-    await next()
-  } catch (error) {
-    console.error('Auth error:', error)
-    return c.json({ error: 'Authentication failed' }, 401)
-  }
-}
+// REFACTORED: verifyPrivyAuth middleware moved to auth.js
+// Now imported from auth middleware
+// OLD CODE - COMMENTED OUT:
+// async function verifyPrivyAuth(c, next) {
+//   try {
+//     const authHeader = c.req.header('Authorization')
+//     if (!authHeader?.startsWith('Bearer ')) {
+//       return c.json({ error: 'Missing authorization header' }, 401)
+//     }
+//     
+//     const token = authHeader.substring(7)
+//     const user = await privyClient.verifyAuthToken(token)
+//     
+//     if (!user) {
+//       return c.json({ error: 'Invalid token' }, 401)
+//     }
+//     
+//     // Add user to context
+//     c.set('privyUser', user)
+//     const userId = privyDidToUuid(user.userId)
+//     c.set('userId', userId)
+//     
+//     // Store/update wallet address on each authenticated request
+//     try {
+//       console.log('🔍 Fetching wallet address for user:', user.userId)
+//       const userDetails = await privyClient.getUser(user.userId)
+//       const smartWallet = userDetails.linkedAccounts?.find(acc => acc.type === 'smart_wallet')
+//       const embeddedWallet = userDetails.linkedAccounts?.find(acc => acc.type === 'wallet')
+//       const walletAddress = smartWallet?.address || embeddedWallet?.address
+// 
+//       console.log('💰 Smart wallet:', smartWallet?.address || 'Not found')
+//       console.log('💰 Embedded wallet:', embeddedWallet?.address || 'Not found')
+//       console.log('💰 Using wallet address:', walletAddress)
+// 
+//       if (walletAddress) {
+//         console.log('💾 Updating wallet address in database for user:', userId)
+//         // Update existing user's wallet address (don't create new users)
+//         const { data, error } = await supabaseAdmin
+//           .from('users')
+//           .update({ 
+//             wallet_address: walletAddress 
+//           })
+//           .eq('id', userId)
+//         
+//         if (error) {
+//           console.error('❌ Database update error:', error)
+//         } else {
+//           console.log('✅ Wallet address updated successfully:', walletAddress)
+//         }
+//       } else {
+//         console.warn('⚠️ No wallet address found for user:', user.userId)
+//       }
+//     } catch (walletError) {
+//       // Don't fail auth if wallet update fails, just log warning
+//       console.warn('⚠️ Failed to update user wallet address:', walletError.message)
+//       console.error('Full wallet error:', walletError)
+//     }
+//     
+//     await next()
+//   } catch (error) {
+//     console.error('Auth error:', error)
+//     return c.json({ error: 'Authentication failed' }, 401)
+//   }
+// }
 
 // Health check endpoint (no auth required)
 app.get('/health', (c) => {
