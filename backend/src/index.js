@@ -19,6 +19,8 @@ import conversationRoutes from './routes/conversations.js'
 import integrationRoutes from './routes/integrations.js'
 // REFACTORED: Upload routes moved to src/routes/uploads.js
 import uploadRoutes from './routes/uploads.js'
+// REFACTORED: System routes moved to src/routes/system.js
+import systemRoutes from './routes/system.js'
 // import { PrivyClient } from '@privy-io/server-auth' // MOVED TO auth.js
 // import { createClient } from '@supabase/supabase-js' // MOVED TO auth.js
 // import { v5 as uuidv5 } from 'uuid' // MOVED TO auth.js
@@ -192,13 +194,14 @@ if (process.env.NODE_ENV === 'production' || process.env.ENABLE_BLOCKCHAIN_MONIT
 //   }
 // }
 
+// REFACTORED: Health check endpoint moved to src/routes/system.js
 // Health check endpoint (no auth required)
-app.get('/health', (c) => {
-  return c.json({ 
-    status: 'ok',
-    timestamp: new Date().toISOString()
-  })
-})
+// app.get('/health', (c) => {
+//   return c.json({ 
+//     status: 'ok',
+//     timestamp: new Date().toISOString()
+//   })
+// })
 
 // REFACTORED: Auth routes moved to src/routes/auth.js
 // Initialize auth routes
@@ -217,6 +220,8 @@ conversationRoutes(app);
 integrationRoutes(app);
 // Register upload routes
 uploadRoutes(app);
+// Register system routes
+systemRoutes(app);
 
 // OLD CODE - COMMENTED OUT:
 // app.post('/api/auth/token', async (c) => {
@@ -880,44 +885,47 @@ uploadRoutes(app);
 //   }
 // })
 
+// REFACTORED: Blockchain monitor status endpoint moved to src/routes/system.js
 // Get event monitoring status
-app.get('/api/blockchain/monitor-status', async (c) => {
-  try {
-    const status = eventMonitor.getStatus();
-    return c.json({
-      ...status,
-      uptime: process.uptime(),
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    console.error('❌ Error getting monitor status:', error);
-    return c.json({ error: 'Failed to get monitoring status' }, 500);
-  }
-})
+// app.get('/api/blockchain/monitor-status', async (c) => {
+//   try {
+//     const status = eventMonitor.getStatus();
+//     return c.json({
+//       ...status,
+//       uptime: process.uptime(),
+//       timestamp: new Date().toISOString()
+//     });
+//   } catch (error) {
+//     console.error('❌ Error getting monitor status:', error);
+//     return c.json({ error: 'Failed to get monitoring status' }, 500);
+//   }
+// })
 
+// REFACTORED: Start blockchain monitoring endpoint moved to src/routes/system.js
 // Start event monitoring (admin only)
-app.post('/api/blockchain/start-monitoring', async (c) => {
-  try {
-    // TODO: Add admin authentication check
-    await eventMonitor.startMonitoring();
-    return c.json({ message: 'Event monitoring started', status: eventMonitor.getStatus() });
-  } catch (error) {
-    console.error('❌ Error starting monitoring:', error);
-    return c.json({ error: 'Failed to start monitoring' }, 500);
-  }
-})
+// app.post('/api/blockchain/start-monitoring', async (c) => {
+//   try {
+//     // TODO: Add admin authentication check
+//     await eventMonitor.startMonitoring();
+//     return c.json({ message: 'Event monitoring started', status: eventMonitor.getStatus() });
+//   } catch (error) {
+//     console.error('❌ Error starting monitoring:', error);
+//     return c.json({ error: 'Failed to start monitoring' }, 500);
+//   }
+// })
 
+// REFACTORED: Stop blockchain monitoring endpoint moved to src/routes/system.js
 // Stop event monitoring (admin only)
-app.post('/api/blockchain/stop-monitoring', async (c) => {
-  try {
-    // TODO: Add admin authentication check
-    await eventMonitor.stopMonitoring();
-    return c.json({ message: 'Event monitoring stopped', status: eventMonitor.getStatus() });
-  } catch (error) {
-    console.error('❌ Error stopping monitoring:', error);
-    return c.json({ error: 'Failed to stop monitoring' }, 500);
-  }
-})
+// app.post('/api/blockchain/stop-monitoring', async (c) => {
+//   try {
+//     // TODO: Add admin authentication check
+//     await eventMonitor.stopMonitoring();
+//     return c.json({ message: 'Event monitoring stopped', status: eventMonitor.getStatus() });
+//   } catch (error) {
+//     console.error('❌ Error stopping monitoring:', error);
+//     return c.json({ error: 'Failed to stop monitoring' }, 500);
+//   }
+// })
 
 // Complete service (triggers blockchain payment distribution)
 
@@ -1322,25 +1330,26 @@ app.post('/api/blockchain/stop-monitoring', async (c) => {
 //   }
 // })
 
+// REFACTORED: Categories endpoint moved to src/routes/system.js
 // Get categories (public)
-app.get('/api/categories', async (c) => {
-  try {
-    const { data, error } = await supabaseAdmin
-      .from('categories')
-      .select('*')
-      .order('name')
-    
-    if (error) {
-      console.error('Categories fetch error:', error)
-      return c.json({ error: 'Failed to fetch categories' }, 500)
-    }
-    
-    return c.json(data || [])
-  } catch (error) {
-    console.error('Categories error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// app.get('/api/categories', async (c) => {
+//   try {
+//     const { data, error } = await supabaseAdmin
+//       .from('categories')
+//       .select('*')
+//       .order('name')
+//     
+//     if (error) {
+//       console.error('Categories fetch error:', error)
+//       return c.json({ error: 'Failed to fetch categories' }, 500)
+//     }
+//     
+//     return c.json(data || [])
+//   } catch (error) {
+//     console.error('Categories error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
 // Get public user profile (no auth required)
 // REFACTORED: Moved to src/routes/users.js - GET /api/profile/public/:userId
