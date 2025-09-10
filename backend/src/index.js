@@ -17,6 +17,8 @@ import reviewRoutes from './routes/reviews.js'
 import conversationRoutes from './routes/conversations.js'
 // REFACTORED: Integration routes moved to src/routes/integrations.js
 import integrationRoutes from './routes/integrations.js'
+// REFACTORED: Upload routes moved to src/routes/uploads.js
+import uploadRoutes from './routes/uploads.js'
 // import { PrivyClient } from '@privy-io/server-auth' // MOVED TO auth.js
 // import { createClient } from '@supabase/supabase-js' // MOVED TO auth.js
 // import { v5 as uuidv5 } from 'uuid' // MOVED TO auth.js
@@ -213,6 +215,8 @@ reviewRoutes(app);
 conversationRoutes(app);
 // Register integration routes
 integrationRoutes(app);
+// Register upload routes
+uploadRoutes(app);
 
 // OLD CODE - COMMENTED OUT:
 // app.post('/api/auth/token', async (c) => {
@@ -2699,65 +2703,66 @@ app.get('/api/categories', async (c) => {
 //   }
 // })
 
+// REFACTORED: File upload endpoint moved to src/routes/uploads.js
 // File upload endpoint
-app.post('/api/upload', verifyPrivyAuth, async (c) => {
-  try {
-    const userId = c.get('userId')
-    const formData = await c.req.formData()
-    const file = formData.get('file')
-    const bucket = formData.get('bucket') || 'avatars'
-    
-    if (!file || !(file instanceof File)) {
-      return c.json({ error: 'No file provided' }, 400)
-    }
-    
-    // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-    if (!allowedTypes.includes(file.type)) {
-      return c.json({ error: 'Invalid file type. Only images are allowed.' }, 400)
-    }
-    
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      return c.json({ error: 'File too large. Maximum size is 5MB.' }, 400)
-    }
-    
-    // Generate unique filename
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${userId}-${Date.now()}.${fileExt}`
-    const filePath = `${userId}/${fileName}`
-    
-    // Upload to Supabase Storage
-    const arrayBuffer = await file.arrayBuffer()
-    const { data, error } = await supabaseAdmin
-      .storage
-      .from(bucket)
-      .upload(filePath, arrayBuffer, {
-        contentType: file.type,
-        upsert: true
-      })
-    
-    if (error) {
-      console.error('Upload error:', error)
-      return c.json({ error: 'Failed to upload file' }, 500)
-    }
-    
-    // Get public URL
-    const { data: { publicUrl } } = supabaseAdmin
-      .storage
-      .from(bucket)
-      .getPublicUrl(filePath)
-    
-    return c.json({
-      url: publicUrl,
-      path: filePath,
-      bucket
-    })
-  } catch (error) {
-    console.error('Upload error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// app.post('/api/upload', verifyPrivyAuth, async (c) => {
+//   try {
+//     const userId = c.get('userId')
+//     const formData = await c.req.formData()
+//     const file = formData.get('file')
+//     const bucket = formData.get('bucket') || 'avatars'
+//     
+//     if (!file || !(file instanceof File)) {
+//       return c.json({ error: 'No file provided' }, 400)
+//     }
+//     
+//     // Validate file type
+//     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+//     if (!allowedTypes.includes(file.type)) {
+//       return c.json({ error: 'Invalid file type. Only images are allowed.' }, 400)
+//     }
+//     
+//     // Validate file size (max 5MB)
+//     if (file.size > 5 * 1024 * 1024) {
+//       return c.json({ error: 'File too large. Maximum size is 5MB.' }, 400)
+//     }
+//     
+//     // Generate unique filename
+//     const fileExt = file.name.split('.').pop()
+//     const fileName = `${userId}-${Date.now()}.${fileExt}`
+//     const filePath = `${userId}/${fileName}`
+//     
+//     // Upload to Supabase Storage
+//     const arrayBuffer = await file.arrayBuffer()
+//     const { data, error } = await supabaseAdmin
+//       .storage
+//       .from(bucket)
+//       .upload(filePath, arrayBuffer, {
+//         contentType: file.type,
+//         upsert: true
+//       })
+//     
+//     if (error) {
+//       console.error('Upload error:', error)
+//       return c.json({ error: 'Failed to upload file' }, 500)
+//     }
+//     
+//     // Get public URL
+//     const { data: { publicUrl } } = supabaseAdmin
+//       .storage
+//       .from(bucket)
+//       .getPublicUrl(filePath)
+//     
+//     return c.json({
+//       url: publicUrl,
+//       path: filePath,
+//       bucket
+//     })
+//   } catch (error) {
+//     console.error('Upload error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
 // REFACTORED: Get user meeting integrations (duplicate) moved to src/routes/integrations.js
 // Get user meeting integrations
