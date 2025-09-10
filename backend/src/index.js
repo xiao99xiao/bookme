@@ -11,6 +11,8 @@ import userRoutes from './routes/users.js'
 import serviceRoutes from './routes/services.js'
 // REFACTORED: Booking routes moved to src/routes/bookings.js
 import bookingRoutes from './routes/bookings.js'
+// REFACTORED: Review routes moved to src/routes/reviews.js
+import reviewRoutes from './routes/reviews.js'
 // import { PrivyClient } from '@privy-io/server-auth' // MOVED TO auth.js
 // import { createClient } from '@supabase/supabase-js' // MOVED TO auth.js
 // import { v5 as uuidv5 } from 'uuid' // MOVED TO auth.js
@@ -201,6 +203,8 @@ userRoutes(app);
 serviceRoutes(app);
 // Register booking routes
 bookingRoutes(app);
+// Register review routes
+reviewRoutes(app);
 
 // OLD CODE - COMMENTED OUT:
 // app.post('/api/auth/token', async (c) => {
@@ -1377,33 +1381,34 @@ app.get('/api/categories', async (c) => {
 //   }
 // })
 
+// REFACTORED: Get public provider reviews moved to src/routes/reviews.js
 // Get public provider reviews (no auth required)
-app.get('/api/reviews/public/provider/:providerId', async (c) => {
-  try {
-    const providerId = c.req.param('providerId')
-    
-    const { data, error } = await supabaseAdmin
-      .from('reviews')
-      .select(`
-        *,
-        services(title),
-        reviewer:users!reviewer_id(display_name, avatar)
-      `)
-      .eq('reviewee_id', providerId)
-      .eq('is_public', true)
-      .order('created_at', { ascending: false })
-    
-    if (error) {
-      console.error('Public reviews fetch error:', error)
-      return c.json({ error: 'Failed to fetch reviews' }, 500)
-    }
-    
-    return c.json(data || [])
-  } catch (error) {
-    console.error('Public reviews error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// app.get('/api/reviews/public/provider/:providerId', async (c) => {
+//   try {
+//     const providerId = c.req.param('providerId')
+//     
+//     const { data, error } = await supabaseAdmin
+//       .from('reviews')
+//       .select(`
+//         *,
+//         services(title),
+//         reviewer:users!reviewer_id(display_name, avatar)
+//       `)
+//       .eq('reviewee_id', providerId)
+//       .eq('is_public', true)
+//       .order('created_at', { ascending: false })
+//     
+//     if (error) {
+//       console.error('Public reviews fetch error:', error)
+//       return c.json({ error: 'Failed to fetch reviews' }, 500)
+//     }
+//     
+//     return c.json(data || [])
+//   } catch (error) {
+//     console.error('Public reviews error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
 // Get public services for discovery (no auth required)
 // REFACTORED: Moved to src/routes/services.js - GET /api/services/public
@@ -2314,183 +2319,185 @@ app.get('/api/messages/:conversationId', verifyPrivyAuth, async (c) => {
   }
 })
 
+// REFACTORED: Create or update review moved to src/routes/reviews.js
 // Create or update review
-app.post('/api/reviews', verifyPrivyAuth, async (c) => {
-  try {
-    const userId = c.get('userId')
-    const { bookingId, rating, comment } = await c.req.json()
-    
-    // Validate booking and check if user can review
-    const { data: booking, error: bookingError } = await supabaseAdmin
-      .from('bookings')
-      .select('*')
-      .eq('id', bookingId)
-      .single()
-    
-    if (bookingError || !booking) {
-      return c.json({ error: 'Booking not found' }, 404)
-    }
-    
-    if (booking.customer_id !== userId) {
-      return c.json({ error: 'Only customer can review' }, 403)
-    }
-    
-    if (booking.status !== 'completed') {
-      return c.json({ error: 'Can only review completed bookings' }, 400)
-    }
-    
-    // Check if within 7-day review window
-    const completedDate = new Date(booking.completed_at)
-    const daysSinceCompletion = Math.floor((Date.now() - completedDate.getTime()) / (1000 * 60 * 60 * 24))
-    
-    if (daysSinceCompletion > 7) {
-      return c.json({ error: 'Review window has expired (7 days)' }, 400)
-    }
-    
-    // Check if review exists
-    const { data: existingReview } = await supabaseAdmin
-      .from('reviews')
-      .select('id')
-      .eq('booking_id', bookingId)
-      .single()
-    
-    let review
-    if (existingReview) {
-      // Update existing review
-      const { data, error } = await supabaseAdmin
-        .from('reviews')
-        .update({
-          rating,
-          comment,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', existingReview.id)
-        .select()
-        .single()
-      
-      if (error) {
-        console.error('Review update error:', error)
-        return c.json({ error: 'Failed to update review' }, 500)
-      }
-      review = data
-    } else {
-      // Create new review
-      const { data, error } = await supabaseAdmin
-        .from('reviews')
-        .insert({
-          booking_id: bookingId,
-          service_id: booking.service_id,
-          reviewer_id: userId,
-          reviewee_id: booking.provider_id,
-          rating,
-          comment
-        })
-        .select()
-        .single()
-      
-      if (error) {
-        console.error('Review create error:', error)
-        return c.json({ error: 'Failed to create review' }, 500)
-      }
-      review = data
-    }
-    
-    // Update provider rating
-    const { data: providerReviews } = await supabaseAdmin
-      .from('reviews')
-      .select('rating')
-      .eq('reviewee_id', booking.provider_id)
-    
-    if (providerReviews && providerReviews.length > 0) {
-      const avgRating = providerReviews.reduce((sum, r) => sum + r.rating, 0) / providerReviews.length
-      
-      await supabaseAdmin
-        .from('users')
-        .update({
-          rating: avgRating,
-          review_count: providerReviews.length
-        })
-        .eq('id', booking.provider_id)
-    }
-    
-    // Update service rating
-    const { data: serviceReviews } = await supabaseAdmin
-      .from('reviews')
-      .select('rating')
-      .eq('service_id', booking.service_id)
-    
-    if (serviceReviews && serviceReviews.length > 0) {
-      const avgRating = serviceReviews.reduce((sum, r) => sum + r.rating, 0) / serviceReviews.length
-      
-      await supabaseAdmin
-        .from('services')
-        .update({
-          rating: avgRating,
-          review_count: serviceReviews.length
-        })
-        .eq('id', booking.service_id)
-    }
-    
-    return c.json(review)
-  } catch (error) {
-    console.error('Review error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// app.post('/api/reviews', verifyPrivyAuth, async (c) => {
+//   try {
+//     const userId = c.get('userId')
+//     const { bookingId, rating, comment } = await c.req.json()
+//     
+//     // Validate booking and check if user can review
+//     const { data: booking, error: bookingError } = await supabaseAdmin
+//       .from('bookings')
+//       .select('*')
+//       .eq('id', bookingId)
+//       .single()
+//     
+//     if (bookingError || !booking) {
+//       return c.json({ error: 'Booking not found' }, 404)
+//     }
+//     
+//     if (booking.customer_id !== userId) {
+//       return c.json({ error: 'Only customer can review' }, 403)
+//     }
+//     
+//     if (booking.status !== 'completed') {
+//       return c.json({ error: 'Can only review completed bookings' }, 400)
+//     }
+//     
+//     // Check if within 7-day review window
+//     const completedDate = new Date(booking.completed_at)
+//     const daysSinceCompletion = Math.floor((Date.now() - completedDate.getTime()) / (1000 * 60 * 60 * 24))
+//     
+//     if (daysSinceCompletion > 7) {
+//       return c.json({ error: 'Review window has expired (7 days)' }, 400)
+//     }
+//     
+//     // Check if review exists
+//     const { data: existingReview } = await supabaseAdmin
+//       .from('reviews')
+//       .select('id')
+//       .eq('booking_id', bookingId)
+//       .single()
+//     
+//     let review
+//     if (existingReview) {
+//       // Update existing review
+//       const { data, error } = await supabaseAdmin
+//         .from('reviews')
+//         .update({
+//           rating,
+//           comment,
+//           updated_at: new Date().toISOString()
+//         })
+//         .eq('id', existingReview.id)
+//         .select()
+//         .single()
+//       
+//       if (error) {
+//         console.error('Review update error:', error)
+//         return c.json({ error: 'Failed to update review' }, 500)
+//       }
+//       review = data
+//     } else {
+//       // Create new review
+//       const { data, error } = await supabaseAdmin
+//         .from('reviews')
+//         .insert({
+//           booking_id: bookingId,
+//           service_id: booking.service_id,
+//           reviewer_id: userId,
+//           reviewee_id: booking.provider_id,
+//           rating,
+//           comment
+//         })
+//         .select()
+//         .single()
+//       
+//       if (error) {
+//         console.error('Review create error:', error)
+//         return c.json({ error: 'Failed to create review' }, 500)
+//       }
+//       review = data
+//     }
+//     
+//     // Update provider rating
+//     const { data: providerReviews } = await supabaseAdmin
+//       .from('reviews')
+//       .select('rating')
+//       .eq('reviewee_id', booking.provider_id)
+//     
+//     if (providerReviews && providerReviews.length > 0) {
+//       const avgRating = providerReviews.reduce((sum, r) => sum + r.rating, 0) / providerReviews.length
+//       
+//       await supabaseAdmin
+//         .from('users')
+//         .update({
+//           rating: avgRating,
+//           review_count: providerReviews.length
+//         })
+//         .eq('id', booking.provider_id)
+//     }
+//     
+//     // Update service rating
+//     const { data: serviceReviews } = await supabaseAdmin
+//       .from('reviews')
+//       .select('rating')
+//       .eq('service_id', booking.service_id)
+//     
+//     if (serviceReviews && serviceReviews.length > 0) {
+//       const avgRating = serviceReviews.reduce((sum, r) => sum + r.rating, 0) / serviceReviews.length
+//       
+//       await supabaseAdmin
+//         .from('services')
+//         .update({
+//           rating: avgRating,
+//           review_count: serviceReviews.length
+//         })
+//         .eq('id', booking.service_id)
+//     }
+//     
+//     return c.json(review)
+//   } catch (error) {
+//     console.error('Review error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
+// REFACTORED: Get review for booking moved to src/routes/reviews.js
 // Get review for booking
-app.get('/api/reviews/:bookingId', verifyPrivyAuth, async (c) => {
-  try {
-    const bookingId = c.req.param('bookingId')
-    
-    // First get the review
-    const { data: review, error } = await supabaseAdmin
-      .from('reviews')
-      .select('*')
-      .eq('booking_id', bookingId)
-      .single()
-    
-    if (error) {
-      // Review might not exist yet
-      if (error.code === 'PGRST116') {
-        return c.json(null)
-      }
-      console.error('Review fetch error:', error)
-      return c.json({ error: 'Failed to fetch review' }, 500)
-    }
-    
-    // If review exists, fetch user details separately
-    if (review) {
-      // Fetch reviewer details
-      const { data: reviewer } = await supabaseAdmin
-        .from('users')
-        .select('display_name, avatar')
-        .eq('id', review.reviewer_id)
-        .single()
-      
-      // Fetch reviewee details
-      const { data: reviewee } = await supabaseAdmin
-        .from('users')
-        .select('display_name, avatar')
-        .eq('id', review.reviewee_id)
-        .single()
-      
-      // Combine the data
-      const reviewWithUsers = {
-        ...review,
-        reviewer: reviewer || null,
-        reviewee: reviewee || null
-      }
-      
-      return c.json(reviewWithUsers)
-    }
-    
-    return c.json(null)
-  } catch (error) {
-    console.error('Review error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// app.get('/api/reviews/:bookingId', verifyPrivyAuth, async (c) => {
+//   try {
+//     const bookingId = c.req.param('bookingId')
+//     
+//     // First get the review
+//     const { data: review, error } = await supabaseAdmin
+//       .from('reviews')
+//       .select('*')
+//       .eq('booking_id', bookingId)
+//       .single()
+//     
+//     if (error) {
+//       // Review might not exist yet
+//       if (error.code === 'PGRST116') {
+//         return c.json(null)
+//       }
+//       console.error('Review fetch error:', error)
+//       return c.json({ error: 'Failed to fetch review' }, 500)
+//     }
+//     
+//     // If review exists, fetch user details separately
+//     if (review) {
+//       // Fetch reviewer details
+//       const { data: reviewer } = await supabaseAdmin
+//         .from('users')
+//         .select('display_name, avatar')
+//         .eq('id', review.reviewer_id)
+//         .single()
+//       
+//       // Fetch reviewee details
+//       const { data: reviewee } = await supabaseAdmin
+//         .from('users')
+//         .select('display_name, avatar')
+//         .eq('id', review.reviewee_id)
+//         .single()
+//       
+//       // Combine the data
+//       const reviewWithUsers = {
+//         ...review,
+//         reviewer: reviewer || null,
+//         reviewee: reviewee || null
+//       }
+//       
+//       return c.json(reviewWithUsers)
+//     }
+//     
+//     return c.json(null)
+//   } catch (error) {
+//     console.error('Review error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
 // Generate meeting link
 app.post('/api/meeting/generate', verifyPrivyAuth, async (c) => {
