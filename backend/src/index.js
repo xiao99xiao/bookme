@@ -15,6 +15,8 @@ import bookingRoutes from './routes/bookings.js'
 import reviewRoutes from './routes/reviews.js'
 // REFACTORED: Conversation routes moved to src/routes/conversations.js
 import conversationRoutes from './routes/conversations.js'
+// REFACTORED: Integration routes moved to src/routes/integrations.js
+import integrationRoutes from './routes/integrations.js'
 // import { PrivyClient } from '@privy-io/server-auth' // MOVED TO auth.js
 // import { createClient } from '@supabase/supabase-js' // MOVED TO auth.js
 // import { v5 as uuidv5 } from 'uuid' // MOVED TO auth.js
@@ -209,6 +211,8 @@ bookingRoutes(app);
 reviewRoutes(app);
 // Register conversation routes
 conversationRoutes(app);
+// Register integration routes
+integrationRoutes(app);
 
 // OLD CODE - COMMENTED OUT:
 // app.post('/api/auth/token', async (c) => {
@@ -2509,186 +2513,191 @@ app.get('/api/categories', async (c) => {
 //   }
 // })
 
+// REFACTORED: Generate meeting link moved to src/routes/integrations.js
 // Generate meeting link
-app.post('/api/meeting/generate', verifyPrivyAuth, async (c) => {
-  try {
-    const userId = c.get('userId')
-    const { bookingId } = await c.req.json()
-    
-    // Import meeting generation module
-    const { generateMeetingLinkForBooking } = await import('./meeting-generation.js')
-    
-    // Verify user is the provider
-    const { data: booking, error } = await supabaseAdmin
-      .from('bookings')
-      .select('provider_id')
-      .eq('id', bookingId)
-      .single()
-    
-    if (error || !booking) {
-      return c.json({ error: 'Booking not found' }, 404)
-    }
-    
-    if (booking.provider_id !== userId) {
-      return c.json({ error: 'Only provider can generate meeting link' }, 403)
-    }
-    
-    // Generate meeting link
-    const meetingLink = await generateMeetingLinkForBooking(bookingId)
-    
-    if (!meetingLink) {
-      return c.json({ 
-        error: 'Failed to generate meeting link. Please check your Google integration settings and try reconnecting your Google account.',
-        details: 'Meeting link generation failed - this usually indicates expired or invalid OAuth credentials.'
-      }, 500)
-    }
-    
-    return c.json({ meetingLink })
-  } catch (error) {
-    console.error('Meeting generation error:', error)
-    
-    // Provide more specific error messages based on the error
-    let errorMessage = 'Failed to generate meeting link'
-    if (error.message?.includes('401') || error.message?.includes('authError')) {
-      errorMessage = 'Google authentication failed. Please reconnect your Google account in integrations.'
-    } else if (error.message?.includes('refresh token')) {
-      errorMessage = 'Google authorization expired. Please reconnect your Google account in integrations.'
-    } else if (error.message?.includes('Calendar API error')) {
-      errorMessage = 'Google Calendar API error. Please check your Google account permissions.'
-    }
-    
-    return c.json({ error: errorMessage }, 500)
-  }
-})
+// app.post('/api/meeting/generate', verifyPrivyAuth, async (c) => {
+//   try {
+//     const userId = c.get('userId')
+//     const { bookingId } = await c.req.json()
+//     
+//     // Import meeting generation module
+//     const { generateMeetingLinkForBooking } = await import('./meeting-generation.js')
+//     
+//     // Verify user is the provider
+//     const { data: booking, error } = await supabaseAdmin
+//       .from('bookings')
+//       .select('provider_id')
+//       .eq('id', bookingId)
+//       .single()
+//     
+//     if (error || !booking) {
+//       return c.json({ error: 'Booking not found' }, 404)
+//     }
+//     
+//     if (booking.provider_id !== userId) {
+//       return c.json({ error: 'Only provider can generate meeting link' }, 403)
+//     }
+//     
+//     // Generate meeting link
+//     const meetingLink = await generateMeetingLinkForBooking(bookingId)
+//     
+//     if (!meetingLink) {
+//       return c.json({ 
+//         error: 'Failed to generate meeting link. Please check your Google integration settings and try reconnecting your Google account.',
+//         details: 'Meeting link generation failed - this usually indicates expired or invalid OAuth credentials.'
+//       }, 500)
+//     }
+//     
+//     return c.json({ meetingLink })
+//   } catch (error) {
+//     console.error('Meeting generation error:', error)
+//     
+//     // Provide more specific error messages based on the error
+//     let errorMessage = 'Failed to generate meeting link'
+//     if (error.message?.includes('401') || error.message?.includes('authError')) {
+//       errorMessage = 'Google authentication failed. Please reconnect your Google account in integrations.'
+//     } else if (error.message?.includes('refresh token')) {
+//       errorMessage = 'Google authorization expired. Please reconnect your Google account in integrations.'
+//     } else if (error.message?.includes('Calendar API error')) {
+//       errorMessage = 'Google Calendar API error. Please check your Google account permissions.'
+//     }
+//     
+//     return c.json({ error: errorMessage }, 500)
+//   }
+// })
 
+// REFACTORED: Delete meeting moved to src/routes/integrations.js
 // Delete meeting
-app.delete('/api/meeting/:bookingId', verifyPrivyAuth, async (c) => {
-  try {
-    const userId = c.get('userId')
-    const bookingId = c.req.param('bookingId')
-    
-    // Import meeting generation module
-    const { deleteMeetingForBooking } = await import('./meeting-generation.js')
-    
-    // Verify user is part of booking
-    const { data: booking, error } = await supabaseAdmin
-      .from('bookings')
-      .select('customer_id, provider_id')
-      .eq('id', bookingId)
-      .single()
-    
-    if (error || !booking) {
-      return c.json({ error: 'Booking not found' }, 404)
-    }
-    
-    if (booking.customer_id !== userId && booking.provider_id !== userId) {
-      return c.json({ error: 'Unauthorized' }, 403)
-    }
-    
-    // Delete meeting
-    await deleteMeetingForBooking(bookingId)
-    
-    return c.json({ success: true })
-  } catch (error) {
-    console.error('Meeting deletion error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// app.delete('/api/meeting/:bookingId', verifyPrivyAuth, async (c) => {
+//   try {
+//     const userId = c.get('userId')
+//     const bookingId = c.req.param('bookingId')
+//     
+//     // Import meeting generation module
+//     const { deleteMeetingForBooking } = await import('./meeting-generation.js')
+//     
+//     // Verify user is part of booking
+//     const { data: booking, error } = await supabaseAdmin
+//       .from('bookings')
+//       .select('customer_id, provider_id')
+//       .eq('id', bookingId)
+//       .single()
+//     
+//     if (error || !booking) {
+//       return c.json({ error: 'Booking not found' }, 404)
+//     }
+//     
+//     if (booking.customer_id !== userId && booking.provider_id !== userId) {
+//       return c.json({ error: 'Unauthorized' }, 403)
+//     }
+//     
+//     // Delete meeting
+//     await deleteMeetingForBooking(bookingId)
+//     
+//     return c.json({ success: true })
+//   } catch (error) {
+//     console.error('Meeting deletion error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
+// REFACTORED: Meeting integrations endpoints moved to src/routes/integrations.js
 // Meeting integrations endpoints
-app.get('/api/integrations', verifyPrivyAuth, async (c) => {
-  try {
-    const userId = c.get('userId')
-    
-    const { data, error } = await supabaseAdmin
-      .from('user_meeting_integrations')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-    
-    if (error) {
-      console.error('Failed to fetch integrations:', error)
-      return c.json({ error: 'Failed to fetch integrations' }, 500)
-    }
-    
-    return c.json(data || [])
-  } catch (error) {
-    console.error('Integrations fetch error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// app.get('/api/integrations', verifyPrivyAuth, async (c) => {
+//   try {
+//     const userId = c.get('userId')
+//     
+//     const { data, error } = await supabaseAdmin
+//       .from('user_meeting_integrations')
+//       .select('*')
+//       .eq('user_id', userId)
+//       .order('created_at', { ascending: false })
+//     
+//     if (error) {
+//       console.error('Failed to fetch integrations:', error)
+//       return c.json({ error: 'Failed to fetch integrations' }, 500)
+//     }
+//     
+//     return c.json(data || [])
+//   } catch (error) {
+//     console.error('Integrations fetch error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
+// REFACTORED: Save or update integration moved to src/routes/integrations.js
 // Save or update integration
-app.post('/api/integrations', verifyPrivyAuth, async (c) => {
-  try {
-    const userId = c.get('userId')
-    const body = await c.req.json()
-    
-    // Validate required fields
-    if (!body.platform || !body.access_token) {
-      return c.json({ error: 'Missing required fields' }, 400)
-    }
-    
-    // Prepare integration data
-    const integrationData = {
-      user_id: userId,
-      platform: body.platform,
-      access_token: body.access_token,
-      refresh_token: body.refresh_token || null,
-      expires_at: body.expires_at || null,
-      scope: body.scope || [],
-      platform_user_id: body.platform_user_id || null,
-      platform_user_email: body.platform_user_email || null,
-      is_active: true,
-      updated_at: new Date().toISOString()
-    }
-    
-    // Upsert integration (update if exists, insert if not)
-    const { data, error } = await supabaseAdmin
-      .from('user_meeting_integrations')
-      .upsert(integrationData, {
-        onConflict: 'user_id,platform',
-        ignoreDuplicates: false
-      })
-      .select()
-      .single()
-    
-    if (error) {
-      console.error('Failed to save integration:', error)
-      return c.json({ error: 'Failed to save integration' }, 500)
-    }
-    
-    return c.json(data)
-  } catch (error) {
-    console.error('Integration save error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// app.post('/api/integrations', verifyPrivyAuth, async (c) => {
+//   try {
+//     const userId = c.get('userId')
+//     const body = await c.req.json()
+//     
+//     // Validate required fields
+//     if (!body.platform || !body.access_token) {
+//       return c.json({ error: 'Missing required fields' }, 400)
+//     }
+//     
+//     // Prepare integration data
+//     const integrationData = {
+//       user_id: userId,
+//       platform: body.platform,
+//       access_token: body.access_token,
+//       refresh_token: body.refresh_token || null,
+//       expires_at: body.expires_at || null,
+//       scope: body.scope || [],
+//       platform_user_id: body.platform_user_id || null,
+//       platform_user_email: body.platform_user_email || null,
+//       is_active: true,
+//       updated_at: new Date().toISOString()
+//     }
+//     
+//     // Upsert integration (update if exists, insert if not)
+//     const { data, error } = await supabaseAdmin
+//       .from('user_meeting_integrations')
+//       .upsert(integrationData, {
+//         onConflict: 'user_id,platform',
+//         ignoreDuplicates: false
+//       })
+//       .select()
+//       .single()
+//     
+//     if (error) {
+//       console.error('Failed to save integration:', error)
+//       return c.json({ error: 'Failed to save integration' }, 500)
+//     }
+//     
+//     return c.json(data)
+//   } catch (error) {
+//     console.error('Integration save error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
+// REFACTORED: Disconnect integration moved to src/routes/integrations.js
 // Disconnect integration
-app.delete('/api/integrations/:id', verifyPrivyAuth, async (c) => {
-  try {
-    const userId = c.get('userId')
-    const integrationId = c.req.param('id')
-    
-    // Delete the integration (only if it belongs to the user)
-    const { error } = await supabaseAdmin
-      .from('user_meeting_integrations')
-      .delete()
-      .eq('id', integrationId)
-      .eq('user_id', userId)
-    
-    if (error) {
-      console.error('Failed to delete integration:', error)
-      return c.json({ error: 'Failed to delete integration' }, 500)
-    }
-    
-    return c.json({ success: true })
-  } catch (error) {
-    console.error('Integration deletion error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// app.delete('/api/integrations/:id', verifyPrivyAuth, async (c) => {
+//   try {
+//     const userId = c.get('userId')
+//     const integrationId = c.req.param('id')
+//     
+//     // Delete the integration (only if it belongs to the user)
+//     const { error } = await supabaseAdmin
+//       .from('user_meeting_integrations')
+//       .delete()
+//       .eq('id', integrationId)
+//       .eq('user_id', userId)
+//     
+//     if (error) {
+//       console.error('Failed to delete integration:', error)
+//       return c.json({ error: 'Failed to delete integration' }, 500)
+//     }
+//     
+//     return c.json({ success: true })
+//   } catch (error) {
+//     console.error('Integration deletion error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
 // File upload endpoint
 app.post('/api/upload', verifyPrivyAuth, async (c) => {
@@ -2750,175 +2759,178 @@ app.post('/api/upload', verifyPrivyAuth, async (c) => {
   }
 })
 
+// REFACTORED: Get user meeting integrations (duplicate) moved to src/routes/integrations.js
 // Get user meeting integrations
-app.get('/api/integrations', verifyPrivyAuth, async (c) => {
-  try {
-    const userId = c.get('userId')
-    
-    const { data, error } = await supabaseAdmin
-      .from('user_meeting_integrations')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-    
-    if (error) {
-      console.error('Integrations fetch error:', error)
-      return c.json({ error: 'Failed to fetch integrations' }, 500)
-    }
-    
-    // Remove sensitive data before sending
-    const sanitized = data?.map(integration => ({
-      ...integration,
-      access_token: undefined,
-      refresh_token: undefined
-    }))
-    
-    return c.json(sanitized || [])
-  } catch (error) {
-    console.error('Integrations error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// app.get('/api/integrations', verifyPrivyAuth, async (c) => {
+//   try {
+//     const userId = c.get('userId')
+//     
+//     const { data, error } = await supabaseAdmin
+//       .from('user_meeting_integrations')
+//       .select('*')
+//       .eq('user_id', userId)
+//       .order('created_at', { ascending: false })
+//     
+//     if (error) {
+//       console.error('Integrations fetch error:', error)
+//       return c.json({ error: 'Failed to fetch integrations' }, 500)
+//     }
+//     
+//     // Remove sensitive data before sending
+//     const sanitized = data?.map(integration => ({
+//       ...integration,
+//       access_token: undefined,
+//       refresh_token: undefined
+//     }))
+//     
+//     return c.json(sanitized || [])
+//   } catch (error) {
+//     console.error('Integrations error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
+// REFACTORED: Disconnect integration (duplicate) moved to src/routes/integrations.js
 // Disconnect integration
-app.delete('/api/integrations/:id', verifyPrivyAuth, async (c) => {
-  try {
-    const userId = c.get('userId')
-    const integrationId = c.req.param('id')
-    
-    const { error } = await supabaseAdmin
-      .from('user_meeting_integrations')
-      .update({ is_active: false })
-      .eq('id', integrationId)
-      .eq('user_id', userId)
-    
-    if (error) {
-      console.error('Integration disconnect error:', error)
-      return c.json({ error: 'Failed to disconnect integration' }, 500)
-    }
-    
-    return c.json({ success: true })
-  } catch (error) {
-    console.error('Integration error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// app.delete('/api/integrations/:id', verifyPrivyAuth, async (c) => {
+//   try {
+//     const userId = c.get('userId')
+//     const integrationId = c.req.param('id')
+//     
+//     const { error } = await supabaseAdmin
+//       .from('user_meeting_integrations')
+//       .update({ is_active: false })
+//       .eq('id', integrationId)
+//       .eq('user_id', userId)
+//     
+//     if (error) {
+//       console.error('Integration disconnect error:', error)
+//       return c.json({ error: 'Failed to disconnect integration' }, 500)
+//     }
+//     
+//     return c.json({ success: true })
+//   } catch (error) {
+//     console.error('Integration error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
+// REFACTORED: Secure Google OAuth callback handler moved to src/routes/integrations.js
 // Secure Google OAuth callback handler
-app.post('/api/oauth/google-callback', verifyPrivyAuth, async (c) => {
-  try {
-    const userId = c.get('userId')
-    const { code, redirectUri } = await c.req.json()
-    
-    if (!code) {
-      return c.json({ error: 'Authorization code is required' }, 400)
-    }
-    
-    console.log('🔐 Processing Google OAuth callback for user:', userId)
-    
-    // Exchange code for tokens securely on backend
-    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        code,
-        client_id: process.env.GOOGLE_CLIENT_ID,
-        client_secret: process.env.GOOGLE_CLIENT_SECRET,
-        redirect_uri: redirectUri,
-        grant_type: 'authorization_code',
-      }),
-    })
-    
-    const tokenData = await tokenResponse.json()
-    
-    if (tokenData.error) {
-      console.error('Google token exchange failed:', tokenData.error_description || tokenData.error)
-      return c.json({ 
-        error: `Token exchange failed: ${tokenData.error_description || tokenData.error}` 
-      }, 400)
-    }
-    
-    if (!tokenData.access_token) {
-      console.error('No access token received from Google')
-      return c.json({ error: 'No access token received' }, 400)
-    }
-    
-    // Get user info from Google
-    const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-      headers: {
-        Authorization: `Bearer ${tokenData.access_token}`,
-      },
-    })
-    
-    if (!userInfoResponse.ok) {
-      console.error('Failed to get Google user info')
-      return c.json({ error: 'Failed to get user info from Google' }, 400)
-    }
-    
-    const userInfo = await userInfoResponse.json()
-    
-    // Save the integration to database
-    const integrationData = {
-      user_id: userId,
-      platform: 'google_meet',
-      access_token: tokenData.access_token,
-      refresh_token: tokenData.refresh_token,
-      expires_at: tokenData.expires_in 
-        ? new Date(Date.now() + tokenData.expires_in * 1000).toISOString()
-        : null,
-      scope: tokenData.scope?.split(' ') || [],
-      platform_user_id: userInfo.id,
-      platform_user_email: userInfo.email,
-      is_active: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }
-    
-    // Check if integration already exists for this user and platform
-    const { data: existingIntegration } = await supabaseAdmin
-      .from('user_meeting_integrations')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('platform', 'google_meet')
-      .single()
-    
-    if (existingIntegration) {
-      // Update existing integration
-      const { error } = await supabaseAdmin
-        .from('user_meeting_integrations')
-        .update(integrationData)
-        .eq('id', existingIntegration.id)
-      
-      if (error) {
-        console.error('Failed to update Google integration:', error)
-        return c.json({ error: 'Failed to save integration' }, 500)
-      }
-    } else {
-      // Create new integration
-      const { error } = await supabaseAdmin
-        .from('user_meeting_integrations')
-        .insert(integrationData)
-      
-      if (error) {
-        console.error('Failed to save Google integration:', error)
-        return c.json({ error: 'Failed to save integration' }, 500)
-      }
-    }
-    
-    console.log('✅ Google integration saved successfully for user:', userId)
-    return c.json({ 
-      success: true,
-      userEmail: userInfo.email,
-      message: 'Google Meet integration connected successfully!' 
-    })
-    
-  } catch (error) {
-    console.error('Google OAuth callback error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// app.post('/api/oauth/google-callback', verifyPrivyAuth, async (c) => {
+//   try {
+//     const userId = c.get('userId')
+//     const { code, redirectUri } = await c.req.json()
+//     
+//     if (!code) {
+//       return c.json({ error: 'Authorization code is required' }, 400)
+//     }
+//     
+//     console.log('🔐 Processing Google OAuth callback for user:', userId)
+//     
+//     // Exchange code for tokens securely on backend
+//     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/x-www-form-urlencoded',
+//       },
+//       body: new URLSearchParams({
+//         code,
+//         client_id: process.env.GOOGLE_CLIENT_ID,
+//         client_secret: process.env.GOOGLE_CLIENT_SECRET,
+//         redirect_uri: redirectUri,
+//         grant_type: 'authorization_code',
+//       }),
+//     })
+//     
+//     const tokenData = await tokenResponse.json()
+//     
+//     if (tokenData.error) {
+//       console.error('Google token exchange failed:', tokenData.error_description || tokenData.error)
+//       return c.json({ 
+//         error: `Token exchange failed: ${tokenData.error_description || tokenData.error}` 
+//       }, 400)
+//     }
+//     
+//     if (!tokenData.access_token) {
+//       console.error('No access token received from Google')
+//       return c.json({ error: 'No access token received' }, 400)
+//     }
+//     
+//     // Get user info from Google
+//     const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+//       headers: {
+//         Authorization: `Bearer ${tokenData.access_token}`,
+//       },
+//     })
+//     
+//     if (!userInfoResponse.ok) {
+//       console.error('Failed to get Google user info')
+//       return c.json({ error: 'Failed to get user info from Google' }, 400)
+//     }
+//     
+//     const userInfo = await userInfoResponse.json()
+//     
+//     // Save the integration to database
+//     const integrationData = {
+//       user_id: userId,
+//       platform: 'google_meet',
+//       access_token: tokenData.access_token,
+//       refresh_token: tokenData.refresh_token,
+//       expires_at: tokenData.expires_in 
+//         ? new Date(Date.now() + tokenData.expires_in * 1000).toISOString()
+//         : null,
+//       scope: tokenData.scope?.split(' ') || [],
+//       platform_user_id: userInfo.id,
+//       platform_user_email: userInfo.email,
+//       is_active: true,
+//       created_at: new Date().toISOString(),
+//       updated_at: new Date().toISOString()
+//     }
+//     
+//     // Check if integration already exists for this user and platform
+//     const { data: existingIntegration } = await supabaseAdmin
+//       .from('user_meeting_integrations')
+//       .select('id')
+//       .eq('user_id', userId)
+//       .eq('platform', 'google_meet')
+//       .single()
+//     
+//     if (existingIntegration) {
+//       // Update existing integration
+//       const { error } = await supabaseAdmin
+//         .from('user_meeting_integrations')
+//         .update(integrationData)
+//         .eq('id', existingIntegration.id)
+//       
+//       if (error) {
+//         console.error('Failed to update Google integration:', error)
+//         return c.json({ error: 'Failed to save integration' }, 500)
+//       }
+//     } else {
+//       // Create new integration
+//       const { error } = await supabaseAdmin
+//         .from('user_meeting_integrations')
+//         .insert(integrationData)
+//       
+//       if (error) {
+//         console.error('Failed to save Google integration:', error)
+//         return c.json({ error: 'Failed to save integration' }, 500)
+//       }
+//     }
+//     
+//     console.log('✅ Google integration saved successfully for user:', userId)
+//     return c.json({ 
+//       success: true,
+//       userEmail: userInfo.email,
+//       message: 'Google Meet integration connected successfully!' 
+//     })
+//     
+//   } catch (error) {
+//     console.error('Google OAuth callback error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
 // Export app for use in HTTPS server
 export default app
