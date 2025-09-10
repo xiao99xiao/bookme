@@ -116,6 +116,41 @@ userRoutes(app);
 - Profile auto-creation for new users
 - Username uniqueness enforcement
 
+#### Service Routes (`src/routes/services.js`)
+**Extracted:** 2025-09-10
+**Purpose:** Handles service management endpoints for both authenticated users and public access
+
+**Endpoints:**
+- `GET /api/services` - Get services with filtering (authenticated)
+- `GET /api/services/user/:userId` - Get services for specific provider (authenticated)
+- `POST /api/services` - Create or update service (authenticated)
+- `DELETE /api/services/:serviceId` - Delete service (authenticated)
+- `PATCH /api/services/:serviceId/visibility` - Toggle service visibility (authenticated)
+- `GET /api/services/public/user/:userId` - Get public services for provider (no auth)
+- `GET /api/services/public` - Search public services with filters (no auth)
+- `GET /api/services/public/:providerId` - Get provider services with category data (no auth)
+- `GET /api/services/:id` - Get single service with provider info (authenticated)
+- `GET /api/services/search` - Advanced service search (authenticated)
+
+**Usage:**
+```javascript
+// In main app file
+import serviceRoutes from './routes/services.js';
+serviceRoutes(app);
+```
+
+**Dependencies:**
+- Uses auth middleware for protected endpoints
+- Supabase admin client for database operations
+- Category relationship joins for public endpoints
+
+**Key Features:**
+- CRUD operations with ownership validation
+- Public vs authenticated endpoint patterns
+- Advanced search and filtering
+- Visibility controls for service publishing
+- Category information integration
+
 ---
 
 ## Migration Patterns

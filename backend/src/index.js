@@ -7,6 +7,8 @@ import { verifyPrivyAuth, privyDidToUuid, getPrivyClient, getSupabaseAdmin } fro
 import authRoutes from './routes/auth.js'
 // REFACTORED: User/Profile routes moved to src/routes/users.js
 import userRoutes from './routes/users.js'
+// REFACTORED: Service routes moved to src/routes/services.js
+import serviceRoutes from './routes/services.js'
 // import { PrivyClient } from '@privy-io/server-auth' // MOVED TO auth.js
 // import { createClient } from '@supabase/supabase-js' // MOVED TO auth.js
 // import { v5 as uuidv5 } from 'uuid' // MOVED TO auth.js
@@ -193,6 +195,8 @@ app.get('/health', (c) => {
 authRoutes(app);
 // Register user/profile routes
 userRoutes(app);
+// Register service routes
+serviceRoutes(app);
 
 // OLD CODE - COMMENTED OUT:
 // app.post('/api/auth/token', async (c) => {
@@ -336,31 +340,31 @@ userRoutes(app);
 //   }
 // })
 
-// Get services (with optional filters)
-app.get('/api/services', verifyPrivyAuth, async (c) => {
-  try {
-    const userId = c.get('userId')
-    const { provider_id, category, is_visible } = c.req.query()
-    
-    let query = supabaseAdmin.from('services').select('*')
-    
-    if (provider_id) query = query.eq('provider_id', provider_id)
-    if (category) query = query.eq('category_id', category)
-    if (is_visible !== undefined) query = query.eq('is_visible', is_visible === 'true')
-    
-    const { data, error } = await query
-    
-    if (error) {
-      console.error('Services fetch error:', error)
-      return c.json({ error: 'Failed to fetch services' }, 500)
-    }
-    
-    return c.json(data)
-  } catch (error) {
-    console.error('Services error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// REFACTORED: Moved to src/routes/services.js - GET /api/services
+// app.get('/api/services', verifyPrivyAuth, async (c) => {
+//   try {
+//     const userId = c.get('userId')
+//     const { provider_id, category, is_visible } = c.req.query()
+//     
+//     let query = supabaseAdmin.from('services').select('*')
+//     
+//     if (provider_id) query = query.eq('provider_id', provider_id)
+//     if (category) query = query.eq('category_id', category)
+//     if (is_visible !== undefined) query = query.eq('is_visible', is_visible === 'true')
+//     
+//     const { data, error } = await query
+//     
+//     if (error) {
+//       console.error('Services fetch error:', error)
+//       return c.json({ error: 'Failed to fetch services' }, 500)
+//     }
+//     
+//     return c.json(data)
+//   } catch (error) {
+//     console.error('Services error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
 // Create booking (optimized with combined operations)
 app.post('/api/bookings', verifyPrivyAuth, async (c) => {
@@ -928,142 +932,142 @@ app.post('/api/blockchain/stop-monitoring', async (c) => {
 //   }
 // })
 
-// Get user's services
-app.get('/api/services/user/:userId', verifyPrivyAuth, async (c) => {
-  try {
-    const userId = c.get('userId')
-    const targetUserId = c.req.param('userId')
-    
-    const { data, error } = await supabaseAdmin
-      .from('services')
-      .select('*')
-      .eq('provider_id', targetUserId)
-      .order('created_at', { ascending: false })
-    
-    if (error) {
-      console.error('Services fetch error:', error)
-      return c.json({ error: 'Failed to fetch services' }, 500)
-    }
-    
-    return c.json(data || [])
-  } catch (error) {
-    console.error('Services error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// REFACTORED: Moved to src/routes/services.js - GET /api/services/user/:userId
+// app.get('/api/services/user/:userId', verifyPrivyAuth, async (c) => {
+//   try {
+//     const userId = c.get('userId')
+//     const targetUserId = c.req.param('userId')
+//     
+//     const { data, error } = await supabaseAdmin
+//       .from('services')
+//       .select('*')
+//       .eq('provider_id', targetUserId)
+//       .order('created_at', { ascending: false })
+//     
+//     if (error) {
+//       console.error('Services fetch error:', error)
+//       return c.json({ error: 'Failed to fetch services' }, 500)
+//     }
+//     
+//     return c.json(data || [])
+//   } catch (error) {
+//     console.error('Services error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
-// Create or update service
-app.post('/api/services', verifyPrivyAuth, async (c) => {
-  try {
-    const userId = c.get('userId')
-    const body = await c.req.json()
-    
-    // Remove any fields that don't exist in the database
-    delete body.time_slots // Remove if accidentally sent
-    delete body.timeSlots // Remove if accidentally sent (camelCase version)
-    
-    // Ensure provider_id matches authenticated user
-    const serviceData = {
-      ...body,
-      provider_id: userId
-    }
-    
-    if (body.id) {
-      // Update existing service
-      const { data, error } = await supabaseAdmin
-        .from('services')
-        .update(serviceData)
-        .eq('id', body.id)
-        .eq('provider_id', userId) // Ensure user owns the service
-        .select()
-        .single()
-      
-      if (error) {
-        console.error('Service update error:', error)
-        return c.json({ error: 'Failed to update service' }, 500)
-      }
-      
-      return c.json(data)
-    } else {
-      // Create new service
-      const { data, error } = await supabaseAdmin
-        .from('services')
-        .insert(serviceData)
-        .select()
-        .single()
-      
-      if (error) {
-        console.error('Service creation error:', error)
-        return c.json({ error: 'Failed to create service' }, 500)
-      }
-      
-      return c.json(data)
-    }
-  } catch (error) {
-    console.error('Service error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// REFACTORED: Moved to src/routes/services.js - POST /api/services
+// app.post('/api/services', verifyPrivyAuth, async (c) => {
+//   try {
+//     const userId = c.get('userId')
+//     const body = await c.req.json()
+//     
+//     // Remove any fields that don't exist in the database
+//     delete body.time_slots // Remove if accidentally sent
+//     delete body.timeSlots // Remove if accidentally sent (camelCase version)
+//     
+//     // Ensure provider_id matches authenticated user
+//     const serviceData = {
+//       ...body,
+//       provider_id: userId
+//     }
+//     
+//     if (body.id) {
+//       // Update existing service
+//       const { data, error } = await supabaseAdmin
+//         .from('services')
+//         .update(serviceData)
+//         .eq('id', body.id)
+//         .eq('provider_id', userId) // Ensure user owns the service
+//         .select()
+//         .single()
+//       
+//       if (error) {
+//         console.error('Service update error:', error)
+//         return c.json({ error: 'Failed to update service' }, 500)
+//       }
+//       
+//       return c.json(data)
+//     } else {
+//       // Create new service
+//       const { data, error } = await supabaseAdmin
+//         .from('services')
+//         .insert(serviceData)
+//         .select()
+//         .single()
+//       
+//       if (error) {
+//         console.error('Service creation error:', error)
+//         return c.json({ error: 'Failed to create service' }, 500)
+//       }
+//       
+//       return c.json(data)
+//     }
+//   } catch (error) {
+//     console.error('Service error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
-// Delete service
-app.delete('/api/services/:serviceId', verifyPrivyAuth, async (c) => {
-  try {
-    const userId = c.get('userId')
-    const serviceId = c.req.param('serviceId')
-    
-    const { error } = await supabaseAdmin
-      .from('services')
-      .delete()
-      .eq('id', serviceId)
-      .eq('provider_id', userId) // Ensure user owns the service
-    
-    if (error) {
-      console.error('Service deletion error:', error)
-      return c.json({ error: 'Failed to delete service' }, 500)
-    }
-    
-    return c.json({ success: true })
-  } catch (error) {
-    console.error('Service deletion error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// REFACTORED: Moved to src/routes/services.js - DELETE /api/services/:serviceId
+// app.delete('/api/services/:serviceId', verifyPrivyAuth, async (c) => {
+//   try {
+//     const userId = c.get('userId')
+//     const serviceId = c.req.param('serviceId')
+//     
+//     const { error } = await supabaseAdmin
+//       .from('services')
+//       .delete()
+//       .eq('id', serviceId)
+//       .eq('provider_id', userId) // Ensure user owns the service
+//     
+//     if (error) {
+//       console.error('Service deletion error:', error)
+//       return c.json({ error: 'Failed to delete service' }, 500)
+//     }
+//     
+//     return c.json({ success: true })
+//   } catch (error) {
+//     console.error('Service deletion error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
-// Toggle service visibility
-app.patch('/api/services/:serviceId/visibility', verifyPrivyAuth, async (c) => {
-  try {
-    const userId = c.get('userId')
-    const serviceId = c.req.param('serviceId')
-    const body = await c.req.json()
-    const { is_visible } = body
-    
-    if (typeof is_visible !== 'boolean') {
-      return c.json({ error: 'is_visible must be a boolean' }, 400)
-    }
-    
-    const { data, error } = await supabaseAdmin
-      .from('services')
-      .update({ is_visible })
-      .eq('id', serviceId)
-      .eq('provider_id', userId) // Ensure user owns the service
-      .select()
-      .single()
-    
-    if (error) {
-      console.error('Service visibility toggle error:', error)
-      return c.json({ error: 'Failed to update service visibility' }, 500)
-    }
-    
-    if (!data) {
-      return c.json({ error: 'Service not found' }, 404)
-    }
-    
-    return c.json(data)
-  } catch (error) {
-    console.error('Service visibility toggle error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// REFACTORED: Moved to src/routes/services.js - PATCH /api/services/:serviceId/visibility
+// app.patch('/api/services/:serviceId/visibility', verifyPrivyAuth, async (c) => {
+//   try {
+//     const userId = c.get('userId')
+//     const serviceId = c.req.param('serviceId')
+//     const body = await c.req.json()
+//     const { is_visible } = body
+//     
+//     if (typeof is_visible !== 'boolean') {
+//       return c.json({ error: 'is_visible must be a boolean' }, 400)
+//     }
+//     
+//     const { data, error } = await supabaseAdmin
+//       .from('services')
+//       .update({ is_visible })
+//       .eq('id', serviceId)
+//       .eq('provider_id', userId) // Ensure user owns the service
+//       .select()
+//       .single()
+//     
+//     if (error) {
+//       console.error('Service visibility toggle error:', error)
+//       return c.json({ error: 'Failed to update service visibility' }, 500)
+//     }
+//     
+//     if (!data) {
+//       return c.json({ error: 'Service not found' }, 404)
+//     }
+//     
+//     return c.json(data)
+//   } catch (error) {
+//     console.error('Service visibility toggle error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
 // Get user's bookings
 app.get('/api/bookings/user/:userId', verifyPrivyAuth, async (c) => {
@@ -1334,32 +1338,32 @@ app.get('/api/categories', async (c) => {
 //   }
 // })
 
-// Get public user services (no auth required)
-app.get('/api/services/public/user/:userId', async (c) => {
-  try {
-    const userId = c.req.param('userId')
-    
-    const { data, error } = await supabaseAdmin
-      .from('services')
-      .select(`
-        *,
-        categories(name, icon, color)
-      `)
-      .eq('provider_id', userId)
-      .eq('is_visible', true)
-      .order('created_at', { ascending: false })
-    
-    if (error) {
-      console.error('Public services fetch error:', error)
-      return c.json({ error: 'Failed to fetch services' }, 500)
-    }
-    
-    return c.json(data || [])
-  } catch (error) {
-    console.error('Public services error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// REFACTORED: Moved to src/routes/services.js - GET /api/services/public/user/:userId
+// app.get('/api/services/public/user/:userId', async (c) => {
+//   try {
+//     const userId = c.req.param('userId')
+//     
+//     const { data, error } = await supabaseAdmin
+//       .from('services')
+//       .select(`
+//         *,
+//         categories(name, icon, color)
+//       `)
+//       .eq('provider_id', userId)
+//       .eq('is_visible', true)
+//       .order('created_at', { ascending: false })
+//     
+//     if (error) {
+//       console.error('Public services fetch error:', error)
+//       return c.json({ error: 'Failed to fetch services' }, 500)
+//     }
+//     
+//     return c.json(data || [])
+//   } catch (error) {
+//     console.error('Public services error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
 // Get public provider reviews (no auth required)
 app.get('/api/reviews/public/provider/:providerId', async (c) => {
@@ -1390,48 +1394,49 @@ app.get('/api/reviews/public/provider/:providerId', async (c) => {
 })
 
 // Get public services for discovery (no auth required)
-app.get('/api/services/public', async (c) => {
-  try {
-    const { search, category, minPrice, maxPrice, location } = c.req.query()
-    
-    let query = supabaseAdmin
-      .from('services')
-      .select(`
-        *,
-        provider:users!provider_id(display_name, avatar, rating, review_count)
-      `)
-      .eq('is_visible', true)
-    
-    // Only apply filters if they have valid values
-    if (search && search !== 'undefined' && search.trim()) {
-      query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`)
-    }
-    if (category && category !== 'undefined' && category !== 'all') {
-      query = query.eq('category_id', category)
-    }
-    if (minPrice && minPrice !== 'undefined') {
-      query = query.gte('price', parseFloat(minPrice))
-    }
-    if (maxPrice && maxPrice !== 'undefined') {
-      query = query.lte('price', parseFloat(maxPrice))
-    }
-    if (location && location !== 'undefined' && location.trim()) {
-      query = query.ilike('location', `%${location}%`)
-    }
-    
-    const { data, error } = await query.order('created_at', { ascending: false })
-    
-    if (error) {
-      console.error('Public services fetch error:', error)
-      return c.json({ error: 'Failed to fetch services' }, 500)
-    }
-    
-    return c.json({ services: data || [] })
-  } catch (error) {
-    console.error('Public services error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// REFACTORED: Moved to src/routes/services.js - GET /api/services/public
+// app.get('/api/services/public', async (c) => {
+//   try {
+//     const { search, category, minPrice, maxPrice, location } = c.req.query()
+//     
+//     let query = supabaseAdmin
+//       .from('services')
+//       .select(`
+//         *,
+//         provider:users!provider_id(display_name, avatar, rating, review_count)
+//       `)
+//       .eq('is_visible', true)
+//     
+//     // Only apply filters if they have valid values
+//     if (search && search !== 'undefined' && search.trim()) {
+//       query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`)
+//     }
+//     if (category && category !== 'undefined' && category !== 'all') {
+//       query = query.eq('category_id', category)
+//     }
+//     if (minPrice && minPrice !== 'undefined') {
+//       query = query.gte('price', parseFloat(minPrice))
+//     }
+//     if (maxPrice && maxPrice !== 'undefined') {
+//       query = query.lte('price', parseFloat(maxPrice))
+//     }
+//     if (location && location !== 'undefined' && location.trim()) {
+//       query = query.ilike('location', `%${location}%`)
+//     }
+//     
+//     const { data, error } = await query.order('created_at', { ascending: false })
+//     
+//     if (error) {
+//       console.error('Public services fetch error:', error)
+//       return c.json({ error: 'Failed to fetch services' }, 500)
+//     }
+//     
+//     return c.json({ services: data || [] })
+//   } catch (error) {
+//     console.error('Public services error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
 // Check username availability
 // REFACTORED: Moved to src/routes/users.js - GET /api/username/check/:username
@@ -1585,117 +1590,117 @@ app.get('/api/services/public', async (c) => {
 //   }
 // })
 
-// Get public services by provider (no auth required)
-app.get('/api/services/public/:providerId', async (c) => {
-  try {
-    const providerId = c.req.param('providerId')
-    const { timezone } = c.req.query()
-    
-    console.log('Getting public services for provider:', providerId)
-    
-    let query = supabaseAdmin
-      .from('services')
-      .select(`
-        *,
-        categories(name, icon, color),
-        provider:users!provider_id(display_name, avatar, rating)
-      `)
-      .eq('provider_id', providerId)
-      .eq('is_visible', true)
-      .order('created_at', { ascending: false })
-    
-    const { data, error } = await query
-    
-    if (error) {
-      console.error('Services fetch error:', error)
-      return c.json({ error: 'Failed to fetch services' }, 500)
-    }
-    
-    // Transform the data to match expected format
-    const transformedServices = (data || []).map(service => ({
-      ...service,
-      categories: service.categories ? {
-        name: service.categories.name,
-        icon: service.categories.icon,
-        color: service.categories.color
-      } : null
-    }))
-    
-    return c.json(transformedServices)
-  } catch (error) {
-    console.error('Services error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// REFACTORED: Moved to src/routes/services.js - GET /api/services/public/:providerId
+// app.get('/api/services/public/:providerId', async (c) => {
+//   try {
+//     const providerId = c.req.param('providerId')
+//     const { timezone } = c.req.query()
+//     
+//     console.log('Getting public services for provider:', providerId)
+//     
+//     let query = supabaseAdmin
+//       .from('services')
+//       .select(`
+//         *,
+//         categories(name, icon, color),
+//         provider:users!provider_id(display_name, avatar, rating)
+//       `)
+//       .eq('provider_id', providerId)
+//       .eq('is_visible', true)
+//       .order('created_at', { ascending: false })
+//     
+//     const { data, error } = await query
+//     
+//     if (error) {
+//       console.error('Services fetch error:', error)
+//       return c.json({ error: 'Failed to fetch services' }, 500)
+//     }
+//     
+//     // Transform the data to match expected format
+//     const transformedServices = (data || []).map(service => ({
+//       ...service,
+//       categories: service.categories ? {
+//         name: service.categories.name,
+//         icon: service.categories.icon,
+//         color: service.categories.color
+//       } : null
+//     }))
+//     
+//     return c.json(transformedServices)
+//   } catch (error) {
+//     console.error('Services error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
-// Get single service by ID
-app.get('/api/services/:id', verifyPrivyAuth, async (c) => {
-  try {
-    const serviceId = c.req.param('id')
-    
-    const { data, error } = await supabaseAdmin
-      .from('services')
-      .select(`
-        *,
-        provider:users!provider_id(*)
-      `)
-      .eq('id', serviceId)
-      .single()
-    
-    if (error) {
-      console.error('Service fetch error:', error)
-      return c.json({ error: 'Service not found' }, 404)
-    }
-    
-    return c.json(data)
-  } catch (error) {
-    console.error('Service error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// REFACTORED: Moved to src/routes/services.js - GET /api/services/:id
+// app.get('/api/services/:id', verifyPrivyAuth, async (c) => {
+//   try {
+//     const serviceId = c.req.param('id')
+//     
+//     const { data, error } = await supabaseAdmin
+//       .from('services')
+//       .select(`
+//         *,
+//         provider:users!provider_id(*)
+//       `)
+//       .eq('id', serviceId)
+//       .single()
+//     
+//     if (error) {
+//       console.error('Service fetch error:', error)
+//       return c.json({ error: 'Service not found' }, 404)
+//     }
+//     
+//     return c.json(data)
+//   } catch (error) {
+//     console.error('Service error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
-// Search services
-app.get('/api/services/search', verifyPrivyAuth, async (c) => {
-  try {
-    const { query, category, minPrice, maxPrice, location } = c.req.query()
-    
-    let dbQuery = supabaseAdmin
-      .from('services')
-      .select(`
-        *,
-        provider:users!provider_id(display_name, avatar, rating, review_count)
-      `)
-      .eq('is_visible', true)
-    
-    if (query) {
-      dbQuery = dbQuery.or(`title.ilike.%${query}%,description.ilike.%${query}%`)
-    }
-    if (category) {
-      dbQuery = dbQuery.eq('category_id', category)
-    }
-    if (minPrice) {
-      dbQuery = dbQuery.gte('price', parseFloat(minPrice))
-    }
-    if (maxPrice) {
-      dbQuery = dbQuery.lte('price', parseFloat(maxPrice))
-    }
-    if (location) {
-      dbQuery = dbQuery.ilike('location', `%${location}%`)
-    }
-    
-    const { data, error } = await dbQuery.order('created_at', { ascending: false })
-    
-    if (error) {
-      console.error('Search error:', error)
-      return c.json({ error: 'Search failed' }, 500)
-    }
-    
-    return c.json(data || [])
-  } catch (error) {
-    console.error('Search error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+// REFACTORED: Moved to src/routes/services.js - GET /api/services/search
+// app.get('/api/services/search', verifyPrivyAuth, async (c) => {
+//   try {
+//     const { query, category, minPrice, maxPrice, location } = c.req.query()
+//     
+//     let dbQuery = supabaseAdmin
+//       .from('services')
+//       .select(`
+//         *,
+//         provider:users!provider_id(display_name, avatar, rating, review_count)
+//       `)
+//       .eq('is_visible', true)
+//     
+//     if (query) {
+//       dbQuery = dbQuery.or(`title.ilike.%${query}%,description.ilike.%${query}%`)
+//     }
+//     if (category) {
+//       dbQuery = dbQuery.eq('category_id', category)
+//     }
+//     if (minPrice) {
+//       dbQuery = dbQuery.gte('price', parseFloat(minPrice))
+//     }
+//     if (maxPrice) {
+//       dbQuery = dbQuery.lte('price', parseFloat(maxPrice))
+//     }
+//     if (location) {
+//       dbQuery = dbQuery.ilike('location', `%${location}%`)
+//     }
+//     
+//     const { data, error } = await dbQuery.order('created_at', { ascending: false })
+//     
+//     if (error) {
+//       console.error('Search error:', error)
+//       return c.json({ error: 'Search failed' }, 500)
+//     }
+//     
+//     return c.json(data || [])
+//   } catch (error) {
+//     console.error('Search error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
 // Cancel booking
 app.post('/api/bookings/:id/cancel', verifyPrivyAuth, async (c) => {
