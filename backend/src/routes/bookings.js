@@ -721,8 +721,7 @@ export default function bookingRoutes(app) {
       // Apply pagination
       query = query
         .order('created_at', { ascending: false })
-        .limit(parseInt(limit))
-        .offset(parseInt(offset));
+        .range(parseInt(offset), parseInt(offset) + parseInt(limit) - 1);
 
       const { data, error } = await query;
 

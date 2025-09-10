@@ -394,213 +394,213 @@ systemRoutes(app);
 // REFACTORED: Booking creation moved to src/routes/bookings.js
 // Create booking (optimized with combined operations)
 // app.post('/api/bookings', verifyPrivyAuth, async (c) => {
-  try {
-    const startTime = Date.now()
-    const userId = c.get('userId')
-    const body = await c.req.json()
-    const { service_id: serviceId, scheduled_at: scheduledAt, customer_notes: customerNotes, location, is_online: isOnline } = body
-    
-    // First, get the service
-    const { data: service, error: serviceError } = await supabaseAdmin
-      .from('services')
-      .select('*')
-      .eq('id', serviceId)
-      .single()
-    
-    if (serviceError || !service) {
-      return c.json({ error: 'Service not found' }, 404)
-    }
-    
-    // Then check for conflicting bookings separately
-    const bookingStart = new Date(scheduledAt)
-    const bookingEnd = new Date(bookingStart.getTime() + service.duration_minutes * 60000)
-    
-    const { data: conflictingBookings, error: bookingError } = await supabaseAdmin
-      .from('bookings')
-      .select('id, scheduled_at, duration_minutes')
-      .eq('service_id', serviceId)
-      .in('status', ['pending', 'confirmed'])
-    
-    if (bookingError) {
-      // Continue anyway - don't fail the booking for this
-    }
-    
-    // Check for time conflicts
-    const hasConflict = conflictingBookings?.some(booking => {
-      const existingStart = new Date(booking.scheduled_at)
-      const existingEnd = new Date(existingStart.getTime() + booking.duration_minutes * 60000)
-      
-      // Check if times overlap
-      return (bookingStart < existingEnd && bookingEnd > existingStart)
-    })
-    
-    if (hasConflict) {
-      return c.json({ error: 'Time slot not available' }, 400)
-    }
-    
-    // Calculate service fee (10% platform fee)
-    const serviceFee = service.price * 0.1
-    
-    // Atomic operation: Create booking and conversation together
-    const bookingData = {
-      service_id: serviceId,
-      customer_id: userId,
-      provider_id: service.provider_id,
-      scheduled_at: scheduledAt,
-      duration_minutes: service.duration_minutes,
-      total_price: service.price,
-      service_fee: serviceFee,
-      status: 'pending',
-      customer_notes: customerNotes || null,
-      location: location || service.location,
-      is_online: isOnline ?? service.is_online
-    }
-    
-    // Use Promise.all for parallel execution of booking and conversation creation
-    const [bookingResult, conversationResult] = await Promise.all([
-      supabaseAdmin
-        .from('bookings')
-        .insert(bookingData)
-        .select()
-        .single(),
-      // Pre-generate conversation data to create immediately after booking
-      Promise.resolve({
-        provider_id: service.provider_id,
-        customer_id: userId,
-        is_active: true
-      })
-    ])
-    
-    if (bookingResult.error) {
-      console.error('Booking creation error:', bookingResult.error)
-      return c.json({ error: 'Failed to create booking' }, 500)
-    }
-    
-    const booking = bookingResult.data
-    
-    // Create conversation with booking ID
-    const { error: conversationError } = await supabaseAdmin
-      .from('conversations')
-      .insert({
-        booking_id: booking.id,
-        ...conversationResult
-      })
-    
-    if (conversationError) {
-      // Log error but don't fail the booking - conversation can be created later
-      console.error('Conversation creation warning:', conversationError)
-    }
-    
-    // Generate payment authorization for blockchain payment
-    console.log('🔐 Generating payment authorization for booking:', booking.id)
-    
-    try {
-    
-    // Get customer wallet address from database
-    const { data: customerUser } = await supabaseAdmin
-      .from('users')
-      .select('wallet_address')
-      .eq('id', userId)
-      .single()
-    
-    const customerWallet = customerUser?.wallet_address
-    console.log('💰 Customer wallet address:', customerWallet)
-    
-    if (!customerWallet) {
-      return c.json({ error: 'No wallet found for customer. Please ensure wallet is connected and try logging in again.' }, 400)
-    }
-
-    // Get provider's wallet address from database
-    const { data: providerUser } = await supabaseAdmin
-      .from('users')
-      .select('wallet_address')
-      .eq('id', service.provider_id)
-      .single()
-    
-    const providerWallet = providerUser?.wallet_address
-    console.log('💰 Provider wallet address:', providerWallet)
-    
-    if (!providerUser) {
-      return c.json({ error: 'Provider not found' }, 400)
-    }
-    
-    if (!providerWallet) {
-      return c.json({ error: 'No wallet found for provider. Provider must log in to register their wallet address.' }, 400)
-    }
-    
-    // Calculate fee structure
-    const hasInviter = false // TODO: Add inviter logic when implemented
-    const feeData = eip712Signer.calculateFees(booking.total_price, hasInviter)
-    
-    // Generate blockchain booking ID
-    const blockchainBookingId = blockchainService.formatBookingId(booking.id)
-    
-    // Update booking with blockchain booking ID and set status to pending_payment
-    await supabaseAdmin
-      .from('bookings')
-      .update({
-        blockchain_booking_id: blockchainBookingId,
-        status: 'pending_payment'
-      })
-      .eq('id', booking.id)
-    
-    // Generate EIP-712 signature
-    const authResult = await eip712Signer.signBookingAuthorization({
-      bookingId: booking.id,
-      customer: customerWallet,
-      provider: providerWallet,
-      inviter: ethers.ZeroAddress, // TODO: Add inviter support
-      amount: booking.total_price,
-      platformFeeRate: feeData.platformFeeRate,
-      inviterFeeRate: feeData.inviterFeeRate,
-      expiryMinutes: 5 // 5 minute expiry
-    })
-    
-    // Store nonce to prevent replay attacks
-    await supabaseAdmin
-      .from('signature_nonces')
-      .insert({
-        nonce: authResult.nonce,
-        booking_id: booking.id,
-        signature_type: 'booking_authorization'
-      })
-    
-    const endTime = Date.now()
-    console.log(`✅ Booking creation with payment authorization: ${endTime - startTime}ms | Booking ID: ${booking.id}`)
-    
-    // Convert BigInt values to strings for JSON serialization
-    const serializableAuthorization = {
-      ...authResult.authorization,
-      bookingId: authResult.authorization.bookingId.toString(),
-      amount: authResult.authorization.amount.toString()
-    }
-
-    return c.json({
-      booking: { ...booking, status: 'pending_payment', blockchain_booking_id: blockchainBookingId },
-      authorization: serializableAuthorization,
-      signature: authResult.signature,
-      contractAddress: process.env.CONTRACT_ADDRESS,
-      usdcAddress: process.env.USDC_ADDRESS,
-      feeBreakdown: feeData,
-      expiresAt: new Date(authResult.expiry * 1000).toISOString()
-    })
-    
-    } catch (authError) {
-      console.error('❌ Payment authorization error:', authError)
-      // If payment authorization fails, still return the booking but without payment info
-      // This allows the booking to be created and payment can be attempted later
-      return c.json({
-        booking,
-        error: 'Payment authorization failed - booking created but payment required',
-        message: 'You can complete payment from your bookings page'
-      })
-    }
-    
-  } catch (error) {
-    console.error('Booking error:', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
+//   try {
+//     const startTime = Date.now()
+//     const userId = c.get('userId')
+//     const body = await c.req.json()
+//     const { service_id: serviceId, scheduled_at: scheduledAt, customer_notes: customerNotes, location, is_online: isOnline } = body
+//     
+//     // First, get the service
+//     const { data: service, error: serviceError } = await supabaseAdmin
+//       .from('services')
+//       .select('*')
+//       .eq('id', serviceId)
+//       .single()
+//     
+//     if (serviceError || !service) {
+//       return c.json({ error: 'Service not found' }, 404)
+//     }
+//     
+//     // Then check for conflicting bookings separately
+//     const bookingStart = new Date(scheduledAt)
+//     const bookingEnd = new Date(bookingStart.getTime() + service.duration_minutes * 60000)
+//     
+//     const { data: conflictingBookings, error: bookingError } = await supabaseAdmin
+//       .from('bookings')
+//       .select('id, scheduled_at, duration_minutes')
+//       .eq('service_id', serviceId)
+//       .in('status', ['pending', 'confirmed'])
+//     
+//     if (bookingError) {
+//       // Continue anyway - don't fail the booking for this
+//     }
+//     
+//     // Check for time conflicts
+//     const hasConflict = conflictingBookings?.some(booking => {
+//       const existingStart = new Date(booking.scheduled_at)
+//       const existingEnd = new Date(existingStart.getTime() + booking.duration_minutes * 60000)
+//       
+//       // Check if times overlap
+//       return (bookingStart < existingEnd && bookingEnd > existingStart)
+//     })
+//     
+//     if (hasConflict) {
+//       return c.json({ error: 'Time slot not available' }, 400)
+//     }
+//     
+//     // Calculate service fee (10% platform fee)
+//     const serviceFee = service.price * 0.1
+//     
+//     // Atomic operation: Create booking and conversation together
+//     const bookingData = {
+//       service_id: serviceId,
+//       customer_id: userId,
+//       provider_id: service.provider_id,
+//       scheduled_at: scheduledAt,
+//       duration_minutes: service.duration_minutes,
+//       total_price: service.price,
+//       service_fee: serviceFee,
+//       status: 'pending',
+//       customer_notes: customerNotes || null,
+//       location: location || service.location,
+//       is_online: isOnline ?? service.is_online
+//     }
+//     
+//     // Use Promise.all for parallel execution of booking and conversation creation
+//     const [bookingResult, conversationResult] = await Promise.all([
+//       supabaseAdmin
+//         .from('bookings')
+//         .insert(bookingData)
+//         .select()
+//         .single(),
+//       // Pre-generate conversation data to create immediately after booking
+//       Promise.resolve({
+//         provider_id: service.provider_id,
+//         customer_id: userId,
+//         is_active: true
+//       })
+//     ])
+//     
+//     if (bookingResult.error) {
+//       console.error('Booking creation error:', bookingResult.error)
+//       return c.json({ error: 'Failed to create booking' }, 500)
+//     }
+//     
+//     const booking = bookingResult.data
+//     
+//     // Create conversation with booking ID
+//     const { error: conversationError } = await supabaseAdmin
+//       .from('conversations')
+//       .insert({
+//         booking_id: booking.id,
+//         ...conversationResult
+//       })
+//     
+//     if (conversationError) {
+//       // Log error but don't fail the booking - conversation can be created later
+//       console.error('Conversation creation warning:', conversationError)
+//     }
+//     
+//     // Generate payment authorization for blockchain payment
+//     console.log('🔐 Generating payment authorization for booking:', booking.id)
+//     
+//     try {
+//     
+//     // Get customer wallet address from database
+//     const { data: customerUser } = await supabaseAdmin
+//       .from('users')
+//       .select('wallet_address')
+//       .eq('id', userId)
+//       .single()
+//     
+//     const customerWallet = customerUser?.wallet_address
+//     console.log('💰 Customer wallet address:', customerWallet)
+//     
+//     if (!customerWallet) {
+//       return c.json({ error: 'No wallet found for customer. Please ensure wallet is connected and try logging in again.' }, 400)
+//     }
+// 
+//     // Get provider's wallet address from database
+//     const { data: providerUser } = await supabaseAdmin
+//       .from('users')
+//       .select('wallet_address')
+//       .eq('id', service.provider_id)
+//       .single()
+//     
+//     const providerWallet = providerUser?.wallet_address
+//     console.log('💰 Provider wallet address:', providerWallet)
+//     
+//     if (!providerUser) {
+//       return c.json({ error: 'Provider not found' }, 400)
+//     }
+//     
+//     if (!providerWallet) {
+//       return c.json({ error: 'No wallet found for provider. Provider must log in to register their wallet address.' }, 400)
+//     }
+//     
+//     // Calculate fee structure
+//     const hasInviter = false // TODO: Add inviter logic when implemented
+//     const feeData = eip712Signer.calculateFees(booking.total_price, hasInviter)
+//     
+//     // Generate blockchain booking ID
+//     const blockchainBookingId = blockchainService.formatBookingId(booking.id)
+//     
+//     // Update booking with blockchain booking ID and set status to pending_payment
+//     await supabaseAdmin
+//       .from('bookings')
+//       .update({
+//         blockchain_booking_id: blockchainBookingId,
+//         status: 'pending_payment'
+//       })
+//       .eq('id', booking.id)
+//     
+//     // Generate EIP-712 signature
+//     const authResult = await eip712Signer.signBookingAuthorization({
+//       bookingId: booking.id,
+//       customer: customerWallet,
+//       provider: providerWallet,
+//       inviter: ethers.ZeroAddress, // TODO: Add inviter support
+//       amount: booking.total_price,
+//       platformFeeRate: feeData.platformFeeRate,
+//       inviterFeeRate: feeData.inviterFeeRate,
+//       expiryMinutes: 5 // 5 minute expiry
+//     })
+//     
+//     // Store nonce to prevent replay attacks
+//     await supabaseAdmin
+//       .from('signature_nonces')
+//       .insert({
+//         nonce: authResult.nonce,
+//         booking_id: booking.id,
+//         signature_type: 'booking_authorization'
+//       })
+//     
+//     const endTime = Date.now()
+//     console.log(`✅ Booking creation with payment authorization: ${endTime - startTime}ms | Booking ID: ${booking.id}`)
+//     
+//     // Convert BigInt values to strings for JSON serialization
+//     const serializableAuthorization = {
+//       ...authResult.authorization,
+//       bookingId: authResult.authorization.bookingId.toString(),
+//       amount: authResult.authorization.amount.toString()
+//     }
+// 
+//     return c.json({
+//       booking: { ...booking, status: 'pending_payment', blockchain_booking_id: blockchainBookingId },
+//       authorization: serializableAuthorization,
+//       signature: authResult.signature,
+//       contractAddress: process.env.CONTRACT_ADDRESS,
+//       usdcAddress: process.env.USDC_ADDRESS,
+//       feeBreakdown: feeData,
+//       expiresAt: new Date(authResult.expiry * 1000).toISOString()
+//     })
+//     
+//     } catch (authError) {
+//       console.error('❌ Payment authorization error:', authError)
+//       // If payment authorization fails, still return the booking but without payment info
+//       // This allows the booking to be created and payment can be attempted later
+//       return c.json({
+//         booking,
+//         error: 'Payment authorization failed - booking created but payment required',
+//         message: 'You can complete payment from your bookings page'
+//       })
+//     }
+//     
+//   } catch (error) {
+//     console.error('Booking error:', error)
+//     return c.json({ error: 'Internal server error' }, 500)
+//   }
+// })
 
 // ========== BLOCKCHAIN PAYMENT ENDPOINTS ==========
 
