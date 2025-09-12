@@ -368,7 +368,7 @@ export default function systemRoutes(app) {
         supabaseAdmin.from('services').select('*', { count: 'exact', head: true }).eq('is_visible', true),
         supabaseAdmin.from('bookings').select('*', { count: 'exact', head: true }),
         supabaseAdmin.from('reviews').select('*', { count: 'exact', head: true }),
-        supabaseAdmin.from('meeting_integrations').select('*', { count: 'exact', head: true }).eq('is_active', true)
+        supabaseAdmin.from('user_meeting_integrations').select('*', { count: 'exact', head: true }).eq('is_active', true)
       ]);
 
       // Get booking stats by status

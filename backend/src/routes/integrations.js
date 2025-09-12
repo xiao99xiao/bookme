@@ -26,164 +26,6 @@ const supabaseAdmin = getSupabaseAdmin();
 export default function integrationRoutes(app) {
 
   /**
-   * POST /api/meeting/generate
-   * 
-   * Generate a meeting link for a booking.
-   * This endpoint creates meeting links using integrated services like Google Meet or Zoom.
-   * 
-   * Headers:
-   * - Authorization: Bearer {privyToken}
-   * 
-   * Body:
-   * - booking_id: UUID of the booking to generate meeting for
-   * - meeting_type: Type of meeting ('google_meet', 'zoom', 'teams')
-   * - duration_minutes: Meeting duration (optional, defaults to booking duration)
-   * - title: Meeting title (optional, defaults to service title)
-   * - description: Meeting description (optional)
-   * 
-   * Response:
-   * - Meeting object with generated link and details
-   * 
-   * @param {Context} c - Hono context
-   * @returns {Response} JSON response with meeting data or error
-   */
-  app.post('/api/meeting/generate', verifyPrivyAuth, async (c) => {
-    try {
-      const userId = c.get('userId');
-      const body = await c.req.json();
-      const { 
-        booking_id, 
-        meeting_type = 'google_meet', 
-        duration_minutes,
-        title,
-        description 
-      } = body;
-
-      if (!booking_id) {
-        return c.json({ error: 'Booking ID is required' }, 400);
-      }
-
-      // Get booking details to verify access and gather meeting info
-      const { data: booking, error: bookingError } = await supabaseAdmin
-        .from('bookings')
-        .select(`
-          *,
-          service:services(*),
-          customer:users!customer_id(*),
-          provider:users!provider_id(*)
-        `)
-        .eq('id', booking_id)
-        .single();
-
-      if (bookingError || !booking) {
-        console.error('Booking fetch error:', bookingError);
-        return c.json({ error: 'Booking not found' }, 404);
-      }
-
-      // Only provider can generate meeting links
-      if (booking.provider_id !== userId) {
-        return c.json({ error: 'Only the service provider can generate meeting links' }, 403);
-      }
-
-      // Check if booking is confirmed
-      if (booking.status !== 'confirmed' && booking.status !== 'in_progress') {
-        return c.json({ error: 'Meeting can only be generated for confirmed bookings' }, 400);
-      }
-
-      // Get provider's integration for the requested meeting type
-      const { data: integration, error: integrationError } = await supabaseAdmin
-        .from('meeting_integrations')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('provider_type', meeting_type)
-        .eq('is_active', true)
-        .single();
-
-      if (integrationError || !integration) {
-        console.error('Integration fetch error:', integrationError);
-        return c.json({ 
-          error: `No active ${meeting_type} integration found. Please connect your account first.` 
-        }, 404);
-      }
-
-      // Generate meeting based on integration type
-      let meetingData;
-      try {
-        switch (meeting_type) {
-          case 'google_meet':
-            meetingData = await generateGoogleMeeting({
-              integration,
-              booking,
-              title: title || `${booking.service.title} - ${booking.customer.display_name}`,
-              description: description || booking.customer_notes || 'Booking session',
-              duration: duration_minutes || booking.duration_minutes
-            });
-            break;
-          
-          case 'zoom':
-            meetingData = await generateZoomMeeting({
-              integration,
-              booking,
-              title: title || `${booking.service.title} - ${booking.customer.display_name}`,
-              description: description || booking.customer_notes || 'Booking session',
-              duration: duration_minutes || booking.duration_minutes
-            });
-            break;
-          
-          default:
-            return c.json({ error: 'Unsupported meeting type' }, 400);
-        }
-      } catch (meetingError) {
-        console.error('Meeting generation error:', meetingError);
-        return c.json({ error: 'Failed to generate meeting link' }, 500);
-      }
-
-      // Update booking with meeting information
-      const { data: updatedBooking, error: updateError } = await supabaseAdmin
-        .from('bookings')
-        .update({
-          meeting_link: meetingData.meeting_url,
-          meeting_id: meetingData.meeting_id,
-          meeting_password: meetingData.password || null,
-          meeting_type: meeting_type,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', booking_id)
-        .select()
-        .single();
-
-      if (updateError) {
-        console.error('Booking meeting update error:', updateError);
-        return c.json({ error: 'Failed to save meeting information' }, 500);
-      }
-
-      // Send meeting link to customer via email/notification
-      setImmediate(async () => {
-        try {
-          console.log(`Meeting generated for booking ${booking_id}: ${meetingData.meeting_url}`);
-          // Email notification logic would go here
-        } catch (notificationError) {
-          console.error('Meeting notification error:', notificationError);
-        }
-      });
-
-      return c.json({
-        booking_id,
-        meeting_type,
-        meeting_url: meetingData.meeting_url,
-        meeting_id: meetingData.meeting_id,
-        password: meetingData.password,
-        join_instructions: meetingData.join_instructions,
-        generated_at: new Date().toISOString()
-      });
-
-    } catch (error) {
-      console.error('Meeting generation error:', error);
-      return c.json({ error: 'Internal server error' }, 500);
-    }
-  });
-
-  /**
    * DELETE /api/meeting/:bookingId
    * 
    * Delete/cancel a meeting for a booking.
@@ -231,10 +73,10 @@ export default function integrationRoutes(app) {
       if (booking.meeting_type && booking.meeting_id) {
         try {
           const { data: integration } = await supabaseAdmin
-            .from('meeting_integrations')
+            .from('user_meeting_integrations')
             .select('*')
             .eq('user_id', userId)
-            .eq('provider_type', booking.meeting_type)
+            .eq('platform', booking.meeting_type)
             .single();
 
           if (integration) {
@@ -255,9 +97,6 @@ export default function integrationRoutes(app) {
         .from('bookings')
         .update({
           meeting_link: null,
-          meeting_id: null,
-          meeting_password: null,
-          meeting_type: null,
           updated_at: new Date().toISOString()
         })
         .eq('id', bookingId);
@@ -289,7 +128,7 @@ export default function integrationRoutes(app) {
    * 
    * Query Parameters:
    * - active_only: Filter for active integrations only
-   * - provider_type: Filter by integration type ('google_meet', 'zoom', etc.)
+   * - platform: Filter by integration type ('google_meet', 'zoom', etc.)
    * 
    * Response:
    * - Array of integration objects with connection status
@@ -300,10 +139,10 @@ export default function integrationRoutes(app) {
   app.get('/api/integrations', verifyPrivyAuth, async (c) => {
     try {
       const userId = c.get('userId');
-      const { active_only, provider_type } = c.req.query();
+      const { active_only, platform } = c.req.query();
 
       let query = supabaseAdmin
-        .from('meeting_integrations')
+        .from('user_meeting_integrations')
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
@@ -312,8 +151,8 @@ export default function integrationRoutes(app) {
         query = query.eq('is_active', true);
       }
 
-      if (provider_type) {
-        query = query.eq('provider_type', provider_type);
+      if (platform) {
+        query = query.eq('platform', platform);
       }
 
       const { data: integrations, error: integrationsError } = await query;
@@ -323,19 +162,8 @@ export default function integrationRoutes(app) {
         return c.json({ error: 'Failed to fetch integrations' }, 500);
       }
 
-      // Remove sensitive data from response
-      const safeIntegrations = integrations?.map(integration => ({
-        id: integration.id,
-        provider_type: integration.provider_type,
-        provider_email: integration.provider_email,
-        is_active: integration.is_active,
-        created_at: integration.created_at,
-        updated_at: integration.updated_at,
-        connection_status: integration.refresh_token ? 'connected' : 'disconnected',
-        scopes: integration.scopes || []
-      })) || [];
-
-      return c.json(safeIntegrations);
+      // Return data directly like original implementation
+      return c.json(integrations || []);
 
     } catch (error) {
       console.error('Integrations fetch error:', error);
@@ -353,7 +181,7 @@ export default function integrationRoutes(app) {
    * - Authorization: Bearer {privyToken}
    * 
    * Body:
-   * - provider_type: Integration type ('google_meet', 'zoom', 'teams')
+   * - platform: Integration type ('google_meet', 'zoom', 'teams')
    * - provider_email: Email associated with the integration
    * - access_token: OAuth access token (temporary)
    * - refresh_token: OAuth refresh token (for token renewal)
@@ -371,36 +199,36 @@ export default function integrationRoutes(app) {
       const userId = c.get('userId');
       const body = await c.req.json();
       const { 
-        provider_type, 
-        provider_email, 
+        platform, 
         access_token, 
         refresh_token,
-        scopes,
-        expires_at 
+        expires_at,
+        scope,
+        platform_user_id,
+        platform_user_email
       } = body;
 
-      if (!provider_type || !provider_email || !access_token) {
-        return c.json({ 
-          error: 'Provider type, email, and access token are required' 
-        }, 400);
+      if (!platform || !access_token) {
+        return c.json({ error: 'Missing required fields' }, 400);
       }
 
       // Check if integration already exists
       const { data: existingIntegration, error: existingError } = await supabaseAdmin
-        .from('meeting_integrations')
+        .from('user_meeting_integrations')
         .select('*')
         .eq('user_id', userId)
-        .eq('provider_type', provider_type)
+        .eq('platform', platform)
         .single();
 
       const integrationData = {
         user_id: userId,
-        provider_type,
-        provider_email,
+        platform: platform,
         access_token,
         refresh_token: refresh_token || null,
-        scopes: scopes || [],
         expires_at: expires_at || null,
+        scopes: scope || [],
+        platform_user_id: platform_user_id || null,
+        platform_user_email: platform_user_email || null,
         is_active: true,
         updated_at: new Date().toISOString()
       };
@@ -409,7 +237,7 @@ export default function integrationRoutes(app) {
       if (existingIntegration) {
         // Update existing integration
         const { data, error } = await supabaseAdmin
-          .from('meeting_integrations')
+          .from('user_meeting_integrations')
           .update(integrationData)
           .eq('id', existingIntegration.id)
           .select()
@@ -424,7 +252,7 @@ export default function integrationRoutes(app) {
         // Create new integration
         integrationData.created_at = new Date().toISOString();
         const { data, error } = await supabaseAdmin
-          .from('meeting_integrations')
+          .from('user_meeting_integrations')
           .insert(integrationData)
           .select()
           .single();
@@ -436,17 +264,8 @@ export default function integrationRoutes(app) {
         integration = data;
       }
 
-      // Return safe integration data (without tokens)
-      return c.json({
-        id: integration.id,
-        provider_type: integration.provider_type,
-        provider_email: integration.provider_email,
-        is_active: integration.is_active,
-        created_at: integration.created_at,
-        updated_at: integration.updated_at,
-        connection_status: 'connected',
-        scopes: integration.scopes || []
-      });
+      // Return full data like original implementation
+      return c.json(integration);
 
     } catch (error) {
       console.error('Integration creation error:', error);
@@ -479,7 +298,7 @@ export default function integrationRoutes(app) {
 
       // Get integration to verify ownership and gather token info for revocation
       const { data: integration, error: integrationError } = await supabaseAdmin
-        .from('meeting_integrations')
+        .from('user_meeting_integrations')
         .select('*')
         .eq('id', integrationId)
         .eq('user_id', userId)
@@ -494,7 +313,7 @@ export default function integrationRoutes(app) {
       if (integration.access_token) {
         try {
           await revokeIntegrationAccess({
-            providerType: integration.provider_type,
+            providerType: integration.platform,
             accessToken: integration.access_token,
             refreshToken: integration.refresh_token
           });
@@ -506,7 +325,7 @@ export default function integrationRoutes(app) {
 
       // Delete integration from database
       const { error: deleteError } = await supabaseAdmin
-        .from('meeting_integrations')
+        .from('user_meeting_integrations')
         .delete()
         .eq('id', integrationId)
         .eq('user_id', userId);
@@ -551,7 +370,7 @@ export default function integrationRoutes(app) {
     try {
       const userId = c.get('userId');
       const body = await c.req.json();
-      const { code, state, redirect_uri } = body;
+      const { code, redirectUri } = body;
 
       if (!code) {
         return c.json({ error: 'Authorization code is required' }, 400);
@@ -560,7 +379,7 @@ export default function integrationRoutes(app) {
       // Exchange authorization code for tokens
       const tokenData = await exchangeGoogleAuthCode({
         code,
-        redirectUri: redirect_uri || process.env.GOOGLE_OAUTH_REDIRECT_URI,
+        redirectUri: redirectUri || process.env.GOOGLE_OAUTH_REDIRECT_URI,
         clientId: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET
       });
@@ -575,7 +394,7 @@ export default function integrationRoutes(app) {
       // Create or update integration
       const integrationData = {
         user_id: userId,
-        provider_type: 'google_meet',
+        platform: 'google_meet',
         provider_email: userInfo.email,
         access_token: tokenData.access_token,
         refresh_token: tokenData.refresh_token || null,
@@ -588,10 +407,10 @@ export default function integrationRoutes(app) {
 
       // Check for existing integration
       const { data: existingIntegration } = await supabaseAdmin
-        .from('meeting_integrations')
+        .from('user_meeting_integrations')
         .select('id')
         .eq('user_id', userId)
-        .eq('provider_type', 'google_meet')
+        .eq('platform', 'google_meet')
         .single();
 
       let integration;
@@ -599,7 +418,7 @@ export default function integrationRoutes(app) {
         // Update existing integration
         integrationData.updated_at = new Date().toISOString();
         const { data, error } = await supabaseAdmin
-          .from('meeting_integrations')
+          .from('user_meeting_integrations')
           .update(integrationData)
           .eq('id', existingIntegration.id)
           .select()
@@ -616,7 +435,7 @@ export default function integrationRoutes(app) {
         integrationData.updated_at = new Date().toISOString();
         
         const { data, error } = await supabaseAdmin
-          .from('meeting_integrations')
+          .from('user_meeting_integrations')
           .insert(integrationData)
           .select()
           .single();
@@ -632,7 +451,7 @@ export default function integrationRoutes(app) {
         success: true,
         integration: {
           id: integration.id,
-          provider_type: integration.provider_type,
+          platform: integration.platform,
           provider_email: integration.provider_email,
           is_active: integration.is_active,
           connection_status: 'connected',
@@ -645,6 +464,86 @@ export default function integrationRoutes(app) {
     } catch (error) {
       console.error('Google OAuth callback error:', error);
       return c.json({ error: 'Failed to process Google OAuth callback' }, 500);
+    }
+  });
+
+  /**
+   * POST /api/meeting/generate
+   * 
+   * Generate meeting link (old simplified endpoint for backward compatibility).
+   * This endpoint matches the old commented code pattern exactly.
+   * 
+   * Body:
+   * - bookingId: UUID of the booking to generate meeting for
+   * 
+   * Response:
+   * - Updated booking with meeting link or error
+   */
+  app.post('/api/meeting/generate', verifyPrivyAuth, async (c) => {
+    try {
+      const userId = c.get('userId');
+      const { bookingId } = await c.req.json();
+      
+      // Import meeting generation module
+      const { generateMeetingLinkForBooking } = await import('../meeting-generation.js');
+      
+      // Verify user is the provider
+      const { data: booking, error } = await supabaseAdmin
+        .from('bookings')
+        .select('provider_id')
+        .eq('id', bookingId)
+        .single();
+      
+      if (error || !booking) {
+        return c.json({ error: 'Booking not found' }, 404);
+      }
+      
+      if (booking.provider_id !== userId) {
+        return c.json({ error: 'Only provider can generate meeting link' }, 403);
+      }
+      
+      // Generate meeting link
+      const meetingLink = await generateMeetingLinkForBooking(bookingId);
+      
+      if (!meetingLink) {
+        return c.json({ 
+          error: 'Failed to generate meeting link. Please check your Google integration settings and try reconnecting your Google account.',
+          details: 'Meeting link generation failed - this usually indicates expired or invalid OAuth credentials.'
+        }, 500);
+      }
+      
+      // Get updated booking
+      const { data: updatedBooking } = await supabaseAdmin
+        .from('bookings')
+        .select(`
+          *,
+          service:services(*),
+          customer:users!customer_id(*)
+        `)
+        .eq('id', bookingId)
+        .single();
+      
+      return c.json({
+        success: true,
+        booking: updatedBooking,
+        meetingLink
+      });
+      
+    } catch (error) {
+      console.error('Meeting generation error:', error);
+      
+      // Provide more specific error messages based on the error
+      let errorMessage = 'Failed to generate meeting link';
+      if (error.message?.includes('401') || error.message?.includes('authError')) {
+        errorMessage = 'Google authentication failed. Please reconnect your Google account in integrations.';
+      } else if (error.message?.includes('refresh token')) {
+        errorMessage = 'Google refresh token expired. Please reconnect your Google account in integrations.';
+      }
+      
+      return c.json({ 
+        error: errorMessage,
+        details: error.message 
+      }, 500);
     }
   });
 }

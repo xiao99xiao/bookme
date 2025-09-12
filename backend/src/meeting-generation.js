@@ -289,13 +289,7 @@ export async function generateMeetingLinkForBooking(bookingId) {
       await supabaseAdmin
         .from('bookings')
         .update({
-          meeting_platform: meetingPlatform,
-          meeting_link: meetingLink,
-          meeting_id: meetingId,
-          meeting_settings: {
-            created_at: new Date().toISOString(),
-            platform: meetingPlatform
-          }
+          meeting_link: meetingLink
         })
         .eq('id', bookingId)
       
@@ -318,40 +312,22 @@ export async function deleteMeetingForBooking(bookingId) {
     // Get booking details
     const { data: booking, error } = await supabaseAdmin
       .from('bookings')
-      .select('meeting_id, meeting_platform, provider_id')
+      .select('meeting_link, provider_id')
       .eq('id', bookingId)
       .single()
 
-    if (error || !booking || !booking.meeting_id) {
+    if (error || !booking || !booking.meeting_link) {
       return
     }
 
-    // Get provider's integration
-    const { data: integration } = await supabaseAdmin
-      .from('user_meeting_integrations')
-      .select('access_token')
-      .eq('user_id', booking.provider_id)
-      .eq('platform', booking.meeting_platform)
-      .eq('is_active', true)
-      .single()
-
-    if (!integration) {
-      return
-    }
-
-    // Delete meeting based on platform
-    if (booking.meeting_platform === 'google_meet') {
-      const calendar = new GoogleCalendar(integration.access_token)
-      await calendar.deleteEvent(booking.meeting_id)
-    }
+    // Since we don't store meeting_id, we can't delete from Google Calendar
+    // Just clear the meeting link
 
     // Clear meeting info from booking
     await supabaseAdmin
       .from('bookings')
       .update({
-        meeting_link: null,
-        meeting_id: null,
-        meeting_settings: null
+        meeting_link: null
       })
       .eq('id', bookingId)
 

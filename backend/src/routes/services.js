@@ -139,6 +139,7 @@ export default function serviceRoutes(app) {
       // Remove any fields that don't exist in the database
       delete body.time_slots; // Remove if accidentally sent
       delete body.timeSlots; // Remove if accidentally sent (camelCase version)
+      delete body.user_id; // Remove if accidentally sent - database uses provider_id
       
       // Ensure provider_id matches authenticated user
       const serviceData = {
@@ -426,17 +427,7 @@ export default function serviceRoutes(app) {
         return c.json({ error: 'Failed to fetch services' }, 500);
       }
       
-      // Transform the data to match expected format
-      const transformedServices = (data || []).map(service => ({
-        ...service,
-        categories: service.categories ? {
-          name: service.categories.name,
-          icon: service.categories.icon,
-          color: service.categories.color
-        } : null
-      }));
-      
-      return c.json(transformedServices);
+      return c.json(data || []);
     } catch (error) {
       console.error('Services error:', error);
       return c.json({ error: 'Internal server error' }, 500);

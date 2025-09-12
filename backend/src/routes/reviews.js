@@ -60,11 +60,7 @@ export default function reviewRoutes(app) {
       const { 
         booking_id, 
         rating, 
-        comment, 
-        service_quality,
-        communication,
-        punctuality,
-        value_for_money 
+        comment
       } = body;
 
       // Validate required fields
@@ -129,16 +125,12 @@ export default function reviewRoutes(app) {
       // Create review record
       const reviewData = {
         booking_id: booking_id,
-        customer_id: userId,
-        provider_id: booking.provider_id,
+        reviewer_id: userId,
+        reviewee_id: booking.provider_id,
         service_id: booking.service_id,
         rating: rating,
         comment: comment || null,
-        service_quality: service_quality || null,
-        communication: communication || null,
-        punctuality: punctuality || null,
-        value_for_money: value_for_money || null,
-        created_at: new Date().toISOString()
+        is_public: true
       };
 
       const { data: review, error: createError } = await supabaseAdmin
@@ -147,8 +139,8 @@ export default function reviewRoutes(app) {
         .select(`
           *,
           booking:bookings(*),
-          customer:users!customer_id(*),
-          provider:users!provider_id(*),
+          reviewer:users!reviewer_id(*),
+          reviewee:users!reviewee_id(*),
           service:services(*)
         `)
         .single();
@@ -165,7 +157,7 @@ export default function reviewRoutes(app) {
           const { data: allReviews, error: statsError } = await supabaseAdmin
             .from('reviews')
             .select('rating')
-            .eq('provider_id', booking.provider_id);
+            .eq('reviewee_id', booking.provider_id);
 
           if (!statsError && allReviews) {
             const totalReviews = allReviews.length;
@@ -254,8 +246,8 @@ export default function reviewRoutes(app) {
         .select(`
           *,
           booking:bookings(*),
-          customer:users!customer_id(id, display_name, avatar),
-          provider:users!provider_id(id, display_name, avatar),
+          reviewer:users!reviewer_id(id, display_name, avatar),
+          reviewee:users!reviewee_id(id, display_name, avatar),
           service:services(id, title, category_id)
         `)
         .eq('booking_id', bookingId)
@@ -332,15 +324,12 @@ export default function reviewRoutes(app) {
           id,
           rating,
           comment,
-          service_quality,
-          communication,
-          punctuality,
-          value_for_money,
           created_at,
-          customer:users!customer_id(id, display_name, avatar),
+          reviewer:users!reviewer_id(id, display_name, avatar),
           service:services(id, title, category_id)
         `)
-        .eq('provider_id', providerId);
+        .eq('reviewee_id', providerId)
+        .eq('is_public', true);
 
       // Filter by rating if specified
       if (rating && ['1', '2', '3', '4', '5'].includes(rating)) {
@@ -365,7 +354,7 @@ export default function reviewRoutes(app) {
       }
 
       // Apply pagination
-      query = query.limit(limitNum).offset(offsetNum);
+      query = query.range(offsetNum, offsetNum + limitNum - 1);
 
       const { data: reviews, error: reviewsError } = await query;
 
@@ -378,13 +367,13 @@ export default function reviewRoutes(app) {
       const { count: totalReviews, error: countError } = await supabaseAdmin
         .from('reviews')
         .select('*', { count: 'exact', head: true })
-        .eq('provider_id', providerId)
+        .eq('reviewee_id', providerId)
         .then(result => {
           if (rating && ['1', '2', '3', '4', '5'].includes(rating)) {
             return supabaseAdmin
               .from('reviews')
               .select('*', { count: 'exact', head: true })
-              .eq('provider_id', providerId)
+              .eq('reviewee_id', providerId)
               .eq('rating', parseInt(rating));
           }
           return result;
@@ -399,7 +388,7 @@ export default function reviewRoutes(app) {
       const { data: ratingDistribution, error: distributionError } = await supabaseAdmin
         .from('reviews')
         .select('rating')
-        .eq('provider_id', providerId);
+        .eq('reviewee_id', providerId);
 
       let distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
       if (!distributionError && ratingDistribution) {

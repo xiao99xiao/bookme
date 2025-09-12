@@ -159,7 +159,7 @@ export default function conversationRoutes(app) {
           participant2:users!participant2_id(*),
           booking:bookings(*)
         `)
-        .eq('id', conversationId)
+        .eq('id', conversation_id)
         .single();
 
       if (conversationError || !conversation) {
@@ -349,7 +349,7 @@ export default function conversationRoutes(app) {
       const { data: conversation, error: conversationError } = await supabaseAdmin
         .from('conversations')
         .select('participant1_id, participant2_id')
-        .eq('id', conversationId)
+        .eq('id', conversation_id)
         .single();
 
       if (conversationError || !conversation) {
@@ -368,7 +368,7 @@ export default function conversationRoutes(app) {
           is_read: true,
           read_at: new Date().toISOString() 
         })
-        .eq('conversation_id', conversationId)
+        .eq('conversation_id', conversation_id)
         .neq('sender_id', userId)
         .eq('is_read', false)
         .select('id');
@@ -435,7 +435,7 @@ export default function conversationRoutes(app) {
     try {
       const userId = c.get('userId');
       const body = await c.req.json();
-      const { conversation_id, content, message_type = 'text', metadata } = body;
+      const { conversationId: conversation_id, content, message_type = 'text', metadata } = body;
 
       if (!conversation_id || !content) {
         return c.json({ error: 'Conversation ID and content are required' }, 400);
@@ -569,7 +569,7 @@ export default function conversationRoutes(app) {
       const { data: conversation, error: conversationError } = await supabaseAdmin
         .from('conversations')
         .select('participant1_id, participant2_id')
-        .eq('id', conversationId)
+        .eq('id', conversation_id)
         .single();
 
       if (conversationError || !conversation) {
@@ -588,7 +588,7 @@ export default function conversationRoutes(app) {
           *,
           sender:users!sender_id(id, display_name, avatar)
         `)
-        .eq('conversation_id', conversationId)
+        .eq('conversation_id', conversation_id)
         .order('created_at', { ascending: false });
 
       // Apply cursor-based pagination if specified
@@ -618,7 +618,7 @@ export default function conversationRoutes(app) {
 
       // Apply pagination
       if (!before && !after) {
-        query = query.limit(limitNum).offset(offsetNum);
+        query = query.range(offsetNum, offsetNum + limitNum - 1);
       } else {
         query = query.limit(limitNum);
       }
