@@ -332,6 +332,9 @@ function subscribeToUserBookings(socket, userId) {
     .subscribe()
 
   // Store subscription
+  if (!activeSubscriptions.has(userId)) {
+    activeSubscriptions.set(userId, [])
+  }
   activeSubscriptions.get(userId).push(bookingChannel)
 }
 
