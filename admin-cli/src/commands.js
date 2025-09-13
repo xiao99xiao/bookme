@@ -129,6 +129,115 @@ export class AdminCommands {
   }
 
   /**
+   * Find booking by transaction hash and optionally mark as paid
+   */
+  async findBookingByTxHash(txHash, markAsPaid) {
+    try {
+      if (!txHash) {
+        const { enteredTxHash } = await inquirer.prompt([
+          {
+            type: 'input',
+            name: 'enteredTxHash',
+            message: 'Enter transaction hash:',
+            validate: (input) => {
+              if (!input || input.length < 10) {
+                return 'Please enter a valid transaction hash'
+              }
+              return true
+            }
+          }
+        ])
+        txHash = enteredTxHash.trim()
+      }
+
+      console.log(chalk.blue(`🔍 Parsing transaction hash: ${txHash.slice(0, 10)}...${txHash.slice(-6)}\\n`))
+      
+      // First, extract booking ID from the blockchain transaction
+      let transactionData
+      try {
+        transactionData = await this.blockchainService.getBookingIdFromTransaction(txHash)
+        console.log(chalk.green(`✅ Found ${transactionData.eventName} event with booking ID: ${transactionData.bookingId.slice(0, 10)}...${transactionData.bookingId.slice(-6)}`))
+      } catch (error) {
+        console.log(chalk.red('❌ Failed to parse transaction or extract booking ID:'), error.message)
+        console.log(chalk.yellow('💡 This might not be a BookMe transaction or the transaction may not contain booking events'))
+        return null
+      }
+      
+      // Now find the booking in the database using the extracted booking ID
+      console.log(chalk.blue('🔍 Searching for booking in database...\\n'))
+      const booking = await this.databaseService.getBookingByBlockchainId(transactionData.bookingId)
+      
+      if (!booking) {
+        console.log(chalk.yellow('❌ Booking found on blockchain but not in database'))
+        console.log(chalk.yellow(`📋 Blockchain Booking ID: ${transactionData.bookingId}`))
+        console.log(chalk.yellow(`🔗 Transaction: ${transactionData.transactionHash}`))
+        console.log(chalk.yellow(`📋 Event: ${transactionData.eventName}`))
+        console.log(chalk.yellow(`🏭 Block: ${transactionData.blockNumber}`))
+        return null
+      }
+
+      // Display booking details
+      console.log(chalk.green('✅ Found booking!\\n'))
+      console.log(chalk.cyan(`📋 Booking ID: ${booking.id}`))
+      console.log(chalk.cyan(`🔗 Blockchain ID: ${booking.blockchain_booking_id || 'N/A'}`))
+      console.log(chalk.cyan(`📅 Status: ${booking.status}`))
+      console.log(chalk.cyan(`💰 Total Price: $${booking.total_price}`))
+      console.log(chalk.cyan(`🏷️  Service: ${booking.services?.title || 'Unknown'}`))
+      console.log(chalk.cyan(`👤 Customer: ${booking.customers?.display_name || 'Unknown'} (@${booking.customers?.username || 'no-username'})`))
+      console.log(chalk.cyan(`🛠️  Provider: ${booking.providers?.display_name || 'Unknown'} (@${booking.providers?.username || 'no-username'})`))
+      console.log(chalk.cyan(`📅 Scheduled: ${new Date(booking.scheduled_at).toLocaleString()}`))
+      console.log(chalk.cyan(`📍 Location: ${booking.is_online ? '🌐 Online' : '📍 ' + (booking.location || 'TBD')}`))
+      
+      // Show transaction hash details
+      console.log(chalk.blue('\\n🔗 Transaction Hashes:'))
+      if (booking.blockchain_tx_hash) {
+        console.log(chalk.gray(`  💳 Payment: ${booking.blockchain_tx_hash}`))
+      }
+      if (booking.completion_tx_hash) {
+        console.log(chalk.gray(`  ✅ Completion: ${booking.completion_tx_hash}`))
+      }
+      if (booking.cancellation_tx_hash) {
+        console.log(chalk.gray(`  ❌ Cancellation: ${booking.cancellation_tx_hash}`))
+      }
+
+      // If not already paid and markAsPaid is requested or user chooses to mark as paid
+      if (booking.status !== 'paid') {
+        let shouldMarkAsPaid = markAsPaid
+        
+        if (!shouldMarkAsPaid) {
+          const { markPaid } = await inquirer.prompt([
+            {
+              type: 'confirm',
+              name: 'markPaid',
+              message: `Booking status is "${booking.status}". Mark as paid?`,
+              default: booking.status === 'pending_payment'
+            }
+          ])
+          shouldMarkAsPaid = markPaid
+        }
+
+        if (shouldMarkAsPaid) {
+          console.log(chalk.blue('\\n💳 Marking booking as paid...'))
+          
+          await this.databaseService.markBookingAsPaid(booking.id, txHash)
+          
+          console.log(chalk.green('\\n✅ Booking marked as paid successfully!'))
+          console.log(chalk.gray(`📋 Booking ID: ${booking.id}`))
+          console.log(chalk.gray(`💳 Payment Transaction: ${txHash}`))
+        }
+      } else {
+        console.log(chalk.green('\\n💚 Booking is already marked as paid'))
+      }
+
+      return booking
+      
+    } catch (error) {
+      console.log(chalk.red('❌ Error finding booking:'), error.message)
+      throw error
+    }
+  }
+
+  /**
    * Cancel all active bookings
    */
   async cancelAllBookings(reason) {

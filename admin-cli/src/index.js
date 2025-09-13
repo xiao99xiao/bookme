@@ -84,6 +84,22 @@ async function initializeCommands() {
         }
       })
 
+    // Find booking by transaction hash command
+    program
+      .command('find-tx <tx-hash>')
+      .description('Find booking by transaction hash and optionally mark as paid')
+      .option('-p, --mark-paid', 'Automatically mark booking as paid if found')
+      .action(async (txHash, options) => {
+        try {
+          console.log(chalk.blue('🚀 BookMe Admin CLI - Find Booking by Transaction Hash\n'))
+          await commands.findBookingByTxHash(txHash, options.markPaid)
+          process.exit(0)
+        } catch (error) {
+          console.error(chalk.red('❌ Transaction lookup failed:'), error.message)
+          process.exit(1)
+        }
+      })
+
     // Interactive mode (default command)
     program
       .command('interactive', { isDefault: true })
@@ -123,9 +139,10 @@ async function runInteractiveMode(commands) {
           message: 'What would you like to do?',
           choices: [
             { name: '📋 List active bookings', value: 'list' },
+            { name: '🔍 Find booking by transaction hash', value: 'find-tx' },
             { name: '🚨 Cancel a booking', value: 'cancel' },
             { name: '💥 Cancel ALL bookings', value: 'cancel-all' },
-            { name: '🔍 Test connections', value: 'test' },
+            { name: '🔧 Test connections', value: 'test' },
             { name: '🚪 Exit', value: 'exit' }
           ]
         }
@@ -136,6 +153,10 @@ async function runInteractiveMode(commands) {
       switch (action) {
         case 'list':
           await commands.listActiveBookings()
+          break
+          
+        case 'find-tx':
+          await commands.findBookingByTxHash()
           break
           
         case 'cancel':
@@ -198,6 +219,7 @@ if (process.argv.length === 2) {
   console.log(chalk.yellow('Direct commands:'))
   console.log('  node src/index.js test       # Test connections')
   console.log('  node src/index.js list       # List active bookings')
+  console.log('  node src/index.js find-tx <hash> [-p]        # Find booking by transaction hash')
   console.log('  node src/index.js cancel [id] [-r "reason"]  # Cancel specific booking')
   console.log('  node src/index.js cancel-all [-r "reason"]   # Cancel all bookings')
   console.log()

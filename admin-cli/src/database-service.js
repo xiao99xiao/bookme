@@ -184,4 +184,84 @@ export class DatabaseService {
       // Don't throw - database update is secondary to blockchain operation
     }
   }
+
+  /**
+   * Find booking by transaction hash (payment or completion tx)
+   */
+  async getBookingByTransactionHash(txHash) {
+    try {
+      const { data, error } = await this.supabase
+        .from('bookings')
+        .select(`
+          id,
+          status,
+          scheduled_at,
+          duration_minutes,
+          total_price,
+          service_fee,
+          customer_notes,
+          location,
+          is_online,
+          blockchain_booking_id,
+          blockchain_tx_hash,
+          completion_tx_hash,
+          cancellation_tx_hash,
+          created_at,
+          services!inner(
+            title,
+            description,
+            price
+          ),
+          customers:customer_id(
+            display_name,
+            username
+          ),
+          providers:provider_id(
+            display_name,
+            username
+          )
+        `)
+        .or(`blockchain_tx_hash.eq.${txHash},completion_tx_hash.eq.${txHash},cancellation_tx_hash.eq.${txHash}`)
+
+      if (error) {
+        throw error
+      }
+
+      if (!data || data.length === 0) {
+        return null
+      }
+
+      // Return first match (should only be one booking per transaction)
+      return data[0]
+    } catch (error) {
+      console.error('❌ Error fetching booking by transaction hash:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Mark booking as paid by updating payment transaction hash and status
+   */
+  async markBookingAsPaid(bookingId, paymentTxHash) {
+    try {
+      const { error } = await this.supabase
+        .from('bookings')
+        .update({
+          status: 'paid',
+          blockchain_tx_hash: paymentTxHash,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', bookingId)
+
+      if (error) {
+        throw error
+      }
+
+      console.log(`✅ Marked booking ${bookingId} as paid with transaction ${paymentTxHash}`)
+      return true
+    } catch (error) {
+      console.error('❌ Error marking booking as paid:', error)
+      throw error
+    }
+  }
 }

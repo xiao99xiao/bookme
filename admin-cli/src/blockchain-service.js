@@ -49,6 +49,66 @@ export class AdminBlockchainService {
   }
 
   /**
+   * Parse transaction and extract booking ID from events
+   */
+  async getBookingIdFromTransaction(txHash) {
+    try {
+      console.log('🔍 Fetching transaction receipt...')
+      
+      // Get transaction receipt which contains the events
+      const receipt = await this.provider.getTransactionReceipt(txHash)
+      
+      if (!receipt) {
+        throw new Error('Transaction not found or not yet mined')
+      }
+      
+      console.log('✅ Transaction found, parsing events...')
+      
+      // Parse logs using the contract interface
+      const contract = new ethers.Contract(this.CONTRACT_ADDRESS, contractABI, this.provider)
+      
+      for (const log of receipt.logs) {
+        try {
+          // Try to parse each log with our contract interface
+          if (log.address.toLowerCase() === this.CONTRACT_ADDRESS.toLowerCase()) {
+            const parsedLog = contract.interface.parseLog(log)
+            
+            if (parsedLog) {
+              console.log(`📋 Found event: ${parsedLog.name}`)
+              
+              // Look for events that contain booking information
+              if (parsedLog.name === 'BookingCreatedAndPaid' || 
+                  parsedLog.name === 'BookingCancelled' || 
+                  parsedLog.name === 'ServiceCompleted') {
+                
+                const bookingId = parsedLog.args.bookingId
+                console.log(`✅ Extracted booking ID: ${bookingId}`)
+                
+                return {
+                  bookingId: bookingId,
+                  eventName: parsedLog.name,
+                  transactionHash: txHash,
+                  blockNumber: receipt.blockNumber,
+                  eventData: parsedLog.args
+                }
+              }
+            }
+          }
+        } catch (parseError) {
+          // Skip logs that can't be parsed (might be from other contracts)
+          continue
+        }
+      }
+      
+      throw new Error('No booking-related events found in this transaction')
+      
+    } catch (error) {
+      console.error('❌ Error parsing transaction:', error.message)
+      throw error
+    }
+  }
+
+  /**
    * Get all active bookings from smart contract using enumeration functions
    */
   async getActiveBookings() {
