@@ -15,78 +15,126 @@ class BlockchainEventMonitor {
     this.WEBSOCKET_URL = process.env.BLOCKCHAIN_WEBSOCKET_URL;
     this.REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 
-    // Initialize blockchain provider and contract
-    // Use WebSocket provider for real-time events if available, fallback to HTTP
+    // Lazy initialization - don't create connections until monitoring starts
+    this.provider = null;
+    this.contract = null;
+    this.redis = null;
+    this.subscriber = null;
+    this.publisher = null;
+
+    // Event processing state
+    this.isMonitoring = false;
+    this.eventQueue = "blockchain-events";
+    this.eventNotificationChannel = "blockchain-event-added";
+    this.processedEvents = new Set();
+    this.maxProcessedEvents = 1000; // Prevent unbounded growth
+
+    // Connection management
+    this.reconnectAttempts = 0;
+    this.maxReconnectAttempts = 5;
+
+    // Resource cleanup tracking
+    this.intervals = [];
+    this.timeouts = [];
+    this.abortController = null;
+
+    console.log("📡 Blockchain Event Monitor initialized (lazy loading)");
+    console.log("Contract Address:", this.CONTRACT_ADDRESS);
+    console.log("RPC URL:", this.RPC_URL);
+    console.log("Redis URL:", this.REDIS_URL);
+  }
+
+  /**
+   * Initialize all connections (called when monitoring starts)
+   */
+  async initializeConnections() {
+    console.log("🔧 Initializing blockchain monitoring connections...");
+
+    // Initialize Redis connections
+    await this.initializeRedis();
+
+    // Initialize blockchain connections
+    await this.initializeBlockchain();
+
+    console.log("✅ All connections initialized");
+  }
+
+  /**
+   * Initialize Redis connections with pub/sub
+   */
+  async initializeRedis() {
+    if (this.redis) return; // Already initialized
+
+    const redisConfig = {
+      retryDelayOnFailover: 100,
+      maxRetriesPerRequest: 3,
+      lazyConnect: true,
+      retryStrategy: (times) => {
+        if (times > 10) {
+          console.error("❌ Redis connection failed after 10 attempts");
+          return undefined;
+        }
+        const delay = Math.min(times * 2000, 10000);
+        console.log(`🔄 Redis reconnecting in ${delay}ms (attempt ${times})...`);
+        return delay;
+      },
+    };
+
+    // Main Redis connection for queue operations
+    this.redis = new Redis(this.REDIS_URL, redisConfig);
+
+    // Separate connections for pub/sub (Redis best practice)
+    this.subscriber = new Redis(this.REDIS_URL, redisConfig);
+    this.publisher = new Redis(this.REDIS_URL, redisConfig);
+
+    // Set up Redis event handlers
+    this.redis.on("error", (error) => {
+      console.error("❌ Redis error:", error.message);
+    });
+
+    this.redis.on("connect", () => {
+      console.log("✅ Redis main connection established");
+    });
+
+    this.subscriber.on("connect", () => {
+      console.log("✅ Redis subscriber connection established");
+    });
+
+    this.publisher.on("connect", () => {
+      console.log("✅ Redis publisher connection established");
+    });
+
+    // Connect all Redis instances
+    await Promise.all([
+      this.redis.connect(),
+      this.subscriber.connect(),
+      this.publisher.connect(),
+    ]);
+  }
+
+  /**
+   * Initialize blockchain provider and contract
+   */
+  async initializeBlockchain() {
+    if (this.provider) return; // Already initialized
+
+    // Create WebSocket provider for real-time events
     if (this.WEBSOCKET_URL) {
       this.provider = new ethers.WebSocketProvider(this.WEBSOCKET_URL);
-      console.log("Using WebSocket provider for real-time events");
+      console.log("✅ WebSocket provider created for real-time events");
     } else {
       this.provider = new ethers.JsonRpcProvider(this.RPC_URL);
-      console.log("Using HTTP provider (WebSocket URL not provided)");
+      console.log("✅ HTTP provider created (WebSocket URL not provided)");
     }
+
+    // Create contract instance
     this.contract = new ethers.Contract(
       this.CONTRACT_ADDRESS,
       contractABI,
       this.provider,
     );
 
-    // Initialize Redis for event queuing
-    this.redis = new Redis(this.REDIS_URL, {
-      retryDelayOnFailover: 100,
-      maxRetriesPerRequest: 3,
-      retryStrategy: (times) => {
-        // Reconnect after 2 seconds, up to 10 times
-        if (times > 10) {
-          console.error("❌ Redis connection failed after 10 attempts");
-          // Don't throw error, just return undefined to stop retrying
-          return undefined;
-        }
-        const delay = Math.min(times * 2000, 10000);
-        console.log(
-          `🔄 Redis reconnecting in ${delay}ms (attempt ${times})...`,
-        );
-        return delay;
-      },
-      reconnectOnError: (err) => {
-        const targetError = "READONLY";
-        if (err.message.includes(targetError)) {
-          // Only reconnect when the error contains "READONLY"
-          return true;
-        }
-        return false;
-      },
-    });
-
-    // Set up Redis error handlers
-    this.redis.on("error", (error) => {
-      console.error("❌ Redis error:", error.message);
-      // Don't crash the server, just log the error
-    });
-
-    this.redis.on("connect", () => {
-      console.log("✅ Redis connected successfully");
-    });
-
-    this.redis.on("close", () => {
-      console.log("⚠️ Redis connection closed");
-    });
-
-    this.redis.on("reconnecting", () => {
-      console.log("🔄 Redis reconnecting...");
-    });
-
-    // Event processing state
-    this.isMonitoring = false;
-    this.isReconnecting = false;
-    this.reconnectAttempts = 0;
-    this.maxReconnectAttempts = 5;
-    this.eventQueue = "blockchain-events";
-    this.processedEvents = new Set();
-
-    console.log("📡 Blockchain Event Monitor initialized");
-    console.log("Contract Address:", this.CONTRACT_ADDRESS);
-    console.log("RPC URL:", this.RPC_URL);
-    console.log("Redis URL:", this.REDIS_URL);
+    console.log("✅ Blockchain contract instance created");
   }
 
   /**
@@ -99,67 +147,122 @@ class BlockchainEventMonitor {
     }
 
     try {
-      console.log("🚀 Starting blockchain event monitoring...");
+      console.log("🚀 Starting memory-optimized blockchain event monitoring...");
+
+      // Initialize all connections
+      await this.initializeConnections();
+
       this.isMonitoring = true;
+      this.abortController = new AbortController();
 
-      // Set up event listeners for all contract events
-      this.setupEventListeners();
+      // Set up event-driven processing (replaces polling loop)
+      await this.setupEventDrivenProcessing();
 
-      // Start processing queued events
-      this.startEventProcessor();
+      // Set up blockchain event listeners
+      this.setupBlockchainEventListeners();
 
-      console.log("✅ Blockchain event monitoring started");
+      // Set up periodic cleanup
+      this.setupPeriodicCleanup();
+
+      console.log("✅ Memory-optimized blockchain event monitoring started");
     } catch (error) {
       console.error("❌ Failed to start event monitoring:", error);
       this.isMonitoring = false;
+      await this.cleanup();
       throw error;
     }
   }
 
   /**
-   * Stop monitoring blockchain events
+   * Set up event-driven processing (replaces polling loop)
    */
-  async stopMonitoring() {
-    console.log("🛑 Stopping blockchain event monitoring...");
-    this.isMonitoring = false;
+  async setupEventDrivenProcessing() {
+    // Subscribe to event notifications
+    await this.subscriber.subscribe(this.eventNotificationChannel);
 
-    // Remove all listeners
-    this.contract.removeAllListeners();
+    this.subscriber.on("message", async (channel, message) => {
+      if (channel === this.eventNotificationChannel && this.isMonitoring) {
+        // Process events only when notified (no polling)
+        await this.processQueueBatch();
+      }
+    });
 
-    // Close WebSocket connection if using WebSocket provider
-    if (this.provider && typeof this.provider.destroy === "function") {
-      await this.provider.destroy();
-    }
-
-    console.log("✅ Event monitoring stopped");
+    console.log("✅ Event-driven processing setup complete (no polling)");
   }
 
   /**
-   * Set up event listeners for contract events
+   * Process events in batches to reduce Redis overhead
    */
-  setupEventListeners() {
-    // Set up WebSocket error handling and reconnection
-    // Check if provider has WebSocket and it's not already being reconnected
-    if (this.provider && this.provider._websocket && !this.isReconnecting) {
-      // Remove any existing listeners first to prevent duplicates
-      if (this.provider._websocket.removeAllListeners) {
-        this.provider._websocket.removeAllListeners("error");
-        this.provider._websocket.removeAllListeners("close");
+  async processQueueBatch() {
+    if (!this.isMonitoring) return;
+
+    try {
+      const batchSize = 5; // Small batches to control memory
+      const events = [];
+
+      // Get batch of events (non-blocking)
+      for (let i = 0; i < batchSize; i++) {
+        const eventJson = await this.redis.rpop(this.eventQueue);
+        if (!eventJson) break;
+        events.push(JSON.parse(eventJson));
       }
 
+      if (events.length > 0) {
+        console.log(`📦 Processing batch of ${events.length} events`);
+        
+        // Process sequentially to control memory usage
+        for (const eventData of events) {
+          await this.processEvent(eventData);
+        }
+        
+        console.log(`✅ Completed processing batch of ${events.length} events`);
+      }
+    } catch (error) {
+      console.error("❌ Error processing event batch:", error);
+    }
+  }
+
+  /**
+   * Set up periodic cleanup to prevent memory leaks
+   */
+  setupPeriodicCleanup() {
+    // Clean up processed events set every 5 minutes
+    const cleanupInterval = setInterval(() => {
+      if (!this.isMonitoring) {
+        clearInterval(cleanupInterval);
+        return;
+      }
+
+      if (this.processedEvents.size > this.maxProcessedEvents) {
+        // Keep only recent events to prevent unbounded growth
+        const recent = Array.from(this.processedEvents).slice(-500);
+        this.processedEvents.clear();
+        recent.forEach(event => this.processedEvents.add(event));
+        
+        console.log(`🧹 Cleaned up processed events cache (kept ${recent.length} recent entries)`);
+      }
+    }, 300000); // Every 5 minutes
+
+    this.intervals.push(cleanupInterval);
+  }
+
+  /**
+   * Set up blockchain event listeners
+   */
+  setupBlockchainEventListeners() {
+    // Set up WebSocket error handling
+    if (this.provider && this.provider._websocket) {
       this.provider._websocket.on("error", (error) => {
         console.error("❌ WebSocket error:", error);
-        // Only attempt reconnect if not already reconnecting
-        if (!this.isReconnecting) {
-          this.handleWebSocketReconnect();
+        if (this.isMonitoring) {
+          this.scheduleReconnect();
         }
       });
 
       this.provider._websocket.on("close", () => {
         console.log("⚠️ WebSocket connection closed");
-        // Only attempt reconnect if monitoring and not already reconnecting
-        if (this.isMonitoring && !this.isReconnecting) {
-          this.handleWebSocketReconnect();
+        if (this.isMonitoring) {
+          this.scheduleReconnect();
         }
       });
     }
@@ -167,20 +270,7 @@ class BlockchainEventMonitor {
     // Listen for BookingCreatedAndPaid events
     this.contract.on(
       "BookingCreatedAndPaid",
-      async (
-        bookingId,
-        customer,
-        provider,
-        inviter,
-        amount,
-        platformFeeRate,
-        inviterFeeRate,
-        event,
-      ) => {
-        console.log("🔍 Raw event object:", event);
-        console.log("🔍 Transaction hash:", event.transactionHash);
-        console.log("🔍 Block number:", event.blockNumber);
-
+      async (bookingId, customer, provider, inviter, amount, platformFeeRate, inviterFeeRate, event) => {
         await this.queueEvent({
           type: "BookingCreatedAndPaid",
           bookingId,
@@ -199,14 +289,7 @@ class BlockchainEventMonitor {
     // Listen for ServiceCompleted events
     this.contract.on(
       "ServiceCompleted",
-      async (
-        bookingId,
-        provider,
-        providerAmount,
-        platformFee,
-        inviterFee,
-        event,
-      ) => {
+      async (bookingId, provider, providerAmount, platformFee, inviterFee, event) => {
         await this.queueEvent({
           type: "ServiceCompleted",
           bookingId,
@@ -223,16 +306,7 @@ class BlockchainEventMonitor {
     // Listen for BookingCancelled events
     this.contract.on(
       "BookingCancelled",
-      async (
-        bookingId,
-        cancelledBy,
-        customerAmount,
-        providerAmount,
-        platformAmount,
-        inviterAmount,
-        reason,
-        event,
-      ) => {
+      async (bookingId, cancelledBy, customerAmount, providerAmount, platformAmount, inviterAmount, reason, event) => {
         await this.queueEvent({
           type: "BookingCancelled",
           bookingId,
@@ -248,15 +322,51 @@ class BlockchainEventMonitor {
       },
     );
 
-    console.log("👂 Event listeners set up for contract events");
+    console.log("👂 Blockchain event listeners set up for all contract events");
   }
 
   /**
-   * Queue an event for processing
+   * Stop monitoring blockchain events
+   */
+  async stopMonitoring() {
+    console.log("🛑 Stopping memory-optimized blockchain event monitoring...");
+    this.isMonitoring = false;
+
+    // Signal all operations to stop
+    if (this.abortController) {
+      this.abortController.abort();
+    }
+
+    // Clean up all resources
+    await this.cleanup();
+
+    console.log("✅ Memory-optimized event monitoring stopped");
+  }
+
+  /**
+   * Schedule WebSocket reconnection with exponential backoff
+   */
+  scheduleReconnect() {
+    if (!this.isMonitoring) return;
+    
+    const delay = Math.min(5000 * Math.pow(2, this.reconnectAttempts), 30000); // Max 30 seconds
+    console.log(`🔄 Scheduling WebSocket reconnection in ${delay}ms...`);
+    
+    const timeout = setTimeout(async () => {
+      if (this.isMonitoring) {
+        await this.handleWebSocketReconnect();
+      }
+    }, delay);
+    
+    this.timeouts.push(timeout);
+  }
+
+  /**
+   * Queue an event for processing with pub/sub notification
    */
   async queueEvent(eventData) {
     try {
-      const eventKey = `${eventData.transactionHash}-${eventData.logIndex}`;
+      const eventKey = `${eventData.transactionHash}-${eventData.logIndex || 'no-index'}`;
 
       // Check if we've already processed this event
       if (this.processedEvents.has(eventKey)) {
@@ -264,9 +374,15 @@ class BlockchainEventMonitor {
         return;
       }
 
-      // Add to Redis queue only if Redis is connected
+      // Add to Redis queue
       if (this.redis && this.redis.status === "ready") {
         await this.redis.lpush(this.eventQueue, JSON.stringify(eventData));
+        
+        // Notify event processor (replaces polling)
+        if (this.publisher && this.publisher.status === "ready") {
+          await this.publisher.publish(this.eventNotificationChannel, "1");
+        }
+        
         console.log(
           "📥 Queued blockchain event:",
           eventData.type,
@@ -278,8 +394,6 @@ class BlockchainEventMonitor {
           "⚠️ Redis not available, event not queued:",
           eventData.type,
         );
-        // Optionally, you could store events in memory or process them directly
-        // For now, just log the warning
       }
     } catch (error) {
       console.error("❌ Error queuing event:", error.message);
@@ -288,48 +402,63 @@ class BlockchainEventMonitor {
   }
 
   /**
-   * Start processing events from the queue
+   * Clean up all resources
    */
-  startEventProcessor() {
-    // Process events continuously
-    const processNext = async () => {
-      if (!this.isMonitoring) return;
+  async cleanup() {
+    console.log("🧹 Cleaning up blockchain monitoring resources...");
 
-      try {
-        // Only try to get events if Redis is connected
-        if (this.redis && this.redis.status === "ready") {
-          // Get next event from queue
-          const eventJson = await this.redis.brpop(this.eventQueue, 1); // 1 second timeout
+    // Clear all intervals and timeouts
+    this.intervals.forEach(clearInterval);
+    this.timeouts.forEach(clearTimeout);
+    this.intervals = [];
+    this.timeouts = [];
 
-          if (eventJson && eventJson[1]) {
-            const eventData = JSON.parse(eventJson[1]);
-            await this.processEvent(eventData);
-          }
-        } else {
-          // Redis not ready, wait a bit longer
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Remove blockchain event listeners
+    if (this.contract) {
+      this.contract.removeAllListeners();
+    }
+
+    // Close Redis connections
+    const connections = [this.redis, this.subscriber, this.publisher];
+    await Promise.all(connections.map(async (conn) => {
+      if (conn && conn.status !== 'end') {
+        try {
+          await conn.quit();
+        } catch (error) {
+          console.warn("⚠️ Error closing Redis connection:", error.message);
         }
+      }
+    }));
+
+    // Close WebSocket provider
+    if (this.provider && !this.provider.destroyed) {
+      try {
+        await this.provider.destroy();
       } catch (error) {
-        console.error("❌ Error processing event from queue:", error.message);
-        // Wait before retrying if there's an error
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        console.warn("⚠️ Error closing WebSocket provider:", error.message);
       }
+    }
 
-      // Continue processing
-      if (this.isMonitoring) {
-        setTimeout(processNext, 100); // Small delay to prevent spinning
-      }
-    };
+    // Clear references
+    this.redis = null;
+    this.subscriber = null;
+    this.publisher = null;
+    this.provider = null;
+    this.contract = null;
+    this.abortController = null;
 
-    processNext();
-    console.log("⚙️ Event processor started");
+    // Clear processed events set
+    this.processedEvents.clear();
+    this.reconnectAttempts = 0;
+
+    console.log("✅ Blockchain monitoring resources cleaned up");
   }
 
   /**
    * Process a single blockchain event
    */
   async processEvent(eventData) {
-    const eventKey = `${eventData.transactionHash}-${eventData.logIndex}`;
+    const eventKey = `${eventData.transactionHash}-${eventData.logIndex || 'no-index'}`;
 
     try {
       console.log(
@@ -567,56 +696,76 @@ class BlockchainEventMonitor {
   }
 
   /**
-   * Handle WebSocket reconnection
+   * Handle WebSocket reconnection with exponential backoff
    */
   async handleWebSocketReconnect() {
-    console.log("🔄 Attempting WebSocket reconnection...");
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.error("❌ Max WebSocket reconnection attempts reached");
+      return;
+    }
+
+    this.reconnectAttempts++;
+    console.log(`🔄 Attempting WebSocket reconnection (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
 
     try {
       // Remove old listeners
-      this.contract.removeAllListeners();
-
-      // Recreate WebSocket provider
-      if (this.WEBSOCKET_URL) {
-        this.provider = new ethers.WebSocketProvider(this.WEBSOCKET_URL);
-        this.contract = new ethers.Contract(
-          this.CONTRACT_ADDRESS,
-          contractABI,
-          this.provider,
-        );
-
-        // Wait a moment for connection to establish
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-
-        // Restart event listeners
-        this.setupEventListeners();
-
-        console.log("✅ WebSocket reconnection successful");
+      if (this.contract) {
+        this.contract.removeAllListeners();
       }
+
+      // Recreate connections
+      await this.initializeBlockchain();
+
+      // Wait for connection to stabilize
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // Restart event listeners
+      this.setupBlockchainEventListeners();
+
+      // Reset reconnect attempts on success
+      this.reconnectAttempts = 0;
+      console.log("✅ WebSocket reconnection successful");
     } catch (error) {
       console.error("❌ WebSocket reconnection failed:", error);
-
-      // Retry after delay
-      setTimeout(() => {
-        if (this.isMonitoring) {
-          this.handleWebSocketReconnect();
-        }
-      }, 5000);
+      
+      // Schedule next retry if we haven't exceeded max attempts
+      if (this.reconnectAttempts < this.maxReconnectAttempts) {
+        this.scheduleReconnect();
+      }
     }
   }
 
   /**
    * Get monitoring status
    */
-  getStatus() {
-    return {
+  async getStatus() {
+    const status = {
       isMonitoring: this.isMonitoring,
-      queueLength: this.redis.llen(this.eventQueue),
-      processedEventsCount: this.processedEvents.size,
       contractAddress: this.CONTRACT_ADDRESS,
-      providerType: this.provider.constructor.name,
       isWebSocket: !!this.WEBSOCKET_URL,
+      processedEventsCount: this.processedEvents.size,
+      reconnectAttempts: this.reconnectAttempts,
+      activeIntervals: this.intervals.length,
+      activeTimeouts: this.timeouts.length,
     };
+
+    // Add queue length if Redis is available
+    if (this.redis && this.redis.status === 'ready') {
+      try {
+        status.queueLength = await this.redis.llen(this.eventQueue);
+      } catch (error) {
+        status.queueLength = 'unavailable';
+      }
+    } else {
+      status.queueLength = 'redis-not-connected';
+    }
+
+    // Add provider type if available
+    if (this.provider) {
+      status.providerType = this.provider.constructor.name;
+    }
+
+    return status;
   }
 }
 
