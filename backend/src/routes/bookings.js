@@ -528,9 +528,6 @@ export default function bookingRoutes(app) {
    * Parameters:
    * - id: UUID of the booking
    *
-   * Body:
-   * - completion_notes: Optional completion notes from customer
-   *
    * Response:
    * - Updated booking object with completion status
    *
@@ -541,8 +538,6 @@ export default function bookingRoutes(app) {
     try {
       const userId = c.get("userId");
       const bookingId = c.req.param("id");
-      const body = await c.req.json();
-      const { completion_notes } = body;
 
       // Get booking details
       const { data: booking, error: bookingError } = await supabaseAdmin
@@ -584,7 +579,6 @@ export default function bookingRoutes(app) {
         .update({
           status: "completed",
           completed_at: new Date().toISOString(),
-          completion_notes: completion_notes || null,
           updated_at: new Date().toISOString(),
         })
         .eq("id", bookingId)
