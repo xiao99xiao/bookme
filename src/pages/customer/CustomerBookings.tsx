@@ -179,7 +179,9 @@ export default function CustomerBookings() {
       const completionData = await response.json();
       console.log('✅ Backend validation successful:', completionData);
       
-      if (!completionData.blockchain_booking_id) {
+      // Check if booking has blockchain booking ID (from the response)
+      const blockchainBookingId = completionData.booking?.blockchain_booking_id;
+      if (!blockchainBookingId) {
         toast.error('This booking was not paid via blockchain and cannot be completed this way');
         return;
       }
@@ -194,6 +196,7 @@ export default function CustomerBookings() {
       await completionTransaction.executePayment(async (onStatusChange) => {
         return await blockchainService.completeService(
           bookingId,
+          blockchainBookingId, // Pass the blockchain booking ID
           onStatusChange
         );
       });

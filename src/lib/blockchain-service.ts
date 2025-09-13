@@ -262,6 +262,7 @@ export class BlockchainService {
    */
   async completeService(
     bookingId: string,
+    blockchainBookingId?: string,
     onStatusChange?: (status: TransactionStatus) => void
   ): Promise<string> {
     if (!this.smartWalletClient) {
@@ -279,11 +280,12 @@ export class BlockchainService {
         message: 'Please confirm service completion...'
       })
 
-      // Convert booking ID to bytes32
-      const bookingIdBytes = ethers.keccak256(ethers.toUtf8Bytes(bookingId))
+      // Use the blockchain booking ID if provided, otherwise hash the booking ID
+      // The blockchain booking ID is already the hashed value stored when payment was made
+      const bookingIdBytes = blockchainBookingId || ethers.keccak256(ethers.toUtf8Bytes(bookingId))
       
       console.log('🎉 Completing service for booking:', bookingId)
-      console.log('🔍 Booking ID bytes:', bookingIdBytes)
+      console.log('🔍 Using blockchain booking ID:', bookingIdBytes)
 
       // Prepare the transaction data using viem's encodeFunctionData
       const txData = encodeFunctionData({

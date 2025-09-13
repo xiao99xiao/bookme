@@ -515,12 +515,9 @@ export default function bookingRoutes(app) {
   /**
    * POST /api/bookings/:id/complete-service
    *
-   * Mark a service as completed by the customer.
-   * This endpoint handles service completion including:
-   * - Status validation
-   * - Completion timestamp recording
-   * - Smart contract fund release
-   * - Provider earnings distribution
+   * Initiate service completion by the customer.
+   * This endpoint ONLY returns completion data for blockchain transaction.
+   * The actual database update happens via blockchain event monitoring.
    *
    * Headers:
    * - Authorization: Bearer {privyToken}
@@ -529,10 +526,10 @@ export default function bookingRoutes(app) {
    * - id: UUID of the booking
    *
    * Response:
-   * - Updated booking object with completion status
+   * - Booking data needed for blockchain completion transaction
    *
    * @param {Context} c - Hono context
-   * @returns {Response} JSON response with completed booking or error
+   * @returns {Response} JSON response with booking data for completion
    */
   app.post("/api/bookings/:id/complete-service", verifyPrivyAuth, async (c) => {
     try {
@@ -573,60 +570,28 @@ export default function bookingRoutes(app) {
         );
       }
 
-      // Update booking to completed
-      const { data: updatedBooking, error: updateError } = await supabaseAdmin
-        .from("bookings")
-        .update({
-          status: "completed",
-          completed_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", bookingId)
-        .select(
-          `
-          *,
-          service:services(*),
-          customer:users!customer_id(*),
-          provider:users!provider_id(*)
-        `,
-        )
-        .single();
+      // IMPORTANT: Do NOT update database here!
+      // The database will be updated when we receive the ServiceCompleted event
+      // from the blockchain via the event monitor (event-monitor.js handleServiceCompleted)
+      
+      console.log("📝 Service completion initiated for booking:", bookingId);
+      console.log("⏳ Waiting for blockchain confirmation...");
 
-      if (updateError) {
-        console.error("Booking completion error:", updateError);
-        return c.json({ error: "Failed to complete booking" }, 500);
-      }
-
-      // Trigger smart contract fund release asynchronously
-      setImmediate(async () => {
-        try {
-          // TODO: Implement releaseFunds in blockchain-service.js
-          // await blockchainService.releaseFunds({
-          //   bookingId: booking.id,
-          //   amount: booking.price,
-          //   providerAddress:
-          //     booking.provider.wallet_address ||
-          //     booking.provider.smart_wallet_address,
-          // });
-          console.log("TODO: Implement fund release for booking:", booking.id);
-
-          // Log blockchain event
-          await supabaseAdmin.from("blockchain_events").insert({
-            booking_id: bookingId,
-            event_type: "funds_released",
-            transaction_hash: null, // Will be updated when transaction completes
-            block_timestamp: new Date().toISOString(),
-            event_data: {
-              amount: booking.price,
-              provider: booking.provider_id,
-            },
-          });
-        } catch (releaseError) {
-          console.error("Fund release error:", releaseError);
-        }
+      // Return booking data for frontend to execute blockchain transaction
+      // The frontend will call completeService on the smart contract
+      return c.json({
+        success: true,
+        message: "Ready for blockchain completion",
+        booking: {
+          id: booking.id,
+          blockchain_booking_id: booking.blockchain_booking_id,
+          status: booking.status,
+          total_price: booking.total_price,
+          provider_wallet: booking.provider.wallet_address,
+          customer_wallet: booking.customer.wallet_address,
+        },
+        contractAddress: process.env.CONTRACT_ADDRESS,
       });
-
-      return c.json(updatedBooking);
     } catch (error) {
       console.error("Service completion error:", error);
       return c.json({ error: "Internal server error" }, 500);
