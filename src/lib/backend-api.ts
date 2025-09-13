@@ -179,7 +179,7 @@ export class BackendAPI {
   async sendMessage(conversationId: string, content: string): Promise<any> {
     return this.request('/api/messages', {
       method: 'POST',
-      body: JSON.stringify({ conversationId, content }),
+      body: JSON.stringify({ conversation_id: conversationId, content }),
     });
   }
 
