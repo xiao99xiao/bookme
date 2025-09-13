@@ -186,14 +186,23 @@ export class CalendarService {
 
   /**
    * Ensure access token is valid, refresh if necessary
+   * Only deactivates integration if >6 months old or refresh fails
    */
   async ensureValidAccessToken(integration) {
     try {
-      // Check if token is expired (with 5-minute buffer)
       const now = new Date();
       const expiresAt = new Date(integration.expires_at);
       const bufferTime = 5 * 60 * 1000; // 5 minutes
+      const sixMonthsAgo = new Date(now.getTime() - (6 * 30 * 24 * 60 * 60 * 1000)); // 6 months
 
+      // Check if integration is older than 6 months - require reconnection
+      if (expiresAt < sixMonthsAgo) {
+        console.log(`Integration ${integration.id} is older than 6 months, requires reconnection`);
+        await this.deactivateIntegration(integration.id);
+        return null;
+      }
+
+      // Check if token is expired (with 5-minute buffer) - try refresh
       if (expiresAt && expiresAt.getTime() - bufferTime <= now.getTime()) {
         console.log(`Access token for integration ${integration.id} is expired, refreshing...`);
         return await this.refreshAccessToken(integration);
@@ -291,6 +300,73 @@ export class CalendarService {
       }
     } catch (error) {
       console.error('Error deactivating integration:', error);
+    }
+  }
+
+  /**
+   * Validate and refresh integrations for service operations
+   * Returns { valid: boolean, errors: string[] }
+   */
+  async validateIntegrationsForService(userId) {
+    try {
+      const integrations = await this.getActiveCalendarIntegrations(userId);
+      
+      if (integrations.length === 0) {
+        return { valid: true, errors: [] }; // No integrations is valid - user can operate without calendar
+      }
+
+      const errors = [];
+      let hasValidIntegration = false;
+
+      for (const integration of integrations) {
+        try {
+          const accessToken = await this.ensureValidAccessToken(integration);
+          
+          if (!accessToken) {
+            errors.push(`${integration.platform} integration needs to be reconnected (expired or invalid)`);
+            continue;
+          }
+
+          // Test the token with a simple API call
+          const response = await fetch(
+            `${this.GOOGLE_CALENDAR_API_BASE}/calendars/primary`,
+            {
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+              },
+            }
+          );
+
+          if (response.ok) {
+            hasValidIntegration = true;
+          } else if (response.status === 401) {
+            // Token is invalid, try one more refresh
+            const refreshedToken = await this.refreshAccessToken(integration);
+            if (!refreshedToken) {
+              errors.push(`${integration.platform} integration needs to be reconnected (refresh failed)`);
+            } else {
+              hasValidIntegration = true;
+            }
+          } else {
+            errors.push(`${integration.platform} integration API error: ${response.status}`);
+          }
+
+        } catch (error) {
+          console.error(`Error validating integration ${integration.id}:`, error);
+          errors.push(`${integration.platform} integration validation failed: ${error.message}`);
+        }
+      }
+
+      return { 
+        valid: hasValidIntegration || integrations.length === 0, 
+        errors,
+        hasIntegrations: integrations.length > 0 
+      };
+
+    } catch (error) {
+      console.error('Error validating integrations for service:', error);
+      return { valid: false, errors: ['Failed to validate calendar integrations'] };
     }
   }
 

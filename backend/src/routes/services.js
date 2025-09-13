@@ -15,6 +15,7 @@
 import { Hono } from 'hono';
 import { verifyPrivyAuth, getSupabaseAdmin } from '../middleware/auth.js';
 import availabilityService from '../services/availability-service.js';
+import calendarService from '../services/calendar-service.js';
 
 // Get Supabase admin client
 const supabaseAdmin = getSupabaseAdmin();
@@ -147,6 +148,27 @@ export default function serviceRoutes(app) {
         ...body,
         provider_id: userId
       };
+
+      // Validate calendar integrations for online services that require meeting platforms
+      if (serviceData.is_online && (serviceData.meeting_platform === 'google_meet' || serviceData.meeting_platform)) {
+        console.log(`🔗 Validating calendar integrations for online service with ${serviceData.meeting_platform}`);
+        
+        const validation = await calendarService.validateIntegrationsForService(userId);
+        
+        if (!validation.valid && validation.hasIntegrations) {
+          // User has integrations but they're invalid
+          return c.json({ 
+            error: 'Calendar integration validation failed', 
+            details: validation.errors,
+            requiresReconnection: true
+          }, 400);
+        }
+        
+        if (validation.errors.length > 0 && validation.hasIntegrations) {
+          // Some integrations failed but at least one is valid - log warnings
+          console.warn(`⚠️ Some integrations have issues for user ${userId}:`, validation.errors);
+        }
+      }
       
       if (body.id) {
         // Update existing service

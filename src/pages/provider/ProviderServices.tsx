@@ -141,9 +141,22 @@ export default function ProviderServices() {
 
       setIsServiceModalOpen(false);
       setEditingService(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Service save error:', error);
-      toast.error('Failed to save service');
+      
+      // Handle calendar integration validation errors
+      if (error.message && error.message.includes('Calendar integration validation failed')) {
+        const errorData = JSON.parse(error.message.replace('API Error: ', ''));
+        if (errorData.requiresReconnection) {
+          toast.error(`Calendar integration needs reconnection. Please go to Integrations page.`, {
+            duration: 6000
+          });
+        } else {
+          toast.error('Calendar integration validation failed');
+        }
+      } else {
+        toast.error('Failed to save service');
+      }
     } finally {
       setIsSavingService(false);
     }
