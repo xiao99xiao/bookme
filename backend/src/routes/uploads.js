@@ -254,8 +254,7 @@ export default function uploadRoutes(app) {
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
-        .limit(limitNum)
-        .offset(offsetNum);
+        .range(offsetNum, offsetNum + limitNum - 1);
 
       if (upload_type) {
         query = query.eq('upload_type', upload_type);

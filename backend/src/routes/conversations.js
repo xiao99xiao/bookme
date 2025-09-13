@@ -64,8 +64,7 @@ export default function conversationRoutes(app) {
         `)
         .or(`participant1_id.eq.${userId},participant2_id.eq.${userId}`)
         .order('updated_at', { ascending: false })
-        .limit(limitNum)
-        .offset(offsetNum);
+        .range(offsetNum, offsetNum + limitNum - 1);
 
       const { data: conversations, error: conversationsError } = await query;
 
