@@ -464,7 +464,7 @@ export default function conversationRoutes(app) {
       const { data: conversation, error: conversationError } = await supabaseAdmin
         .from('conversations')
         .select('user1_id, user2_id')
-        .eq('id', conversationId)
+        .eq('id', conversation_id)
         .single();
 
       if (conversationError || !conversation) {
@@ -508,7 +508,7 @@ export default function conversationRoutes(app) {
           latest_message_id: message.id,
           updated_at: new Date().toISOString()
         })
-        .eq('id', conversationId);
+        .eq('id', conversation_id);
 
       if (updateConversationError) {
         console.error('Conversation update error:', updateConversationError);
