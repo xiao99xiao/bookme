@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { serve } from "@hono/node-server";
-import { cors } from "hono/cors";
-import { getSupabaseAdmin } from "./middleware/auth.js";
+// import { cors } from "hono/cors"; // Extracted to config/cors.js
+// import { getSupabaseAdmin } from "./middleware/auth.js"; // Now handled in config/blockchain.js
 import authRoutes from "./routes/auth.js";
 import userRoutes from "./routes/users.js";
 import serviceRoutes from "./routes/services.js";
@@ -11,136 +11,150 @@ import conversationRoutes from "./routes/conversations.js";
 import integrationRoutes from "./routes/integrations.js";
 import uploadRoutes from "./routes/uploads.js";
 import systemRoutes from "./routes/system.js";
-import dotenv from "dotenv";
+// import dotenv from "dotenv"; // Extracted to config/server.js
 import { createServer } from "http";
 import { setupWebSocket, getIO } from "./websocket.js";
-import BlockchainService from "./blockchain-service.js";
-import EIP712Signer from "./eip712-signer.js";
-import BlockchainEventMonitor from "./event-monitor.js";
+// import BlockchainService from "./blockchain-service.js"; // Extracted to config/blockchain.js
+// import EIP712Signer from "./eip712-signer.js"; // Extracted to config/blockchain.js
+// import BlockchainEventMonitor from "./event-monitor.js"; // Extracted to config/blockchain.js
 
-// Load environment variables
-dotenv.config({ path: ".env" });
+// Configuration imports
+import { configureCors } from "./config/cors.js";
+import { setupBlockchain } from "./config/blockchain.js";
+import { setupServer, setupHeartbeatMonitoring } from "./config/server.js";
 
-// CRITICAL: Add process-level error handlers to catch silent crashes
-process.on("uncaughtException", (err) => {
-  console.error("❌❌❌ UNCAUGHT EXCEPTION - SERVER WILL CRASH ❌❌❌");
-  console.error("Error:", err);
-  console.error("Stack:", err.stack);
-  console.error("Time:", new Date().toISOString());
-  // Log and exit to prevent undefined behavior
-  process.exit(1);
-});
+// Load environment variables - EXTRACTED to config/server.js
+// dotenv.config({ path: ".env" });
 
-process.on("unhandledRejection", (reason, promise) => {
-  console.error("❌❌❌ UNHANDLED PROMISE REJECTION ❌❌❌");
-  console.error("Reason:", reason);
-  console.error("Promise:", promise);
-  console.error("Time:", new Date().toISOString());
-  // Convert to exception
-  throw reason;
-});
+// CRITICAL: Add process-level error handlers to catch silent crashes - EXTRACTED to config/server.js
+// process.on("uncaughtException", (err) => {
+//   console.error("❌❌❌ UNCAUGHT EXCEPTION - SERVER WILL CRASH ❌❌❌");
+//   console.error("Error:", err);
+//   console.error("Stack:", err.stack);
+//   console.error("Time:", new Date().toISOString());
+//   // Log and exit to prevent undefined behavior
+//   process.exit(1);
+// });
 
-process.on("warning", (warning) => {
-  console.warn("⚠️ Process Warning:", warning.name);
-  console.warn("Message:", warning.message);
-  console.warn("Stack:", warning.stack);
-});
+// process.on("unhandledRejection", (reason, promise) => {
+//   console.error("❌❌❌ UNHANDLED PROMISE REJECTION ❌❌❌");
+//   console.error("Reason:", reason);
+//   console.error("Promise:", promise);
+//   console.error("Time:", new Date().toISOString());
+//   // Convert to exception
+//   throw reason;
+// });
 
-// Monitor process exit
-process.on("exit", (code) => {
-  console.log(
-    `💀 Process exiting with code: ${code} at ${new Date().toISOString()}`,
-  );
-});
+// process.on("warning", (warning) => {
+//   console.warn("⚠️ Process Warning:", warning.name);
+//   console.warn("Message:", warning.message);
+//   console.warn("Stack:", warning.stack);
+// });
 
-process.on("SIGTERM", () => {
-  console.log("📛 SIGTERM received, shutting down gracefully...");
-  process.exit(0);
-});
+// // Monitor process exit
+// process.on("exit", (code) => {
+//   console.log(
+//     `💀 Process exiting with code: ${code} at ${new Date().toISOString()}`,
+//   );
+// });
 
-process.on("SIGINT", () => {
-  console.log("📛 SIGINT received, shutting down gracefully...");
-  process.exit(0);
-});
+// process.on("SIGTERM", () => {
+//   console.log("📛 SIGTERM received, shutting down gracefully...");
+//   process.exit(0);
+// });
 
-console.log("✅ Process error handlers installed");
-console.log(`📍 Process started at: ${new Date().toISOString()}`);
-console.log(`📍 Node version: ${process.version}`);
-console.log(`📍 PID: ${process.pid}`);
+// process.on("SIGINT", () => {
+//   console.log("📛 SIGINT received, shutting down gracefully...");
+//   process.exit(0);
+// });
+
+// console.log("✅ Process error handlers installed");
+// console.log(`📍 Process started at: ${new Date().toISOString()}`);
+// console.log(`📍 Node version: ${process.version}`);
+// console.log(`📍 PID: ${process.pid}`);
+
+// Setup server configuration (environment, error handlers, graceful shutdown)
+setupServer();
 
 // Initialize Hono app
 const app = new Hono();
 
-// Enable CORS for your frontend
-app.use(
-  "*",
-  cors({
-    origin: [
-      "http://localhost:8080",
-      "http://localhost:5173",
-      "https://localhost:8443",
-      "https://192.168.0.10:8443",
-      /^https:\/\/192\.168\.\d+\.\d+:8443$/, // Allow any local IP on port 8443
-      "https://roulette-phenomenon-airfare-claire.trycloudflare.com",
-      /https:\/\/.*\.trycloudflare\.com$/, // Allow any Cloudflare tunnel
-      /https:\/\/.*\.up\.railway\.app$/, // Allow all Railway domains
-      "https://staging.timee.app", // Staging frontend domain
-      /https:\/\/.*\.timee\.app$/, // Allow all timee.app subdomains
-    ],
-    credentials: true,
-    // Safari-specific headers
-    optionsSuccessStatus: 200,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "X-Requested-With",
-      "Accept",
-      "Origin",
-    ],
-    exposedHeaders: ["Set-Cookie"],
-  }),
-);
+// Enable CORS for your frontend - EXTRACTED to config/cors.js
+// app.use(
+//   "*",
+//   cors({
+//     origin: [
+//       "http://localhost:8080",
+//       "http://localhost:5173",
+//       "https://localhost:8443",
+//       "https://192.168.0.10:8443",
+//       /^https:\/\/192\.168\.\d+\.\d+:8443$/, // Allow any local IP on port 8443
+//       "https://roulette-phenomenon-airfare-claire.trycloudflare.com",
+//       /https:\/\/.*\.trycloudflare\.com$/, // Allow any Cloudflare tunnel
+//       /https:\/\/.*\.up\.railway\.app$/, // Allow all Railway domains
+//       "https://staging.timee.app", // Staging frontend domain
+//       /https:\/\/.*\.timee\.app$/, // Allow all timee.app subdomains
+//     ],
+//     credentials: true,
+//     // Safari-specific headers
+//     optionsSuccessStatus: 200,
+//     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+//     allowedHeaders: [
+//       "Content-Type",
+//       "Authorization",
+//       "X-Requested-With",
+//       "Accept",
+//       "Origin",
+//     ],
+//     exposedHeaders: ["Set-Cookie"],
+//   }),
+// );
 
-// Debug: Check if env vars are loaded
-console.log("Privy App ID:", process.env.PRIVY_APP_ID ? "Set" : "Not set");
-console.log(
-  "Privy App Secret:",
-  process.env.PRIVY_APP_SECRET ? "Set" : "Not set",
-);
+// Configure CORS using extracted configuration
+configureCors(app);
 
-// Initialize blockchain services
-const blockchainService = new BlockchainService();
-const eip712Signer = new EIP712Signer();
+// Debug: Check if env vars are loaded - EXTRACTED to config/server.js
+// console.log("Privy App ID:", process.env.PRIVY_APP_ID ? "Set" : "Not set");
+// console.log(
+//   "Privy App Secret:",
+//   process.env.PRIVY_APP_SECRET ? "Set" : "Not set",
+// );
 
-// Initialize event monitor after supabaseAdmin is created
-let eventMonitor;
+// Initialize blockchain services - EXTRACTED to config/blockchain.js
+// const blockchainService = new BlockchainService();
+// const eip712Signer = new EIP712Signer();
 
-// Test blockchain connection on startup
-blockchainService.testConnection().then((result) => {
-  if (result.success) {
-    console.log("✅ Blockchain connection successful");
-  } else {
-    console.error("❌ Blockchain connection failed:", result.error);
-  }
-});
+// // Initialize event monitor after supabaseAdmin is created
+// let eventMonitor;
 
-const supabaseAdmin = getSupabaseAdmin();
+// // Test blockchain connection on startup
+// blockchainService.testConnection().then((result) => {
+//   if (result.success) {
+//     console.log("✅ Blockchain connection successful");
+//   } else {
+//     console.error("❌ Blockchain connection failed:", result.error);
+//   }
+// });
 
-// Initialize blockchain event monitor
-eventMonitor = new BlockchainEventMonitor(supabaseAdmin);
+// const supabaseAdmin = getSupabaseAdmin();
 
-// Start event monitoring in production or when explicitly enabled
-if (process.env.NODE_ENV === 'production' || process.env.ENABLE_BLOCKCHAIN_MONITORING === 'true') {
-  eventMonitor.startMonitoring().then(() => {
-    console.log('🚀 Blockchain event monitoring started');
-  }).catch(error => {
-    console.error('❌ Failed to start blockchain event monitoring:', error);
-  });
-} else {
-  console.log('⏸️ Blockchain event monitoring disabled (set ENABLE_BLOCKCHAIN_MONITORING=true to enable)');
-}
-console.log('🧪 TEST MODE: Blockchain event monitoring ENABLED for memory comparison');
+// // Initialize blockchain event monitor
+// eventMonitor = new BlockchainEventMonitor(supabaseAdmin);
+
+// // Start event monitoring in production or when explicitly enabled
+// if (process.env.NODE_ENV === 'production' || process.env.ENABLE_BLOCKCHAIN_MONITORING === 'true') {
+//   eventMonitor.startMonitoring().then(() => {
+//     console.log('🚀 Blockchain event monitoring started');
+//   }).catch(error => {
+//     console.error('❌ Failed to start blockchain event monitoring:', error);
+//   });
+// } else {
+//   console.log('⏸️ Blockchain event monitoring disabled (set ENABLE_BLOCKCHAIN_MONITORING=true to enable)');
+// }
+// console.log('🧪 TEST MODE: Blockchain event monitoring ENABLED for memory comparison');
+
+// Setup blockchain services using extracted configuration
+setupBlockchain();
 
 // Initialize auth routes
 authRoutes(app);
@@ -187,25 +201,28 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   // Setup WebSocket server
   const io = setupWebSocket(server);
 
-  // Add heartbeat logging to track when server crashes
-  let heartbeatCount = 0;
-  const heartbeatInterval = setInterval(() => {
-    heartbeatCount++;
-    const uptime = Math.floor(process.uptime());
-    const memory = process.memoryUsage();
-    console.log(
-      `💓 Heartbeat #${heartbeatCount} - Uptime: ${uptime}s - Memory: RSS ${Math.round(memory.rss / 1024 / 1024)}MB, Heap ${Math.round(memory.heapUsed / 1024 / 1024)}MB/${Math.round(memory.heapTotal / 1024 / 1024)}MB - Time: ${new Date().toISOString()}`,
-    );
+  // Add heartbeat logging to track when server crashes - EXTRACTED to config/server.js
+  // let heartbeatCount = 0;
+  // const heartbeatInterval = setInterval(() => {
+  //   heartbeatCount++;
+  //   const uptime = Math.floor(process.uptime());
+  //   const memory = process.memoryUsage();
+  //   console.log(
+  //     `💓 Heartbeat #${heartbeatCount} - Uptime: ${uptime}s - Memory: RSS ${Math.round(memory.rss / 1024 / 1024)}MB, Heap ${Math.round(memory.heapUsed / 1024 / 1024)}MB/${Math.round(memory.heapTotal / 1024 / 1024)}MB - Time: ${new Date().toISOString()}`,
+  //   );
 
-    // Check for memory leaks
-    if (memory.heapUsed / memory.heapTotal > 0.9) {
-      console.warn("⚠️ High memory usage detected (>90% heap)");
-    }
-  }, 10000); // Log every 10 seconds
+  //   // Check for memory leaks
+  //   if (memory.heapUsed / memory.heapTotal > 0.9) {
+  //     console.warn("⚠️ High memory usage detected (>90% heap)");
+  //   }
+  // }, 10000); // Log every 10 seconds
 
-  // Clean up on exit
-  process.on("beforeExit", () => {
-    clearInterval(heartbeatInterval);
-    console.log("🔚 Server shutting down, clearing intervals...");
-  });
+  // // Clean up on exit
+  // process.on("beforeExit", () => {
+  //   clearInterval(heartbeatInterval);
+  //   console.log("🔚 Server shutting down, clearing intervals...");
+  // });
+
+  // Setup heartbeat monitoring using extracted configuration
+  setupHeartbeatMonitoring();
 }
