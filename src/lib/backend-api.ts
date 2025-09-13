@@ -244,7 +244,7 @@ export class BackendAPI {
   async getOrCreateConversation(otherUserId: string): Promise<any> {
     return this.request('/api/conversations', {
       method: 'POST',
-      body: JSON.stringify({ otherUserId }),
+      body: JSON.stringify({ participant_id: otherUserId }),
     });
   }
 
