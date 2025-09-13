@@ -147,17 +147,19 @@ async function transitionInProgressToCompleted(nowISO) {
       return 0;
     }
 
-    // Filter bookings that should be completed (end time has passed)
+    // Filter bookings that should be completed (end time + 30 minutes has passed)
     const now = new Date();
     const bookingsToComplete = [];
 
     for (const booking of inProgressBookings) {
       const startTime = new Date(booking.scheduled_at);
       const endTime = new Date(startTime.getTime() + (booking.duration_minutes * 60 * 1000));
+      // Wait 30 minutes after service ends before auto-completing
+      const autoCompleteTime = new Date(endTime.getTime() + (30 * 60 * 1000));
       
-      if (endTime <= now) {
+      if (autoCompleteTime <= now) {
         bookingsToComplete.push(booking);
-        console.log(`📋 Booking ${booking.id.slice(0, 8)}... should complete (ended at ${endTime.toISOString()})`);
+        console.log(`📋 Booking ${booking.id.slice(0, 8)}... should complete (ended at ${endTime.toISOString()}, auto-complete after ${autoCompleteTime.toISOString()})`);
       }
     }
 
@@ -179,7 +181,11 @@ async function transitionInProgressToCompleted(nowISO) {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-          }
+          },
+          body: JSON.stringify({
+            admin_notes: `Auto-completed by cron job after 30-minute grace period`,
+            trigger_reason: 'cron_job_auto_completion'
+          })
         });
 
         if (response.ok) {

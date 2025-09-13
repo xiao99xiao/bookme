@@ -602,8 +602,8 @@ export default function bookingRoutes(app) {
    * POST /api/bookings/:id/complete-service-backend
    *
    * Internal endpoint for backend-triggered service completion.
-   * This endpoint is used by automated systems or admin operations
-   * to complete services without customer interaction.
+   * This endpoint is used by automated systems (cron jobs) to complete
+   * services via blockchain using the backend signer.
    *
    * Parameters:
    * - id: UUID of the booking
@@ -613,10 +613,10 @@ export default function bookingRoutes(app) {
    * - trigger_reason: Reason for backend completion
    *
    * Response:
-   * - Updated booking object with completion status
+   * - Transaction hash and success status
    *
    * @param {Context} c - Hono context
-   * @returns {Response} JSON response with completed booking or error
+   * @returns {Response} JSON response with transaction hash or error
    */
   app.post("/api/bookings/:id/complete-service-backend", async (c) => {
     try {
@@ -624,9 +624,7 @@ export default function bookingRoutes(app) {
       const body = await c.req.json();
       const { admin_notes, trigger_reason } = body;
 
-      // Verify request comes from internal system (in production, add proper auth)
-      // For now, just log the backend completion
-      console.log("Backend completion triggered for booking:", bookingId);
+      console.log("🤖 Backend completion triggered for booking:", bookingId);
 
       // Get booking details
       const { data: booking, error: bookingError } = await supabaseAdmin
@@ -634,6 +632,7 @@ export default function bookingRoutes(app) {
         .select(
           `
           *,
+          blockchain_booking_id,
           service:services(*),
           customer:users!customer_id(*),
           provider:users!provider_id(*)
@@ -654,54 +653,78 @@ export default function bookingRoutes(app) {
         );
       }
 
-      // Update booking to completed with backend completion flag
-      const { data: updatedBooking, error: updateError } = await supabaseAdmin
-        .from("bookings")
-        .update({
-          status: "completed",
-          completed_at: new Date().toISOString(),
-          completion_notes: admin_notes || "Completed by backend system",
-          backend_completed: true,
-          backend_completion_reason: trigger_reason,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", bookingId)
-        .select(
-          `
-          *,
-          service:services(*),
-          customer:users!customer_id(*),
-          provider:users!provider_id(*)
-        `,
-        )
-        .single();
+      // Check if booking was paid via blockchain
+      if (!booking.blockchain_booking_id) {
+        console.log("⚠️ Booking was not paid via blockchain, updating database directly");
+        
+        // For non-blockchain bookings, update database directly
+        const { error: updateError } = await supabaseAdmin
+          .from("bookings")
+          .update({
+            status: "completed",
+            completed_at: new Date().toISOString(),
+            completion_notes: admin_notes || "Auto-completed by system (non-blockchain booking)",
+            backend_completed: true,
+            backend_completion_reason: trigger_reason || "auto-completion",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", bookingId);
 
-      if (updateError) {
-        console.error("Backend completion error:", updateError);
-        return c.json({ error: "Failed to complete booking" }, 500);
+        if (updateError) {
+          console.error("Database update error:", updateError);
+          return c.json({ error: "Failed to complete booking" }, 500);
+        }
+
+        return c.json({ 
+          success: true, 
+          message: "Booking completed in database (non-blockchain)",
+          bookingId 
+        });
       }
 
-      // Trigger smart contract fund release
-      setImmediate(async () => {
-        try {
-          // TODO: Implement releaseFunds in blockchain-service.js
-          // await blockchainService.releaseFunds({
-          //   bookingId: booking.id,
-          //   amount: booking.price,
-          //   providerAddress:
-          //     booking.provider.wallet_address ||
-          //     booking.provider.smart_wallet_address,
-          // });
-          console.log(
-            "TODO: Implement backend fund release for booking:",
-            booking.id,
-          );
-        } catch (releaseError) {
-          console.error("Backend fund release error:", releaseError);
-        }
-      });
+      // For blockchain bookings, use backend signer to complete on-chain
+      console.log("🔗 Completing blockchain booking:", booking.blockchain_booking_id);
 
-      return c.json(updatedBooking);
+      try {
+        // Import blockchain service (uses backend signer)
+        const { getBlockchainService } = await import("../config/blockchain.js");
+        const blockchainService = getBlockchainService();
+
+        // Complete service on blockchain using backend signer
+        const txHash = await blockchainService.completeServiceAsBackend(
+          booking.blockchain_booking_id
+        );
+
+        console.log("✅ Blockchain completion successful:", txHash);
+        
+        // The database will be updated by the event monitor when it catches the ServiceCompleted event
+        // We just need to store the auto-completion metadata
+        await supabaseAdmin
+          .from("bookings")
+          .update({
+            backend_completed: true,
+            backend_completion_reason: trigger_reason || "auto-completion after 30 min",
+            completion_notes: admin_notes || "Auto-completed by cron job",
+          })
+          .eq("id", bookingId);
+
+        return c.json({ 
+          success: true, 
+          txHash,
+          message: "Service completed on blockchain",
+          bookingId,
+          blockchainBookingId: booking.blockchain_booking_id
+        });
+        
+      } catch (blockchainError) {
+        console.error("❌ Blockchain completion failed:", blockchainError);
+        
+        // Don't update database on blockchain failure - let customer retry
+        return c.json({ 
+          error: "Blockchain completion failed", 
+          details: blockchainError.message 
+        }, 500);
+      }
     } catch (error) {
       console.error("Backend completion error:", error);
       return c.json({ error: "Internal server error" }, 500);
