@@ -876,7 +876,16 @@ export default function bookingRoutes(app) {
           *,
           service:services(*),
           customer:users!customer_id(*),
-          provider:users!provider_id(*)
+          provider:users!provider_id(*),
+          reviews(
+            id,
+            rating,
+            comment,
+            created_at,
+            updated_at,
+            reviewer:users!reviewer_id(id, display_name, avatar),
+            reviewee:users!reviewee_id(id, display_name, avatar)
+          )
         `);
 
       // Filter by user role

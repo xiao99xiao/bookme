@@ -60,16 +60,16 @@ export default function ProviderOrders() {
       const reviewsMap: Record<string, any> = {};
       
       bookingsData.forEach((booking) => {
-        if (booking.reviews && booking.reviews.length > 0) {
-          const review = booking.reviews[0];
+        // Each booking has at most one review (customer -> provider)
+        if (booking.reviews) {
           reviewsMap[booking.id] = {
-            id: review.id,
-            rating: review.rating,
-            comment: review.comment || '',
-            created_at: review.created_at,
-            updated_at: review.updated_at,
-            reviewer: review.reviewer,
-            reviewee: review.reviewee
+            id: booking.reviews.id,
+            rating: booking.reviews.rating,
+            comment: booking.reviews.comment || '',
+            created_at: booking.reviews.created_at,
+            updated_at: booking.reviews.updated_at,
+            reviewer: booking.reviews.reviewer,
+            reviewee: booking.reviews.reviewee
           };
         }
       });
@@ -600,21 +600,23 @@ export default function ProviderOrders() {
                           <div>
                             {review ? (
                               <>
-                                <p className="text-sm font-medium text-black font-body mb-2">Customer Review</p>
-                                <div className="flex items-center gap-1 mb-2">
-                                  {[...Array(5)].map((_, i) => (
-                                    <Star
-                                      key={i}
-                                      className={`w-4 h-4 ${
-                                        i < review.rating
-                                          ? 'text-[#FFD43C] fill-[#FFD43C]'
-                                          : 'text-gray-300'
-                                      }`}
-                                    />
-                                  ))}
-                                  <span className="text-sm font-medium text-black font-body ml-1">
-                                    {review.rating}/5
-                                  </span>
+                                <div className="flex items-center justify-between mb-3">
+                                  <p className="text-sm font-medium text-black font-body">Customer Review</p>
+                                  <div className="bg-[#fcf9f4] px-2 py-[5px] rounded-xl flex items-center gap-1 h-8">
+                                    {[...Array(5)].map((_, i) => (
+                                      <Star
+                                        key={i}
+                                        className={`w-5 h-5 ${
+                                          i < review.rating
+                                            ? 'text-[#FFD43C] fill-[#FFD43C]'
+                                            : 'text-gray-300'
+                                        }`}
+                                      />
+                                    ))}
+                                    <span className="text-sm font-medium text-black font-body ml-1">
+                                      {review.rating}/5
+                                    </span>
+                                  </div>
                                 </div>
                                 <p className="text-sm text-[#666666] font-body italic">
                                   "{review.comment || 'No written review provided.'}"
@@ -909,21 +911,23 @@ export default function ProviderOrders() {
                           <div>
                             {review ? (
                               <>
-                                <p className="text-sm font-medium text-black font-body mb-2">Customer Review</p>
-                                <div className="flex items-center gap-1 mb-2">
-                                  {[...Array(5)].map((_, i) => (
-                                    <Star
-                                      key={i}
-                                      className={`w-4 h-4 ${
-                                        i < review.rating
-                                          ? 'text-[#FFD43C] fill-[#FFD43C]'
-                                          : 'text-gray-300'
-                                      }`}
-                                    />
-                                  ))}
-                                  <span className="text-sm font-medium text-black font-body ml-1">
-                                    {review.rating}/5
-                                  </span>
+                                <div className="flex items-center justify-between mb-3">
+                                  <p className="text-sm font-medium text-black font-body">Customer Review</p>
+                                  <div className="bg-[#fcf9f4] px-2 py-[5px] rounded-xl flex items-center gap-1 h-8">
+                                    {[...Array(5)].map((_, i) => (
+                                      <Star
+                                        key={i}
+                                        className={`w-5 h-5 ${
+                                          i < review.rating
+                                            ? 'text-[#FFD43C] fill-[#FFD43C]'
+                                            : 'text-gray-300'
+                                        }`}
+                                      />
+                                    ))}
+                                    <span className="text-sm font-medium text-black font-body ml-1">
+                                      {review.rating}/5
+                                    </span>
+                                  </div>
                                 </div>
                                 <p className="text-sm text-[#666666] font-body italic">
                                   "{review.comment || 'No written review provided.'}"

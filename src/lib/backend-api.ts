@@ -193,7 +193,7 @@ export class BackendAPI {
   async createReview(bookingId: string, rating: number, comment: string): Promise<any> {
     return this.request('/api/reviews', {
       method: 'POST',
-      body: JSON.stringify({ bookingId, rating, comment }),
+      body: JSON.stringify({ booking_id: bookingId, rating, comment }),
     });
   }
 
