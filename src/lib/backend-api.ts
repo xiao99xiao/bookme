@@ -168,7 +168,8 @@ export class BackendAPI {
 
   // Conversations & Messages
   async getConversations(): Promise<any[]> {
-    return this.request('/api/conversations');
+    const response = await this.request('/api/conversations');
+    return response.conversations || [];
   }
 
   async getConversation(conversationId: string): Promise<any> {
@@ -184,7 +185,8 @@ export class BackendAPI {
 
   async getMessages(conversationId: string, params?: { limit?: number; before?: string }): Promise<any[]> {
     const queryParams = params ? new URLSearchParams(params as any).toString() : '';
-    return this.request(`/api/messages/${conversationId}${queryParams ? `?${queryParams}` : ''}`);
+    const response = await this.request(`/api/messages/${conversationId}${queryParams ? `?${queryParams}` : ''}`);
+    return response.messages || [];
   }
 
   // Reviews
