@@ -533,6 +533,8 @@ const Profile = () => {
                       onDateTimeSelect={setSelectedTimeSlot}
                       selectedDateTime={selectedTimeSlot}
                       serviceDuration={selectedService.duration_minutes}
+                      serviceId={selectedService.id}
+                      timezone={getBrowserTimezone()}
                     />
                   </div>
 

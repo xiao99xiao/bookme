@@ -567,6 +567,63 @@ export class ApiClient {
     return response.json()
   }
 
+  // Availability methods
+  static async getServiceCalendarAvailability(
+    serviceId: string, 
+    month: string, 
+    timezone = 'UTC'
+  ): Promise<{
+    availableDates: Array<{ date: string; availableSlots: number }>
+    unavailableDates: Array<{ date: string; reason: string }>
+    nextAvailableDate: string | null
+  }> {
+    this.ensureInitialized()
+    const params = new URLSearchParams({ month, timezone })
+    const response = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL || 'https://192.168.0.10:4443'}/api/services/${serviceId}/calendar-availability?${params}`
+    )
+    
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error('Service not found')
+      }
+      throw new Error('Failed to fetch calendar availability')
+    }
+    
+    return response.json()
+  }
+
+  static async getServiceDayAvailability(
+    serviceId: string, 
+    date: string, 
+    timezone = 'UTC'
+  ): Promise<{
+    availableSlots: string[]
+    unavailableSlots: Array<{ time: string; reason: string; bookingId?: string; event?: string }>
+    serviceSchedule: { start: string; end: string } | null
+  }> {
+    this.ensureInitialized()
+    const response = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL || 'https://192.168.0.10:4443'}/api/services/${serviceId}/availability`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ date, timezone }),
+      }
+    )
+    
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error('Service not found')
+      }
+      throw new Error('Failed to fetch day availability')
+    }
+    
+    return response.json()
+  }
+
   // Enhanced cancellation methods
   static async getCancellationPolicies(bookingId: string): Promise<any[]> {
     await this.waitForInitialization()

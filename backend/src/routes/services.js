@@ -14,6 +14,7 @@
 
 import { Hono } from 'hono';
 import { verifyPrivyAuth, getSupabaseAdmin } from '../middleware/auth.js';
+import availabilityService from '../services/availability-service.js';
 
 // Get Supabase admin client
 const supabaseAdmin = getSupabaseAdmin();
@@ -538,6 +539,123 @@ export default function serviceRoutes(app) {
     } catch (error) {
       console.error('Search error:', error);
       return c.json({ error: 'Internal server error' }, 500);
+    }
+  });
+
+  /**
+   * GET /api/services/:serviceId/calendar-availability
+   * 
+   * Get month availability for calendar view (public endpoint).
+   * Returns available and unavailable dates for the specified service and month.
+   * 
+   * Parameters:
+   * - serviceId: UUID of the service
+   * 
+   * Query Parameters:
+   * - month: Month in format 'YYYY-MM' (e.g., '2024-01')
+   * - timezone: User's timezone for calculations (optional, defaults to 'UTC')
+   * 
+   * Response:
+   * - availableDates: Array of dates with available slots
+   * - unavailableDates: Array of dates with reasons for unavailability
+   * - nextAvailableDate: Next available date if current month has no availability
+   * 
+   * @param {Context} c - Hono context
+   * @returns {Response} JSON response with calendar availability or error
+   */
+  app.get('/api/services/:serviceId/calendar-availability', async (c) => {
+    try {
+      const serviceId = c.req.param('serviceId');
+      const { month, timezone } = c.req.query();
+      
+      console.log(`📅 Calendar availability request for service ${serviceId}, month ${month}`);
+      
+      if (!month) {
+        return c.json({ error: 'Month parameter is required (format: YYYY-MM)' }, 400);
+      }
+      
+      // Validate month format
+      if (!/^\d{4}-\d{2}$/.test(month)) {
+        return c.json({ error: 'Invalid month format. Use YYYY-MM' }, 400);
+      }
+      
+      const availability = await availabilityService.getMonthAvailability(
+        serviceId, 
+        month, 
+        timezone || 'UTC'
+      );
+      
+      console.log(`✅ Calendar availability calculated for ${serviceId}: ${availability.availableDates.length} available days`);
+      
+      return c.json(availability);
+      
+    } catch (error) {
+      console.error('❌ Calendar availability error:', error);
+      
+      if (error.message === 'Service not found') {
+        return c.json({ error: 'Service not found' }, 404);
+      }
+      
+      return c.json({ error: 'Failed to calculate calendar availability' }, 500);
+    }
+  });
+
+  /**
+   * POST /api/services/:serviceId/availability
+   * 
+   * Get detailed day availability with time slots (public endpoint).
+   * Returns available and unavailable time slots for a specific service and date.
+   * 
+   * Parameters:
+   * - serviceId: UUID of the service
+   * 
+   * Body:
+   * - date: Date in ISO format (YYYY-MM-DD)
+   * - timezone: User's timezone for calculations (optional, defaults to 'UTC')
+   * 
+   * Response:
+   * - availableSlots: Array of available time slots (HH:MM format)
+   * - unavailableSlots: Array of unavailable slots with reasons
+   * - serviceSchedule: Service operating hours for the day
+   * 
+   * @param {Context} c - Hono context
+   * @returns {Response} JSON response with day availability or error
+   */
+  app.post('/api/services/:serviceId/availability', async (c) => {
+    try {
+      const serviceId = c.req.param('serviceId');
+      const body = await c.req.json();
+      const { date, timezone } = body;
+      
+      console.log(`🕐 Day availability request for service ${serviceId}, date ${date}`);
+      
+      if (!date) {
+        return c.json({ error: 'Date is required in request body' }, 400);
+      }
+      
+      // Validate date format
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        return c.json({ error: 'Invalid date format. Use YYYY-MM-DD' }, 400);
+      }
+      
+      const availability = await availabilityService.getDayAvailability(
+        serviceId, 
+        date, 
+        timezone || 'UTC'
+      );
+      
+      console.log(`✅ Day availability calculated for ${serviceId} on ${date}: ${availability.availableSlots.length} available slots`);
+      
+      return c.json(availability);
+      
+    } catch (error) {
+      console.error('❌ Day availability error:', error);
+      
+      if (error.message === 'Service not found') {
+        return c.json({ error: 'Service not found' }, 404);
+      }
+      
+      return c.json({ error: 'Failed to calculate day availability' }, 500);
     }
   });
 }
