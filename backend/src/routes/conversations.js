@@ -441,8 +441,6 @@ export default function conversationRoutes(app) {
    * Body:
    * - conversation_id: UUID of the conversation
    * - content: Message content
-   * - message_type: Type of message ('text', 'image', 'file', 'booking_update')
-   * - metadata: Optional metadata for structured messages
    * 
    * Response:
    * - Created message object with sender information
@@ -454,7 +452,7 @@ export default function conversationRoutes(app) {
     try {
       const userId = c.get('userId');
       const body = await c.req.json();
-      const { conversation_id, content, message_type = 'text', metadata } = body;
+      const { conversation_id, content } = body;
 
       if (!conversation_id || !content) {
         return c.json({ error: 'Conversation ID and content are required' }, 400);
@@ -481,10 +479,7 @@ export default function conversationRoutes(app) {
         conversation_id,
         sender_id: userId,
         content,
-        message_type,
-        metadata: metadata || null,
-        is_read: false,
-        created_at: new Date().toISOString()
+        is_read: false
       };
 
       const { data: message, error: messageError } = await supabaseAdmin
