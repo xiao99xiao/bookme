@@ -74,7 +74,12 @@ export default function ProviderServices() {
   };
 
   const handleEditService = (service: Service) => {
-    setEditingService(service);
+    // Convert availability_schedule to timeSlots format for the modal
+    const serviceWithTimeSlots = {
+      ...service,
+      timeSlots: service.availability_schedule || {}
+    };
+    setEditingService(serviceWithTimeSlots);
     setIsServiceModalOpen(true);
   };
 
