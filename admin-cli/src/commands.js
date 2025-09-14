@@ -372,6 +372,113 @@ export class AdminCommands {
   }
 
   /**
+   * Generate transaction records from completed bookings
+   */
+  async generateTransactionRecords(dryRun = false) {
+    try {
+      console.log(chalk.blue('🔍 Fetching completed bookings...\n'))
+      
+      // Get all completed bookings that don't have corresponding transaction records
+      const completedBookings = await this.databaseService.getCompletedBookingsWithoutTransactions()
+      
+      if (completedBookings.length === 0) {
+        console.log(chalk.yellow('✨ No completed bookings found that need transaction records'))
+        return { created: 0, total: 0 }
+      }
+      
+      console.log(chalk.green(`📋 Found ${completedBookings.length} completed bookings without transaction records\n`))
+      
+      // Display what would be created
+      this.displayTransactionPreview(completedBookings)
+      
+      if (dryRun) {
+        console.log(chalk.blue('\n🔍 DRY RUN - No records will be created'))
+        return { created: 0, total: completedBookings.length }
+      }
+      
+      // Confirm creation
+      const { confirmed } = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'confirmed',
+          message: `Create transaction records for ${completedBookings.length} completed bookings?`,
+          default: true
+        }
+      ])
+      
+      if (!confirmed) {
+        console.log(chalk.yellow('🚫 Transaction record creation cancelled'))
+        return { created: 0, total: completedBookings.length }
+      }
+      
+      console.log(chalk.blue('\n💾 Creating transaction records...\n'))
+      
+      let created = 0
+      const results = []
+      
+      for (const booking of completedBookings) {
+        try {
+          const result = await this.databaseService.createTransactionRecord(booking)
+          
+          if (result.success) {
+            created++
+            console.log(chalk.green(`✅ Created transaction record for booking ${booking.id}`))
+            results.push({ booking: booking.id, success: true, transactionId: result.transactionId })
+          } else {
+            console.log(chalk.red(`❌ Failed to create transaction for booking ${booking.id}: ${result.error}`))
+            results.push({ booking: booking.id, success: false, error: result.error })
+          }
+          
+        } catch (error) {
+          console.log(chalk.red(`❌ Error creating transaction for booking ${booking.id}: ${error.message}`))
+          results.push({ booking: booking.id, success: false, error: error.message })
+        }
+      }
+      
+      console.log(chalk.green(`\n✅ Transaction record creation completed!`))
+      console.log(chalk.gray(`📊 Successfully created: ${created}/${completedBookings.length} transaction records`))
+      
+      if (created < completedBookings.length) {
+        console.log(chalk.yellow(`⚠️  Failed: ${completedBookings.length - created} transaction records`))
+      }
+      
+      return { created, total: completedBookings.length, results }
+      
+    } catch (error) {
+      console.log(chalk.red('❌ Error generating transaction records:'), error.message)
+      throw error
+    }
+  }
+
+  /**
+   * Display preview of transactions that would be created
+   */
+  displayTransactionPreview(bookings) {
+    console.log(chalk.blue('📊 Transaction Records to be Created:\n'))
+    
+    let totalAmount = 0
+    
+    bookings.forEach((booking, index) => {
+      const header = chalk.cyan(`[${index + 1}] Booking: ${booking.id}`)
+      const amount = chalk.green(`$${booking.total_price}`)
+      const service = booking.services?.title || 'Unknown Service'
+      
+      console.log(`${header} - ${amount} - ${service}`)
+      console.log(chalk.gray(`  📅 Completed: ${new Date(booking.completed_at).toLocaleString()}`))
+      console.log(chalk.gray(`  👤 Provider: ${booking.providers?.display_name || 'Unknown'} (@${booking.providers?.username || 'no-username'})`))
+      console.log(chalk.gray(`  💰 Provider Earnings: $${(booking.total_price * 0.9).toFixed(2)} (90%)`))
+      console.log(chalk.gray(`  🏢 Platform Fee: $${(booking.total_price * 0.1).toFixed(2)} (10%)`))
+      console.log() // Empty line between bookings
+      
+      totalAmount += parseFloat(booking.total_price)
+    })
+    
+    console.log(chalk.cyan(`📊 Total Value: $${totalAmount.toFixed(2)} across ${bookings.length} completed bookings`))
+    console.log(chalk.cyan(`💰 Total Provider Earnings: $${(totalAmount * 0.9).toFixed(2)}`))
+    console.log(chalk.cyan(`🏢 Total Platform Fees: $${(totalAmount * 0.1).toFixed(2)}\n`))
+  }
+
+  /**
    * Format wallet address for display
    */
   formatAddress(address) {

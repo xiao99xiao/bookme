@@ -527,10 +527,10 @@ export default function Balance() {
                             
                             <div className="text-right">
                               <p className="text-sm font-semibold text-green-600">
-                                +${transaction.net_amount.toFixed(2)}
+                                +${transaction.amount.toFixed(2)}
                               </p>
                               <p className="text-xs text-gray-500">
-                                ${transaction.service_amount.toFixed(2)} - ${transaction.platform_fee.toFixed(2)} fee
+                                Provider earnings (90% of service)
                               </p>
                               {transaction.transaction_hash && (
                                 <Button

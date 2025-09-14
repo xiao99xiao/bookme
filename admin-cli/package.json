@@ -8,7 +8,10 @@
     "start": "node src/index.js",
     "list": "node src/index.js list",
     "cancel": "node src/index.js cancel",
-    "cancel-all": "node src/index.js cancel-all"
+    "cancel-all": "node src/index.js cancel-all",
+    "generate-transactions": "node src/index.js generate-transactions",
+    "gen-tx": "node src/index.js generate-transactions",
+    "gen-tx-dry": "node src/index.js generate-transactions --dry-run"
   },
   "bin": {
     "bookme-admin": "src/index.js"

@@ -264,4 +264,138 @@ export class DatabaseService {
       throw error
     }
   }
+
+  /**
+   * Get all completed bookings that don't have transaction records
+   */
+  async getCompletedBookingsWithoutTransactions() {
+    try {
+      const { data, error } = await this.supabase
+        .from('bookings')
+        .select(`
+          id,
+          status,
+          scheduled_at,
+          completed_at,
+          duration_minutes,
+          total_price,
+          service_fee,
+          customer_notes,
+          provider_notes,
+          location,
+          is_online,
+          provider_id,
+          customer_id,
+          service_id,
+          blockchain_booking_id,
+          blockchain_tx_hash,
+          completion_tx_hash,
+          created_at,
+          services!inner(
+            id,
+            title,
+            description,
+            price
+          ),
+          customers:customer_id(
+            id,
+            display_name,
+            username
+          ),
+          providers:provider_id(
+            id,
+            display_name,
+            username
+          )
+        `)
+        .eq('status', 'completed')
+        .not('completed_at', 'is', null)
+        
+      if (error) {
+        throw error
+      }
+
+      if (!data || data.length === 0) {
+        return []
+      }
+
+      // Filter out bookings that already have transaction records
+      const completedBookings = []
+      for (const booking of data) {
+        // Check if transaction record already exists for this booking
+        const { data: existingTransaction, error: txError } = await this.supabase
+          .from('transactions')
+          .select('id')
+          .eq('booking_id', booking.id)
+          .eq('type', 'booking_payment')
+          .limit(1)
+
+        if (txError) {
+          console.warn(`⚠️  Error checking existing transaction for booking ${booking.id}:`, txError.message)
+          continue
+        }
+
+        if (!existingTransaction || existingTransaction.length === 0) {
+          completedBookings.push(booking)
+        }
+      }
+
+      console.log(`📊 Found ${completedBookings.length} completed bookings without transaction records (out of ${data.length} total completed)`)
+      return completedBookings
+      
+    } catch (error) {
+      console.error('❌ Error fetching completed bookings:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Create a transaction record for a completed booking
+   */
+  async createTransactionRecord(booking) {
+    try {
+      // Calculate amounts based on booking price (90% provider, 10% platform)
+      const totalPrice = parseFloat(booking.total_price)
+      const providerEarnings = totalPrice * 0.9 // 90% to provider
+      const platformFee = totalPrice * 0.1 // 10% platform fee
+      
+      // Create transaction record for provider earnings
+      const { data: transactionData, error: transactionError } = await this.supabase
+        .from('transactions')
+        .insert({
+          provider_id: booking.provider_id,
+          type: 'booking_payment',
+          amount: providerEarnings,
+          booking_id: booking.id,
+          source_user_id: booking.customer_id,
+          service_id: booking.service_id,
+          description: `Payment for service: ${booking.services?.title || 'Unknown Service'}`,
+          transaction_hash: booking.completion_tx_hash || booking.blockchain_tx_hash,
+          created_at: booking.completed_at || booking.created_at,
+          updated_at: new Date().toISOString()
+        })
+        .select('id')
+        .single()
+
+      if (transactionError) {
+        console.error('❌ Error creating transaction record:', transactionError)
+        return { success: false, error: transactionError.message }
+      }
+
+      console.log(`✅ Created transaction record ${transactionData.id} for booking ${booking.id}`)
+      console.log(`   💰 Provider earnings: $${providerEarnings.toFixed(2)} for ${booking.providers?.display_name || 'Unknown'}`)
+      console.log(`   🏢 Platform fee: $${platformFee.toFixed(2)}`)
+      
+      return { 
+        success: true, 
+        transactionId: transactionData.id,
+        providerEarnings,
+        platformFee
+      }
+      
+    } catch (error) {
+      console.error('❌ Error creating transaction record:', error)
+      return { success: false, error: error.message }
+    }
+  }
 }

@@ -100,6 +100,23 @@ async function initializeCommands() {
         }
       })
 
+    // Generate transaction records command
+    program
+      .command('generate-transactions')
+      .alias('gen-tx')
+      .description('Generate transaction records from completed bookings')
+      .option('--dry-run', 'Preview what would be created without making changes')
+      .action(async (options) => {
+        try {
+          console.log(chalk.blue('🚀 BookMe Admin CLI - Generate Transaction Records\n'))
+          await commands.generateTransactionRecords(options.dryRun)
+          process.exit(0)
+        } catch (error) {
+          console.error(chalk.red('❌ Transaction generation failed:'), error.message)
+          process.exit(1)
+        }
+      })
+
     // Interactive mode (default command)
     program
       .command('interactive', { isDefault: true })
@@ -140,6 +157,7 @@ async function runInteractiveMode(commands) {
           choices: [
             { name: '📋 List active bookings', value: 'list' },
             { name: '🔍 Find booking by transaction hash', value: 'find-tx' },
+            { name: '💰 Generate transaction records', value: 'generate-transactions' },
             { name: '🚨 Cancel a booking', value: 'cancel' },
             { name: '💥 Cancel ALL bookings', value: 'cancel-all' },
             { name: '🔧 Test connections', value: 'test' },
@@ -157,6 +175,10 @@ async function runInteractiveMode(commands) {
           
         case 'find-tx':
           await commands.findBookingByTxHash()
+          break
+          
+        case 'generate-transactions':
+          await commands.generateTransactionRecords()
           break
           
         case 'cancel':
@@ -220,6 +242,7 @@ if (process.argv.length === 2) {
   console.log('  node src/index.js test       # Test connections')
   console.log('  node src/index.js list       # List active bookings')
   console.log('  node src/index.js find-tx <hash> [-p]        # Find booking by transaction hash')
+  console.log('  node src/index.js generate-transactions [--dry-run]  # Generate transaction records from completed bookings')
   console.log('  node src/index.js cancel [id] [-r "reason"]  # Cancel specific booking')
   console.log('  node src/index.js cancel-all [-r "reason"]   # Cancel all bookings')
   console.log()
