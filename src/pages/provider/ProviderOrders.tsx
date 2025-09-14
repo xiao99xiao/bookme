@@ -486,7 +486,7 @@ export default function ProviderOrders() {
                       <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-2">
                           {/* Status Badge */}
-                          <StatusBadge status={booking.status === 'confirmed' ? 'in_progress' : booking.status as any} />
+                          <StatusBadge status={booking.status as any} />
                           
                           {/* Online Badge */}
                           {booking.is_online && <OnlineBadge isOnline={booking.is_online} />}
@@ -786,7 +786,7 @@ export default function ProviderOrders() {
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
                         <div className="flex items-center gap-2 flex-wrap">
                           {/* Status Badge */}
-                          <StatusBadge status={booking.status === 'confirmed' ? 'in_progress' : booking.status as any} />
+                          <StatusBadge status={booking.status as any} />
                           
                           {/* Online Badge */}
                           {booking.is_online && (

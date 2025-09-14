@@ -586,10 +586,14 @@ class BlockchainEventMonitor {
    * Handle ServiceCompleted event
    */
   async handleServiceCompleted(eventData) {
-    // Find booking by blockchain_booking_id
+    // Find booking by blockchain_booking_id with related data
     const { data: booking, error } = await this.supabaseAdmin
       .from("bookings")
-      .select()
+      .select(`
+        *,
+        services!inner(id, title),
+        users!bookings_customer_id_fkey(display_name, email)
+      `)
       .eq("blockchain_booking_id", eventData.bookingId)
       .single();
 
@@ -615,16 +619,38 @@ class BlockchainEventMonitor {
       throw updateError;
     }
 
-    // Update provider earnings
-    const providerEarnings = parseFloat(
-      ethers.formatUnits(eventData.providerAmount, 6),
-    );
+    // Calculate net amount received by provider
+    const netAmount = parseFloat(ethers.formatUnits(eventData.providerAmount, 6));
 
+    // Get customer name and service title for description
+    const customerName = booking.users.display_name || booking.users.email?.split('@')[0] || 'Unknown Customer';
+    const serviceTitle = booking.services.title;
+    const description = `${serviceTitle}`;
+
+    // Create transaction record using new schema
+    const { error: transactionError } = await this.supabaseAdmin
+      .from("transactions")
+      .insert({
+        provider_id: booking.provider_id,
+        type: 'booking_payment',
+        amount: netAmount,
+        booking_id: booking.id,
+        source_user_id: booking.customer_id,
+        service_id: booking.service_id,
+        description: description,
+        transaction_hash: eventData.transactionHash,
+      });
+
+    if (transactionError) {
+      console.error("⚠️ Error creating transaction record:", transactionError);
+    }
+
+    // Update provider total_earnings by calculating from all transaction records
     const { error: earningsError } = await this.supabaseAdmin
       .from("users")
       .update({
         total_earnings: this.supabaseAdmin.raw(
-          `total_earnings + ${providerEarnings}`,
+          `(SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE provider_id = '${booking.provider_id}')`
         ),
       })
       .eq("id", booking.provider_id);
@@ -633,7 +659,7 @@ class BlockchainEventMonitor {
       console.error("⚠️ Error updating provider earnings:", earningsError);
     }
 
-    console.log("🎉 Service completed for booking:", booking.id);
+    console.log("🎉 Service completed for booking:", booking.id, "- Transaction recorded");
   }
 
   /**

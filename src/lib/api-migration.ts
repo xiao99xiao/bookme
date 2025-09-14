@@ -91,6 +91,29 @@ export interface Booking {
   }[]
 }
 
+export interface IncomeTransaction {
+  id: string
+  provider_id: string
+  type: 'booking_payment' | 'inviter_fee' | 'bonus' | 'refund'
+  amount: number
+  booking_id?: string
+  source_user_id?: string
+  service_id?: string
+  description: string
+  transaction_hash?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface IncomeSummary {
+  totalIncome: number
+  transactionCount: number
+  averageTransactionValue: number
+  thisMonthIncome: number
+  lastTransactionDate?: string
+  transactionsByType: Record<string, number>
+}
+
 /**
  * Migration wrapper that mimics old ApiClient interface
  * Uses the new BackendAPI under the hood
@@ -660,6 +683,56 @@ export class ApiClient {
     if (!response.ok) {
       const error = await response.json()
       throw new Error(error.error || 'Failed to reject booking')
+    }
+
+    return response.json()
+  }
+
+  // Income transaction methods
+  static async getIncomeTransactions(limit: number = 50, offset: number = 0): Promise<{
+    transactions: IncomeTransaction[]
+    totalIncome: number
+    pagination: {
+      limit: number
+      offset: number
+      hasMore: boolean
+    }
+  }> {
+    await this.waitForInitialization()
+    
+    const params = new URLSearchParams({
+      limit: limit.toString(),
+      offset: offset.toString()
+    })
+    
+    const response = await fetch(`${this.backendApi!.baseUrl}/api/transactions/income?${params}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${await this.backendApi!.getToken()}`
+      }
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Failed to fetch income transactions' }))
+      throw new Error(error.error || 'Failed to fetch income transactions')
+    }
+
+    return response.json()
+  }
+
+  static async getIncomeSummary(): Promise<IncomeSummary> {
+    await this.waitForInitialization()
+    
+    const response = await fetch(`${this.backendApi!.baseUrl}/api/transactions/income/summary`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${await this.backendApi!.getToken()}`
+      }
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Failed to fetch income summary' }))
+      throw new Error(error.error || 'Failed to fetch income summary')
     }
 
     return response.json()
