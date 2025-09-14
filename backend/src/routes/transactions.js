@@ -39,7 +39,7 @@ export default function transactionRoutes(app) {
    */
   app.get('/api/transactions/income', verifyPrivyAuth, async (c) => {
     try {
-      const { userId } = c.get('user');
+      const userId = c.get('userId');
       
       // Get query parameters for pagination
       const limit = Math.min(parseInt(c.req.query('limit') || '50'), 100);
@@ -108,7 +108,7 @@ export default function transactionRoutes(app) {
    */
   app.get('/api/transactions/income/summary', verifyPrivyAuth, async (c) => {
     try {
-      const { userId } = c.get('user');
+      const userId = c.get('userId');
 
       console.log(`📊 Fetching income summary for provider ${userId}`);
 

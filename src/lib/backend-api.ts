@@ -316,4 +316,33 @@ export class BackendAPI {
   async getBlockchainStatus(bookingId: string): Promise<any> {
     return this.request(`/api/bookings/${bookingId}/blockchain-status`);
   }
+
+  // Transaction methods
+  async getIncomeTransactions(limit: number = 50, offset: number = 0): Promise<{
+    transactions: any[]
+    totalIncome: number
+    pagination: {
+      limit: number
+      offset: number
+      hasMore: boolean
+    }
+  }> {
+    const params = new URLSearchParams({
+      limit: limit.toString(),
+      offset: offset.toString()
+    });
+    
+    return this.request(`/api/transactions/income?${params}`);
+  }
+
+  async getIncomeTransactionsSummary(): Promise<{
+    totalIncome: number
+    transactionCount: number
+    averageTransactionValue: number
+    thisMonthIncome: number
+    lastTransactionDate: string | null
+    transactionsByType: Record<string, number>
+  }> {
+    return this.request(`/api/transactions/income/summary`);
+  }
 }

@@ -6,11 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Badge as DSBadge } from '@/design-system';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { Copy, Wallet, RefreshCw, ExternalLink, Plus, CreditCard } from 'lucide-react';
+import { Copy, Wallet, RefreshCw, ExternalLink, Plus, CreditCard, TrendingUp, Calendar, User } from 'lucide-react';
 import { createPublicClient, http, formatUnits, type Address } from 'viem';
 import { base, baseSepolia } from 'viem/chains';
 import { useAuth } from '@/contexts/PrivyAuthContext';
-import { H1 } from '@/design-system';
+import { ApiClient, type IncomeTransaction } from '@/lib/api-migration';
+import { H1, H2 } from '@/design-system';
 
 // USDC contract addresses
 const USDC_ADDRESS_BASE = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913' as Address;
@@ -40,14 +41,14 @@ interface TokenBalance {
   formatted: string;
 }
 
+
 export default function Balance() {
   const { user, ready: privyReady } = usePrivy();
   const { wallets, ready: walletsReady } = useWallets();
   const { client: smartWalletClient } = useSmartWallets();
-  const { authenticated, loading: authLoading } = useAuth();
+  const { authenticated, loading: authLoading, userId, profile } = useAuth();
   const { fundWallet } = useFundWallet({
     onUserExited: ({ balance, address }) => {
-      // Refresh balances after funding flow exits
       if (walletInfo?.address === address) {
         fetchBalances();
       }
@@ -61,12 +62,16 @@ export default function Balance() {
   const [refreshing, setRefreshing] = useState(false);
   const [fundingInProgress, setFundingInProgress] = useState(false);
   
+  // Income transactions state
+  const [incomeTransactions, setIncomeTransactions] = useState<IncomeTransaction[]>([]);
+  const [loadingIncome, setLoadingIncome] = useState(true);
+  const [totalIncome, setTotalIncome] = useState(0);
+  
   const isProduction = import.meta.env.MODE === 'production';
   const chain = isProduction ? base : baseSepolia;
   const usdcAddress = isProduction ? USDC_ADDRESS_BASE : USDC_ADDRESS_BASE_SEPOLIA;
   const explorerUrl = isProduction ? 'https://basescan.org' : 'https://sepolia.basescan.org';
 
-  // Create public client for reading blockchain data
   const publicClient = createPublicClient({
     chain,
     transport: http()
@@ -78,7 +83,6 @@ export default function Balance() {
 
     const determineWallet = async () => {
       try {
-        // Check for smart wallet first
         const smartWallet = user?.linkedAccounts?.find((account: any) => account.type === 'smart_wallet');
         if (smartWallet) {
           setWalletInfo({
@@ -89,7 +93,6 @@ export default function Balance() {
           return;
         }
 
-        // Check for connected external wallet
         if (wallets.length > 0) {
           const externalWallet = wallets.find(w => w.walletClientType !== 'privy');
           if (externalWallet) {
@@ -102,7 +105,6 @@ export default function Balance() {
           }
         }
 
-        // Check for embedded wallet
         const embeddedWallet = user?.linkedAccounts?.find((account: any) => 
           account.type === 'wallet' && account.walletClientType === 'privy'
         );
@@ -115,7 +117,6 @@ export default function Balance() {
           return;
         }
 
-        // No wallet found
         setWalletInfo(null);
       } catch (error) {
         console.error('Error determining wallet:', error);
@@ -128,20 +129,47 @@ export default function Balance() {
     determineWallet();
   }, [user, wallets, privyReady, walletsReady, authenticated, authLoading, chain]);
 
-  // Fetch balances
+  // Load income transactions for all authenticated users
+  useEffect(() => {
+    if (userId) {
+      loadIncomeTransactions();
+    } else {
+      setLoadingIncome(false);
+    }
+  }, [userId]);
+
+  const loadIncomeTransactions = async () => {
+    try {
+      setLoadingIncome(true);
+      
+      // Use real API call to get income transactions
+      const response = await ApiClient.getIncomeTransactions(50, 0);
+      
+      setIncomeTransactions(response.transactions);
+      setTotalIncome(response.totalIncome);
+      
+    } catch (error) {
+      console.error('Failed to load income transactions:', error);
+      toast.error('Failed to load income transactions');
+      // Set empty state on error
+      setIncomeTransactions([]);
+      setTotalIncome(0);
+    } finally {
+      setLoadingIncome(false);
+    }
+  };
+
   const fetchBalances = async () => {
     if (!walletInfo?.address) return;
 
     try {
       setRefreshing(true);
 
-      // Fetch native balance (ETH)
       const nativeBalanceWei = await publicClient.getBalance({
         address: walletInfo.address as Address
       });
       setNativeBalance(formatUnits(nativeBalanceWei, 18));
 
-      // Fetch USDC balance
       const usdcBalanceRaw = await publicClient.readContract({
         address: usdcAddress,
         abi: USDC_ABI,
@@ -191,10 +219,10 @@ export default function Balance() {
       await fundWallet(walletInfo.address, {
         chain,
         asset: 'USDC',
-        amount: '10', // Default to $10 USDC
+        amount: '10',
         defaultFundingMethod: 'card',
         card: {
-          preferredProvider: 'moonpay' // or 'coinbase'
+          preferredProvider: 'moonpay'
         },
         uiConfig: {
           receiveFundsTitle: 'Fund Your Wallet with USDC',
@@ -222,30 +250,40 @@ export default function Balance() {
     }
   };
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   if (loading || authLoading) {
     return (
-      <div className="max-w-4xl mx-auto p-6">
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-8 w-32 mb-2" />
-            <Skeleton className="h-4 w-64" />
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Skeleton className="h-20 w-full" />
-            <Skeleton className="h-20 w-full" />
-          </CardContent>
-        </Card>
+      <div className="max-w-6xl mx-auto p-6">
+        <Skeleton className="h-8 w-32 mb-6" />
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="space-y-6">
+            <Skeleton className="h-40 w-full" />
+            <Skeleton className="h-32 w-full" />
+          </div>
+          <Skeleton className="h-80 w-full" />
+        </div>
       </div>
     );
   }
 
   if (!walletInfo) {
     return (
-      <div className="max-w-4xl mx-auto p-6">
+      <div className="max-w-6xl mx-auto p-6">
+        <H1 className="mb-6">Wallet & Balance</H1>
         <Card>
           <CardHeader>
-            <CardTitle>Wallet Balance</CardTitle>
-            <CardDescription>No wallet detected</CardDescription>
+            <CardTitle>No Wallet Detected</CardTitle>
+            <CardDescription>Please ensure you're logged in and have a wallet connected</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-center py-8">
@@ -264,232 +302,258 @@ export default function Balance() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <div className="mb-6">
-        <H1>Wallet Balance</H1>
+    <div className="max-w-6xl mx-auto p-6">
+      <div className="mb-8">
+        <H1>Wallet & Balance</H1>
         <p className="text-gray-600 mt-1">
           View your {chain.name} wallet balance and manage your funds
         </p>
       </div>
 
-      {/* Wallet Info Card */}
-      <Card className="mb-6">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Wallet Details</CardTitle>
-              <CardDescription>Your connected wallet information</CardDescription>
-            </div>
-            {getWalletTypeBadge(walletInfo.type)}
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium text-gray-500">Address</label>
-              <div className="flex items-center justify-between mt-1">
-                <code className="text-sm bg-gray-100 px-2 py-1 rounded">
-                  {formatAddress(walletInfo.address)}
-                </code>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={copyAddress}
-                  >
-                    <Copy className="w-4 h-4 mr-1" />
-                    Copy
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => window.open(`${explorerUrl}/address/${walletInfo.address}`, '_blank')}
-                  >
-                    <ExternalLink className="w-4 h-4 mr-1" />
-                    Explorer
-                  </Button>
+      <div className="grid gap-8 lg:grid-cols-2">
+        {/* Left Column - Wallet Overview */}
+        <div className="space-y-6">
+          {/* Wallet Info Card */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Wallet Details</CardTitle>
+                  <CardDescription>Your connected wallet information</CardDescription>
+                </div>
+                {getWalletTypeBadge(walletInfo.type)}
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Address</label>
+                  <div className="flex items-center justify-between mt-1">
+                    <code className="text-sm bg-gray-100 px-2 py-1 rounded">
+                      {formatAddress(walletInfo.address)}
+                    </code>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={copyAddress}>
+                        <Copy className="w-4 h-4 mr-1" />
+                        Copy
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => window.open(`${explorerUrl}/address/${walletInfo.address}`, '_blank')}
+                      >
+                        <ExternalLink className="w-4 h-4 mr-1" />
+                        Explorer
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Network</label>
+                  <p className="mt-1">{chain.name}</p>
                 </div>
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            <div>
-              <label className="text-sm font-medium text-gray-500">Network</label>
-              <p className="mt-1">{chain.name}</p>
-            </div>
+          {/* Balance Cards */}
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* USDC Balance */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">USDC Balance</CardTitle>
+                  <Button size="sm" variant="ghost" onClick={fetchBalances} disabled={refreshing}>
+                    <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="text-2xl font-bold">
+                    {usdcBalance ? (
+                      <>
+                        {parseFloat(usdcBalance.formatted).toLocaleString('en-US', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 6
+                        })}
+                        <span className="text-sm text-gray-500 ml-1">USDC</span>
+                      </>
+                    ) : (
+                      <span className="text-gray-400">0.00 USDC</span>
+                    )}
+                  </div>
+                  
+                  <Button
+                    onClick={handleFundUSDC}
+                    disabled={fundingInProgress || !walletInfo}
+                    size="sm"
+                    className="w-full"
+                    variant={parseFloat(usdcBalance?.formatted || '0') === 0 ? 'default' : 'outline'}
+                  >
+                    {fundingInProgress ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add USDC
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* ETH Balance */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">ETH Balance</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {parseFloat(nativeBalance).toLocaleString('en-US', {
+                    minimumFractionDigits: 4,
+                    maximumFractionDigits: 6
+                  })}
+                  <span className="text-sm text-gray-500 ml-1">ETH</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Used for transaction fees
+                </p>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Balance Cards */}
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* USDC Balance */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">USDC Balance</CardTitle>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={fetchBalances}
-                  disabled={refreshing}
+          {/* Quick Actions for empty balance */}
+          {parseFloat(usdcBalance?.formatted || '0') === 0 && (
+            <Card className="border-blue-200 bg-blue-50/50">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center">
+                  <CreditCard className="w-5 h-5 mr-2 text-blue-600" />
+                  Get Started with USDC
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-600 mb-4">
+                  You'll need USDC to book services on the platform. Fund your wallet to get started!
+                </p>
+                <Button 
+                  onClick={handleFundUSDC}
+                  disabled={fundingInProgress}
+                  className="w-full"
+                  size="lg"
                 >
-                  <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                  <CreditCard className="w-4 h-4 mr-2" />
+                  Buy USDC with Card
                 </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <div className="text-3xl font-bold">
-                  {usdcBalance ? (
-                    <>
-                      {parseFloat(usdcBalance.formatted).toLocaleString('en-US', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 6
-                      })}
-                      <span className="text-lg text-gray-500 ml-2">USDC</span>
-                    </>
-                  ) : (
-                    <span className="text-gray-400">0.00 USDC</span>
-                  )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* Right Column - Income Transactions */}
+        <div>
+          <Card className="h-fit">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5 text-green-600" />
+                      Your Income
+                    </CardTitle>
+                    <CardDescription>Earnings from completed services</CardDescription>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={loadIncomeTransactions}
+                    disabled={loadingIncome}
+                  >
+                    <RefreshCw className={`w-4 h-4 ${loadingIncome ? 'animate-spin' : ''}`} />
+                  </Button>
                 </div>
-                {usdcBalance && parseFloat(usdcBalance.formatted) > 0 && (
-                  <p className="text-sm text-gray-500">
-                    ≈ ${parseFloat(usdcBalance.formatted).toLocaleString('en-US', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2
-                    })} USD
-                  </p>
-                )}
-              </div>
-              
-              <Button
-                onClick={handleFundUSDC}
-                disabled={fundingInProgress || !walletInfo}
-                className="w-full"
-                variant={parseFloat(usdcBalance?.formatted || '0') === 0 ? 'default' : 'outline'}
-              >
-                {fundingInProgress ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Processing...
-                  </>
+              </CardHeader>
+              <CardContent>
+                {loadingIncome ? (
+                  <div className="space-y-4">
+                    <Skeleton className="h-12 w-32" />
+                    {[1, 2, 3].map((i) => (
+                      <Skeleton key={i} className="h-16 w-full" />
+                    ))}
+                  </div>
                 ) : (
                   <>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Fund USDC
+                    <div className="mb-6">
+                      <div className="text-3xl font-bold text-green-600">
+                        ${totalIncome.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </div>
+                      <p className="text-sm text-gray-500 mt-1">
+                        From {incomeTransactions.length} completed services
+                      </p>
+                    </div>
+
+                    {incomeTransactions.length === 0 ? (
+                      <div className="text-center py-8">
+                        <TrendingUp className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                        <p className="text-gray-500">No income yet</p>
+                        <p className="text-sm text-gray-400 mt-1">
+                          Complete your first service to start earning
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4 max-h-96 overflow-y-auto">
+                        {incomeTransactions.map((transaction) => (
+                          <div key={transaction.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+                            <div className="flex items-start space-x-3 flex-1">
+                              <div className="p-2 bg-green-100 rounded-lg">
+                                <TrendingUp className="w-4 h-4 text-green-600" />
+                              </div>
+                              
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm truncate">{transaction.service_title}</p>
+                                <p className="text-xs text-gray-600 flex items-center gap-1">
+                                  <User className="w-3 h-3" />
+                                  {transaction.customer_name}
+                                </p>
+                                <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                                  <Calendar className="w-3 h-3" />
+                                  {formatDate(transaction.created_at)}
+                                </p>
+                              </div>
+                            </div>
+                            
+                            <div className="text-right">
+                              <p className="text-sm font-semibold text-green-600">
+                                +${transaction.net_amount.toFixed(2)}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                ${transaction.service_amount.toFixed(2)} - ${transaction.platform_fee.toFixed(2)} fee
+                              </p>
+                              {transaction.transaction_hash && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-xs h-auto p-1 mt-1"
+                                  onClick={() => window.open(`${explorerUrl}/tx/${transaction.transaction_hash}`, '_blank')}
+                                >
+                                  <ExternalLink className="w-3 h-3 mr-1" />
+                                  View
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </>
                 )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Native Balance */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">ETH Balance</CardTitle>
-              <DSBadge variant="outline">Gas Token</DSBadge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="text-3xl font-bold">
-                {parseFloat(nativeBalance).toLocaleString('en-US', {
-                  minimumFractionDigits: 4,
-                  maximumFractionDigits: 6
-                })}
-                <span className="text-lg text-gray-500 ml-2">ETH</span>
-              </div>
-              <p className="text-sm text-gray-500">
-                Used for transaction fees on {chain.name}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Quick Actions for empty balance */}
-      {parseFloat(usdcBalance?.formatted || '0') === 0 && (
-        <Card className="mt-6 border-blue-200 bg-blue-50/50">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center">
-              <CreditCard className="w-5 h-5 mr-2 text-blue-600" />
-              Get Started with USDC
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-600 mb-4">
-              You'll need USDC to book services on the platform. Fund your wallet to get started!
-            </p>
-            <div className="grid gap-3 md:grid-cols-2">
-              <Button 
-                onClick={handleFundUSDC}
-                disabled={fundingInProgress}
-                className="w-full"
-                size="lg"
-              >
-                <CreditCard className="w-4 h-4 mr-2" />
-                Buy USDC with Card
-              </Button>
-              <Button 
-                variant="outline" 
-                size="lg"
-                onClick={() => {
-                  if (walletInfo?.address) {
-                    navigator.clipboard.writeText(walletInfo.address);
-                    toast.success('Address copied! Send USDC from another wallet.');
-                  }
-                }}
-              >
-                <Copy className="w-4 h-4 mr-2" />
-                Copy Address to Receive
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Info Section */}
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="text-lg">About Your Wallet</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3 text-sm text-gray-600">
-            {walletInfo.type === 'smart_wallet' && (
-              <>
-                <p>
-                  You're using a smart wallet powered by account abstraction. This provides enhanced security
-                  and enables features like gas sponsorship and transaction batching.
-                </p>
-                <p>
-                  Your smart wallet is controlled by your embedded signer and secured by Privy's infrastructure.
-                </p>
-              </>
-            )}
-            {walletInfo.type === 'embedded' && (
-              <p>
-                Your embedded wallet is securely managed by Privy. Only you have access to this wallet
-                through your authenticated account.
-              </p>
-            )}
-            {walletInfo.type === 'external' && (
-              <p>
-                You're using an external wallet (like MetaMask or WalletConnect). Make sure to keep your
-                wallet secure and never share your private keys.
-              </p>
-            )}
-            <p>
-              USDC is a stablecoin pegged to the US Dollar. You can use it for payments and transactions
-              on the {chain.name} network.
-            </p>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
+      </div>
     </div>
   );
 }

@@ -158,9 +158,10 @@ export default function ProviderOrders() {
   };
 
   const handleGenerateMeetingLink = async (bookingId: string) => {
+    const toastId = toast.loading('Generating meeting link...');
+    
     try {
       console.log('🔗 Generate Meeting Link clicked for booking:', bookingId);
-      toast.loading('Generating meeting link...');
       
       const accessToken = await getAccessToken();
       const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/meeting/generate`, {
@@ -179,10 +180,10 @@ export default function ProviderOrders() {
       }
       
       if (data.meetingLink) {
-        toast.success('Meeting link generated successfully!');
+        toast.success('Meeting link generated successfully!', { id: toastId });
         loadBookings(); // Refresh to show the new meeting link
       } else {
-        toast.error('Failed to generate meeting link - no link returned');
+        toast.error('Failed to generate meeting link - no link returned', { id: toastId });
       }
     } catch (error) {
       console.error('Failed to generate meeting link:', error);
@@ -191,6 +192,7 @@ export default function ProviderOrders() {
       let errorMessage = error.message || 'Failed to generate meeting link';
       if (errorMessage.includes('Google') || errorMessage.includes('authentication') || errorMessage.includes('authorization')) {
         toast.error(errorMessage + ' Go to Integrations to reconnect.', {
+          id: toastId,
           duration: 6000,
           action: {
             label: 'Go to Integrations',
@@ -198,7 +200,7 @@ export default function ProviderOrders() {
           }
         });
       } else {
-        toast.error(errorMessage);
+        toast.error(errorMessage, { id: toastId });
       }
     }
   };

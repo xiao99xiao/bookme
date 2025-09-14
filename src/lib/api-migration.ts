@@ -699,43 +699,12 @@ export class ApiClient {
     }
   }> {
     await this.waitForInitialization()
-    
-    const params = new URLSearchParams({
-      limit: limit.toString(),
-      offset: offset.toString()
-    })
-    
-    const response = await fetch(`${this.backendApi!.baseUrl}/api/transactions/income?${params}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${await this.backendApi!.getToken()}`
-      }
-    })
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Failed to fetch income transactions' }))
-      throw new Error(error.error || 'Failed to fetch income transactions')
-    }
-
-    return response.json()
+    return this.backendApi!.getIncomeTransactions(limit, offset)
   }
 
   static async getIncomeSummary(): Promise<IncomeSummary> {
     await this.waitForInitialization()
-    
-    const response = await fetch(`${this.backendApi!.baseUrl}/api/transactions/income/summary`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${await this.backendApi!.getToken()}`
-      }
-    })
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Failed to fetch income summary' }))
-      throw new Error(error.error || 'Failed to fetch income summary')
-    }
-
-    return response.json()
+    return this.backendApi!.getIncomeTransactionsSummary()
   }
 }
 
