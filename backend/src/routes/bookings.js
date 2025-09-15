@@ -14,6 +14,7 @@
 
 import { Hono } from "hono";
 import { verifyPrivyAuth, getSupabaseAdmin } from "../middleware/auth.js";
+import { getEventMonitor } from "../config/blockchain.js";
 import {
   getApplicableCancellationPolicies,
   calculateRefundBreakdown,
@@ -576,6 +577,9 @@ export default function bookingRoutes(app) {
       
       console.log("📝 Service completion initiated for booking:", bookingId);
       console.log("⏳ Waiting for blockchain confirmation...");
+
+      // Backup polling system disabled - use manual script if needed
+      // node scripts/check-booking-completion.js <booking-id>
 
       // Return booking data for frontend to execute blockchain transaction
       // The frontend will call completeService on the smart contract

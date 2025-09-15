@@ -762,6 +762,111 @@ class BlockchainEventMonitor {
   }
 
   /**
+   * Start backup polling for a specific booking completion
+   * Checks every 30 seconds for 6 attempts (3 minutes total)
+   */
+  startCompletionBackupPolling(bookingId, blockchainBookingId) {
+    console.log(`🔄 Starting backup polling for booking completion: ${bookingId} (blockchain: ${blockchainBookingId})`);
+
+    const pollAttempts = 6;
+    const pollInterval = 30000; // 30 seconds
+    let attemptCount = 0;
+
+    const pollForCompletion = async () => {
+      attemptCount++;
+      console.log(`🔍 Backup poll attempt ${attemptCount}/${pollAttempts} for booking ${bookingId}`);
+
+      try {
+        // Check if booking status has already been updated
+        const { data: booking, error: bookingError } = await this.supabaseAdmin
+          .from("bookings")
+          .select("status, completion_tx_hash, blockchain_booking_id")
+          .eq("id", bookingId)
+          .single();
+
+        if (bookingError) {
+          console.error(`❌ Error checking booking ${bookingId}:`, bookingError);
+          return;
+        }
+
+        // If already completed, stop polling
+        if (booking.status === 'completed') {
+          console.log(`✅ Booking ${bookingId} already marked as completed, stopping backup polling`);
+          return;
+        }
+
+        // Look for ServiceCompleted events for this booking on the blockchain
+        const filter = this.contract.filters.ServiceCompleted(blockchainBookingId);
+        const currentBlock = await this.provider.getBlockNumber();
+        // Check last 10 blocks (Base Sepolia has ~2 second block time, so ~20 seconds of history)
+        const fromBlock = Math.max(0, currentBlock - 10);
+
+        const events = await this.contract.queryFilter(filter, fromBlock, currentBlock);
+
+        if (events.length > 0) {
+          console.log(`🎯 Backup polling found ServiceCompleted event for booking ${bookingId}`);
+          const event = events[0]; // Use the first (should be only) event
+
+          // Process the event
+          const eventData = {
+            bookingId: blockchainBookingId,
+            provider: event.args.provider,
+            customer: event.args.customer,
+            providerAmount: event.args.providerAmount,
+            platformFee: event.args.platformFee,
+            transactionHash: event.transactionHash,
+            blockNumber: event.blockNumber
+          };
+
+          await this.handleServiceCompleted(eventData);
+          console.log(`✅ Backup polling successfully processed completion for booking ${bookingId}`);
+          return;
+        }
+
+        // If this was the last attempt and no event found, log warning
+        if (attemptCount >= pollAttempts) {
+          console.warn(`⚠️ BACKUP POLLING FAILED for booking ${bookingId}`);
+          console.warn(`📋 Booking Details:`);
+          console.warn(`   - Booking ID: ${bookingId}`);
+          console.warn(`   - Blockchain Booking ID: ${blockchainBookingId}`);
+          console.warn(`   - Current Status: ${booking.status}`);
+          console.warn(`   - Completion TX Hash: ${booking.completion_tx_hash || 'None'}`);
+          console.warn(`   - Attempts Made: ${pollAttempts}`);
+          console.warn(`   - Total Time: ${pollAttempts * pollInterval / 1000} seconds`);
+          console.warn(`   - Block Range Checked: ${fromBlock} to ${currentBlock} (last 10 blocks)`);
+          console.warn(`📧 This may indicate:`);
+          console.warn(`   - Transaction failed or was reverted`);
+          console.warn(`   - Event not emitted by smart contract`);
+          console.warn(`   - Network connectivity issues`);
+          console.warn(`   - Contract address mismatch`);
+          console.warn(`   - Block explorer delay`);
+          return;
+        }
+
+        // Schedule next attempt
+        const timeoutId = setTimeout(pollForCompletion, pollInterval);
+        this.timeouts.push(timeoutId);
+
+      } catch (error) {
+        console.error(`❌ Error in backup polling attempt ${attemptCount} for booking ${bookingId}:`, error);
+
+        // If this was the last attempt, log the error details
+        if (attemptCount >= pollAttempts) {
+          console.warn(`⚠️ BACKUP POLLING ERROR for booking ${bookingId}: ${error.message}`);
+        } else {
+          // Schedule next attempt even on error
+          const timeoutId = setTimeout(pollForCompletion, pollInterval);
+          this.timeouts.push(timeoutId);
+        }
+      }
+    };
+
+    // Start the first poll attempt
+    const timeoutId = setTimeout(pollForCompletion, pollInterval);
+    this.timeouts.push(timeoutId);
+  }
+
+  /**
    * Get monitoring status
    */
   async getStatus() {

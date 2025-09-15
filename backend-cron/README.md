@@ -20,10 +20,21 @@ npm install
 ```
 
 ### Environment Variables
-Create `.env.local` in project root with:
+Create `.env` in backend-cron directory with:
 ```env
-VITE_SUPABASE_URL=your_supabase_url
+# Supabase Database Configuration
+SUPABASE_URL=https://esfowzdgituqktemrmle.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# Backend API Configuration
+BACKEND_URL=https://localhost:4443
+
+# Google OAuth (for meeting generation fallback)
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+# SSL Configuration (for development)
+NODE_TLS_REJECT_UNAUTHORIZED=0
 ```
 
 ### Test Locally
@@ -49,8 +60,18 @@ node src/index.js
 ### 2. Configure Environment Variables
 In Railway service settings → Variables:
 ```env
-VITE_SUPABASE_URL=your_supabase_url
+# Supabase Database Configuration
+SUPABASE_URL=https://esfowzdgituqktemrmle.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# Backend API Configuration (use your production backend URL)
+BACKEND_URL=https://your-production-backend.railway.app
+
+# Google OAuth (for meeting generation fallback)
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+# Production environment
 NODE_ENV=production
 ```
 

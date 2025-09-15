@@ -177,7 +177,8 @@ async function transitionInProgressToCompleted(nowISO) {
         console.log(`🎉 Auto-completing booking ${booking.id.slice(0, 8)}... via blockchain`);
         
         // Call backend endpoint to complete service on blockchain
-        const response = await fetch(`http://localhost:4001/api/bookings/${booking.id}/complete-service-backend`, {
+        const backendUrl = process.env.BACKEND_URL || 'https://localhost:4443';
+        const response = await fetch(`${backendUrl}/api/bookings/${booking.id}/complete-service-backend`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
