@@ -308,16 +308,16 @@ const NewNavigation = () => {
     if (isLoggedIn && userMode) {
       return (
         <div className="flex items-center gap-3">
-          {/* Become Provider / Provider Dashboard button */}
-          {!profile?.is_provider ? (
-            <button
-              onClick={handleBecomeProvider}
-              className="hidden md:block text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              Become Provider
-            </button>
-          ) : (
-            userMode === 'provider' && (
+          {/* Become Provider / Provider Dashboard button - only show in customer mode */}
+          {userMode === 'customer' && (
+            !profile?.is_provider ? (
+              <button
+                onClick={handleBecomeProvider}
+                className="hidden md:block text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Become Provider
+              </button>
+            ) : (
               <Link
                 to="/provider/services"
                 className={`hidden md:block text-sm transition-colors ${
@@ -326,7 +326,7 @@ const NewNavigation = () => {
                     : 'font-medium text-gray-600 hover:text-gray-900'
                 }`}
               >
-                Dashboard
+                Provider Dashboard
               </Link>
             )
           )}
