@@ -36,6 +36,7 @@ import ProviderMessages from "./pages/provider/ProviderMessages";
 import ProviderMobileChat from "./pages/provider/ProviderMobileChat";
 import ProviderIntegrations from "./pages/provider/ProviderIntegrations";
 import IntegrationsCallback from "./pages/provider/IntegrationsCallback";
+import Income from "./pages/provider/Income";
 
 // Balance page
 import Balance from "./pages/Balance";
@@ -189,6 +190,14 @@ function AppContent() {
               element={
                 <ProtectedRoute>
                   <IntegrationsCallback />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/provider/income" 
+              element={
+                <ProtectedRoute>
+                  <Income />
                 </ProtectedRoute>
               } 
             />

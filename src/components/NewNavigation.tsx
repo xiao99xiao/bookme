@@ -12,7 +12,8 @@ import {
   MessageCircle,
   ClipboardList,
   Settings,
-  Plug
+  Plug,
+  DollarSign
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/PrivyAuthContext";
@@ -282,6 +283,12 @@ const NewNavigation = () => {
               <Link to="/balance" className="flex items-center gap-2">
                 <Wallet className="w-4 h-4" />
                 Balance
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/provider/income" className="flex items-center gap-2">
+                <DollarSign className="w-4 h-4" />
+                Income
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />

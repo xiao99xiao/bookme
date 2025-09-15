@@ -47,10 +47,35 @@ export default function transactionRoutes(app) {
 
       console.log(`📊 Fetching income transactions for provider ${userId}`);
 
-      // Fetch income transactions for this provider
+      // Fetch income transactions for this provider with related data
       const { data: transactions, error } = await supabaseAdmin
         .from('transactions')
-        .select('*')
+        .select(`
+          *,
+          provider:provider_id(
+            id,
+            display_name,
+            username
+          ),
+          source_user:source_user_id(
+            id,
+            display_name,
+            username
+          ),
+          service:service_id(
+            id,
+            title,
+            price,
+            duration_minutes
+          ),
+          booking:booking_id(
+            id,
+            scheduled_at,
+            duration_minutes,
+            location,
+            is_online
+          )
+        `)
         .eq('provider_id', userId)
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
