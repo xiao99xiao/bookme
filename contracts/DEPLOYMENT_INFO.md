@@ -3,7 +3,7 @@
 ## Base Sepolia Testnet Deployment
 
 ### Contract Details
-- **Contract Address:** `0x1D59b8DD5b1f6bE31C48a7AB82eaA322752880C7`
+- **Contract Address:** `0x33ddEd6F8183aa4dAB04E2aE216a5a3f9871405a`
 - **Network:** Base Sepolia (Chain ID: 84532)
 - **Block Number:** 30,740,428
 - **Deployment Date:** September 7, 2025
@@ -12,7 +12,7 @@
 
 ### Verification
 - **Status:** ✅ VERIFIED
-- **BaseScan URL:** https://sepolia.basescan.org/address/0x1d59b8dd5b1f6be31c48a7ab82eaa322752880c7
+- **BaseScan URL:** https://sepolia.basescan.org/address/0x33ddEd6F8183aa4dAB04E2aE216a5a3f9871405a
 - **Verification GUID:** `appz4hwb7z7lmysmypq2fyfqimi3lrq8vwzycscqryxkptsbuh`
 
 ### Configuration Parameters
@@ -37,7 +37,7 @@ Add these to your backend `.env` file:
 
 ```bash
 # Smart Contract Configuration
-CONTRACT_ADDRESS=0x1D59b8DD5b1f6bE31C48a7AB82eaA322752880C7
+CONTRACT_ADDRESS=0x33ddEd6F8183aa4dAB04E2aE216a5a3f9871405a
 CONTRACT_NETWORK=base-sepolia
 CONTRACT_CHAIN_ID=84532
 
@@ -89,7 +89,7 @@ const domain = {
   name: "BookingEscrow",
   version: "1",
   chainId: 84532, // Base Sepolia
-  verifyingContract: "0x1D59b8DD5b1f6bE31C48a7AB82eaA322752880C7"
+  verifyingContract: "0x33ddEd6F8183aa4dAB04E2aE216a5a3f9871405a"
 }
 
 const types = {
@@ -144,13 +144,13 @@ event BookingCancelled(bytes32 indexed bookingId, address indexed customer, addr
 ### Useful Commands
 ```bash
 # Check contract state
-cast call 0x1D59b8DD5b1f6bE31C48a7AB82eaA322752880C7 "paused()" --rpc-url base_sepolia
+cast call 0x33ddEd6F8183aa4dAB04E2aE216a5a3f9871405a "paused()" --rpc-url base_sepolia
 
 # Check booking status
-cast call 0x1D59b8DD5b1f6bE31C48a7AB82eaA322752880C7 "bookings(bytes32)" <BOOKING_ID> --rpc-url base_sepolia
+cast call 0x33ddEd6F8183aa4dAB04E2aE216a5a3f9871405a "bookings(bytes32)" <BOOKING_ID> --rpc-url base_sepolia
 
 # Monitor events
-cast logs --address 0x1D59b8DD5b1f6bE31C48a7AB82eaA322752880C7 --rpc-url base_sepolia
+cast logs --address 0x33ddEd6F8183aa4dAB04E2aE216a5a3f9871405a --rpc-url base_sepolia
 ```
 
 ---

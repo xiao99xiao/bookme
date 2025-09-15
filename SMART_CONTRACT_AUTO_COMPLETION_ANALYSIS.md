@@ -187,7 +187,7 @@ for (const booking of bookingsToComplete) {
 #### Environment Variables
 ```bash
 # Add to backend-cron/.env
-CONTRACT_ADDRESS=0x1D59b8DD5b1f6bE31C48a7AB82eaA322752880C7
+CONTRACT_ADDRESS=0x33ddEd6F8183aa4dAB04E2aE216a5a3f9871405a
 BACKEND_SIGNER_PRIVATE_KEY=your_private_key
 BLOCKCHAIN_RPC_URL=https://sepolia.base.org
 ```

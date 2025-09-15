@@ -336,7 +336,7 @@ return c.json({
     "nonce": "1701428400123"
   },
   "signature": "0xdef456789abcdef...",
-  "contractAddress": "0x1D59b8DD5b1f6bE31C48a7AB82eaA322752880C7",
+  "contractAddress": "0x33ddEd6F8183aa4dAB04E2aE216a5a3f9871405a",
   "usdcAddress": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
   "chainId": "84532"
 }
@@ -444,7 +444,7 @@ const txHash = await this.smartWalletClient.sendTransaction({
     },
     // Second: Execute booking payment
     {
-      to: CONTRACT_ADDRESS,                // "0x1D59b8DD5b1f6bE31C48a7AB82eaA322752880C7"
+      to: CONTRACT_ADDRESS,                // "0x33ddEd6F8183aa4dAB04E2aE216a5a3f9871405a"
       data: txData,                        // Encoded createAndPayBooking(authorization, signature)
       value: 0
     }

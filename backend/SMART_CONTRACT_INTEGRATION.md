@@ -4,14 +4,14 @@
 
 ### Contract Address (Base Sepolia)
 ```
-0x1D59b8DD5b1f6bE31C48a7AB82eaA322752880C7
+0x33ddEd6F8183aa4dAB04E2aE216a5a3f9871405a
 ```
 
 ### Required Environment Variables
 Add to your backend `.env`:
 ```bash
 # Smart Contract
-CONTRACT_ADDRESS=0x1D59b8DD5b1f6bE31C48a7AB82eaA322752880C7
+CONTRACT_ADDRESS=0x33ddEd6F8183aa4dAB04E2aE216a5a3f9871405a
 CONTRACT_CHAIN_ID=84532
 BASE_SEPOLIA_RPC=https://sepolia.base.org
 
@@ -49,7 +49,7 @@ USDC_ADDRESS=0x036CbD53842c5426634e7929541eC2318f3dCF7e
 const ethers = require('ethers');
 
 // Contract configuration
-const CONTRACT_ADDRESS = "0x1D59b8DD5b1f6bE31C48a7AB82eaA322752880C7";
+const CONTRACT_ADDRESS = "0x33ddEd6F8183aa4dAB04E2aE216a5a3f9871405a";
 const CHAIN_ID = 84532;
 
 // EIP-712 Domain
@@ -222,7 +222,7 @@ describe('Smart Contract Integration', () => {
 ### Environment Differences
 ```bash
 # Testnet (Base Sepolia)
-CONTRACT_ADDRESS=0x1D59b8DD5b1f6bE31C48a7AB82eaA322752880C7
+CONTRACT_ADDRESS=0x33ddEd6F8183aa4dAB04E2aE216a5a3f9871405a
 CHAIN_ID=84532
 RPC_URL=https://sepolia.base.org
 USDC_ADDRESS=0x036CbD53842c5426634e7929541eC2318f3dCF7e

@@ -7,7 +7,7 @@
 
 This PRD outlines the integration of BookingEscrow smart contract (deployed on Base Sepolia) with BookMe's existing booking system. The integration enables secure, trustless USDC payments between customers and providers with automated escrow functionality.
 
-**Contract Address:** `0x1D59b8DD5b1f6bE31C48a7AB82eaA322752880C7`  
+**Contract Address:** `0x33ddEd6F8183aa4dAB04E2aE216a5a3f9871405a`  
 **Network:** Base Sepolia (Chain ID: 84532)  
 **Payment Token:** USDC (`0x036CbD53842c5426634e7929541eC2318f3dCF7e`)
 
@@ -118,7 +118,7 @@ INSERT INTO bookings (
     "nonce": 12345
   },
   "signature": "0x...",
-  "contractAddress": "0x1D59b8DD5b1f6bE31C48a7AB82eaA322752880C7",
+  "contractAddress": "0x33ddEd6F8183aa4dAB04E2aE216a5a3f9871405a",
   "estimatedGas": "261265"
 }
 ```

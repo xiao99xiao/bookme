@@ -797,7 +797,7 @@ CREATE TABLE IF NOT EXISTS blockchain_system_state (
 
 -- Insert initial state
 INSERT INTO blockchain_system_state (last_processed_block, contract_address, network_name)
-VALUES (30740428, '0x1D59b8DD5b1f6bE31C48a7AB82eaA322752880C7', 'base-sepolia')
+VALUES (30740428, '0x33ddEd6F8183aa4dAB04E2aE216a5a3f9871405a', 'base-sepolia')
 ON CONFLICT DO NOTHING;
 ```
 
@@ -813,7 +813,7 @@ DATABASE_URL=postgresql://user:pass@localhost:5432/bookme
 REDIS_URL=redis://localhost:6379
 
 # Blockchain Configuration
-CONTRACT_ADDRESS=0x1D59b8DD5b1f6bE31C48a7AB82eaA322752880C7
+CONTRACT_ADDRESS=0x33ddEd6F8183aa4dAB04E2aE216a5a3f9871405a
 CHAIN_ID=84532
 USDC_CONTRACT_ADDRESS=0x036CbD53842c5426634e7929541eC2318f3dCF7e
 
@@ -1406,7 +1406,7 @@ DATABASE_URL=postgresql://... (Railway managed)
 REDIS_URL=redis://... (Railway Redis addon)
 
 # Blockchain Configuration  
-CONTRACT_ADDRESS=0x1D59b8DD5b1f6bE31C48a7AB82eaA322752880C7
+CONTRACT_ADDRESS=0x33ddEd6F8183aa4dAB04E2aE216a5a3f9871405a
 CHAIN_ID=84532
 START_BLOCK=30740428
 
@@ -1521,7 +1521,7 @@ restartPolicyMaxRetries = 3
 
 [environments.production.variables]
 NODE_ENV = "production"
-CONTRACT_ADDRESS = "0x1D59b8DD5b1f6bE31C48a7AB82eaA322752880C7"
+CONTRACT_ADDRESS = "0x33ddEd6F8183aa4dAB04E2aE216a5a3f9871405a"
 CHAIN_ID = "84532"
 
 [environments.production.plugins]

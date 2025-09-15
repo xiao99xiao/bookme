@@ -33,7 +33,7 @@ cp .env.example .env
 Edit `.env` with your configuration:
 ```env
 # Smart Contract Configuration
-CONTRACT_ADDRESS=0x1D59b8DD5b1f6bE31C48a7AB82eaA322752880C7
+CONTRACT_ADDRESS=0x33ddEd6F8183aa4dAB04E2aE216a5a3f9871405a
 BLOCKCHAIN_RPC_URL=https://sepolia.base.org
 CONTRACT_CHAIN_ID=84532
 

@@ -133,7 +133,7 @@ Tables in Supabase (see `/database/*.sql`):
 ### Smart Wallets & Blockchain
 
 #### Smart Contract Integration
-- **Contract Address**: `0x1D59b8DD5b1f6bE31C48a7AB82eaA322752880C7` (Base Sepolia)
+- **Contract Address**: `0x33ddEd6F8183aa4dAB04E2aE216a5a3f9871405a` (Base Sepolia)
 - **Smart Wallets**: Automatically created via Privy's SmartWalletsProvider
 - **Networks**: Base (production) and Base Sepolia (development)
 - **USDC Addresses**: 
@@ -253,7 +253,7 @@ VITE_GOOGLE_CLIENT_SECRET=
 VITE_BACKEND_URL=  # Backend URL (use Cloudflare tunnel URL for SSL in dev)
 
 # Blockchain Configuration
-VITE_CONTRACT_ADDRESS=0x1D59b8DD5b1f6bE31C48a7AB82eaA322752880C7
+VITE_CONTRACT_ADDRESS=0x33ddEd6F8183aa4dAB04E2aE216a5a3f9871405a
 VITE_USDC_ADDRESS=0x036CbD53842c5426634e7929541eC2318f3dCF7e
 VITE_CHAIN_ID=84532
 VITE_BLOCKCHAIN_EXPLORER=https://sepolia.basescan.org

@@ -29,6 +29,11 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 # Backend API Configuration
 BACKEND_URL=https://localhost:4443
 
+# Smart Contract Configuration (for production backend calls)
+CONTRACT_ADDRESS=0x33ddEd6F8183aa4dAB04E2aE216a5a3f9871405a
+CONTRACT_CHAIN_ID=84532
+BLOCKCHAIN_RPC_URL=https://base-sepolia.g.alchemy.com/v2/YOUR_ALCHEMY_API_KEY
+
 # Google OAuth (for meeting generation fallback)
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
@@ -66,6 +71,11 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
 # Backend API Configuration (use your production backend URL)
 BACKEND_URL=https://your-production-backend.railway.app
+
+# Smart Contract Configuration (for production backend calls)
+CONTRACT_ADDRESS=0x33ddEd6F8183aa4dAB04E2aE216a5a3f9871405a
+CONTRACT_CHAIN_ID=84532
+BLOCKCHAIN_RPC_URL=https://base-sepolia.g.alchemy.com/v2/YOUR_ALCHEMY_API_KEY
 
 # Google OAuth (for meeting generation fallback)
 GOOGLE_CLIENT_ID=your_google_client_id
