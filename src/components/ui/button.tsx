@@ -20,6 +20,7 @@ const buttonVariants = cva(
         link: "text-accent underline-offset-4 hover:underline",
         yellow: "bg-brand-yellow text-black hover:bg-brand-yellow/90 shadow-sm",
         green: "bg-brand-green text-white hover:bg-brand-green/90 shadow-sm",
+        nav: "hover:bg-gray-100 text-black !ring-0 !ring-offset-0 !outline-none focus:!ring-0 focus:!ring-offset-0 focus:!outline-none focus-visible:!ring-0 focus-visible:!ring-offset-0 focus-visible:!outline-none",
       },
       size: {
         default: "h-9 px-4 py-2",

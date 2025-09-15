@@ -2,9 +2,9 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { 
-  ChevronDown, 
-  LogOut, 
+import {
+  ChevronDown,
+  LogOut,
   Wallet,
   Briefcase,
   User,
@@ -13,10 +13,14 @@ import {
   ClipboardList,
   Settings,
   Plug,
-  DollarSign
+  DollarSign,
+  BarChart3
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/PrivyAuthContext";
+import { ApiClient } from "@/lib/api-migration";
+import BecomeProviderDialog from "./BecomeProviderDialog";
+import { toast } from "sonner";
 import timeeLogo from "@/assets/timee-logo.jpg";
 
 const STORAGE_KEY = 'bookme_user_mode';
@@ -26,10 +30,12 @@ type UserMode = 'customer' | 'provider' | null;
 const NewNavigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, profile, ready, authenticated, logout, userId } = useAuth();
+  const { user, profile, ready, authenticated, logout, userId, refreshProfile } = useAuth();
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [userMode, setUserMode] = useState<UserMode>(null);
+  const [showBecomeProviderDialog, setShowBecomeProviderDialog] = useState(false);
+  const [isBecomingProvider, setIsBecomingProvider] = useState(false);
   
   const isLoggedIn = authenticated;
   const isAuthPage = location.pathname === "/auth";
@@ -93,20 +99,62 @@ const NewNavigation = () => {
   // Handle mode switching
   const handleModeSwitch = () => {
     if (!userMode) return;
-    
+
     const newMode: UserMode = userMode === 'customer' ? 'provider' : 'customer';
-    
+
     // Update state
     setUserMode(newMode);
-    
+
     // Save to localStorage
     localStorage.setItem(STORAGE_KEY, newMode);
-    
+
     // Navigate to appropriate landing
     if (newMode === 'provider') {
-      navigate('/provider/orders');
+      navigate('/provider/services');
     } else {
       navigate('/customer/bookings');
+    }
+  };
+
+  // Handle becoming a provider
+  const handleBecomeProvider = () => {
+    if (profile?.is_provider) {
+      // Already a provider, just switch mode
+      handleModeSwitch();
+    } else {
+      // Show dialog to become provider
+      setShowBecomeProviderDialog(true);
+    }
+  };
+
+  // Confirm becoming a provider
+  const handleConfirmBecomeProvider = async () => {
+    if (!userId || !profile) return;
+
+    setIsBecomingProvider(true);
+    try {
+      // Update user to be a provider
+      await ApiClient.updateProfile({ is_provider: true }, userId);
+
+      // Refresh profile to get updated is_provider status
+      await refreshProfile();
+
+      // Switch to provider mode
+      setUserMode('provider');
+      localStorage.setItem(STORAGE_KEY, 'provider');
+
+      // Close dialog
+      setShowBecomeProviderDialog(false);
+
+      // Navigate to services page
+      navigate('/provider/services');
+
+      toast.success('Welcome to provider mode! You can now create services.');
+    } catch (error) {
+      console.error('Failed to become provider:', error);
+      toast.error('Failed to enable provider mode. Please try again.');
+    } finally {
+      setIsBecomingProvider(false);
     }
   };
 
@@ -259,19 +307,46 @@ const NewNavigation = () => {
     
     if (isLoggedIn && userMode) {
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="flex items-center gap-2 h-auto p-2 focus-visible:ring-0 focus-visible:ring-offset-0">
-              <Avatar className="w-8 h-8">
-                <AvatarImage src={profile?.avatar} alt={userName} />
-                <AvatarFallback className="text-xs">
-                  {userName.substring(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-sm font-medium hidden md:block">{userName}</span>
-              <ChevronDown className="w-4 h-4" />
-            </Button>
-          </DropdownMenuTrigger>
+        <div className="flex items-center gap-3">
+          {/* Become Provider / Provider Dashboard button */}
+          {!profile?.is_provider ? (
+            <button
+              onClick={handleBecomeProvider}
+              className="hidden md:block text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              Become Provider
+            </button>
+          ) : (
+            userMode === 'provider' && (
+              <Link
+                to="/provider/services"
+                className={`hidden md:block text-sm transition-colors ${
+                  location.pathname === '/provider/services'
+                    ? 'font-bold text-gray-900'
+                    : 'font-medium text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Dashboard
+              </Link>
+            )
+          )}
+
+          {/* Account dropdown menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="nav"
+                className="flex items-center gap-2 h-auto p-2">
+                <Avatar className="w-8 h-8">
+                  <AvatarImage src={profile?.avatar} alt={userName} />
+                  <AvatarFallback className="text-xs">
+                    {userName.substring(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-sm font-medium hidden md:block">{userName}</span>
+                <ChevronDown className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem asChild>
               <Link to="/settings/profile" className="flex items-center gap-2">
@@ -293,15 +368,30 @@ const NewNavigation = () => {
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             {userMode === 'customer' ? (
-              <DropdownMenuItem 
-                onClick={handleModeSwitch}
-                className="flex items-center gap-2 cursor-pointer"
-              >
-                <Briefcase className="w-4 h-4" />
-                Provider Mode
-              </DropdownMenuItem>
+              !profile?.is_provider ? (
+                <DropdownMenuItem
+                  onClick={handleBecomeProvider}
+                  className="flex flex-col items-start gap-1 cursor-pointer py-3"
+                >
+                  <div className="flex items-center gap-2">
+                    <Briefcase className="w-4 h-4" />
+                    Become Provider
+                  </div>
+                  <span className="text-xs text-muted-foreground ml-6">
+                    Start earning by offering services
+                  </span>
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem
+                  onClick={handleModeSwitch}
+                  className="flex items-center gap-2 cursor-pointer"
+                >
+                  <Briefcase className="w-4 h-4" />
+                  Provider Mode
+                </DropdownMenuItem>
+              )
             ) : (
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={handleModeSwitch}
                 className="flex items-center gap-2 cursor-pointer"
               >
@@ -319,6 +409,7 @@ const NewNavigation = () => {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
       );
     }
     
@@ -334,23 +425,29 @@ const NewNavigation = () => {
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-transform duration-300 ${
         isVisible ? 'translate-y-0' : '-translate-y-full'
       } ${isAuthPage ? 'bg-transparent' : 'bg-white/95 backdrop-blur-sm border-b border-gray-200'}`}>
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo and Brand */}
-            <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-              <img 
-                src={timeeLogo} 
-                alt="Timee logo" 
-                className="w-8 h-8 rounded-lg"
-              />
-              <span className="text-2xl font-bold font-heading text-foreground">Timee</span>
-            </Link>
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid grid-cols-3 items-center h-16">
+            {/* Left Section - Logo and Brand */}
+            <div className="flex justify-start">
+              <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                <img
+                  src={timeeLogo}
+                  alt="Timee logo"
+                  className="w-8 h-8 rounded-lg"
+                />
+                <span className="text-2xl font-bold font-heading text-foreground">Timee</span>
+              </Link>
+            </div>
 
-            {/* Center Content */}
-            {renderCenterContent()}
+            {/* Center Section - Navigation */}
+            <div className="flex justify-center">
+              {renderCenterContent()}
+            </div>
 
-            {/* Right Content */}
-            {renderRightContent()}
+            {/* Right Section - Account */}
+            <div className="flex justify-end">
+              {renderRightContent()}
+            </div>
           </div>
         </div>
       </nav>
@@ -363,6 +460,14 @@ const NewNavigation = () => {
       {isLoggedIn && userMode && !location.pathname.includes('/messages/') && (
         <div className="md:hidden h-16" />
       )}
+
+      {/* Become Provider Dialog */}
+      <BecomeProviderDialog
+        open={showBecomeProviderDialog}
+        onOpenChange={setShowBecomeProviderDialog}
+        onConfirm={handleConfirmBecomeProvider}
+        isLoading={isBecomingProvider}
+      />
     </>
   );
 };

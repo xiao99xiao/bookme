@@ -3,11 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { ApiClient } from '@/lib/api-migration'
 import { useAuth } from '@/contexts/PrivyAuthContext'
 import { CSVLink } from 'react-csv'
-import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
-import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { Download, FileText, DollarSign, TrendingUp, Calendar, User } from 'lucide-react'
+import { Download, DollarSign, TrendingUp, Calendar, User } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 
@@ -100,67 +97,6 @@ export default function Income() {
     } finally {
       setLoading(false)
     }
-  }
-
-  const generateInvoicePDF = (transaction: Transaction) => {
-    const doc = new jsPDF()
-    
-    // Header
-    doc.setFontSize(20)
-    doc.text('INVOICE', 105, 20, { align: 'center' })
-    
-    // Invoice details
-    doc.setFontSize(12)
-    doc.text(`Invoice Date: ${format(new Date(), 'yyyy-MM-dd')}`, 20, 40)
-    doc.text(`Invoice #: INV-${transaction.id.slice(0, 8).toUpperCase()}`, 20, 50)
-    
-    // Provider info
-    doc.setFontSize(14)
-    doc.text('Provider:', 20, 70)
-    doc.setFontSize(12)
-    const providerName = transaction.provider?.display_name || 
-                        transaction.provider?.username || 
-                        user?.display_name || 
-                        user?.username || 
-                        'Provider'
-    doc.text(providerName, 20, 80)
-    
-    // Customer info
-    doc.setFontSize(14)
-    doc.text('Customer:', 120, 70)
-    doc.setFontSize(12)
-    doc.text(transaction.source_user?.display_name || 'Unknown Customer', 120, 80)
-    
-    // Service details table
-    const tableData = [[
-      transaction.service?.title || 'Service',
-      format(new Date(transaction.booking?.scheduled_at || transaction.created_at), 'yyyy-MM-dd HH:mm'),
-      `${transaction.booking?.duration_minutes || 60} min`,
-      `$${transaction.amount.toFixed(2)}`
-    ]]
-    
-    autoTable(doc, {
-      head: [['Service', 'Date & Time', 'Duration', 'Amount']],
-      body: tableData,
-      startY: 100,
-      theme: 'striped',
-      headStyles: { fillColor: [41, 128, 185] },
-      styles: { fontSize: 11 }
-    })
-    
-    // Total
-    const finalY = (doc as any).lastAutoTable.finalY + 10
-    doc.setFontSize(14)
-    doc.text(`Total Amount: $${transaction.amount.toFixed(2)}`, 150, finalY)
-    
-    // Footer
-    doc.setFontSize(10)
-    doc.text('Thank you for your business!', 105, finalY + 20, { align: 'center' })
-    doc.text(`Generated on ${format(new Date(), 'yyyy-MM-dd HH:mm')}`, 105, finalY + 30, { align: 'center' })
-    
-    // Save the PDF
-    doc.save(`invoice-${transaction.id.slice(0, 8)}.pdf`)
-    toast.success('Invoice downloaded successfully')
   }
 
   if (authLoading || loading) {
@@ -287,11 +223,11 @@ export default function Income() {
               <thead>
                 <tr className="border-b bg-gray-50">
                   <th className="text-left p-4 font-medium">Date</th>
+                  <th className="text-left p-4 font-medium">Type</th>
                   <th className="text-left p-4 font-medium">Service</th>
                   <th className="text-left p-4 font-medium">Customer</th>
                   <th className="text-left p-4 font-medium">Location</th>
                   <th className="text-right p-4 font-medium">Amount</th>
-                  <th className="text-center p-4 font-medium">Invoice</th>
                 </tr>
               </thead>
               <tbody>
@@ -310,6 +246,17 @@ export default function Income() {
                         </div>
                         <div className="text-xs text-gray-500">
                           {format(new Date(transaction.created_at), 'HH:mm')}
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            transaction.type === 'inviter_fee'
+                              ? 'bg-purple-100 text-purple-800'
+                              : 'bg-blue-100 text-blue-800'
+                          }`}>
+                            {transaction.type === 'inviter_fee' ? 'Inviter Fee' : 'Service'}
+                          </span>
                         </div>
                       </td>
                       <td className="p-4">
@@ -346,18 +293,8 @@ export default function Income() {
                           +${transaction.amount.toFixed(2)}
                         </div>
                         <div className="text-xs text-gray-500">
-                          Provider earnings
+                          {transaction.type === 'inviter_fee' ? 'Referral bonus' : 'Provider earnings'}
                         </div>
-                      </td>
-                      <td className="p-4 text-center">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => generateInvoicePDF(transaction)}
-                        >
-                          <FileText className="w-4 h-4 mr-1" />
-                          Generate Invoice
-                        </Button>
                       </td>
                     </tr>
                   ))
