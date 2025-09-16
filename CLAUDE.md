@@ -304,10 +304,17 @@ ENABLE_BLOCKCHAIN_MONITORING=false
 - Use `npm run dev:all` for the complete SSL development environment
 - Access via https://YOUR-LOCAL-IP:8443 from any device on your network
 
-### Authentication  
+### Authentication
 - Never use `supabase.auth.getUser()` - we use Privy for auth
 - Always pass `userId` to API methods explicitly
 - Use `ensureUuid()` to convert Privy DIDs to database UUIDs
+
+### Background Colors & Design System
+- **NEVER set background colors on page components** - the global body background is already set
+- Global CSS already applies `bg-background` to body element (`#FAFAFA` light gray)
+- Individual pages should inherit this global background, not override it
+- Only set backgrounds on specific components (cards, modals, etc.) when needed for design
+- This ensures consistent theming and prevents background color conflicts
 
 ### Environment Variables Security
 - **CRITICAL**: Never use `VITE_` prefix for sensitive keys like service role keys

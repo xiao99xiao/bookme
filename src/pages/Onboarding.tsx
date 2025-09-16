@@ -472,7 +472,7 @@ const Onboarding = () => {
   };
 
   return (
-    <div className="bg-background">
+    <div>
       <div className="grid lg:grid-cols-2">
         {/* Left side - Content */}
         <div className="flex flex-col justify-center px-8 py-12 lg:px-12 xl:px-16">

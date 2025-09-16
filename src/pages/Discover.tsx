@@ -134,7 +134,7 @@ const Discover = () => {
 
 
   return (
-    <div className="bg-background">
+    <div>
       {/* Header Section */}
       <section className="py-16 px-4 bg-muted/30">
         <Container maxWidth="lg">

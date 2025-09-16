@@ -181,7 +181,7 @@ export default function ProviderServices() {
   };
 
   return (
-    <div className="bg-gray-50">
+    <div>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
         <div className="mb-8">
           <H1 className="mb-2">Your Services</H1>
@@ -298,99 +298,74 @@ export default function ProviderServices() {
             <div className="fixed w-[400px] h-screen">
               <div className="h-full bg-white border-l border-gray-200 rounded-lg overflow-y-auto">
                 <div className="py-8 px-6">
-              <H2 className="mb-2">Profile Preview</H2>
-              <p className="text-sm text-gray-600 mb-8">This is how others see your profile</p>
-              
-              {/* User Profile Section - Exact match to Profile.tsx */}
-              <div className="mb-12">
-                <div className="text-center mb-10">
-                  <Avatar className="h-20 w-20 mx-auto mb-6">
-                    <AvatarImage src={profile?.avatar || ''} />
-                    <AvatarFallback className="text-lg bg-muted text-foreground">
-                      {profile?.display_name?.charAt(0) || profile?.email?.charAt(0) || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <H1 className="mb-2">
-                    {profile?.display_name || profile?.email?.split('@')[0] || 'User'}
-                  </H1>
-                  {profile?.location && (
-                    <div className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground mb-2">
-                      <MapPin className="h-3.5 w-3.5" />
-                      <span>{profile.location}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground">
-                    <Star className="h-3.5 w-3.5 fill-current" />
-                    <span className="font-medium">{profile?.rating?.toFixed(1) || '5.0'}</span>
-                    <span>({profile?.review_count || 0} reviews)</span>
-                  </div>
-                </div>
-                
-                {profile?.bio && (
-                  <div className="prose prose-sm max-w-none text-muted-foreground leading-relaxed">
-                    <p>{profile.bio}</p>
-                  </div>
-                )}
+              <div className="mb-8">
+                <H2 className="mb-2">Services Preview</H2>
+                <p className="text-sm text-gray-600">This is how your services appear to customers</p>
               </div>
 
-              {/* Services Section - Exact match to Profile.tsx */}
-              {(profile?.is_provider || services.length > 0) && (
-                <div>
-                  <div className="mb-6">
-                    <H2 className="mb-1">Services</H2>
-                    <p className="text-sm text-muted-foreground">Your services</p>
-                  </div>
-                  
                   {services.filter(service => service.is_visible !== false).length > 0 ? (
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       {services.filter(service => service.is_visible !== false).map((service) => (
-                        <div 
-                          key={service.id} 
-                          className="border rounded-lg p-4 transition-colors"
+                        <div
+                          key={service.id}
+                          className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-all hover:shadow-sm cursor-pointer"
                         >
+                          {/* Service Header */}
                           <div className="flex items-start justify-between mb-3">
-                            <div className="flex items-center gap-2">
-                              <DSBadge variant="secondary" size="small">
-                                {service.categories?.name || 'General'}
-                              </DSBadge>
-                              <div className="flex items-center text-muted-foreground text-xs">
-                                {getLocationIcon(service.is_online, !!service.location)}
-                                <span className="ml-1">{getLocationText(service.is_online, !!service.location)}</span>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <div className="text-sm font-medium">${service.price}</div>
-                              <div className="text-xs text-muted-foreground">{service.duration_minutes}m</div>
+                            <H3 className="text-base font-semibold text-gray-900 flex-1">
+                              {service.title}
+                            </H3>
+                            <div className="text-right ml-4">
+                              <div className="text-lg font-semibold text-gray-900">${service.price}</div>
+                              <div className="text-xs text-gray-500">{service.duration_minutes} min</div>
                             </div>
                           </div>
-                          
-                          <H3 className="mb-2">
-                            {service.title}
-                          </H3>
-                          
-                          <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
-                            {service.description}
+
+                          {/* Service Description */}
+                          <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+                            {service.description || service.short_description}
                           </p>
-                          
-                          {service.tags && service.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-1">
-                              {service.tags.slice(0, 3).map((tag) => (
-                                <DSBadge key={tag} variant="secondary" size="small">
-                                  {tag}
-                                </DSBadge>
-                              ))}
+
+                          {/* Service Metadata */}
+                          <div className="flex items-center gap-3 text-xs">
+                            <div className="flex items-center gap-1 text-gray-500">
+                              {getLocationIcon(service.is_online, !!service.location)}
+                              <span>{getLocationText(service.is_online, !!service.location)}</span>
                             </div>
-                          )}
+                          </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <p>You haven't created any services yet.</p>
+                    <div className="text-center py-12 text-muted-foreground">
+                      <Briefcase className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+                      <p className="font-medium mb-1">No services to preview</p>
+                      <p className="text-xs">Create your first service to see how it will appear to customers</p>
                     </div>
                   )}
-                </div>
-              )}
+
+                  {/* Service Tips */}
+                  <div className="mt-8 pt-8 border-t border-gray-200">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Tips for Great Services</h3>
+                    <div className="space-y-2">
+                      <div className="flex items-start gap-2">
+                        <div className="w-1 h-1 rounded-full bg-gray-400 mt-1.5 flex-shrink-0" />
+                        <p className="text-xs text-gray-600">Use clear, descriptive titles that customers can easily understand</p>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <div className="w-1 h-1 rounded-full bg-gray-400 mt-1.5 flex-shrink-0" />
+                        <p className="text-xs text-gray-600">Set competitive prices based on your expertise and market rates</p>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <div className="w-1 h-1 rounded-full bg-gray-400 mt-1.5 flex-shrink-0" />
+                        <p className="text-xs text-gray-600">Include all important details in your service description</p>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <div className="w-1 h-1 rounded-full bg-gray-400 mt-1.5 flex-shrink-0" />
+                        <p className="text-xs text-gray-600">Keep services visible to appear in search results</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

@@ -355,7 +355,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="bg-background">
+    <div>
       <div className="flex">
         {/* Main Content */}
         <div className={cn(
