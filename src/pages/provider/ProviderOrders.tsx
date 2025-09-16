@@ -339,36 +339,38 @@ export default function ProviderOrders() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="bg-gray-50">
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {/* Desktop Layout */}
         <div className="hidden lg:flex gap-8">
           {/* Left Sidebar - Desktop Only */}
           <div className="w-64 flex-shrink-0">
-            <div className="mb-6">
-              {/* Title - Spectral font */}
-              <H2 className="mb-2">Orders</H2>
-              {/* Subtitle - Baloo 2 font */}
-              <p className="text-sm text-gray-500 font-body">Manage orders from your customers</p>
+            <div className="fixed w-64">
+              <div className="mb-6">
+                {/* Title - Spectral font */}
+                <H2 className="mb-2">Orders</H2>
+                {/* Subtitle - Baloo 2 font */}
+                <p className="text-sm text-gray-500 font-body">Manage orders from your customers</p>
+              </div>
+
+              {/* Vertical Navigation - Baloo 2 font */}
+              <nav className="space-y-1">
+                {Object.entries(tabLabels).map(([key, label]) => (
+                  <button
+                    key={key}
+                    onClick={() => setActiveTab(key)}
+                    className={`w-full text-left px-3 py-2.5 text-sm font-medium rounded-md transition-colors font-body ${
+                      activeTab === key
+                        ? 'bg-gray-100 text-black'
+                        : 'text-gray-600 hover:text-black hover:bg-gray-50'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </nav>
             </div>
-            
-            {/* Vertical Navigation - Baloo 2 font */}
-            <nav className="space-y-1">
-              {Object.entries(tabLabels).map(([key, label]) => (
-                <button
-                  key={key}
-                  onClick={() => setActiveTab(key)}
-                  className={`w-full text-left px-3 py-2.5 text-sm font-medium rounded-md transition-colors font-body ${
-                    activeTab === key 
-                      ? 'bg-gray-100 text-black' 
-                      : 'text-gray-600 hover:text-black hover:bg-gray-50'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </nav>
           </div>
 
           {/* Main Content Area - Desktop */}
@@ -644,7 +646,7 @@ export default function ProviderOrders() {
         </div>
 
         {/* Mobile Layout */}
-        <div className="lg:hidden pb-20">
+        <div className="lg:hidden px-4 py-4 pb-20">
           {/* Top Header with Title and Tabs */}
           <div className="mb-6">
             {/* Title Section */}

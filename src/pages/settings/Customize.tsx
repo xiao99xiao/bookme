@@ -180,14 +180,15 @@ export default function Customize() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="bg-gray-50">
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
         {/* Desktop Layout */}
         <div className="hidden lg:flex gap-8">
           {/* Left Sidebar - Desktop Only */}
           <div className="w-64 flex-shrink-0">
-            <div className="bg-neutral-50 box-border content-stretch flex flex-col gap-6 h-full items-start justify-start overflow-clip px-8 py-10 relative shrink-0 w-64 rounded-2xl">
+            <div className="fixed w-64 h-screen">
+              <div className="bg-neutral-50 box-border content-stretch flex flex-col gap-6 h-full items-start justify-start overflow-clip px-8 py-10 relative shrink-0 w-64 rounded-2xl">
               <div className="content-stretch flex flex-col gap-0.5 items-start justify-start leading-[0] relative shrink-0 w-full">
                 <H2 className="leading-[1.4]">Settings</H2>
                 <div className="font-body text-xs text-tertiary w-full">
@@ -220,6 +221,7 @@ export default function Customize() {
                   </div>
                 </Link>
               </div>
+            </div>
             </div>
           </div>
 
@@ -336,7 +338,8 @@ export default function Customize() {
 
           {/* Right Column - Preview/Info - Desktop Only */}
           <div className="w-[400px] flex-shrink-0">
-            <div className="content-stretch flex flex-col gap-6 h-full items-start justify-start relative shrink-0 border-l border-[#eeeeee] rounded-2xl">
+            <div className="fixed w-[400px] h-screen">
+              <div className="content-stretch flex flex-col gap-6 h-full items-start justify-start relative shrink-0 border-l border-[#eeeeee] rounded-2xl">
               <div className="basis-0 box-border content-stretch flex flex-col gap-10 grow items-center justify-start min-h-px min-w-px p-[40px] relative shrink-0 w-full">
                 <div className="content-stretch flex flex-col gap-8 items-center justify-start relative shrink-0 w-full">
                   <div className="content-stretch flex flex-col gap-0.5 items-start justify-start leading-[0] relative shrink-0 w-full">
@@ -383,6 +386,7 @@ export default function Customize() {
                   </div>
                 </div>
               </div>
+            </div>
             </div>
           </div>
         </div>

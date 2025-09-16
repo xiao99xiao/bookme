@@ -180,7 +180,7 @@ export default function CustomerMessages() {
     </div>
 
     {/* Mobile Layout - List only */}
-    <div className="lg:hidden min-h-screen bg-gray-50 pb-20">
+    <div className="lg:hidden bg-gray-50 pb-20">
       <div className="px-4 py-6">
         {/* Title */}
         <div className="mb-6">

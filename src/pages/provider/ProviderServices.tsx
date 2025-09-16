@@ -181,15 +181,17 @@ export default function ProviderServices() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="mb-8">
-        <H1 className="mb-2">Your Services</H1>
-        <p className="text-gray-600 text-lg">Create and manage the services you offer to customers</p>
-      </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3">
-        {/* Left Column - Services List */}
-        <div className="lg:col-span-2 p-6 space-y-6">
+    <div className="bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
+        <div className="mb-8">
+          <H1 className="mb-2">Your Services</H1>
+          <p className="text-gray-600 text-lg">Create and manage the services you offer to customers</p>
+        </div>
+
+        {/* Desktop Layout */}
+        <div className="hidden lg:flex gap-8">
+          {/* Main Content - Services List */}
+          <div className="flex-1 p-6 space-y-6 bg-white rounded-lg">
           {/* Add Service Button */}
           <div className={`pb-8 mb-8 ${services.length === 0 ? "mt-12" : "mt-6"} border-b border-gray-200`}>
             <DSButton 
@@ -289,12 +291,13 @@ export default function ProviderServices() {
               ))}
             </div>
           )}
-        </div>
+          </div>
 
-        {/* Right Column - Profile Preview */}
-        <div className="lg:col-span-1 bg-gray-50 border-l border-gray-200">
-          <div className="sticky top-0 h-screen overflow-y-auto">
-            <div className="max-w-lg mx-auto py-8 px-6">
+          {/* Right Column - Profile Preview - Desktop Only */}
+          <div className="w-[400px] flex-shrink-0">
+            <div className="fixed w-[400px] h-screen">
+              <div className="h-full bg-white border-l border-gray-200 rounded-lg overflow-y-auto">
+                <div className="py-8 px-6">
               <H2 className="mb-2">Profile Preview</H2>
               <p className="text-sm text-gray-600 mb-8">This is how others see your profile</p>
               
@@ -388,8 +391,51 @@ export default function ProviderServices() {
                   )}
                 </div>
               )}
+                </div>
+              </div>
             </div>
           </div>
+        </div>
+
+        {/* Mobile Layout */}
+        <div className="lg:hidden p-4 pb-20">
+          {/* Add Service Button */}
+          <div className={`pb-8 mb-8 ${services.length === 0 ? "mt-12" : "mt-6"} border-b border-gray-200`}>
+            <DSButton
+              onClick={handleCreateService}
+              fullWidth
+              size="large"
+              variant="primary"
+              icon={<Plus className="h-5 w-5" />}
+            >
+              Add Service
+            </DSButton>
+          </div>
+
+          {/* Services List */}
+          {loading ? (
+            <div className="text-center py-8">
+              <p>Loading services...</p>
+            </div>
+          ) : services.length === 0 ? (
+            <div className="text-center py-12">
+              <Briefcase className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No services yet</h3>
+              <p className="text-gray-500 mb-6">Create your first service to start accepting bookings</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {services.map((service) => (
+                <ServiceCard
+                  key={service.id}
+                  service={service}
+                  onEdit={() => handleEditService(service)}
+                  onDelete={() => setDeletingService(service)}
+                  onToggleVisibility={() => handleToggleVisibility(service)}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

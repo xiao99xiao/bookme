@@ -9,7 +9,7 @@ import { H1, H2, H3 } from "@/design-system";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background">
       {/* Hero Section */}
       <section className="relative py-20 px-4">
         <Container maxWidth="lg">

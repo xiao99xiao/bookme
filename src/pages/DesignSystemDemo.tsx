@@ -38,7 +38,7 @@ const sampleService = {
 
 export default function DesignSystemDemo() {
   return (
-    <div className="min-h-screen bg-brandBgGrey2">
+    <div className="bg-brandBgGrey2">
       <RefactoredNavigation />
       
       <Container maxWidth="xl" className="pt-24">

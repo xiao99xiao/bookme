@@ -63,13 +63,19 @@ const NewNavigation = () => {
     }
   }, [isLoggedIn, profile, ready]);
   
-  // Handle scroll visibility
+  // Handle scroll visibility - disabled for desktop, only for mobile
   useEffect(() => {
     const controlNavbar = () => {
       if (typeof window !== 'undefined') {
-        if (window.scrollY > lastScrollY && window.scrollY > 100) {
-          setIsVisible(false);
+        // Only apply auto-hide on mobile (screens smaller than lg breakpoint)
+        if (window.innerWidth < 1024) {
+          if (window.scrollY > lastScrollY && window.scrollY > 100) {
+            setIsVisible(false);
+          } else {
+            setIsVisible(true);
+          }
         } else {
+          // Always visible on desktop
           setIsVisible(true);
         }
         setLastScrollY(window.scrollY);
@@ -78,8 +84,10 @@ const NewNavigation = () => {
 
     if (typeof window !== 'undefined') {
       window.addEventListener('scroll', controlNavbar);
+      window.addEventListener('resize', controlNavbar);
       return () => {
         window.removeEventListener('scroll', controlNavbar);
+        window.removeEventListener('resize', controlNavbar);
       };
     }
   }, [lastScrollY]);

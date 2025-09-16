@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, Camera, Users, Settings, Clock } from 'lucide-react';
+import { Loader2, Camera, Users, Settings, Clock, MapPin, Link as LinkIcon, User } from 'lucide-react';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient } from '@/lib/api-migration';
 import { H2 } from '@/design-system';
@@ -146,14 +146,15 @@ export default function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="bg-gray-50">
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
         {/* Desktop Layout */}
         <div className="hidden lg:flex gap-8">
           {/* Left Sidebar - Desktop Only */}
           <div className="w-64 flex-shrink-0">
-            <div className="bg-neutral-50 box-border content-stretch flex flex-col gap-6 h-full items-start justify-start overflow-clip px-8 py-10 relative shrink-0 w-64 rounded-2xl">
+            <div className="fixed w-64 h-screen">
+              <div className="bg-neutral-50 box-border content-stretch flex flex-col gap-6 h-full items-start justify-start overflow-clip px-8 py-10 relative shrink-0 w-64 rounded-2xl">
               <div className="content-stretch flex flex-col gap-0.5 items-start justify-start leading-[0] relative shrink-0 w-full">
                 <H2 className="leading-[1.4]">Settings</H2>
                 <div className="font-body text-xs text-tertiary w-full">
@@ -186,6 +187,7 @@ export default function Profile() {
                   </div>
                 </Link>
               </div>
+            </div>
             </div>
           </div>
 
@@ -315,6 +317,83 @@ export default function Profile() {
                 </div>
               </div>
             </form>
+          </div>
+
+          {/* Right Column - Profile Preview - Desktop Only */}
+          <div className="w-[400px] flex-shrink-0">
+            <div className="fixed w-[400px] h-screen">
+              <div className="content-stretch flex flex-col gap-6 h-full items-start justify-start relative shrink-0 border-l border-[#eeeeee] rounded-2xl">
+                <div className="basis-0 box-border content-stretch flex flex-col gap-10 grow items-center justify-start min-h-px min-w-px p-[40px] relative shrink-0 w-full">
+                  <div className="content-stretch flex flex-col gap-8 items-center justify-start relative shrink-0 w-full">
+                    <div className="content-stretch flex flex-col gap-0.5 items-start justify-start leading-[0] relative shrink-0 w-full">
+                      <H2 className="leading-[1.4]">Profile Preview</H2>
+                      <div className="font-body font-normal relative shrink-0 text-[#aaaaaa] text-[12px] w-full">
+                        <p className="leading-[1.5]">How your profile appears to others</p>
+                      </div>
+                    </div>
+
+                    <div className="content-stretch flex flex-col gap-6 items-start justify-start relative shrink-0 w-full">
+                      {/* Profile Card Preview */}
+                      <div className="bg-white border border-gray-200 rounded-lg p-6 w-full shadow-sm">
+                        <div className="flex flex-col items-center gap-4">
+                          {/* Avatar Preview */}
+                          <div className="relative">
+                            <Avatar className="w-16 h-16">
+                              <AvatarImage src={avatarUrl} />
+                              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xl">
+                                {formData.display_name?.charAt(0)?.toUpperCase() || 'U'}
+                              </AvatarFallback>
+                            </Avatar>
+                          </div>
+
+                          {/* Name and Details */}
+                          <div className="text-center">
+                            <h3 className="font-semibold text-lg text-gray-900">
+                              {formData.display_name || 'Your Name'}
+                            </h3>
+                            {formData.bio && (
+                              <p className="text-sm text-gray-600 mt-1 max-w-xs">
+                                {formData.bio}
+                              </p>
+                            )}
+                            <div className="flex flex-col gap-1 mt-3 text-xs text-gray-500">
+                              {formData.location && (
+                                <div className="flex items-center justify-center gap-1">
+                                  <MapPin className="w-3 h-3" />
+                                  <span>{formData.location}</span>
+                                </div>
+                              )}
+                              {formData.website && (
+                                <div className="flex items-center justify-center gap-1">
+                                  <LinkIcon className="w-3 h-3" />
+                                  <span className="truncate max-w-[200px]">{formData.website}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Profile Tips */}
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 w-full">
+                        <div className="flex items-center gap-2 mb-2">
+                          <User className="w-4 h-4 text-blue-600" />
+                          <span className="text-sm font-medium text-blue-900">Profile Tips</span>
+                        </div>
+                        <div className="text-xs text-blue-700">
+                          <ul className="list-disc list-inside space-y-1 ml-2">
+                            <li>Add a clear profile picture to build trust</li>
+                            <li>Write a compelling bio that showcases your expertise</li>
+                            <li>Include your location to help customers find local services</li>
+                            <li>Add your website to drive traffic to your business</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

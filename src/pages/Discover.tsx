@@ -134,7 +134,7 @@ const Discover = () => {
 
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background">
       {/* Header Section */}
       <section className="py-16 px-4 bg-muted/30">
         <Container maxWidth="lg">
