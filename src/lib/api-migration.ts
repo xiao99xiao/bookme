@@ -68,6 +68,8 @@ export interface Booking {
   cancelled_by?: string
   cancellation_reason?: string
   completed_at?: string
+  auto_complete_blocked?: boolean
+  auto_complete_blocked_reason?: string
   created_at: string
   updated_at?: string
   // Relations

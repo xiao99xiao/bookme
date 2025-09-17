@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Calendar, CheckCircle, MessageSquare, Copy, Video, Star, XCircle, X, Link } from 'lucide-react';
+import { Calendar, CheckCircle, MessageSquare, Copy, Video, Star, XCircle, X, Link, AlertTriangle, Clock } from 'lucide-react';
 import { GoogleMeetIcon, ZoomIcon, TeamsIcon } from '@/components/icons/MeetingPlatformIcons';
 import { toast } from 'sonner';
 import {
@@ -37,6 +37,7 @@ export default function ProviderOrders() {
     isReadOnly: false
   });
   const [bookingReviews, setBookingReviews] = useState<Record<string, any>>({});
+  const [sessionData, setSessionData] = useState<Record<string, any>>({});
   const [cancelModal, setCancelModal] = useState<{
     isOpen: boolean;
     booking: Booking | null;
@@ -75,12 +76,63 @@ export default function ProviderOrders() {
       });
       
       setBookingReviews(reviewsMap);
+
+      // Load session data for completed bookings with auto_complete_blocked
+      loadSessionData(bookingsData);
     } catch (error) {
       console.error('Failed to load bookings:', error);
       toast.error('Failed to load incoming orders');
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadSessionData = async (bookingsData: Booking[]) => {
+    try {
+      const sessionDataMap: Record<string, any> = {};
+
+      // Get session data for completed bookings that might have session issues
+      const relevantBookings = bookingsData.filter(
+        booking => booking.status === 'completed' &&
+                  booking.is_online &&
+                  booking.meeting_link &&
+                  booking.meeting_link.includes('meet.google.com')
+      );
+
+      if (relevantBookings.length === 0) return;
+
+      // Load session data for each relevant booking
+      const sessionPromises = relevantBookings.map(async (booking) => {
+        try {
+          const response = await fetch(`/api/bookings/${booking.id}/session-data`, {
+            headers: {
+              'Authorization': `Bearer ${await getAccessToken()}`
+            }
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            sessionDataMap[booking.id] = data;
+          }
+        } catch (error) {
+          console.error(`Failed to load session data for booking ${booking.id}:`, error);
+        }
+      });
+
+      await Promise.allSettled(sessionPromises);
+      setSessionData(sessionDataMap);
+    } catch (error) {
+      console.error('Failed to load session data:', error);
+    }
+  };
+
+  const formatDuration = (seconds: number): string => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    if (minutes > 0) {
+      return `${minutes}m ${remainingSeconds}s`;
+    }
+    return `${remainingSeconds}s`;
   };
 
   const handleUpdateStatus = async (bookingId: string, newStatus: string) => {
@@ -595,6 +647,34 @@ export default function ProviderOrders() {
                         </>
                       )}
 
+                      {/* Session Duration Warning for Blocked Auto-Completion */}
+                      {booking.auto_complete_blocked && (
+                        <>
+                          {/* Divider Line */}
+                          <div className="border-t border-[#eeeeee] mt-6 mb-4"></div>
+
+                          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                            <div className="flex items-start gap-2">
+                              <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                              <div className="flex-1">
+                                <Text variant="small" className="font-medium text-amber-800 mb-1">
+                                  Insufficient Session Duration
+                                </Text>
+                                <Text variant="small" className="text-amber-700 mb-2">
+                                  Your Google Meet session was shorter than required. Payment is on hold pending customer confirmation.
+                                </Text>
+                                {sessionData[booking.id] && (
+                                  <Text variant="small" className="text-amber-600">
+                                    Your time: {formatDuration(sessionData[booking.id].providerDuration)} /
+                                    {formatDuration(sessionData[booking.id].serviceDuration || booking.duration_minutes * 60)} required
+                                  </Text>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      )}
+
                       {/* Customer Review Section for Completed */}
                       {booking.status === 'completed' && (
                         <>
@@ -903,6 +983,34 @@ export default function ProviderOrders() {
                                   </DSButton>
                                 </>
                               )}
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {/* Session Duration Warning for Blocked Auto-Completion */}
+                      {booking.auto_complete_blocked && (
+                        <>
+                          {/* Divider Line */}
+                          <div className="border-t border-[#eeeeee] mt-6 mb-4"></div>
+
+                          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                            <div className="flex items-start gap-2">
+                              <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                              <div className="flex-1">
+                                <Text variant="small" className="font-medium text-amber-800 mb-1">
+                                  Insufficient Session Duration
+                                </Text>
+                                <Text variant="small" className="text-amber-700 mb-2">
+                                  Your Google Meet session was shorter than required. Payment is on hold pending customer confirmation.
+                                </Text>
+                                {sessionData[booking.id] && (
+                                  <Text variant="small" className="text-amber-600">
+                                    Your time: {formatDuration(sessionData[booking.id].providerDuration)} /
+                                    {formatDuration(sessionData[booking.id].serviceDuration || booking.duration_minutes * 60)} required
+                                  </Text>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </>

@@ -609,6 +609,9 @@ export default function bookingRoutes(app) {
    * This endpoint is used by automated systems (cron jobs) to complete
    * services via blockchain using the backend signer.
    *
+   * Enhanced with Google Meet session duration validation to ensure
+   * providers deliver the full service duration before payment release.
+   *
    * Parameters:
    * - id: UUID of the booking
    *
@@ -637,6 +640,8 @@ export default function bookingRoutes(app) {
           `
           *,
           blockchain_booking_id,
+          auto_complete_blocked,
+          auto_complete_blocked_reason,
           service:services(*),
           customer:users!customer_id(*),
           provider:users!provider_id(*)
@@ -655,6 +660,73 @@ export default function bookingRoutes(app) {
           { error: "Service cannot be completed from current status" },
           400,
         );
+      }
+
+      // Check if auto-completion is blocked due to insufficient session duration
+      if (booking.auto_complete_blocked) {
+        console.log("🚫 Auto-completion blocked for booking:", bookingId);
+        console.log("🚫 Reason:", booking.auto_complete_blocked_reason);
+
+        return c.json({
+          error: "Auto-completion blocked",
+          reason: booking.auto_complete_blocked_reason,
+          message: "Booking requires manual completion by customer due to insufficient provider session duration",
+          blocked: true
+        }, 400);
+      }
+
+      // For online bookings with Google Meet links, validate session duration
+      if (booking.is_online && booking.meeting_link && booking.meeting_link.includes('meet.google.com')) {
+        console.log("📊 Checking Google Meet session duration for booking:", bookingId);
+
+        try {
+          // Import and use the session tracker
+          const { checkGoogleMeetSessionDuration } = await import("../google-meet-session-tracker.js");
+          const sessionAnalysis = await checkGoogleMeetSessionDuration(bookingId);
+
+          console.log("📊 Session analysis result:", {
+            success: sessionAnalysis.success,
+            providerDuration: sessionAnalysis.providerDuration,
+            serviceDuration: sessionAnalysis.serviceDuration,
+            meetsThreshold: sessionAnalysis.providerMeetsThreshold
+          });
+
+          // If session tracking was successful and provider doesn't meet threshold
+          if (sessionAnalysis.success && !sessionAnalysis.providerMeetsThreshold) {
+            console.log("⚠️ Provider session duration insufficient, blocking auto-completion");
+
+            // Block auto-completion
+            const { error: blockError } = await supabaseAdmin
+              .from("bookings")
+              .update({
+                auto_complete_blocked: true,
+                auto_complete_blocked_reason: `Provider session duration insufficient: ${Math.round(sessionAnalysis.providerDuration)}s / ${Math.round(sessionAnalysis.serviceDuration)}s required (${Math.round(sessionAnalysis.threshold * 100)}% threshold)`,
+                updated_at: new Date().toISOString()
+              })
+              .eq("id", bookingId);
+
+            if (blockError) {
+              console.error("Failed to block auto-completion:", blockError);
+            }
+
+            return c.json({
+              error: "Provider session duration insufficient",
+              sessionData: {
+                providerDuration: sessionAnalysis.providerDuration,
+                serviceDuration: sessionAnalysis.serviceDuration,
+                threshold: sessionAnalysis.threshold,
+                actualPercentage: Math.round(sessionAnalysis.providerDuration / sessionAnalysis.serviceDuration * 100)
+              },
+              message: "Booking requires manual completion by customer",
+              blocked: true
+            }, 400);
+          }
+
+          console.log("✅ Session duration validation passed or API unavailable, proceeding with completion");
+        } catch (sessionError) {
+          console.error("❌ Session duration check failed, proceeding with completion:", sessionError);
+          // Don't block completion on API failures - graceful degradation
+        }
       }
 
       // Check if booking was paid via blockchain
@@ -1523,6 +1595,119 @@ export default function bookingRoutes(app) {
       }
     },
   );
+
+  /**
+   * GET /api/bookings/:id/session-data
+   *
+   * Get Google Meet session duration data for a booking.
+   * This endpoint provides session analytics for bookings with Google Meet links,
+   * including provider and customer session durations for transparency.
+   *
+   * Headers:
+   * - Authorization: Bearer {privyToken}
+   *
+   * Parameters:
+   * - id: UUID of the booking
+   *
+   * Response:
+   * - Session duration data with provider and customer analytics
+   *
+   * @param {Context} c - Hono context
+   * @returns {Response} JSON response with session data or error
+   */
+  app.get("/api/bookings/:id/session-data", verifyPrivyAuth, async (c) => {
+    try {
+      const userId = c.get("userId");
+      const bookingId = c.req.param("id");
+
+      // Get booking details
+      const { data: booking, error: bookingError } = await supabaseAdmin
+        .from("bookings")
+        .select("customer_id, provider_id, is_online, meeting_link")
+        .eq("id", bookingId)
+        .single();
+
+      if (bookingError || !booking) {
+        console.error("Booking fetch error:", bookingError);
+        return c.json({ error: "Booking not found" }, 404);
+      }
+
+      // Verify user has access to this booking
+      if (booking.customer_id !== userId && booking.provider_id !== userId) {
+        return c.json({ error: "Access denied" }, 403);
+      }
+
+      // Check if it's a Google Meet booking
+      if (!booking.is_online || !booking.meeting_link || !booking.meeting_link.includes('meet.google.com')) {
+        return c.json({
+          error: "Not a Google Meet booking",
+          message: "Session data is only available for Google Meet bookings"
+        }, 400);
+      }
+
+      // Get session data from database
+      const { data: sessionData, error: sessionError } = await supabaseAdmin
+        .from("booking_session_data")
+        .select("*")
+        .eq("booking_id", bookingId)
+        .single();
+
+      if (sessionError || !sessionData) {
+        console.log("No session data found for booking:", bookingId);
+
+        // Try to fetch fresh session data
+        try {
+          const { checkGoogleMeetSessionDuration } = await import("../google-meet-session-tracker.js");
+          const freshSessionData = await checkGoogleMeetSessionDuration(bookingId);
+
+          if (freshSessionData.success) {
+            return c.json({
+              bookingId,
+              providerDuration: freshSessionData.providerDuration,
+              customerDuration: freshSessionData.customerDuration,
+              serviceDuration: freshSessionData.serviceDuration,
+              providerMeetsThreshold: freshSessionData.providerMeetsThreshold,
+              threshold: freshSessionData.threshold,
+              lastChecked: new Date().toISOString(),
+              sessions: freshSessionData.sessions,
+              freshData: true
+            });
+          } else {
+            return c.json({
+              error: "Session data not available",
+              reason: freshSessionData.error || "Unable to fetch session data"
+            }, 404);
+          }
+        } catch (trackerError) {
+          console.error("Failed to fetch fresh session data:", trackerError);
+          return c.json({
+            error: "Session data not available",
+            reason: "Unable to fetch session data from Google Meet API"
+          }, 404);
+        }
+      }
+
+      // Return existing session data
+      return c.json({
+        bookingId,
+        providerDuration: sessionData.provider_total_duration,
+        customerDuration: sessionData.customer_total_duration,
+        serviceDuration: null, // Will be calculated on frontend
+        providerMeetsThreshold: null, // Will be calculated on frontend
+        threshold: 0.9,
+        lastChecked: sessionData.last_checked_at,
+        sessions: {
+          provider: sessionData.provider_sessions || [],
+          customer: sessionData.customer_sessions || []
+        },
+        freshData: false
+      });
+
+    } catch (error) {
+      console.error("Session data fetch error:", error);
+      return c.json({ error: "Internal server error" }, 500);
+    }
+  });
 
   /**
    * POST /api/bookings/:id/authorize-cancellation

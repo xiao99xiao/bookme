@@ -131,11 +131,26 @@ async function transitionInProgressToCompleted(nowISO) {
   console.log('🏁 Checking in_progress bookings to complete...');
   
   try {
-    // Find in_progress bookings
+    // First, check how many in_progress bookings are blocked
+    const { data: blockedBookings, error: blockedError } = await supabaseAdmin
+      .from('bookings')
+      .select('id, auto_complete_blocked_reason')
+      .eq('status', 'in_progress')
+      .eq('auto_complete_blocked', true);
+
+    if (!blockedError && blockedBookings && blockedBookings.length > 0) {
+      console.log(`🚫 Found ${blockedBookings.length} bookings blocked from auto-completion:`);
+      blockedBookings.forEach(booking => {
+        console.log(`   ${booking.id.slice(0, 8)}... - ${booking.auto_complete_blocked_reason}`);
+      });
+    }
+
+    // Find in_progress bookings that are NOT blocked from auto-completion
     const { data: inProgressBookings, error: fetchError } = await supabaseAdmin
       .from('bookings')
-      .select('id, scheduled_at, duration_minutes')
-      .eq('status', 'in_progress');
+      .select('id, scheduled_at, duration_minutes, auto_complete_blocked')
+      .eq('status', 'in_progress')
+      .eq('auto_complete_blocked', false);
 
     if (fetchError) {
       console.error('Error fetching in_progress bookings:', fetchError);

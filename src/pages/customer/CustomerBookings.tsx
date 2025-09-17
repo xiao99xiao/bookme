@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, isPast } from 'date-fns';
-import { Calendar, Clock, MapPin, User, DollarSign, CheckCircle, XCircle, AlertCircle, MessageSquare, Star, Copy, Video, CreditCard } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, DollarSign, CheckCircle, XCircle, AlertCircle, MessageSquare, Star, Copy, Video, CreditCard, AlertTriangle } from 'lucide-react';
 import { GoogleMeetIcon, ZoomIcon, TeamsIcon } from '@/components/icons/MeetingPlatformIcons';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -52,6 +52,7 @@ export default function CustomerBookings() {
     existingReview: null
   });
   const [bookingReviews, setBookingReviews] = useState<Record<string, { rating: number; comment: string }>>({});
+  const [sessionData, setSessionData] = useState<Record<string, any>>({});
 
   // Blockchain integration
   const { blockchainService, initializeService, isWalletConnected } = useBlockchainService();
@@ -124,11 +125,74 @@ export default function CustomerBookings() {
       });
       
       setBookingReviews(reviewsMap);
+
+      // Load session data for auto-completion blocked bookings
+      loadSessionData(bookingsData);
     } catch (error) {
       console.error('Failed to load bookings:', error);
       toast.error('Failed to load bookings');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadSessionData = async (bookingsData: Booking[]) => {
+    try {
+      const sessionDataMap: Record<string, any> = {};
+
+      // Get session data for bookings with auto-completion blocked
+      const relevantBookings = bookingsData.filter(
+        booking => booking.auto_complete_blocked &&
+                  booking.is_online &&
+                  booking.meeting_link &&
+                  booking.meeting_link.includes('meet.google.com')
+      );
+
+      if (relevantBookings.length === 0) return;
+
+      // Load session data for each relevant booking
+      const sessionPromises = relevantBookings.map(async (booking) => {
+        try {
+          const response = await fetch(`/api/bookings/${booking.id}/session-data`, {
+            headers: {
+              'Authorization': `Bearer ${await getAccessToken()}`
+            }
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            sessionDataMap[booking.id] = data;
+          }
+        } catch (error) {
+          console.error(`Failed to load session data for booking ${booking.id}:`, error);
+        }
+      });
+
+      await Promise.allSettled(sessionPromises);
+      setSessionData(sessionDataMap);
+    } catch (error) {
+      console.error('Failed to load session data:', error);
+    }
+  };
+
+  const formatDuration = (seconds: number): string => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    if (minutes > 0) {
+      return `${minutes}m ${remainingSeconds}s`;
+    }
+    return `${remainingSeconds}s`;
+  };
+
+  const handleManualComplete = async (bookingId: string) => {
+    try {
+      // Call the complete service API directly for manual completion
+      await handleCompleteBooking(bookingId);
+      toast.success('Service completed manually! Funds will be distributed.');
+      loadBookings();
+    } catch (error) {
+      console.error('Failed to manually complete booking:', error);
+      toast.error('Failed to complete service');
     }
   };
 
@@ -769,6 +833,41 @@ export default function CustomerBookings() {
                         </>
                       )}
 
+                      {/* Manual Completion Required for Blocked Auto-Completion */}
+                      {booking.auto_complete_blocked && (
+                        <>
+                          {/* Separator Line */}
+                          <div className="border-t border-[#eeeeee] my-6"></div>
+
+                          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div className="flex items-start gap-2">
+                              <Clock className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                              <div className="flex-1">
+                                <Text variant="small" weight="medium" className="text-blue-800 mb-1">
+                                  Manual Completion Required
+                                </Text>
+                                <Text variant="small" className="text-blue-700 mb-2">
+                                  The provider's session time was shorter than expected. Please confirm if you received satisfactory service.
+                                </Text>
+                                {sessionData[booking.id] && (
+                                  <Text variant="small" className="text-blue-600 mb-3">
+                                    Provider time: {formatDuration(sessionData[booking.id].providerDuration)} /
+                                    {formatDuration(sessionData[booking.id].serviceDuration || booking.duration_minutes * 60)} expected
+                                  </Text>
+                                )}
+                                <DSButton
+                                  size="small"
+                                  onClick={() => handleManualComplete(booking.id)}
+                                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                                >
+                                  Mark as Complete & Release Payment
+                                </DSButton>
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      )}
+
                       {/* Review Section for Completed */}
                       {booking.status === 'completed' && (
                         <>
@@ -1087,6 +1186,41 @@ export default function CustomerBookings() {
 
                           </div>
                         </div>
+                      )}
+
+                      {/* Manual Completion Required for Blocked Auto-Completion - Mobile */}
+                      {booking.auto_complete_blocked && (
+                        <>
+                          {/* Separator Line */}
+                          <div className="border-t border-[#eeeeee] my-6"></div>
+
+                          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div className="flex items-start gap-2">
+                              <Clock className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                              <div className="flex-1">
+                                <Text variant="small" weight="medium" className="text-blue-800 mb-1">
+                                  Manual Completion Required
+                                </Text>
+                                <Text variant="small" className="text-blue-700 mb-2">
+                                  The provider's session time was shorter than expected. Please confirm if you received satisfactory service.
+                                </Text>
+                                {sessionData[booking.id] && (
+                                  <Text variant="small" className="text-blue-600 mb-3">
+                                    Provider time: {formatDuration(sessionData[booking.id].providerDuration)} /
+                                    {formatDuration(sessionData[booking.id].serviceDuration || booking.duration_minutes * 60)} expected
+                                  </Text>
+                                )}
+                                <DSButton
+                                  size="small"
+                                  onClick={() => handleManualComplete(booking.id)}
+                                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                                >
+                                  Mark as Complete & Release Payment
+                                </DSButton>
+                              </div>
+                            </div>
+                          </div>
+                        </>
                       )}
 
                       {/* Review Section for Completed - Same as desktop */}
