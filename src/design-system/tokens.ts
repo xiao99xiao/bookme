@@ -32,8 +32,8 @@ export const tokens = {
   },
   
   fonts: {
-    heading: '"Spectral", serif',
-    body: '"Baloo 2", sans-serif',
+    heading: '"Raleway", sans-serif',
+    body: '"Nunito", sans-serif',
   },
   
   fontSizes: {

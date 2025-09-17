@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/PrivyAuthContext';
-import { Loader2 } from 'lucide-react';
+import { Loading } from '@/design-system';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -15,10 +15,7 @@ const ProtectedRoute = ({ children, requireAuth = true }: ProtectedRouteProps) =
   if (!ready) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
+        <Loading variant="spinner" size="lg" text="Loading..." />
       </div>
     );
   }

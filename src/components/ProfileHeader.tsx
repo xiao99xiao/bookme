@@ -37,7 +37,7 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
       {/* Name and Info */}
       <div className="flex-1 flex flex-col gap-6 min-w-0">
         {/* Name */}
-        <H1 className="font-['Spectral'] text-[24px] font-bold text-black leading-[1.4]">
+        <H1 className="font-['Raleway'] text-[24px] font-bold text-black leading-[1.4]">
           {profile.display_name || profile.email?.split('@')[0] || 'User'}
         </H1>
         

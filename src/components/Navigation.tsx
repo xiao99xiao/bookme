@@ -97,12 +97,12 @@ const Navigation = () => {
     } ${isAuthPage ? 'bg-transparent' : 'bg-white border-b border-gray-200'}`}>
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex items-center justify-between h-16">
-          {/* Logo - Spectral font */}
+          {/* Logo - Raleway font */}
           <Link to="/" className="hover:opacity-80 transition-opacity">
             <h1 className="text-xl font-bold text-black font-heading">Timee</h1>
           </Link>
           
-          {/* Center Navigation - Baloo 2 font */}
+          {/* Center Navigation - Nunito font */}
           {isLoggedIn && !isAuthPage && (
             <nav className="flex items-center space-x-8">
               <Link 
@@ -124,7 +124,7 @@ const Navigation = () => {
             </nav>
           )}
           
-          {/* User Info - Baloo 2 font */}
+          {/* User Info - Nunito font */}
           {isLoggedIn && !isAuthPage && (
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center">

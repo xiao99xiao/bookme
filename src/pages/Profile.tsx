@@ -382,9 +382,9 @@ const Profile = () => {
                       ul: ({ children }) => <ul className="list-disc pl-5 mb-4">{children}</ul>,
                       ol: ({ children }) => <ol className="list-decimal pl-5 mb-4">{children}</ol>,
                       li: ({ children }) => <li className="font-['Baloo_2'] text-[16px] font-normal text-black leading-[1.5] mb-1">{children}</li>,
-                      h1: ({ children }) => <h1 className="font-['Spectral'] text-2xl font-bold mb-3">{children}</h1>,
-                      h2: ({ children }) => <h2 className="font-['Spectral'] text-xl font-bold mb-2">{children}</h2>,
-                      h3: ({ children }) => <h3 className="font-['Spectral'] text-lg font-bold mb-2">{children}</h3>,
+                      h1: ({ children }) => <h1 className="font-['Raleway'] text-2xl font-bold mb-3">{children}</h1>,
+                      h2: ({ children }) => <h2 className="font-['Raleway'] text-xl font-bold mb-2">{children}</h2>,
+                      h3: ({ children }) => <h3 className="font-['Raleway'] text-lg font-bold mb-2">{children}</h3>,
                       a: ({ children, href }) => <a href={href} className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">{children}</a>,
                       blockquote: ({ children }) => <blockquote className="border-l-4 border-gray-300 pl-4 italic my-4">{children}</blockquote>,
                       code: ({ children }) => <code className="bg-gray-100 px-1 py-0.5 rounded text-sm">{children}</code>,
@@ -404,7 +404,7 @@ const Profile = () => {
               {(profile.is_provider || services.length > 0) && (
                 <div className="flex flex-col gap-8">
                   <div className="flex flex-col gap-1">
-                    <h2 className="font-['Spectral'] text-[20px] font-bold text-black leading-[1.4]">Services</h2>
+                    <h2 className="font-['Raleway'] text-[20px] font-bold text-black leading-[1.4]">Services</h2>
                   </div>
                   
                   {services.filter(service => service.is_visible !== false).length > 0 ? (
@@ -429,7 +429,7 @@ const Profile = () => {
               {((profile?.is_provider || services.length > 0) && reviews.length > 0) && (
                 <div className="flex flex-col gap-8">
                   <div className="flex flex-col gap-1">
-                    <h2 className="font-['Spectral'] text-[20px] font-bold text-black leading-[1.4]">Customer Review</h2>
+                    <h2 className="font-['Raleway'] text-[20px] font-bold text-black leading-[1.4]">Customer Review</h2>
                   </div>
                   
                   <div className="flex flex-col gap-10">
@@ -480,14 +480,14 @@ const Profile = () => {
                   <ArrowLeft className="h-6 w-6" />
                 </Button>
                 <div className="flex flex-col gap-1 flex-1">
-                  <h2 className="font-['Spectral'] text-[20px] font-bold text-black leading-[1.4]">Detail</h2>
+                  <h2 className="font-['Raleway'] text-[20px] font-bold text-black leading-[1.4]">Detail</h2>
                 </div>
               </div>
 
               {/* Service Info Section */}
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-1">
-                  <h1 className="font-['Spectral'] text-[20px] font-bold text-black leading-[1.4]">{selectedService.title}</h1>
+                  <h1 className="font-['Raleway'] text-[20px] font-bold text-black leading-[1.4]">{selectedService.title}</h1>
                 </div>
                 <p className="font-['Baloo_2'] text-[16px] font-normal text-black leading-[1.5]">
                   {selectedService.description}
@@ -525,7 +525,7 @@ const Profile = () => {
                   {/* Select Date Section */}
                   <div className="flex flex-col gap-6">
                     <div className="flex flex-col gap-1">
-                      <h3 className="font-['Spectral'] text-[20px] font-bold text-black leading-[1.4]">Select Date</h3>
+                      <h3 className="font-['Raleway'] text-[20px] font-bold text-black leading-[1.4]">Select Date</h3>
                     </div>
                     
                     {/* Custom Date Picker Component */}
@@ -544,7 +544,7 @@ const Profile = () => {
                   {/* Additional Notes Section */}
                   <div className="flex flex-col gap-4">
                     <div className="flex flex-col gap-1">
-                      <h3 className="font-['Spectral'] text-[20px] font-bold text-black leading-[1.4]">Additional Notes (Optional)</h3>
+                      <h3 className="font-['Raleway'] text-[20px] font-bold text-black leading-[1.4]">Additional Notes (Optional)</h3>
                     </div>
                     <div className="flex flex-col gap-2">
                       <div className="bg-white border border-[#eeeeee] rounded-[8px] p-3 h-[120px] relative group">

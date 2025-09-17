@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/PrivyAuthContext';
@@ -8,7 +8,7 @@ import { ApiClient } from '@/lib/api-migration';
 import { ConversationItem } from '@/components/ConversationList';
 import MessageThread from '@/components/MessageThread';
 import { toast } from 'sonner';
-import { H2 } from '@/design-system';
+import { H2, Loading } from '@/design-system';
 
 /**
  * Mobile-only chat page for customer conversations
@@ -95,10 +95,7 @@ export default function CustomerMobileChat() {
   if (loading) {
     return (
       <div className="h-[100dvh] flex items-center justify-center bg-white">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-sm text-muted-foreground">Loading conversation...</p>
-        </div>
+        <Loading variant="spinner" size="lg" text="Loading conversation..." />
       </div>
     );
   }

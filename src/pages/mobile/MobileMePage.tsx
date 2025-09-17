@@ -8,7 +8,7 @@ import { usePrivy, useWallets } from '@privy-io/react-auth';
 import { useSmartWallets } from '@privy-io/react-auth/smart-wallets';
 import { ApiClient } from '@/lib/api-migration';
 import { toast } from 'sonner';
-import { H2, H3, Text, Description } from '@/design-system';
+import { H2, H3, Text, Description, Loading } from '@/design-system';
 import BecomeProviderDialog from '@/components/BecomeProviderDialog';
 import { useBlockchainService } from '@/lib/blockchain-service';
 
@@ -231,10 +231,7 @@ export default function MobileMePage() {
   if (!ready || !privyReady) {
     return (
       <div className="lg:hidden min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-gray-300 border-t-black rounded-full animate-spin mx-auto mb-4" />
-          <Text variant="small" color="secondary">Loading...</Text>
-        </div>
+        <Loading variant="spinner" size="lg" text="Loading..." />
       </div>
     );
   }

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2 } from 'lucide-react';
-import { Button as DSButton } from '@/design-system';
+import { ArrowLeft } from 'lucide-react';
+import { Button as DSButton, Loading } from '@/design-system';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient } from '@/lib/api-migration';
@@ -95,10 +95,7 @@ export default function ProviderMobileChat() {
   if (loading) {
     return (
       <div className="h-[100dvh] flex items-center justify-center bg-white">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-sm text-muted-foreground">Loading conversation...</p>
-        </div>
+        <Loading variant="spinner" size="lg" text="Loading conversation..." />
       </div>
     );
   }

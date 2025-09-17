@@ -197,7 +197,7 @@ All colors MUST be HSL.
   }
   
   .heading-desktop {
-    @apply font-heading font-bold text-xl leading-snug; /* 20px, Spectral Bold */
+    @apply font-heading font-bold text-xl leading-snug; /* 20px, Raleway Bold */
   }
   
   /* Font weight utilities */

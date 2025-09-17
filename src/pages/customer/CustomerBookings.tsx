@@ -446,13 +446,13 @@ export default function CustomerBookings() {
           <div className="w-64 flex-shrink-0">
             <div className="fixed w-64">
               <div className="mb-6">
-                {/* Title - Spectral font */}
+                {/* Title - Raleway font */}
                 <H2 className="mb-2">My Bookings</H2>
-                {/* Subtitle - Baloo 2 font */}
+                {/* Subtitle - Nunito font */}
                 <Text variant="small" color="secondary">Services you have booked from providers</Text>
               </div>
 
-              {/* Vertical Navigation - Baloo 2 font */}
+              {/* Vertical Navigation - Nunito font */}
               <nav className="space-y-1">
                 {Object.entries(tabLabels).map(([key, label]) => (
                   <button

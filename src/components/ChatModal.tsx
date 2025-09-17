@@ -304,7 +304,7 @@ export default function ChatModal({
           </Button>
           <div className="flex flex-col gap-1 mb-6">
             <div className="flex flex-col gap-1">
-              <h1 className="font-['Spectral'] font-bold text-[20px] text-black leading-[1.4]">
+              <h1 className="font-['Raleway'] font-bold text-[20px] text-black leading-[1.4]">
                 Chat
               </h1>
             </div>
@@ -315,7 +315,7 @@ export default function ChatModal({
                   {otherUserName.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <span className="font-['Spectral'] font-bold text-[14px] text-black leading-[1.2]">
+              <span className="font-['Raleway'] font-bold text-[14px] text-black leading-[1.2]">
                 {otherUserName}
               </span>
             </div>

@@ -289,7 +289,7 @@ export default function MessageThread({ conversation, onConversationUpdate }: Me
       <div className="hidden lg:block flex-shrink-0 px-10 pt-8 pb-6">
         <div className="flex flex-col gap-1 mb-6">
           <div className="flex flex-col gap-1">
-            <h1 className="font-['Spectral'] font-bold text-[20px] text-black leading-[1.4]">
+            <h1 className="font-['Raleway'] font-bold text-[20px] text-black leading-[1.4]">
               {conversation.booking?.service?.title || 'Online Teaching'}
             </h1>
           </div>
@@ -300,7 +300,7 @@ export default function MessageThread({ conversation, onConversationUpdate }: Me
                 {conversation.otherUser.display_name.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <span className="font-['Spectral'] font-bold text-[14px] text-black leading-[1.2]">
+            <span className="font-['Raleway'] font-bold text-[14px] text-black leading-[1.2]">
               {conversation.otherUser.display_name}
             </span>
           </div>

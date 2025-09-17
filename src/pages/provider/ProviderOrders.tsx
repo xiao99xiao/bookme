@@ -348,13 +348,13 @@ export default function ProviderOrders() {
           <div className="w-64 flex-shrink-0">
             <div className="fixed w-64">
               <div className="mb-6">
-                {/* Title - Spectral font */}
+                {/* Title - Raleway font */}
                 <H2 className="mb-2">Orders</H2>
-                {/* Subtitle - Baloo 2 font */}
+                {/* Subtitle - Nunito font */}
                 <p className="text-sm text-gray-500 font-body">Manage orders from your customers</p>
               </div>
 
-              {/* Vertical Navigation - Baloo 2 font */}
+              {/* Vertical Navigation - Nunito font */}
               <nav className="space-y-1">
                 {Object.entries(tabLabels).map(([key, label]) => (
                   <button

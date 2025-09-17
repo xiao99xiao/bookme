@@ -9,7 +9,7 @@ import ConversationList, { ConversationItem } from '@/components/ConversationLis
 import MessageThread from '@/components/MessageThread';
 import { toast } from 'sonner';
 import PageLayout from '@/components/PageLayout';
-import { H1, H2, H3, Text, Description } from '@/design-system';
+import { H1, H2, H3, Text, Description, Loading } from '@/design-system';
 
 export default function ProviderMessages() {
   const { userId } = useAuth();
@@ -206,9 +206,7 @@ export default function ProviderMessages() {
         {/* Conversation List */}
         <div className="space-y-3">
           {loading ? (
-            <div className="text-center py-12">
-              <Text color="secondary">Loading conversations...</Text>
-            </div>
+            <Loading variant="spinner" size="md" text="Loading conversations..." />
           ) : conversations.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-lg">
               <MessageSquare className="h-12 w-12 text-gray-300 mx-auto mb-4" />
