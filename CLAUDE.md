@@ -69,6 +69,24 @@ ps aux | grep vite | grep -v grep
 - The dev server has hot module replacement and will recover from most errors automatically
 - Only restart if the user explicitly requests it
 
+## ⚠️ CRITICAL ROUTING RULE
+**ALL ROUTES MUST BE DEFINED BEFORE THE `/:username` ROUTE**
+
+The `/:username` route is a dynamic catch-all route that matches ANY path segment (e.g., `/me`, `/admin`, `/settings` would all be caught by `/:username`).
+
+To avoid route conflicts:
+1. Define all specific routes (e.g., `/me`, `/auth`, `/settings/*`) BEFORE the `/:username` route
+2. The `/:username` route should be the second-to-last route, just before the `*` catch-all
+3. When adding new routes, NEVER place them after `/:username`
+
+Example correct order in App.tsx:
+```tsx
+<Route path="/me" element={<MobileMePage />} />           // ✅ Specific route first
+<Route path="/settings/profile" element={<Profile />} />   // ✅ Specific route first
+<Route path="/:username" element={<UserProfile />} />      // ⚠️ Dynamic route second-to-last
+<Route path="*" element={<NotFound />} />                  // Catch-all last
+```
+
 ## Architecture Overview
 
 ### Backend Service (Hono)

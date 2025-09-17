@@ -20,7 +20,7 @@ import { ApiClient } from '@/lib/api-migration';
 import CreateServiceModal from '@/components/CreateServiceModal';
 import { RefactoredServiceModal } from '@/components/RefactoredServiceModal';
 import { ServiceCard } from '@/components/ServiceCard';
-import { H1, H2, H3 } from '@/design-system';
+import { H1, H2, H3, Text, Loading } from '@/design-system';
 
 interface Service {
   id: string;
@@ -182,14 +182,16 @@ export default function ProviderServices() {
 
   return (
     <div>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
+      {/* Desktop Content Wrapper */}
+      <div className="hidden lg:block max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        {/* Desktop Title */}
         <div className="mb-8">
           <H1 className="mb-2">Your Services</H1>
-          <p className="text-gray-600 text-lg">Create and manage the services you offer to customers</p>
+          <Text className="text-lg">Create and manage the services you offer to customers</Text>
         </div>
 
         {/* Desktop Layout */}
-        <div className="hidden lg:flex gap-8">
+        <div className="flex gap-8">
           {/* Main Content - Services List */}
           <div className="flex-1 p-6 space-y-6 bg-white rounded-lg">
           {/* Add Service Button */}
@@ -207,9 +209,7 @@ export default function ProviderServices() {
 
           {/* Services List */}
           {loading ? (
-            <div className="py-8">
-              <p className="text-center text-gray-500">Loading services...</p>
-            </div>
+            <Loading variant="spinner" size="md" text="Loading services..." fullHeight={true} />
           ) : services.length === 0 ? (
             <div className="py-12 text-center">
               <Briefcase className="w-12 h-12 text-gray-300 mx-auto mb-4" />
@@ -371,9 +371,16 @@ export default function ProviderServices() {
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Mobile Layout */}
-        <div className="lg:hidden p-4 pb-20">
+      {/* Mobile Layout */}
+      <div className="lg:hidden min-h-screen bg-gray-50 pb-20">
+          <div className="px-4 py-6">
+            {/* Mobile Title */}
+            <div className="mb-6">
+              <H2 className="mb-1">Services</H2>
+              <Text variant="small" color="secondary">Create and manage the services you offer to customers</Text>
+            </div>
           {/* Add Service Button */}
           <div className={`pb-8 mb-8 ${services.length === 0 ? "mt-12" : "mt-6"} border-b border-gray-200`}>
             <DSButton
@@ -389,14 +396,12 @@ export default function ProviderServices() {
 
           {/* Services List */}
           {loading ? (
-            <div className="text-center py-8">
-              <p>Loading services...</p>
-            </div>
+            <Loading variant="spinner" size="md" text="Loading services..." fullHeight={true} />
           ) : services.length === 0 ? (
             <div className="text-center py-12">
               <Briefcase className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No services yet</h3>
-              <p className="text-gray-500 mb-6">Create your first service to start accepting bookings</p>
+              <H3 className="mb-2">No services yet</H3>
+              <Text variant="small" color="secondary" className="mb-6">Create your first service to start accepting bookings</Text>
             </div>
           ) : (
             <div className="space-y-4">

@@ -41,6 +41,13 @@ import Income from "./pages/provider/Income";
 // Balance page
 import Balance from "./pages/Balance";
 
+// Mobile pages
+import MobileMePage from "./pages/mobile/MobileMePage";
+import MobileUsernameSettings from "./pages/mobile/MobileUsernameSettings";
+import MobileTimezoneSettings from "./pages/mobile/MobileTimezoneSettings";
+import MobileProfileSettings from "./pages/mobile/MobileProfileSettings";
+import MobileIntegrationsSettings from "./pages/mobile/MobileIntegrationsSettings";
+
 // Demo page
 import DesignSystemDemo from "./pages/DesignSystemDemo";
 
@@ -109,15 +116,15 @@ function AppContent() {
             />
 
             {/* Balance Route */}
-            <Route 
-              path="/balance" 
+            <Route
+              path="/balance"
               element={
                 <ProtectedRoute>
                   <Balance />
                 </ProtectedRoute>
-              } 
+              }
             />
-            
+
             {/* Customer Routes */}
             <Route 
               path="/customer/bookings" 
@@ -201,12 +208,56 @@ function AppContent() {
                 </ProtectedRoute>
               } 
             />
-            
+
+            {/* Mobile Me Page - must be before username route to avoid conflicts */}
+            <Route
+              path="/me"
+              element={
+                <ProtectedRoute requireAuth={false}>
+                  <MobileMePage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Mobile Settings Pages */}
+            <Route
+              path="/mobile/profile"
+              element={
+                <ProtectedRoute>
+                  <MobileProfileSettings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/mobile/username"
+              element={
+                <ProtectedRoute>
+                  <MobileUsernameSettings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/mobile/timezone"
+              element={
+                <ProtectedRoute>
+                  <MobileTimezoneSettings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/mobile/integrations"
+              element={
+                <ProtectedRoute>
+                  <MobileIntegrationsSettings />
+                </ProtectedRoute>
+              }
+            />
+
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             {/* Username-based user page - must be at the bottom to avoid conflicts */}
-            <Route 
-              path="/:username" 
-              element={<Profile />} 
+            <Route
+              path="/:username"
+              element={<Profile />}
             />
             <Route path="*" element={<NotFound />} />
           </Routes>

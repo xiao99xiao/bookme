@@ -9,7 +9,7 @@ import ConversationList, { ConversationItem } from '@/components/ConversationLis
 import MessageThread from '@/components/MessageThread';
 import { toast } from 'sonner';
 import PageLayout from '@/components/PageLayout';
-import { H1, H3, Text, Description } from '@/design-system';
+import { H1, H2, H3, Text, Description } from '@/design-system';
 
 export default function CustomerMessages() {
   const { userId } = useAuth();
@@ -180,11 +180,11 @@ export default function CustomerMessages() {
     </div>
 
     {/* Mobile Layout - List only */}
-    <div className="lg:hidden bg-gray-50 pb-20">
+    <div className="lg:hidden min-h-screen bg-gray-50 pb-20">
       <div className="px-4 py-6">
         {/* Title */}
         <div className="mb-6">
-          <H1 className="mb-1">Messages</H1>
+          <H2 className="mb-1">Messages</H2>
           <Text variant="small" color="secondary">Chat with service providers</Text>
         </div>
 

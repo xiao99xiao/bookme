@@ -28,7 +28,7 @@ const ProtectedRoute = ({ children, requireAuth = true }: ProtectedRouteProps) =
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  if (!requireAuth && authenticated) {
+  if (!requireAuth && authenticated && location.pathname === '/auth') {
     // If user is logged in but trying to access auth page, redirect to discover
     return <Navigate to="/discover" replace />;
   }

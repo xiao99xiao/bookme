@@ -438,10 +438,10 @@ export default function CustomerBookings() {
 
   return (
     <div>
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      {/* Desktop Content Wrapper */}
+      <div className="hidden lg:block max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {/* Desktop Layout */}
-        <div className="hidden lg:flex gap-8">
+        <div className="flex gap-8">
           {/* Left Sidebar - Desktop Only */}
           <div className="w-64 flex-shrink-0">
             <div className="fixed w-64">
@@ -845,16 +845,18 @@ export default function CustomerBookings() {
             )}
           </div>
         </div>
+      </div>
 
-        {/* Mobile Layout */}
-        <div className="lg:hidden px-4 py-4 pb-20">
-          {/* Top Header with Title and Tabs */}
-          <div className="mb-6">
-            {/* Title Section */}
-            <div className="mb-4">
-              <H2 className="mb-1">My Bookings</H2>
-              <Text variant="small" color="secondary">Services you have booked from providers</Text>
-            </div>
+      {/* Mobile Layout */}
+      <div className="lg:hidden min-h-screen bg-gray-50 pb-20">
+          <div className="px-4 py-6">
+            {/* Top Header with Title and Tabs */}
+            <div className="mb-6">
+              {/* Title Section */}
+              <div className="mb-4">
+                <H2 className="mb-1">My Bookings</H2>
+                <Text variant="small" color="secondary">Services you have booked from providers</Text>
+              </div>
             
             {/* Horizontal Tab Navigation */}
             <div className="flex gap-1 p-1 bg-gray-100 rounded-lg overflow-x-auto">

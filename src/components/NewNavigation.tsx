@@ -263,7 +263,7 @@ const NewNavigation = () => {
     if (!isLoggedIn || !ready || !userMode) {
       return null;
     }
-    
+
     // Hide tab bar when in mobile chat view (has conversationId in path)
     const isInMobileChat = location.pathname.includes('/messages/');
     if (isInMobileChat) {
@@ -273,16 +273,17 @@ const NewNavigation = () => {
     const tabItems = userMode === 'customer' ? [
       { to: '/customer/bookings', icon: Calendar, label: 'Bookings' },
       { to: '/customer/messages', icon: MessageCircle, label: 'Messages' },
+      { to: '/me', icon: User, label: 'Me' },
     ] : [
       { to: '/provider/orders', icon: ClipboardList, label: 'Orders' },
       { to: '/provider/services', icon: Settings, label: 'Services' },
       { to: '/provider/messages', icon: MessageCircle, label: 'Messages' },
-      { to: '/provider/integrations', icon: Plug, label: 'Integrations' },
+      { to: '/me', icon: User, label: 'Me' },
     ];
 
     return (
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
-        <div className={`grid ${userMode === 'customer' ? 'grid-cols-2' : 'grid-cols-4'}`}>
+        <div className={`grid ${userMode === 'customer' ? 'grid-cols-3' : 'grid-cols-4'}`}>
           {tabItems.map(({ to, icon: Icon, label }) => (
             <Link
               key={to}
@@ -430,7 +431,7 @@ const NewNavigation = () => {
 
   return (
     <>
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-transform duration-300 ${
+      <nav className={`hidden md:block fixed top-0 left-0 right-0 z-50 transition-transform duration-300 ${
         isVisible ? 'translate-y-0' : '-translate-y-full'
       } ${isAuthPage ? 'bg-transparent' : 'bg-white/95 backdrop-blur-sm border-b border-gray-200'}`}>
         <div className="max-w-7xl mx-auto px-6">
@@ -462,9 +463,10 @@ const NewNavigation = () => {
       
       {/* Mobile Tab Bar */}
       {renderMobileTabBar()}
-      
-      {/* Add top padding for fixed navigation and bottom padding for mobile tab bar */}
-      <div className="h-16" />
+
+      {/* Add top padding for fixed navigation on desktop only */}
+      <div className="hidden md:block h-16" />
+      {/* Add bottom padding for mobile tab bar */}
       {isLoggedIn && userMode && !location.pathname.includes('/messages/') && (
         <div className="md:hidden h-16" />
       )}
