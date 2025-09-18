@@ -121,8 +121,13 @@ const RefactoredNavigation = () => {
       <Container maxWidth="xl" padding="lg">
         <Stack direction="row" justify="between" align="center" spacing="lg">
           {/* Logo */}
-          <Link to="/" className="hover:opacity-80 transition-opacity">
-            <Text as="h1" variant="medium" weight="bold" className="font-heading">
+          <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <img
+              src="/images/logo.svg"
+alt="Timee logo"
+              className="w-6 h-6"
+            />
+<Text as="h1" variant="medium" weight="bold" className="font-heading">
               Timee
             </Text>
           </Link>

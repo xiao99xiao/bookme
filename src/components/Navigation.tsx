@@ -5,7 +5,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ChevronDown, LayoutDashboard, LogOut } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/PrivyAuthContext";
-import timeeLogo from "@/assets/timee-logo.jpg";
 
 const Navigation = () => {
   const location = useLocation();
@@ -98,8 +97,13 @@ const Navigation = () => {
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex items-center justify-between h-16">
           {/* Logo - Raleway font */}
-          <Link to="/" className="hover:opacity-80 transition-opacity">
-            <h1 className="text-xl font-bold text-black font-heading">Timee</h1>
+          <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <img
+              src="/images/logo.svg"
+alt="Timee logo"
+              className="w-5 h-5"
+            />
+<h1 className="text-xl font-bold text-black font-heading">Timee</h1>
           </Link>
           
           {/* Center Navigation - Nunito font */}

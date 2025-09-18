@@ -1,0 +1,24 @@
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<rect width="16" height="16" rx="4" fill="black"/>
+<g clip-path="url(#clip0_13642_6355)">
+<g opacity="0.6">
+<g id="Repeat group 3_inner" data-figma-trr="r8u3.8-0f">
+<rect x="7.39993" y="1.99993" width="1.2" height="2.5" fill="white"/>
+</g>
+<use xlink:href="#Repeat%20group%203_inner" transform="translate(6.02993 -2.49768) rotate(45)"/>
+<use xlink:href="#Repeat%20group%203_inner" transform="translate(12.0599) rotate(90)"/>
+<use xlink:href="#Repeat%20group%203_inner" transform="translate(14.5575 6.02993) rotate(135)"/>
+<use xlink:href="#Repeat%20group%203_inner" transform="translate(12.0599 12.0599) rotate(-180)"/>
+<use xlink:href="#Repeat%20group%203_inner" transform="translate(6.02992 14.5575) rotate(-135)"/>
+<use xlink:href="#Repeat%20group%203_inner" transform="translate(7.89681e-08 12.0599) rotate(-90)"/>
+<use xlink:href="#Repeat%20group%203_inner" transform="translate(-2.49768 6.02992) rotate(-45)"/>
+</g>
+<rect x="6.31645" y="7.73715" width="1.2" height="2.04696" transform="rotate(-45 6.31645 7.73715)" fill="white"/>
+<rect x="9.39191" y="6.3" width="1.2" height="3.18944" transform="rotate(45 9.39191 6.3)" fill="white"/>
+</g>
+<defs>
+<clipPath id="clip0_13642_6355">
+<rect width="12" height="12" fill="white" transform="translate(2 2)"/>
+</clipPath>
+</defs>
+</svg>

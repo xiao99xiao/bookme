@@ -21,7 +21,6 @@ import { useAuth } from "@/contexts/PrivyAuthContext";
 import { ApiClient } from "@/lib/api-migration";
 import BecomeProviderDialog from "./BecomeProviderDialog";
 import { toast } from "sonner";
-import timeeLogo from "@/assets/timee-logo.jpg";
 
 const STORAGE_KEY = 'bookme_user_mode';
 
@@ -440,11 +439,11 @@ const NewNavigation = () => {
             <div className="flex justify-start">
               <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                 <img
-                  src={timeeLogo}
-                  alt="Timee logo"
-                  className="w-8 h-8 rounded-lg"
+                  src="/images/logo.svg"
+alt="Timee logo"
+                  className="w-8 h-8"
                 />
-                <span className="text-2xl font-bold font-heading text-foreground">Timee</span>
+<span className="text-2xl font-bold font-heading text-foreground">Timee</span>
               </Link>
             </div>
 

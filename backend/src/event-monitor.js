@@ -69,6 +69,7 @@ class BlockchainEventMonitor {
       retryDelayOnFailover: 100,
       maxRetriesPerRequest: 3,
       lazyConnect: true,
+      family: 0, // Enable dual-stack IPv4/IPv6 lookup for Railway compatibility
       retryStrategy: (times) => {
         if (times > 10) {
           console.error("❌ Redis connection failed after 10 attempts");
