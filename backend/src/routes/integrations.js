@@ -376,6 +376,8 @@ export default function integrationRoutes(app) {
         return c.json({ error: 'Authorization code is required' }, 400);
       }
 
+      console.log('🔐 Processing Google OAuth callback for user:', userId);
+
       // Exchange authorization code for tokens
       const tokenData = await exchangeGoogleAuthCode({
         code,
@@ -384,23 +386,37 @@ export default function integrationRoutes(app) {
         clientSecret: process.env.GOOGLE_CLIENT_SECRET
       });
 
+      if (tokenData.error) {
+        console.error('Google token exchange failed:', tokenData.error_description || tokenData.error);
+        return c.json({
+          error: `Token exchange failed: ${tokenData.error_description || tokenData.error}`
+        }, 400);
+      }
+
       if (!tokenData.access_token) {
-        return c.json({ error: 'Failed to obtain access tokens' }, 400);
+        console.error('No access token received from Google');
+        return c.json({ error: 'No access token received' }, 400);
       }
 
       // Get user info from Google to verify the integration
       const userInfo = await getGoogleUserInfo(tokenData.access_token);
 
+      if (!userInfo.email || !userInfo.id) {
+        console.error('Incomplete user info received from Google');
+        return c.json({ error: 'Failed to get complete user info from Google' }, 400);
+      }
+
       // Create or update integration
       const integrationData = {
         user_id: userId,
         platform: 'google_meet',
+        platform_user_id: userInfo.id,
         platform_user_email: userInfo.email,
         access_token: tokenData.access_token,
         refresh_token: tokenData.refresh_token || null,
         scope: tokenData.scope ? tokenData.scope.split(' ') : ['https://www.googleapis.com/auth/calendar'],
-        expires_at: tokenData.expires_in ? 
-          new Date(Date.now() + (tokenData.expires_in * 1000)).toISOString() : 
+        expires_at: tokenData.expires_in ?
+          new Date(Date.now() + (tokenData.expires_in * 1000)).toISOString() :
           null,
         is_active: true
       };
@@ -604,12 +620,19 @@ async function exchangeGoogleAuthCode({ code, redirectUri, clientId, clientSecre
     }),
   });
 
+  const tokenData = await response.json();
+
+  if (tokenData.error) {
+    console.error('Google token exchange failed:', tokenData.error_description || tokenData.error);
+    return tokenData; // Return the error response so caller can handle it
+  }
+
   if (!response.ok) {
     const error = await response.text();
     throw new Error(`Failed to exchange authorization code: ${response.status} ${error}`);
   }
 
-  return response.json();
+  return tokenData;
 }
 
 async function getGoogleUserInfo(accessToken) {
@@ -620,9 +643,17 @@ async function getGoogleUserInfo(accessToken) {
   });
 
   if (!response.ok) {
+    console.error('Failed to get Google user info');
     const error = await response.text();
     throw new Error(`Failed to get user info: ${response.status} ${error}`);
   }
 
-  return response.json();
+  const userInfo = await response.json();
+
+  if (!userInfo.email || !userInfo.id) {
+    console.error('Incomplete user info received from Google:', userInfo);
+    throw new Error('Incomplete user info received from Google');
+  }
+
+  return userInfo;
 }
