@@ -182,7 +182,7 @@ export default function integrationRoutes(app) {
    * 
    * Body:
    * - platform: Integration type ('google_meet', 'zoom', 'teams')
-   * - provider_email: Email associated with the integration
+   * - platform_user_email: Email associated with the integration
    * - access_token: OAuth access token (temporary)
    * - refresh_token: OAuth refresh token (for token renewal)
    * - scopes: Array of granted OAuth scopes
@@ -395,7 +395,7 @@ export default function integrationRoutes(app) {
       const integrationData = {
         user_id: userId,
         platform: 'google_meet',
-        provider_email: userInfo.email,
+        platform_user_email: userInfo.email,
         access_token: tokenData.access_token,
         refresh_token: tokenData.refresh_token || null,
         scopes: tokenData.scope ? tokenData.scope.split(' ') : ['https://www.googleapis.com/auth/calendar'],
@@ -452,7 +452,7 @@ export default function integrationRoutes(app) {
         integration: {
           id: integration.id,
           platform: integration.platform,
-          provider_email: integration.provider_email,
+          provider_email: integration.platform_user_email,
           is_active: integration.is_active,
           connection_status: 'connected',
           scopes: integration.scopes || [],
