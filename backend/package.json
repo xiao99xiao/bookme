@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "node src/check-env.js && node --max-old-space-size=128 --max-semi-space-size=4 --watch src/index.js",
-    "dev:ssl": "node src/check-env.js && PORT=4443 node --max-old-space-size=128 --max-semi-space-size=4 --watch src/https-server.js",
-    "start": "node --max-old-space-size=128 --max-semi-space-size=4 src/index.js",
-    "start:ssl": "node src/check-env.js && PORT=4443 node --max-old-space-size=128 --max-semi-space-size=4 src/https-server.js"
+    "dev": "node src/check-env.js && node --max-old-space-size=512 --watch src/index.js",
+    "dev:ssl": "node src/check-env.js && PORT=4443 node --max-old-space-size=512 --watch src/https-server.js",
+    "start": "node --max-old-space-size=512 src/index.js",
+    "start:ssl": "node src/check-env.js && PORT=4443 node --max-old-space-size=512 src/https-server.js"
   },
   "dependencies": {
     "@hono/node-server": "^1.14.0",
