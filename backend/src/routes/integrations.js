@@ -590,21 +590,39 @@ async function revokeIntegrationAccess({ providerType, accessToken, refreshToken
 }
 
 async function exchangeGoogleAuthCode({ code, redirectUri, clientId, clientSecret }) {
-  // Google OAuth token exchange logic would go here
-  // This is a placeholder implementation
-  return {
-    access_token: 'mock-access-token',
-    refresh_token: 'mock-refresh-token',
-    expires_in: 3600,
-    scope: 'https://www.googleapis.com/auth/calendar'
-  };
+  const response = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({
+      code,
+      client_id: clientId,
+      client_secret: clientSecret,
+      redirect_uri: redirectUri,
+      grant_type: 'authorization_code',
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Failed to exchange authorization code: ${response.status} ${error}`);
+  }
+
+  return response.json();
 }
 
 async function getGoogleUserInfo(accessToken) {
-  // Google user info API call would go here
-  // This is a placeholder implementation
-  return {
-    email: 'user@example.com',
-    name: 'User Name'
-  };
+  const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Failed to get user info: ${response.status} ${error}`);
+  }
+
+  return response.json();
 }
