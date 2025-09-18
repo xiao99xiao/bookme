@@ -96,12 +96,18 @@ export function debugEnvironmentVariables() {
 }
 
 /**
- * Setup heartbeat monitoring with memory leak detection
+ * Setup heartbeat monitoring with intelligent memory management
  * @param {number} interval - Heartbeat interval in milliseconds (default: 10000)
  * @returns {NodeJS.Timeout} Heartbeat interval ID
  */
 export function setupHeartbeatMonitoring(interval = 10000) {
   let heartbeatCount = 0;
+
+  // Log initial memory configuration
+  const initialMemory = process.memoryUsage();
+  const isRailway = process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID;
+  console.log(`📊 Initial Memory - Heap: ${Math.round(initialMemory.heapUsed / 1024 / 1024)}MB/${Math.round(initialMemory.heapTotal / 1024 / 1024)}MB, RSS: ${Math.round(initialMemory.rss / 1024 / 1024)}MB`);
+  console.log(`🌍 Environment: ${isRailway ? 'Railway (Production)' : 'Development'} - GC Available: ${global.gc ? 'Yes' : 'No'}`);
   
   const heartbeatInterval = setInterval(() => {
     heartbeatCount++;
@@ -111,9 +117,30 @@ export function setupHeartbeatMonitoring(interval = 10000) {
       `💓 Heartbeat #${heartbeatCount} - Uptime: ${uptime}s - Memory: RSS ${Math.round(memory.rss / 1024 / 1024)}MB, Heap ${Math.round(memory.heapUsed / 1024 / 1024)}MB/${Math.round(memory.heapTotal / 1024 / 1024)}MB - Time: ${new Date().toISOString()}`,
     );
 
-    // Check for memory leaks
-    if (memory.heapUsed / memory.heapTotal > 0.9) {
-      console.warn("⚠️ High memory usage detected (>90% heap)");
+    // Check for memory issues with environment-aware thresholds
+    const heapUsagePercent = (memory.heapUsed / memory.heapTotal) * 100;
+
+    // Railway typically has smaller heap allocations, so adjust thresholds
+    const isRailway = process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID;
+    const highMemoryThreshold = isRailway ? 95 : 90; // Higher threshold for Railway
+    const criticalMemoryThreshold = isRailway ? 98 : 95;
+
+    if (heapUsagePercent > criticalMemoryThreshold) {
+      console.error(`🚨 CRITICAL MEMORY: ${heapUsagePercent.toFixed(1)}% heap usage - potential memory leak!`);
+    } else if (heapUsagePercent > highMemoryThreshold) {
+      console.warn(`⚠️ High memory usage: ${heapUsagePercent.toFixed(1)}% heap usage`);
+    }
+
+    // Additional monitoring for extremely high RSS usage
+    const rssUsageMB = Math.round(memory.rss / 1024 / 1024);
+    if (rssUsageMB > 500) {
+      console.warn(`⚠️ High RSS usage: ${rssUsageMB}MB`);
+    }
+
+    // Only trigger garbage collection if we're approaching critical memory levels
+    if (heapUsagePercent > criticalMemoryThreshold && global.gc) {
+      console.log(`🚨 Emergency garbage collection (heap at ${heapUsagePercent.toFixed(1)}%)`);
+      global.gc();
     }
   }, interval);
 

@@ -2,6 +2,7 @@ import { serve } from '@hono/node-server'
 import { readFileSync } from 'fs'
 import { createServer } from 'https'
 import app from './index.js'
+import { memoryProfiler } from './utils/memory-profiler.js'
 
 const port = process.env.PORT || 4443
 
@@ -23,6 +24,12 @@ const server = serve({
 }, (info) => {
   console.log(`✅ HTTPS Server running at https://localhost:${info.port}`)
   console.log(`📝 Health check: https://localhost:${info.port}/health`)
+
+  // Start 5-minute memory profiling session
+  setTimeout(() => {
+    console.log('🔍 Starting 5-minute memory profiling session...')
+    memoryProfiler.start(10000, 300000) // 10s interval, 5min duration
+  }, 5000) // Wait 5 seconds for server to fully initialize
 })
 
 // Setup WebSocket if needed
