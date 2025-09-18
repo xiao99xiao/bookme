@@ -26,7 +26,7 @@ export function SimpleReviewItem({ review, onRevealComment, isCommentTruncated }
     <div className="flex gap-6 items-start w-full">
       {/* Review Text */}
       <div className="flex-1">
-        <Text className="font-['Baloo_2'] text-[16px] font-normal text-[#666666] leading-[1.5]">
+        <Text className="font-body text-[16px] font-normal text-[#666666] leading-[1.5]">
           "{review.comment}"
         </Text>
         {isCommentTruncated && onRevealComment && (
@@ -54,7 +54,7 @@ export function SimpleReviewItem({ review, onRevealComment, isCommentTruncated }
         </div>
         
         {/* Rating Text */}
-        <Text className="font-['Baloo_2'] text-[14px] font-medium text-black leading-[1.5] whitespace-nowrap">
+        <Text className="font-body text-[14px] font-medium text-black leading-[1.5] whitespace-nowrap">
           {review.rating}/5
         </Text>
       </div>

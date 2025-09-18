@@ -273,7 +273,7 @@ const CustomDatePicker = ({
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-[16px] p-4 flex items-center gap-3">
           <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
-          <p className="text-red-700 font-['Baloo_2'] text-[14px]">{error}</p>
+          <p className="text-red-700 font-body text-[14px]">{error}</p>
         </div>
       )}
 
@@ -281,7 +281,7 @@ const CustomDatePicker = ({
       <div className="bg-white border border-[#eeeeee] rounded-[16px] p-4 flex flex-col gap-[22px]">
         {/* Month Navigation */}
         <div className="flex items-center justify-between">
-          <h3 className="font-['Baloo_2'] font-semibold text-[18px] text-black leading-[1.5]">
+          <h3 className="font-body font-semibold text-[18px] text-black leading-[1.5]">
             {formatMonthYear(currentMonth)}
           </h3>
           <div className="flex gap-2">
@@ -328,7 +328,7 @@ const CustomDatePicker = ({
                       isAvailable ? `${availabilityInfo?.availableSlots || 0} slots available` : ''
                     }
                     className={cn(
-                      "h-12 w-full flex items-center justify-center rounded-[12px] font-['Baloo_2'] text-[18px] leading-[1.5] transition-all duration-200 relative",
+                      "h-12 w-full flex items-center justify-center rounded-[12px] font-body text-[18px] leading-[1.5] transition-all duration-200 relative",
                       
                       // Base styles
                       !isCurrentMonth && 'text-[#aaaaaa] cursor-default font-semibold',
@@ -370,11 +370,11 @@ const CustomDatePicker = ({
           <div className="flex items-center justify-center gap-6 text-sm">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-green-400"></div>
-              <span className="font-['Baloo_2'] text-gray-600">Available</span>
+              <span className="font-body text-gray-600">Available</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-red-400"></div>
-              <span className="font-['Baloo_2'] text-gray-600">Unavailable</span>
+              <span className="font-body text-gray-600">Unavailable</span>
             </div>
           </div>
         )}
@@ -385,7 +385,7 @@ const CustomDatePicker = ({
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-3">
             <Clock className="h-5 w-5 text-[#3b9ef9]" />
-            <h4 className="font-['Baloo_2'] font-semibold text-[16px] text-black leading-[1.5]">
+            <h4 className="font-body font-semibold text-[16px] text-black leading-[1.5]">
               Available Times: {formatSelectedDate()}
             </h4>
           </div>
@@ -407,7 +407,7 @@ const CustomDatePicker = ({
                       key={time}
                       onClick={() => handleTimeClick(time)}
                       className={cn(
-                        "h-12 flex items-center justify-center rounded-[12px] font-['Baloo_2'] font-semibold text-[16px] leading-[1.5] transition-all duration-200",
+                        "h-12 flex items-center justify-center rounded-[12px] font-body font-semibold text-[16px] leading-[1.5] transition-all duration-200",
                         selectedTime === time
                           ? 'bg-[#3b9ef9] text-white shadow-lg'
                           : 'bg-white border border-[#cccccc] text-black hover:bg-blue-50 hover:border-[#3b9ef9]'
@@ -420,7 +420,7 @@ const CustomDatePicker = ({
               ) : (
                 <div className="bg-orange-50 border border-orange-200 rounded-[16px] p-4 flex items-center gap-3">
                   <AlertCircle className="h-5 w-5 text-orange-500 flex-shrink-0" />
-                  <p className="text-orange-700 font-['Baloo_2'] text-[14px]">
+                  <p className="text-orange-700 font-body text-[14px]">
                     No available time slots for this date. Please select another date.
                   </p>
                 </div>
@@ -429,7 +429,7 @@ const CustomDatePicker = ({
               {/* Show unavailable slots for transparency */}
               {dayAvailability.unavailableSlots.length > 0 && (
                 <details className="mt-4">
-                  <summary className="cursor-pointer font-['Baloo_2'] text-gray-600 text-[14px] hover:text-gray-800">
+                  <summary className="cursor-pointer font-body text-gray-600 text-[14px] hover:text-gray-800">
                     Show unavailable times ({dayAvailability.unavailableSlots.length})
                   </summary>
                   <div className="mt-2 grid grid-cols-4 gap-2">
@@ -437,7 +437,7 @@ const CustomDatePicker = ({
                       <div
                         key={index}
                         title={getSlotUnavailableReason(slot)}
-                        className="h-12 flex items-center justify-center rounded-[12px] font-['Baloo_2'] font-semibold text-[14px] leading-[1.5] bg-gray-100 text-gray-400 cursor-not-allowed"
+                        className="h-12 flex items-center justify-center rounded-[12px] font-body font-semibold text-[14px] leading-[1.5] bg-gray-100 text-gray-400 cursor-not-allowed"
                       >
                         {slot.time}
                       </div>
@@ -452,7 +452,7 @@ const CustomDatePicker = ({
           {!loadingTimeSlots && !dayAvailability && (
             <div className="bg-red-50 border border-red-200 rounded-[16px] p-4 flex items-center gap-3">
               <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
-              <p className="text-red-700 font-['Baloo_2'] text-[14px]">
+              <p className="text-red-700 font-body text-[14px]">
                 Unable to load time slots. Please try again.
               </p>
             </div>
@@ -465,10 +465,10 @@ const CustomDatePicker = ({
         <div className="bg-[#eff7ff] border border-[#3b9ef9] rounded-[16px] p-4 flex flex-col gap-2">
           <div className="flex items-center gap-2 mb-2">
             <CheckCircle className="h-5 w-5 text-[#3b9ef9]" />
-            <span className="font-['Baloo_2'] font-semibold text-[#3b9ef9] text-[16px]">Booking Details</span>
+            <span className="font-body font-semibold text-[#3b9ef9] text-[16px]">Booking Details</span>
           </div>
           <div className="flex gap-2 items-baseline text-[18px]">
-            <span className="font-['Baloo_2'] font-semibold text-black leading-[1.5]">
+            <span className="font-body font-semibold text-black leading-[1.5]">
               {selectedDate.toLocaleDateString('en-US', { 
                 weekday: 'long',
                 year: 'numeric', 
@@ -476,8 +476,8 @@ const CustomDatePicker = ({
                 day: 'numeric' 
               })}
             </span>
-            <span className="font-['Baloo_2'] font-normal text-[#cccccc] text-center leading-[1.5]">|</span>
-            <span className="font-['Baloo_2'] font-semibold text-black leading-[1.5]">
+            <span className="font-body font-normal text-[#cccccc] text-center leading-[1.5]">|</span>
+            <span className="font-body font-semibold text-black leading-[1.5]">
               {(() => {
                 const [hours, minutes] = selectedTime.split(':').map(Number);
                 const period = hours >= 12 ? 'PM' : 'AM';
@@ -487,7 +487,7 @@ const CustomDatePicker = ({
             </span>
           </div>
           <div className="flex gap-2 items-baseline">
-            <span className="font-['Baloo_2'] font-semibold text-black text-[18px] leading-[1.5]">{serviceDuration} minutes</span>
+            <span className="font-body font-semibold text-black text-[18px] leading-[1.5]">{serviceDuration} minutes</span>
           </div>
         </div>
       )}

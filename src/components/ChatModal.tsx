@@ -304,7 +304,7 @@ export default function ChatModal({
           </Button>
           <div className="flex flex-col gap-1 mb-6">
             <div className="flex flex-col gap-1">
-              <h1 className="font-['Raleway'] font-bold text-[20px] text-black leading-[1.4]">
+              <h1 className="font-heading font-semibold text-[20px] text-black leading-[1.4]">
                 Chat
               </h1>
             </div>
@@ -315,7 +315,7 @@ export default function ChatModal({
                   {otherUserName.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <span className="font-['Raleway'] font-bold text-[14px] text-black leading-[1.2]">
+              <span className="font-heading font-bold text-[14px] text-black leading-[1.2]">
                 {otherUserName}
               </span>
             </div>
@@ -381,7 +381,7 @@ export default function ChatModal({
                         : 'bg-[#eff7ff] rounded-bl-[4px]'
                     }`}
                   >
-                    <p className="font-['Baloo_2'] text-[16px] leading-[1.5] text-black break-words">
+                    <p className="font-body text-[16px] leading-[1.5] text-black break-words">
                       {message.content}
                     </p>
                   </div>
@@ -409,7 +409,7 @@ export default function ChatModal({
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 disabled={sending || !connected}
-                className="flex-1 px-4 py-3 border border-[#cccccc] rounded-xl font-['Baloo_2'] text-[16px] leading-[1.5] text-black placeholder:text-[#999999] focus-visible:outline-none focus-visible:border-primary"
+                className="flex-1 px-4 py-3 border border-[#cccccc] rounded-xl font-body text-[16px] leading-[1.5] text-black placeholder:text-[#999999] focus-visible:outline-none focus-visible:border-primary"
               />
               <Button 
                 type="submit" 

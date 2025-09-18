@@ -42,10 +42,10 @@ export function SimpleServiceCard({ service, onClick }: SimpleServiceCardProps) 
       <div className="flex flex-col gap-6">
         {/* Title and Description */}
         <div className="flex flex-col">
-          <Text className="font-['Baloo_2'] text-[18px] font-semibold text-black leading-[1.5]">
+          <Text className="font-body text-[18px] font-semibold text-black leading-[1.5]">
             {service.title}
           </Text>
-          <Text className="font-['Baloo_2'] text-[12px] font-normal text-[#aaaaaa] leading-[1.5]">
+          <Text className="font-body text-[12px] font-normal text-[#aaaaaa] leading-[1.5]">
             {service.description}
           </Text>
         </div>
@@ -55,17 +55,17 @@ export function SimpleServiceCard({ service, onClick }: SimpleServiceCardProps) 
           {/* Location */}
           <div className="bg-[#f3f3f3] flex gap-1 items-center px-2 py-1 rounded-[8px]">
             {getLocationIcon(service.is_online, !!service.location)}
-            <Text className="font-['Baloo_2'] text-[14px] font-normal text-[#666666] leading-[1.5] whitespace-nowrap">
+            <Text className="font-body text-[14px] font-normal text-[#666666] leading-[1.5] whitespace-nowrap">
               {getLocationText(service.is_online, !!service.location)}
             </Text>
           </div>
           
           {/* Price and Duration */}
           <div className="flex gap-1 items-baseline">
-            <Text className="font-['Baloo_2'] text-[18px] font-semibold text-black leading-[1.5] whitespace-nowrap">
+            <Text className="font-body text-[18px] font-semibold text-black leading-[1.5] whitespace-nowrap">
               ${service.price}
             </Text>
-            <Text className="font-['Baloo_2'] text-[12px] font-normal text-[#666666] leading-[1.5] whitespace-nowrap">
+            <Text className="font-body text-[12px] font-normal text-[#666666] leading-[1.5] whitespace-nowrap">
               / {service.duration_minutes}min
             </Text>
           </div>

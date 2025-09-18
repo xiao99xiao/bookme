@@ -138,7 +138,7 @@ export default function ConversationList({
             
             <div className="flex-1 min-w-0">
               <p className={cn(
-                "font-['Baloo_2'] text-[16px] leading-[1.5] truncate",
+                "font-body text-[16px] leading-[1.5] truncate",
                 isSelected 
                   ? "font-medium text-black" 
                   : "font-normal text-[#666666]"

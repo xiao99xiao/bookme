@@ -33,7 +33,7 @@ export function Heading({ children, className, as, level, ...props }: HeadingPro
   return (
     <Component
       className={cn(
-        'font-heading font-bold text-textPrimary leading-tight',
+        'font-heading font-semibold text-textPrimary leading-tight',
         headingSizes[currentLevel],
         className
       )}

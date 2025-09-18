@@ -289,7 +289,7 @@ export default function MessageThread({ conversation, onConversationUpdate }: Me
       <div className="hidden lg:block flex-shrink-0 px-10 pt-8 pb-6">
         <div className="flex flex-col gap-1 mb-6">
           <div className="flex flex-col gap-1">
-            <h1 className="font-['Raleway'] font-bold text-[20px] text-black leading-[1.4]">
+            <h1 className="font-heading font-semibold text-[20px] text-black leading-[1.4]">
               {conversation.booking?.service?.title || 'Online Teaching'}
             </h1>
           </div>
@@ -300,7 +300,7 @@ export default function MessageThread({ conversation, onConversationUpdate }: Me
                 {conversation.otherUser.display_name.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <span className="font-['Raleway'] font-bold text-[14px] text-black leading-[1.2]">
+            <span className="font-heading font-bold text-[14px] text-black leading-[1.2]">
               {conversation.otherUser.display_name}
             </span>
           </div>
@@ -371,7 +371,7 @@ export default function MessageThread({ conversation, onConversationUpdate }: Me
                         : 'bg-[#eff7ff] rounded-bl-[4px]' // Left message: light blue background, different border radius
                     )}
                   >
-                    <p className="font-['Baloo_2'] font-normal text-[16px] text-black leading-[1.5] break-words">
+                    <p className="font-body font-normal text-[16px] text-black leading-[1.5] break-words">
                       {message.content}
                     </p>
                   </div>
@@ -401,7 +401,7 @@ export default function MessageThread({ conversation, onConversationUpdate }: Me
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               disabled={sending || !connected}
-              className="flex-1 bg-white border border-[#eeeeee] rounded-[8px] px-3 py-2 font-['Baloo_2'] font-normal text-[16px] text-[#666666] leading-[1.5] focus-visible:outline-none focus-visible:border-primary transition-colors"
+              className="flex-1 bg-white border border-[#eeeeee] rounded-[8px] px-3 py-2 font-body font-normal text-[16px] text-[#666666] leading-[1.5] focus-visible:outline-none focus-visible:border-primary transition-colors"
             />
             <Button 
               type="submit" 

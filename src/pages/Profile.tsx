@@ -373,18 +373,18 @@ const Profile = () => {
               
               {/* Bio Section */}
               {profile.bio && (
-                <div className="font-['Baloo_2'] text-[16px] font-normal text-black leading-[1.5] w-full prose prose-sm max-w-none">
+                <div className="font-body text-[16px] font-normal text-black leading-[1.5] w-full prose prose-sm max-w-none">
                   <ReactMarkdown
                     components={{
-                      p: ({ children }) => <p className="font-['Baloo_2'] text-[16px] font-normal text-black leading-[1.5] mb-4">{children}</p>,
+                      p: ({ children }) => <p className="font-body text-[16px] font-normal text-black leading-[1.5] mb-4">{children}</p>,
                       strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
                       em: ({ children }) => <em className="italic">{children}</em>,
                       ul: ({ children }) => <ul className="list-disc pl-5 mb-4">{children}</ul>,
                       ol: ({ children }) => <ol className="list-decimal pl-5 mb-4">{children}</ol>,
-                      li: ({ children }) => <li className="font-['Baloo_2'] text-[16px] font-normal text-black leading-[1.5] mb-1">{children}</li>,
-                      h1: ({ children }) => <h1 className="font-['Raleway'] text-2xl font-bold mb-3">{children}</h1>,
-                      h2: ({ children }) => <h2 className="font-['Raleway'] text-xl font-bold mb-2">{children}</h2>,
-                      h3: ({ children }) => <h3 className="font-['Raleway'] text-lg font-bold mb-2">{children}</h3>,
+                      li: ({ children }) => <li className="font-body text-[16px] font-normal text-black leading-[1.5] mb-1">{children}</li>,
+                      h1: ({ children }) => <h1 className="font-heading text-2xl font-semibold mb-3">{children}</h1>,
+                      h2: ({ children }) => <h2 className="font-heading text-xl font-semibold mb-2">{children}</h2>,
+                      h3: ({ children }) => <h3 className="font-heading text-lg font-semibold mb-2">{children}</h3>,
                       a: ({ children, href }) => <a href={href} className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">{children}</a>,
                       blockquote: ({ children }) => <blockquote className="border-l-4 border-gray-300 pl-4 italic my-4">{children}</blockquote>,
                       code: ({ children }) => <code className="bg-gray-100 px-1 py-0.5 rounded text-sm">{children}</code>,
@@ -404,7 +404,7 @@ const Profile = () => {
               {(profile.is_provider || services.length > 0) && (
                 <div className="flex flex-col gap-8">
                   <div className="flex flex-col gap-1">
-                    <h2 className="font-['Raleway'] text-[20px] font-bold text-black leading-[1.4]">Services</h2>
+                    <h2 className="font-heading text-[20px] font-semibold text-black leading-[1.4]">Services</h2>
                   </div>
                   
                   {services.filter(service => service.is_visible !== false).length > 0 ? (
@@ -429,7 +429,7 @@ const Profile = () => {
               {((profile?.is_provider || services.length > 0) && reviews.length > 0) && (
                 <div className="flex flex-col gap-8">
                   <div className="flex flex-col gap-1">
-                    <h2 className="font-['Raleway'] text-[20px] font-bold text-black leading-[1.4]">Customer Review</h2>
+                    <h2 className="font-heading text-[20px] font-semibold text-black leading-[1.4]">Customer Review</h2>
                   </div>
                   
                   <div className="flex flex-col gap-10">
@@ -480,16 +480,16 @@ const Profile = () => {
                   <ArrowLeft className="h-6 w-6" />
                 </Button>
                 <div className="flex flex-col gap-1 flex-1">
-                  <h2 className="font-['Raleway'] text-[20px] font-bold text-black leading-[1.4]">Detail</h2>
+                  <h2 className="font-heading text-[20px] font-semibold text-black leading-[1.4]">Detail</h2>
                 </div>
               </div>
 
               {/* Service Info Section */}
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-1">
-                  <h1 className="font-['Raleway'] text-[20px] font-bold text-black leading-[1.4]">{selectedService.title}</h1>
+                  <h1 className="font-heading text-[20px] font-semibold text-black leading-[1.4]">{selectedService.title}</h1>
                 </div>
-                <p className="font-['Baloo_2'] text-[16px] font-normal text-black leading-[1.5]">
+                <p className="font-body text-[16px] font-normal text-black leading-[1.5]">
                   {selectedService.description}
                 </p>
               </div>
@@ -498,13 +498,13 @@ const Profile = () => {
               <div className="bg-white border border-[#eeeeee] rounded-[16px] p-4 flex flex-col gap-6">
                 <div className="flex items-center justify-between">
                   <div className="flex gap-2 items-baseline text-[18px]">
-                    <span className="font-['Baloo_2'] font-semibold text-black leading-[1.5]">${selectedService.price}</span>
-                    <span className="font-['Baloo_2'] font-normal text-[#cccccc] text-center leading-[1.5]">|</span>
-                    <span className="font-['Baloo_2'] font-semibold text-black leading-[1.5]">{selectedService.duration_minutes} minutes</span>
+                    <span className="font-body font-semibold text-black leading-[1.5]">${selectedService.price}</span>
+                    <span className="font-body font-normal text-[#cccccc] text-center leading-[1.5]">|</span>
+                    <span className="font-body font-semibold text-black leading-[1.5]">{selectedService.duration_minutes} minutes</span>
                   </div>
                   <div className="bg-[#f3f3f3] flex gap-1 items-center px-2 py-1 rounded-[8px]">
                     <Video className="h-5 w-5" />
-                    <span className="font-['Baloo_2'] font-normal text-[#666666] text-[16px] leading-[1.5]">
+                    <span className="font-body font-normal text-[#666666] text-[16px] leading-[1.5]">
                       {getLocationText(selectedService.is_online, !!selectedService.location)}
                     </span>
                   </div>
@@ -525,7 +525,7 @@ const Profile = () => {
                   {/* Select Date Section */}
                   <div className="flex flex-col gap-6">
                     <div className="flex flex-col gap-1">
-                      <h3 className="font-['Raleway'] text-[20px] font-bold text-black leading-[1.4]">Select Date</h3>
+                      <h3 className="font-heading text-[20px] font-semibold text-black leading-[1.4]">Select Date</h3>
                     </div>
                     
                     {/* Custom Date Picker Component */}
@@ -544,7 +544,7 @@ const Profile = () => {
                   {/* Additional Notes Section */}
                   <div className="flex flex-col gap-4">
                     <div className="flex flex-col gap-1">
-                      <h3 className="font-['Raleway'] text-[20px] font-bold text-black leading-[1.4]">Additional Notes (Optional)</h3>
+                      <h3 className="font-heading text-[20px] font-semibold text-black leading-[1.4]">Additional Notes (Optional)</h3>
                     </div>
                     <div className="flex flex-col gap-2">
                       <div className="bg-white border border-[#eeeeee] rounded-[8px] p-3 h-[120px] relative group">
@@ -552,7 +552,7 @@ const Profile = () => {
                           value={customerNotes}
                           onChange={(e) => setCustomerNotes(e.target.value)}
                           placeholder="Tell the provider anything specific about your booking..."
-                          className="w-full h-full border-0 p-0 font-['Baloo_2'] text-[16px] font-normal leading-[1.5] text-black placeholder:text-[#aaaaaa] resize-none focus:ring-0 focus:outline-none bg-transparent"
+                          className="w-full h-full border-0 p-0 font-body text-[16px] font-normal leading-[1.5] text-black placeholder:text-[#aaaaaa] resize-none focus:ring-0 focus:outline-none bg-transparent"
                           maxLength={500}
                         />
                         {/* Resize grip indicator */}
@@ -563,7 +563,7 @@ const Profile = () => {
                           </svg>
                         </div>
                       </div>
-                      <p className="font-['Baloo_2'] text-[12px] font-normal text-[#aaaaaa] leading-[1.5]">
+                      <p className="font-body text-[12px] font-normal text-[#aaaaaa] leading-[1.5]">
                         {customerNotes.length}/500 characters
                       </p>
                     </div>
@@ -572,7 +572,7 @@ const Profile = () => {
                   {/* Confirm Button */}
                   <div className="flex flex-col items-end">
                     <Button 
-                      className="bg-black border border-black rounded-[40px] px-6 py-3 w-60 font-['Baloo_2'] font-semibold text-[16px] text-white leading-[1.5] hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed" 
+                      className="bg-black border border-black rounded-[40px] px-6 py-3 w-60 font-body font-semibold text-[16px] text-white leading-[1.5] hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed" 
                       disabled={authLoading || !selectedTimeSlot || isBooking}
                       onClick={handleBookingSubmit}
                     >
