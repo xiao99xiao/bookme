@@ -51,7 +51,7 @@ export default function integrationRoutes(app) {
       // Get booking details
       const { data: booking, error: bookingError } = await supabaseAdmin
         .from('bookings')
-        .select('provider_id, meeting_id, meeting_type, meeting_link')
+        .select('provider_id, meeting_id, meeting_platform, meeting_link')
         .eq('id', bookingId)
         .single();
 
@@ -70,20 +70,20 @@ export default function integrationRoutes(app) {
       }
 
       // Cancel meeting in external service if possible
-      if (booking.meeting_type && booking.meeting_id) {
+      if (booking.meeting_platform && booking.meeting_id) {
         try {
           const { data: integration } = await supabaseAdmin
             .from('user_meeting_integrations')
             .select('*')
             .eq('user_id', userId)
-            .eq('platform', booking.meeting_type)
+            .eq('platform', booking.meeting_platform)
             .single();
 
           if (integration) {
             await cancelExternalMeeting({
               integration,
               meetingId: booking.meeting_id,
-              meetingType: booking.meeting_type
+              meetingType: booking.meeting_platform
             });
           }
         } catch (cancelError) {
@@ -185,7 +185,7 @@ export default function integrationRoutes(app) {
    * - platform_user_email: Email associated with the integration
    * - access_token: OAuth access token (temporary)
    * - refresh_token: OAuth refresh token (for token renewal)
-   * - scopes: Array of granted OAuth scopes
+   * - scope: Array of granted OAuth scopes
    * - expires_at: Token expiration timestamp
    * 
    * Response:
@@ -226,7 +226,7 @@ export default function integrationRoutes(app) {
         access_token,
         refresh_token: refresh_token || null,
         expires_at: expires_at || null,
-        scopes: scope || [],
+        scope: scope || [],
         platform_user_id: platform_user_id || null,
         platform_user_email: platform_user_email || null,
         is_active: true,
@@ -398,7 +398,7 @@ export default function integrationRoutes(app) {
         platform_user_email: userInfo.email,
         access_token: tokenData.access_token,
         refresh_token: tokenData.refresh_token || null,
-        scopes: tokenData.scope ? tokenData.scope.split(' ') : ['https://www.googleapis.com/auth/calendar'],
+        scope: tokenData.scope ? tokenData.scope.split(' ') : ['https://www.googleapis.com/auth/calendar'],
         expires_at: tokenData.expires_in ? 
           new Date(Date.now() + (tokenData.expires_in * 1000)).toISOString() : 
           null,
@@ -455,7 +455,7 @@ export default function integrationRoutes(app) {
           provider_email: integration.platform_user_email,
           is_active: integration.is_active,
           connection_status: 'connected',
-          scopes: integration.scopes || [],
+          scopes: integration.scope || [],
           created_at: integration.created_at,
           updated_at: integration.updated_at
         }
