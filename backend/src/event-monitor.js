@@ -165,6 +165,9 @@ class BlockchainEventMonitor {
       // Set up periodic cleanup
       this.setupPeriodicCleanup();
 
+      // Check for missed events on startup
+      this.checkForMissedEvents();
+
       console.log("✅ Memory-optimized blockchain event monitoring started");
     } catch (error) {
       console.error("❌ Failed to start event monitoring:", error);
@@ -799,8 +802,9 @@ class BlockchainEventMonitor {
         // Look for ServiceCompleted events for this booking on the blockchain
         const filter = this.contract.filters.ServiceCompleted(blockchainBookingId);
         const currentBlock = await this.provider.getBlockNumber();
-        // Check last 10 blocks (Base Sepolia has ~2 second block time, so ~20 seconds of history)
-        const fromBlock = Math.max(0, currentBlock - 10);
+        // Check last 300 blocks (Base Sepolia has ~2 second block time, so ~10 minutes of history)
+        // This ensures we catch events even if there was a delay in backup polling
+        const fromBlock = Math.max(0, currentBlock - 300);
 
         const events = await this.contract.queryFilter(filter, fromBlock, currentBlock);
 
@@ -865,6 +869,102 @@ class BlockchainEventMonitor {
     // Start the first poll attempt
     const timeoutId = setTimeout(pollForCompletion, pollInterval);
     this.timeouts.push(timeoutId);
+  }
+
+  /**
+   * Check for missed events on startup
+   * This helps recover from events that were missed while the monitor was down
+   */
+  async checkForMissedEvents() {
+    console.log("🔍 Checking for missed events on startup...");
+
+    try {
+      // Get all active bookings that might have missed events
+      const { data: activeBookings, error } = await this.supabaseAdmin
+        .from("bookings")
+        .select("id, blockchain_booking_id, blockchain_tx_hash, status, scheduled_at")
+        .in("status", ["pending_payment", "paid", "confirmed", "in_progress"])
+        .not("blockchain_booking_id", "is", null);
+
+      if (error) {
+        console.error("❌ Error fetching active bookings for missed events check:", error);
+        return;
+      }
+
+      if (!activeBookings || activeBookings.length === 0) {
+        console.log("✅ No active bookings to check for missed events");
+        return;
+      }
+
+      console.log(`🔍 Checking ${activeBookings.length} active bookings for missed events...`);
+
+      const currentBlock = await this.provider.getBlockNumber();
+      // Check last 1000 blocks (~33 minutes on Base Sepolia) for missed events
+      const fromBlock = Math.max(0, currentBlock - 1000);
+
+      for (const booking of activeBookings) {
+        try {
+          // Check for ServiceCompleted events that might have been missed
+          const completedFilter = this.contract.filters.ServiceCompleted(booking.blockchain_booking_id);
+          const completedEvents = await this.contract.queryFilter(completedFilter, fromBlock, currentBlock);
+
+          if (completedEvents.length > 0 && booking.status !== "completed") {
+            console.log(`🎯 Found missed ServiceCompleted event for booking ${booking.id}`);
+            const event = completedEvents[0];
+
+            // Process the missed event
+            const eventData = {
+              type: "ServiceCompleted",
+              bookingId: booking.blockchain_booking_id,
+              provider: event.args.provider,
+              providerAmount: event.args.providerAmount.toString(),
+              platformFee: event.args.platformFee.toString(),
+              inviterFee: event.args.inviterFee.toString(),
+              transactionHash: event.transactionHash,
+              timestamp: Date.now(),
+            };
+
+            await this.handleServiceCompleted(eventData);
+            console.log(`✅ Recovered missed ServiceCompleted event for booking ${booking.id}`);
+          }
+
+          // Also check for BookingCancelled events
+          const cancelledFilter = this.contract.filters.BookingCancelled(booking.blockchain_booking_id);
+          const cancelledEvents = await this.contract.queryFilter(cancelledFilter, fromBlock, currentBlock);
+
+          if (cancelledEvents.length > 0 && booking.status !== "cancelled") {
+            console.log(`🎯 Found missed BookingCancelled event for booking ${booking.id}`);
+            const event = cancelledEvents[0];
+
+            // Process the missed event
+            const eventData = {
+              type: "BookingCancelled",
+              bookingId: booking.blockchain_booking_id,
+              cancelledBy: event.args.cancelledBy,
+              customerAmount: event.args.customerAmount.toString(),
+              providerAmount: event.args.providerAmount.toString(),
+              platformAmount: event.args.platformAmount.toString(),
+              inviterAmount: event.args.inviterAmount.toString(),
+              reason: event.args.reason,
+              transactionHash: event.transactionHash,
+              timestamp: Date.now(),
+            };
+
+            await this.handleBookingCancelled(eventData);
+            console.log(`✅ Recovered missed BookingCancelled event for booking ${booking.id}`);
+          }
+
+        } catch (error) {
+          console.error(`❌ Error checking missed events for booking ${booking.id}:`, error);
+          // Continue with other bookings
+        }
+      }
+
+      console.log("✅ Missed events check completed");
+
+    } catch (error) {
+      console.error("❌ Error in missed events check:", error);
+    }
   }
 
   /**

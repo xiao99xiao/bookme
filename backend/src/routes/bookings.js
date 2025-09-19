@@ -724,8 +724,20 @@ export default function bookingRoutes(app) {
 
           console.log("✅ Session duration validation passed or API unavailable, proceeding with completion");
         } catch (sessionError) {
-          console.error("❌ Session duration check failed, proceeding with completion:", sessionError);
-          // Don't block completion on API failures - graceful degradation
+          console.error("❌ Session duration check failed:", sessionError);
+
+          // If it's a critical error (like missing module), block completion
+          if (sessionError.code === 'ERR_MODULE_NOT_FOUND' || sessionError.message.includes('Cannot find module')) {
+            console.error("🚫 Critical session tracking error - blocking completion until fixed");
+            return c.json({
+              error: "Session tracking system error",
+              message: "Cannot complete booking due to session tracking system failure. Please check system logs.",
+              systemError: true
+            }, 500);
+          }
+
+          // For other API failures (like Google API down), allow graceful degradation
+          console.log("⚠️ Session tracking API unavailable, proceeding with completion (graceful degradation)");
         }
       }
 

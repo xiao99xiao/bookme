@@ -1,5 +1,5 @@
 import { google } from 'googleapis';
-import { supabaseAdmin } from './supabase.js';
+import { supabaseAdmin } from './supabase-admin.js';
 
 /**
  * Google Meet Session Duration Tracker
@@ -197,28 +197,52 @@ class GoogleMeetSessionTracker {
    */
   async saveSessionData(bookingId, sessionData) {
     try {
-      const { error } = await supabaseAdmin
+      // Check if booking_session_data table exists
+      const { error: tableError } = await supabaseAdmin
         .from('booking_session_data')
-        .upsert({
-          booking_id: bookingId,
+        .select('booking_id')
+        .limit(1);
+
+      if (tableError && tableError.message.includes('relation "public.booking_session_data" does not exist')) {
+        console.warn('⚠️ booking_session_data table does not exist, skipping session data save');
+        return;
+      }
+
+      // Try to update existing record first, then insert if it doesn't exist
+      const { error: updateError } = await supabaseAdmin
+        .from('booking_session_data')
+        .update({
           provider_total_duration: sessionData.providerDuration,
           customer_total_duration: sessionData.customerDuration,
           provider_sessions: sessionData.sessions.provider,
           customer_sessions: sessionData.sessions.customer,
           last_checked_at: new Date().toISOString()
-        }, {
-          onConflict: 'booking_id'
-        });
+        })
+        .eq('booking_id', bookingId);
 
-      if (error) {
-        console.error('Error saving session data:', error);
-        throw error;
+      // If update failed (no rows affected), insert new record
+      if (updateError || updateError?.code === 'PGRST116') {
+        const { error: insertError } = await supabaseAdmin
+          .from('booking_session_data')
+          .insert({
+            booking_id: bookingId,
+            provider_total_duration: sessionData.providerDuration,
+            customer_total_duration: sessionData.customerDuration,
+            provider_sessions: sessionData.sessions.provider,
+            customer_sessions: sessionData.sessions.customer,
+            last_checked_at: new Date().toISOString()
+          });
+
+        if (insertError) {
+          console.error('Error inserting session data:', insertError);
+          return;
+        }
       }
 
       console.log('✅ Session data saved for booking:', bookingId);
     } catch (error) {
       console.error('Failed to save session data:', error);
-      throw error;
+      // Don't throw - session data saving is not critical for booking completion
     }
   }
 
