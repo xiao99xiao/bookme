@@ -536,6 +536,8 @@ export default function ProviderOrders() {
                         <span className="text-black">{booking.customer?.display_name || 'Xiao xiao'}</span>
                         <span className="text-[#cccccc]">|</span>
                         <span className="text-black">{format(new Date(booking.scheduled_at), 'EEE, MMM d, yyyy')}</span>
+                        <span className="text-[#cccccc]">|</span>
+                        <span className="text-black">{format(new Date(booking.scheduled_at), 'h:mm a')}</span>
                       </div>
 
                       {/* Status Pills and Price Row */}
@@ -866,6 +868,8 @@ export default function ProviderOrders() {
                         <span className="text-black">{booking.customer?.display_name || 'Xiao xiao'}</span>
                         <span className="text-[#cccccc]">|</span>
                         <span className="text-black">{format(new Date(booking.scheduled_at), 'EEE, MMM d, yyyy')}</span>
+                        <span className="text-[#cccccc] hidden sm:inline">|</span>
+                        <span className="text-black">{format(new Date(booking.scheduled_at), 'h:mm a')}</span>
                       </div>
 
                       {/* Status Pills and Price Row - Responsive layout */}
