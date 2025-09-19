@@ -372,6 +372,149 @@ export class AdminCommands {
   }
 
   /**
+   * Mark booking as complete using completion transaction hash
+   */
+  async markBookingCompleteByTxHash(txHash) {
+    try {
+      if (!txHash) {
+        const { enteredTxHash } = await inquirer.prompt([
+          {
+            type: 'input',
+            name: 'enteredTxHash',
+            message: 'Enter the ServiceCompleted transaction hash:',
+            validate: (input) => {
+              if (!input || !input.startsWith('0x') || input.length < 66) {
+                return 'Please enter a valid transaction hash (must start with 0x)'
+              }
+              return true
+            }
+          }
+        ])
+        txHash = enteredTxHash.trim()
+      }
+
+      // Normalize transaction hash
+      if (!txHash.startsWith('0x')) {
+        txHash = '0x' + txHash
+      }
+
+      console.log(chalk.blue('\n🔍 Verifying transaction on blockchain...\n'))
+
+      // Get transaction details from blockchain
+      const txDetails = await this.blockchainService.getTransactionDetails(txHash)
+
+      if (!txDetails) {
+        console.log(chalk.red('❌ Transaction not found on blockchain'))
+        return
+      }
+
+      // Check if it's a ServiceCompleted event
+      const serviceCompletedEvent = await this.blockchainService.getServiceCompletedEvent(txHash)
+
+      if (!serviceCompletedEvent) {
+        console.log(chalk.red('❌ Transaction does not contain a ServiceCompleted event'))
+        console.log(chalk.yellow('💡 Make sure this is a transaction from completeService() function'))
+        return
+      }
+
+      const blockchainBookingId = serviceCompletedEvent.bookingId
+      console.log(chalk.green(`✅ Found ServiceCompleted event for booking: ${this.blockchainService.formatBookingId(blockchainBookingId)}`))
+      console.log(chalk.gray(`   Provider Amount: ${serviceCompletedEvent.providerAmount} USDC`))
+      console.log(chalk.gray(`   Platform Fee: ${serviceCompletedEvent.platformFee} USDC`))
+
+      // Find the booking in database
+      console.log(chalk.blue('\n🔍 Finding booking in database...\n'))
+
+      const dbBooking = await this.databaseService.getBookingByBlockchainId(blockchainBookingId)
+
+      if (!dbBooking) {
+        console.log(chalk.red('❌ Booking not found in database'))
+        console.log(chalk.yellow('💡 The blockchain booking ID does not match any database booking'))
+        return
+      }
+
+      console.log(chalk.green(`✅ Found booking in database:`))
+      console.log(chalk.gray(`   ID: ${dbBooking.id}`))
+      console.log(chalk.gray(`   Status: ${dbBooking.status}`))
+      console.log(chalk.gray(`   Service: ${dbBooking.services?.title || 'Unknown'}`))
+      console.log(chalk.gray(`   Provider: ${dbBooking.providers?.display_name || 'Unknown'}`))
+      console.log(chalk.gray(`   Customer: ${dbBooking.customers?.display_name || 'Unknown'}`))
+
+      if (dbBooking.status === 'completed') {
+        console.log(chalk.yellow('\n⚠️  Booking is already marked as completed in database'))
+
+        if (dbBooking.completion_tx_hash === txHash) {
+          console.log(chalk.green('✅ Completion transaction hash already matches'))
+        } else if (dbBooking.completion_tx_hash) {
+          console.log(chalk.yellow(`⚠️  Different completion tx recorded: ${dbBooking.completion_tx_hash}`))
+        }
+
+        const { updateAnyway } = await inquirer.prompt([
+          {
+            type: 'confirm',
+            name: 'updateAnyway',
+            message: 'Do you want to update the completion transaction hash anyway?',
+            default: false
+          }
+        ])
+
+        if (!updateAnyway) {
+          console.log(chalk.yellow('🚫 Update cancelled'))
+          return
+        }
+      }
+
+      // Confirm update
+      const { confirmed } = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'confirmed',
+          message: `Mark booking ${dbBooking.id} as completed with transaction ${txHash}?`,
+          default: true
+        }
+      ])
+
+      if (!confirmed) {
+        console.log(chalk.yellow('🚫 Update cancelled'))
+        return
+      }
+
+      // Update the booking status in database
+      console.log(chalk.blue('\n💾 Updating booking status in database...\n'))
+
+      // Pass the block number for event record
+      const result = await this.databaseService.markBookingAsCompleted(
+        dbBooking.id,
+        txHash,
+        serviceCompletedEvent.blockNumber
+      )
+
+      if (result.success) {
+        if (result.alreadyCompleted) {
+          console.log(chalk.green('✅ Booking completion transaction hash updated successfully'))
+        } else {
+          console.log(chalk.green('✅ Booking marked as completed successfully!'))
+        }
+
+        console.log(chalk.gray(`\n📋 Summary:`))
+        console.log(chalk.gray(`   Booking ID: ${dbBooking.id}`))
+        console.log(chalk.gray(`   Blockchain ID: ${this.blockchainService.formatBookingId(blockchainBookingId)}`))
+        console.log(chalk.gray(`   Completion Tx: ${txHash}`))
+        console.log(chalk.gray(`   Provider Amount: ${serviceCompletedEvent.providerAmount} USDC`))
+        console.log(chalk.gray(`   Platform Fee: ${serviceCompletedEvent.platformFee} USDC`))
+      } else {
+        console.log(chalk.red('❌ Failed to update booking status'))
+      }
+
+      return result
+
+    } catch (error) {
+      console.log(chalk.red('❌ Error marking booking as complete:'), error.message)
+      throw error
+    }
+  }
+
+  /**
    * Generate transaction records from completed bookings
    */
   async generateTransactionRecords(dryRun = false) {

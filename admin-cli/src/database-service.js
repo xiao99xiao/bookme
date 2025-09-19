@@ -249,6 +249,7 @@ export class DatabaseService {
         .update({
           status: 'paid',
           blockchain_tx_hash: paymentTxHash,
+          blockchain_confirmed_at: new Date().toISOString(), // CRITICAL: Add this field!
           updated_at: new Date().toISOString()
         })
         .eq('id', bookingId)
@@ -345,6 +346,78 @@ export class DatabaseService {
       
     } catch (error) {
       console.error('❌ Error fetching completed bookings:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Mark booking as completed by updating completion transaction hash and status
+   */
+  async markBookingAsCompleted(bookingId, completionTxHash, blockNumber = 0) {
+    try {
+      // First check if booking exists and is in a valid state
+      const { data: booking, error: fetchError } = await this.supabase
+        .from('bookings')
+        .select('id, status, blockchain_booking_id')
+        .eq('id', bookingId)
+        .single()
+
+      if (fetchError || !booking) {
+        throw new Error(`Booking ${bookingId} not found`)
+      }
+
+      if (booking.status === 'completed') {
+        console.log(`⚠️  Booking ${bookingId} is already marked as completed`)
+        return { success: true, alreadyCompleted: true }
+      }
+
+      if (!['paid', 'confirmed', 'in_progress'].includes(booking.status)) {
+        throw new Error(`Cannot complete booking in ${booking.status} status`)
+      }
+
+      // Update booking to completed status
+      const { error } = await this.supabase
+        .from('bookings')
+        .update({
+          status: 'completed',
+          completion_tx_hash: completionTxHash,
+          completed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', bookingId)
+
+      if (error) {
+        throw error
+      }
+
+      console.log(`✅ Marked booking ${bookingId} as completed with transaction ${completionTxHash}`)
+
+      // Also create blockchain event record for tracking
+      const { error: eventError } = await this.supabase
+        .from('blockchain_events')
+        .insert({
+          event_type: 'ServiceCompleted',
+          booking_id: booking.blockchain_booking_id, // This is the blockchain booking ID (bytes32)
+          transaction_hash: completionTxHash,
+          block_number: blockNumber || 0, // Use provided block number or default to 0
+          event_data: {
+            bookingId: booking.blockchain_booking_id,
+            completedViaAdmin: true,
+            databaseBookingId: bookingId
+          },
+          processing_status: 'PROCESSED',
+          processed_at: new Date().toISOString(),
+          created_at: new Date().toISOString()
+        })
+
+      if (eventError) {
+        console.warn('⚠️  Could not create blockchain event record:', eventError.message)
+        // Don't fail - the booking is already marked complete
+      }
+
+      return { success: true }
+    } catch (error) {
+      console.error('❌ Error marking booking as completed:', error)
       throw error
     }
   }

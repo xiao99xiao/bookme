@@ -282,6 +282,71 @@ export class AdminBlockchainService {
   }
 
   /**
+   * Get transaction details from blockchain
+   */
+  async getTransactionDetails(txHash) {
+    try {
+      const tx = await this.provider.getTransaction(txHash)
+      if (!tx) {
+        return null
+      }
+
+      const receipt = await this.provider.getTransactionReceipt(txHash)
+      return {
+        transaction: tx,
+        receipt: receipt,
+        blockNumber: receipt?.blockNumber,
+        status: receipt?.status === 1 ? 'success' : 'failed'
+      }
+    } catch (error) {
+      console.error('❌ Error fetching transaction details:', error.message)
+      return null
+    }
+  }
+
+  /**
+   * Get ServiceCompleted event from transaction
+   */
+  async getServiceCompletedEvent(txHash) {
+    try {
+      const receipt = await this.provider.getTransactionReceipt(txHash)
+
+      if (!receipt) {
+        return null
+      }
+
+      // Parse logs to find ServiceCompleted event
+      for (const log of receipt.logs) {
+        try {
+          if (log.address.toLowerCase() === this.CONTRACT_ADDRESS.toLowerCase()) {
+            const parsedLog = this.contract.interface.parseLog(log)
+
+            if (parsedLog && parsedLog.name === 'ServiceCompleted') {
+              return {
+                bookingId: parsedLog.args.bookingId,
+                provider: parsedLog.args.provider,
+                providerAmount: this.parseUSDC(parsedLog.args.providerAmount),
+                platformFee: this.parseUSDC(parsedLog.args.platformFee),
+                inviterFee: parsedLog.args.inviterFee ? this.parseUSDC(parsedLog.args.inviterFee) : 0,
+                transactionHash: txHash,
+                blockNumber: receipt.blockNumber
+              }
+            }
+          }
+        } catch (parseError) {
+          // Skip logs that can't be parsed
+          continue
+        }
+      }
+
+      return null
+    } catch (error) {
+      console.error('❌ Error fetching ServiceCompleted event:', error.message)
+      return null
+    }
+  }
+
+  /**
    * Format booking ID for display
    */
   formatBookingId(bookingId) {

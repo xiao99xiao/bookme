@@ -117,6 +117,21 @@ async function initializeCommands() {
         }
       })
 
+    // Mark booking as complete by transaction hash command
+    program
+      .command('complete-tx <tx-hash>')
+      .description('Mark booking as completed using completion transaction hash')
+      .action(async (txHash) => {
+        try {
+          console.log(chalk.blue('🚀 BookMe Admin CLI - Mark Booking as Complete\n'))
+          await commands.markBookingCompleteByTxHash(txHash)
+          process.exit(0)
+        } catch (error) {
+          console.error(chalk.red('❌ Completion failed:'), error.message)
+          process.exit(1)
+        }
+      })
+
     // Interactive mode (default command)
     program
       .command('interactive', { isDefault: true })
@@ -157,6 +172,7 @@ async function runInteractiveMode(commands) {
           choices: [
             { name: '📋 List active bookings', value: 'list' },
             { name: '🔍 Find booking by transaction hash', value: 'find-tx' },
+            { name: '✅ Mark booking complete by transaction hash', value: 'complete-tx' },
             { name: '💰 Generate transaction records', value: 'generate-transactions' },
             { name: '🚨 Cancel a booking', value: 'cancel' },
             { name: '💥 Cancel ALL bookings', value: 'cancel-all' },
@@ -176,7 +192,11 @@ async function runInteractiveMode(commands) {
         case 'find-tx':
           await commands.findBookingByTxHash()
           break
-          
+
+        case 'complete-tx':
+          await commands.markBookingCompleteByTxHash()
+          break
+
         case 'generate-transactions':
           await commands.generateTransactionRecords()
           break
@@ -242,6 +262,7 @@ if (process.argv.length === 2) {
   console.log('  node src/index.js test       # Test connections')
   console.log('  node src/index.js list       # List active bookings')
   console.log('  node src/index.js find-tx <hash> [-p]        # Find booking by transaction hash')
+  console.log('  node src/index.js complete-tx <hash>         # Mark booking as completed by transaction hash')
   console.log('  node src/index.js generate-transactions [--dry-run]  # Generate transaction records from completed bookings')
   console.log('  node src/index.js cancel [id] [-r "reason"]  # Cancel specific booking')
   console.log('  node src/index.js cancel-all [-r "reason"]   # Cancel all bookings')

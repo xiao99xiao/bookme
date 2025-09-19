@@ -7,6 +7,9 @@ A command-line interface for managing BookMe smart contract bookings. This tool 
 - 📋 **List Active Bookings**: View all bookings currently active in the smart contract
 - 🚨 **Emergency Cancel**: Cancel individual bookings with full customer refund
 - 💥 **Bulk Cancel**: Cancel all active bookings at once (use with caution)
+- ✅ **Mark Complete by Tx**: Mark booking as completed using ServiceCompleted transaction hash
+- 🔍 **Find by Tx Hash**: Find and mark bookings as paid by transaction hash
+- 💰 **Generate Transactions**: Create transaction records for completed bookings
 - 🔍 **Connection Test**: Verify blockchain and database connectivity
 - 🎯 **Interactive Mode**: User-friendly interface for all operations
 
@@ -64,6 +67,9 @@ This launches an interactive menu where you can:
 - List active bookings
 - Cancel individual bookings
 - Cancel all bookings
+- Mark bookings as complete by transaction hash
+- Find bookings by transaction hash
+- Generate transaction records
 - Test connections
 
 ### Command Line Interface
@@ -91,6 +97,39 @@ npm run cancel-all
 
 # Direct with reason
 node src/index.js cancel-all -r "System maintenance"
+```
+
+#### Mark Booking Complete by Transaction Hash
+```bash
+# Interactive mode
+node src/index.js complete-tx
+
+# Direct with transaction hash
+node src/index.js complete-tx 0xdaa4d555fa389a75fc7a5e066874667fbb853b7a87884e7b486cce96ff1ab48d
+```
+
+This command:
+1. Verifies the transaction contains a ServiceCompleted event
+2. Extracts the blockchain booking ID from the event
+3. Finds the corresponding booking in the database
+4. Updates the booking status to 'completed' with the transaction hash
+
+#### Find Booking by Transaction Hash
+```bash
+# Interactive mode
+node src/index.js find-tx
+
+# Direct with auto-mark as paid
+node src/index.js find-tx 0xabc123... --mark-paid
+```
+
+#### Generate Transaction Records
+```bash
+# Preview what would be created
+node src/index.js generate-transactions --dry-run
+
+# Create transaction records
+node src/index.js generate-transactions
 ```
 
 #### Test Connections
