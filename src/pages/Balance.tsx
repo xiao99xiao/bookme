@@ -216,17 +216,20 @@ export default function Balance() {
 
     try {
       setFundingInProgress(true);
-      await fundWallet(walletInfo.address, {
-        chain,
-        asset: 'USDC',
-        amount: '10',
-        defaultFundingMethod: 'card',
-        card: {
-          preferredProvider: 'moonpay'
-        },
-        uiConfig: {
-          receiveFundsTitle: 'Fund Your Wallet with USDC',
-          receiveFundsSubtitle: `Add USDC to your wallet on ${chain.name} to start using the platform.`
+      await fundWallet({
+        address: walletInfo.address,
+        options: {
+          chain,
+          asset: 'USDC',
+          amount: '10',
+          defaultFundingMethod: 'card',
+          card: {
+            preferredProvider: 'moonpay'
+          },
+          uiConfig: {
+            receiveFundsTitle: 'Fund Your Wallet with USDC',
+            receiveFundsSubtitle: `Add USDC to your wallet on ${chain.name} to start using the platform.`
+          }
         }
       });
     } catch (error) {
