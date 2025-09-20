@@ -61,13 +61,36 @@ lsof -i :8080
 ps aux | grep vite | grep -v grep
 ```
 
-### CRITICAL DEV SERVER RULE
-**NEVER RESTART THE DEV SERVER UNLESS EXPLICITLY ASKED BY THE USER.**
-- Do NOT kill or restart `npm run dev:all` or any dev server processes
-- Do NOT use KillBash tool on development servers
-- If there are compilation errors, fix the code - do NOT restart the server
-- The dev server has hot module replacement and will recover from most errors automatically
+### CRITICAL DEV SERVER RULES
+
+#### Frontend (Vite)
+**NEVER RESTART THE FRONTEND DEV SERVER UNLESS EXPLICITLY ASKED BY THE USER.**
+- Do NOT kill or restart frontend Vite processes
+- The frontend has hot module replacement and will recover from most errors automatically
 - Only restart if the user explicitly requests it
+
+#### Backend (Hono)
+**BACKEND DOES NOT USE --watch FLAG DUE TO STABILITY ISSUES.**
+- Backend runs without auto-restart to prevent Node.js --watch crashes
+- **AFTER COMPLETING BACKEND CHANGES**: Restart the entire `npm run dev:all` process
+- This ensures backend changes are applied and prevents memory/file descriptor leaks
+- The restart pattern: Edit backend → Complete feature → Restart dev:all
+
+### Backend Development Workflow
+```bash
+# 1. Make backend changes (edit files in backend/src/)
+# 2. When feature is complete, restart the development server:
+pkill -f "npm run dev:all"
+npm run dev:all
+
+# OR use the more targeted approach:
+# Kill just the backend process and restart the whole stack
+```
+
+**Why no --watch for backend:**
+- Node.js --watch can crash after multiple restarts causing memory/file descriptor exhaustion
+- Manual restart ensures clean process state and prevents resource leaks
+- Provides more reliable development environment for backend changes
 
 ## ⚠️ CRITICAL ROUTING RULE
 **ALL ROUTES MUST BE DEFINED BEFORE THE `/:username` ROUTE**
@@ -460,6 +483,31 @@ If you encounter "undefined" field errors:
 - **Backend**: Maintains JavaScript conventions while properly interfacing with database
 - **Frontend**: TypeScript interfaces provide type safety with actual API response structure
 - **Consistency**: Each layer is internally consistent and correctly interfaces with adjacent layers
+
+## Admin CLI Tool
+
+### Location
+The admin CLI tool is located at `/admin-cli/` (separate from main project).
+
+### Purpose
+Emergency admin operations for blockchain bookings including:
+- Finding and marking bookings as paid by transaction hash
+- Emergency cancellation of bookings
+- Generating missing transaction records
+- Syncing blockchain state with database
+
+### Critical Note
+When using `admin-cli` to mark bookings as paid, it MUST update:
+- `status: 'paid'`
+- `blockchain_tx_hash`
+- `blockchain_confirmed_at` (CRITICAL - was missing before!)
+- `updated_at`
+
+### Usage
+```bash
+cd admin-cli
+npm start
+```
 
 ## Testing Access
 

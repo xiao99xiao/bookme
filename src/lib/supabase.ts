@@ -1,14 +1,7 @@
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL!
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY!
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
-
-// DEPRECATED: Admin client removed for security
-// All admin operations now go through the backend API
-// See src/lib/api-client.ts for the new API client
-export const supabaseAdmin = null as any; // Temporarily keep to avoid breaking imports
+// FRONTEND DECOUPLING COMPLETE
+// This file now only exports TypeScript types for database schema
+// All Supabase client operations have been moved to the backend
+// See src/lib/api-migration.ts for the new API client pattern
 
 // Database types for TypeScript
 export interface Database {

@@ -136,4 +136,134 @@ export default function authRoutes(app) {
       return c.json({ error: 'Failed to generate token' }, 500);
     }
   });
+
+  /**
+   * POST /api/auth/callback
+   *
+   * Handle OAuth callback from Supabase Auth.
+   * This endpoint processes OAuth codes/tokens from providers like Google, GitHub, etc.
+   * and handles the session establishment server-side.
+   *
+   * Request Body:
+   * - code?: OAuth authorization code (PKCE flow)
+   * - access_token?: Access token (implicit flow)
+   * - refresh_token?: Refresh token (implicit flow)
+   * - provider?: OAuth provider name (optional)
+   * - error?: Error parameter from OAuth provider
+   * - error_description?: Error description from OAuth provider
+   * - error_code?: Error code from OAuth provider
+   *
+   * Response:
+   * - success: boolean
+   * - redirectTo?: URL to redirect to on success
+   * - error?: Error message on failure
+   *
+   * @param {Context} c - Hono context
+   * @returns {Response} JSON response with success/error status
+   */
+  app.post('/api/auth/callback', async (c) => {
+    try {
+      const body = await c.req.json();
+      const {
+        code,
+        access_token,
+        refresh_token,
+        provider,
+        error: errorParam,
+        error_description,
+        error_code
+      } = body;
+
+      console.log('=== BACKEND AUTH CALLBACK START ===');
+      console.log('Received data:', {
+        hasCode: !!code,
+        hasAccessToken: !!access_token,
+        provider,
+        hasError: !!errorParam
+      });
+
+      // Handle error cases first
+      if (errorParam) {
+        console.log('Authentication error detected:', errorParam);
+        let userFriendlyMessage = 'Authentication failed. Please try again.';
+
+        if (error_code === 'otp_expired') {
+          userFriendlyMessage = 'The magic link has expired. Please request a new one.';
+        } else if (errorParam === 'access_denied') {
+          userFriendlyMessage = 'Authentication was denied or cancelled.';
+        } else if (error_description) {
+          // Use the error description from Supabase, decoded
+          userFriendlyMessage = decodeURIComponent(error_description.replace(/\+/g, ' '));
+        }
+
+        return c.json({
+          success: false,
+          error: userFriendlyMessage
+        }, 400);
+      }
+
+      // Handle PKCE flow (authorization code)
+      if (code) {
+        console.log('Processing PKCE flow with authorization code');
+        const { data, error } = await supabaseAdmin.auth.exchangeCodeForSession(code);
+
+        if (error) {
+          console.error('Code exchange failed:', error);
+          return c.json({
+            success: false,
+            error: `Authentication failed: ${error.message}`
+          }, 400);
+        }
+
+        if (data.session) {
+          console.log('PKCE session established successfully');
+          return c.json({
+            success: true,
+            redirectTo: '/discover',
+            session_established: true
+          });
+        }
+      }
+
+      // Handle implicit flow (direct tokens)
+      if (access_token) {
+        console.log('Processing implicit flow with access token');
+        const { data, error } = await supabaseAdmin.auth.setSession({
+          access_token,
+          refresh_token: refresh_token || ''
+        });
+
+        if (error) {
+          console.error('Session establishment failed:', error);
+          return c.json({
+            success: false,
+            error: `Authentication failed: ${error.message}`
+          }, 400);
+        }
+
+        if (data.session) {
+          console.log('Implicit flow session established successfully');
+          return c.json({
+            success: true,
+            redirectTo: '/discover',
+            session_established: true
+          });
+        }
+      }
+
+      // No valid auth data provided
+      console.log('No valid authentication data provided');
+      return c.json({
+        success: false,
+        error: 'No valid authentication data provided'
+      }, 400);
+
+    } catch (error) {
+      console.error('Auth callback error:', error);
+      return c.json({
+        success: false,
+        error: 'An unexpected error occurred during authentication'
+      }, 500);
+    }
+  });
 }

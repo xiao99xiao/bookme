@@ -60,11 +60,10 @@ export default defineConfig(({ mode }) => ({
   },
   optimizeDeps: {
     include: [
-      'react', 
-      'react-dom', 
-      '@privy-io/react-auth', 
+      'react',
+      'react-dom',
+      '@privy-io/react-auth',
       '@privy-io/react-auth/smart-wallets',
-      '@supabase/supabase-js',
       'viem',
       'permissionless'
     ],
