@@ -14,7 +14,7 @@
     "dotenv": "^16.4.1"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.0.0"
   },
   "keywords": ["cron", "booking", "automation", "railway"],
   "author": "BookMe Team",
