@@ -166,7 +166,8 @@ class BlockchainEventMonitor {
       this.setupPeriodicCleanup();
 
       // Check for missed events on startup
-      this.checkForMissedEvents();
+      // TODO: Re-enable when we have proper Alchemy tier or chunked processing
+      // this.checkForMissedEvents();
 
       console.log("✅ Memory-optimized blockchain event monitoring started");
     } catch (error) {
@@ -899,8 +900,8 @@ class BlockchainEventMonitor {
       console.log(`🔍 Checking ${activeBookings.length} active bookings for missed events...`);
 
       const currentBlock = await this.provider.getBlockNumber();
-      // Check last 1000 blocks (~33 minutes on Base Sepolia) for missed events
-      const fromBlock = Math.max(0, currentBlock - 1000);
+      // Check last 10 blocks (Alchemy free tier limit) for missed events
+      const fromBlock = Math.max(0, currentBlock - 10);
 
       for (const booking of activeBookings) {
         try {
