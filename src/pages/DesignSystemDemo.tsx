@@ -22,7 +22,7 @@ import {
   EmptyListState
 } from '@/design-system';
 import { ServiceCard } from '@/components/ServiceCard';
-import RefactoredNavigation from '@/components/RefactoredNavigation';
+// import RefactoredNavigation from '@/components/RefactoredNavigation'; // Removed - component deleted
 
 const sampleService = {
   id: '1',
@@ -39,7 +39,6 @@ const sampleService = {
 export default function DesignSystemDemo() {
   return (
     <div className="bg-brandBgGrey2">
-      <RefactoredNavigation />
       
       <Container maxWidth="xl" className="pt-24">
         <Stack spacing="3xl">

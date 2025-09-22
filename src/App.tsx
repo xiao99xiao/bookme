@@ -12,8 +12,7 @@ import Auth from "./pages/Auth";
 import AuthCallback from "./pages/AuthCallback";
 import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
-import NewNavigation from "./components/NewNavigation";
-import RefactoredNavigation from "./components/RefactoredNavigation";
+import Navigation from "./components/Navigation";
 import { OnboardingNavigator } from "./components/OnboardingNavigator";
 
 // Customer pages
@@ -60,7 +59,7 @@ function AppContent() {
   return (
     <>
       <OnboardingNavigator />
-      <NewNavigation />
+      <Navigation />
       <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/discover" element={<Discover />} />

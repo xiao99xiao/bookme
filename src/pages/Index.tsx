@@ -6,8 +6,11 @@ import createProfileImg from "@/assets/create-profile.jpg";
 import bookServiceImg from "@/assets/book-service.jpg";
 import cryptoPaymentImg from "@/assets/crypto-payment.jpg";
 import { H1, H2, H3 } from "@/design-system";
+import { useAuth } from "@/contexts/PrivyAuthContext";
 
 const Index = () => {
+  const { login } = useAuth();
+
   return (
     <div>
       {/* Hero Section */}
@@ -23,7 +26,7 @@ const Index = () => {
                 Turn your expertise into income. Share what you know, set your schedule, and get paid in crypto while customers use their credit cards.
               </p>
               <Stack direction="row" spacing="lg" className="flex-col sm:flex-row">
-                <DSButton as={Link} to="/auth" size="large" className="text-lg px-8">
+                <DSButton onClick={login} size="large" className="text-lg px-8">
                   Start Earning Today
                 </DSButton>
                 <DSButton variant="secondary" size="large" as={Link} to="/book-services" className="text-lg px-8">
@@ -219,7 +222,7 @@ const Index = () => {
             Join thousands of professionals already earning cryptocurrency by sharing their expertise.
             Start building your income stream today.
           </p>
-          <DSButton as={Link} to="/auth" size="large" className="text-lg px-12">
+          <DSButton onClick={login} size="large" className="text-lg px-12">
             Create Your Profile Now
           </DSButton>
         </Container>

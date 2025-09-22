@@ -53,7 +53,7 @@ interface Category {
 
 const Discover = () => {
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { profile, login } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [services, setServices] = useState<Service[]>([]);
@@ -251,7 +251,7 @@ const Discover = () => {
           <p className="text-lg text-muted-foreground mb-6">
             Join thousands of professionals earning by sharing their expertise. Start building your income stream today.
           </p>
-          <DSButton as={Link} to="/auth" size="large" className="text-lg px-8">
+          <DSButton onClick={login} size="large" className="text-lg px-8">
             Become a Service Provider
           </DSButton>
         </Container>

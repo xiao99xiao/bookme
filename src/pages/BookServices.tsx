@@ -6,8 +6,11 @@ import browseServices from "@/assets/browse-services.jpg";
 import easyBooking from "@/assets/easy-booking.jpg";
 import payAndConnect from "@/assets/pay-and-connect.jpg";
 import { H1, H2, H3 } from "@/design-system";
+import { useAuth } from "@/contexts/PrivyAuthContext";
 
 const BookServices = () => {
+  const { login } = useAuth();
+
   return (
     <div>
       {/* Hero Section */}
@@ -27,7 +30,7 @@ const BookServices = () => {
                 <DSButton as={Link} to="/discover" size="large" className="text-lg px-8">
                   Browse Experts
                 </DSButton>
-                <DSButton variant="secondary" size="large" as={Link} to="/auth" className="text-lg px-8">
+                <DSButton variant="secondary" size="large" onClick={login} className="text-lg px-8">
                   Join as Provider
                 </DSButton>
               </div>
