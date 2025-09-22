@@ -59,20 +59,31 @@ export default function userRoutes(app) {
       // Create new user if doesn't exist
       const emailAccount = privyUser.linkedAccounts?.find(acc => acc.type === 'email');
       const email = emailAccount?.address || `${privyUser.userId}@privy.user`;
-      
+
+      // Generate appropriate display name
+      let displayName;
+      if (emailAccount?.address) {
+        // Use email username for real email accounts
+        displayName = emailAccount.address.split('@')[0];
+      } else {
+        // For non-email accounts, use truncated Privy ID (matches frontend logic)
+        displayName = privyUser.userId?.substring(0, 8) || 'User';
+      }
+
       const { data: newUser, error: createError } = await supabaseAdmin
         .from('users')
         .insert({
           id: userId,
           email: email,
-          display_name: email.split('@')[0],
+          display_name: displayName,
           timezone: 'UTC',
           is_verified: false,
           rating: 0,
           review_count: 0,
           total_earnings: 0,
           total_spent: 0,
-          is_provider: false
+          is_provider: false,
+          onboarding_completed: false
         })
         .select()
         .single();
@@ -390,6 +401,42 @@ export default function userRoutes(app) {
       return c.json(data);
     } catch (error) {
       console.error('User lookup error:', error);
+      return c.json({ error: 'Internal server error' }, 500);
+    }
+  });
+
+  /**
+   * POST /api/profile/complete-onboarding
+   *
+   * Mark user's onboarding as completed.
+   * Called when user finishes the onboarding flow.
+   *
+   * Headers:
+   * - Authorization: Bearer {privyToken}
+   *
+   * Response:
+   * - success: boolean
+   *
+   * @param {Context} c - Hono context
+   * @returns {Response} JSON response with success status
+   */
+  app.post('/api/profile/complete-onboarding', verifyPrivyAuth, async (c) => {
+    try {
+      const userId = c.get('userId');
+
+      const { error } = await supabaseAdmin
+        .from('users')
+        .update({ onboarding_completed: true })
+        .eq('id', userId);
+
+      if (error) {
+        console.error('Complete onboarding error:', error);
+        return c.json({ error: 'Failed to complete onboarding' }, 500);
+      }
+
+      return c.json({ success: true });
+    } catch (error) {
+      console.error('Complete onboarding error:', error);
       return c.json({ error: 'Internal server error' }, 500);
     }
   });

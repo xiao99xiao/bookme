@@ -9,12 +9,29 @@ export const OnboardingNavigator = () => {
 
   // Handle onboarding redirect after profile is loaded
   useEffect(() => {
-    if (loading || !needsOnboarding) return;
-    if (!authenticated || !profile || location.pathname === '/onboarding') return;
+    console.log('=== ONBOARDING NAVIGATOR DEBUG ===');
+    console.log('loading:', loading);
+    console.log('needsOnboarding:', needsOnboarding);
+    console.log('authenticated:', authenticated);
+    console.log('profile:', profile);
+    console.log('location.pathname:', location.pathname);
+    console.log('===================================');
+
+    if (loading || !needsOnboarding) {
+      console.log('Skipping onboarding redirect: loading:', loading, 'needsOnboarding:', needsOnboarding);
+      return;
+    }
+    if (!authenticated || !profile || location.pathname === '/onboarding') {
+      console.log('Skipping onboarding redirect: authenticated:', authenticated, 'profile:', !!profile, 'isOnboardingPage:', location.pathname === '/onboarding');
+      return;
+    }
 
     // Skip onboarding redirect for auth-related pages
     const authPaths = ['/auth', '/auth/callback'];
-    if (authPaths.includes(location.pathname)) return;
+    if (authPaths.includes(location.pathname)) {
+      console.log('Skipping onboarding redirect: on auth page:', location.pathname);
+      return;
+    }
 
     if (needsOnboarding) {
       console.log('User needs onboarding, redirecting...');

@@ -124,32 +124,84 @@ export const PrivyAuthProvider = ({ children }: PrivyAuthProviderProps) => {
     return user.id?.substring(0, 8) || 'User';
   };
 
-  // Check if user needs onboarding (missing display_name or just has default name based on email)
-  const needsOnboarding = authenticated && profile && !loading && (
-    !profile.display_name || 
-    profile.display_name.trim() === '' ||
-    profile.display_name === getUserDisplayName(privyUser)
-  );
+  // Check if user needs onboarding based on onboarding_completed flag
+  const needsOnboarding = authenticated && profile && !loading && !profile.onboarding_completed;
+
+  // Debug logging for onboarding logic
+  useEffect(() => {
+    if (profile && privyUser) {
+      console.log('=== ONBOARDING DEBUG ===');
+      console.log('authenticated:', authenticated);
+      console.log('profile:', profile);
+      console.log('loading:', loading);
+      console.log('profile.onboarding_completed:', profile.onboarding_completed);
+      console.log('needsOnboarding calculated:', needsOnboarding);
+      console.log('========================');
+    }
+  }, [authenticated, profile, loading, needsOnboarding, privyUser]);
 
   const fetchOrCreateProfile = async (privyId: string) => {
     try {
       console.log('=== FETCH/CREATE PROFILE START ===');
       console.log('Privy ID:', privyId);
-      
+
       // Don't store token - let Privy handle it internally
       // Just fetch or create profile through backend
       console.log('Fetching profile from backend...');
       const profileData = await backendApi.getUserProfile();
-      
+
       if (profileData) {
         console.log('Profile found:', profileData);
         setProfile(profileData);
+
+        // Check for pending referral code after profile is loaded
+        await checkAndApplyPendingReferralCode();
         return;
       }
     } catch (error) {
       console.error('fetchOrCreateProfile failed:', error);
       // Profile will be created by backend on first request
       setProfile(null);
+    }
+  };
+
+  // Check for and apply any pending referral code from sessionStorage
+  const checkAndApplyPendingReferralCode = async () => {
+    try {
+      const storedCode = sessionStorage.getItem('referralCode');
+      const timestamp = sessionStorage.getItem('referralCodeTimestamp');
+
+      if (!storedCode || !timestamp) {
+        return; // No referral code to apply
+      }
+
+      // Check if code is still valid (less than 24 hours old)
+      const age = Date.now() - parseInt(timestamp);
+      const twentyFourHours = 24 * 60 * 60 * 1000;
+
+      if (age >= twentyFourHours) {
+        // Clear expired code
+        sessionStorage.removeItem('referralCode');
+        sessionStorage.removeItem('referralCodeTimestamp');
+        sessionStorage.removeItem('referrerName');
+        return;
+      }
+
+      // Apply the referral code
+      console.log('Applying pending referral code:', storedCode);
+      const { ApiClient } = await import('@/lib/api-migration');
+      const result = await ApiClient.applyReferralCode(storedCode);
+
+      if (result.success) {
+        console.log('Referral code applied successfully');
+        // Clear from storage after successful application
+        sessionStorage.removeItem('referralCode');
+        sessionStorage.removeItem('referralCodeTimestamp');
+        sessionStorage.removeItem('referrerName');
+      }
+    } catch (error) {
+      console.error('Failed to apply pending referral code:', error);
+      // Don't clear on error - user might retry later
     }
   };
 

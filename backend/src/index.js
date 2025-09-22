@@ -10,6 +10,7 @@ import integrationRoutes from "./routes/integrations.js";
 import uploadRoutes from "./routes/uploads.js";
 import systemRoutes from "./routes/system.js";
 import transactionRoutes from "./routes/transactions.js";
+import referralRoutes from "./routes/referrals.js";
 import { createServer } from "http";
 import { setupWebSocket, getIO } from "./websocket.js";
 
@@ -49,6 +50,8 @@ uploadRoutes(app);
 systemRoutes(app);
 // Register transaction routes
 transactionRoutes(app);
+// Register referral routes
+referralRoutes(app);
 
 // Export app for use in HTTPS server
 export default app;

@@ -37,6 +37,7 @@ import ProviderMobileChat from "./pages/provider/ProviderMobileChat";
 import ProviderIntegrations from "./pages/provider/ProviderIntegrations";
 import IntegrationsCallback from "./pages/provider/IntegrationsCallback";
 import Income from "./pages/provider/Income";
+import ProviderReferrals from "./pages/provider/ProviderReferrals";
 
 // Balance page
 import Balance from "./pages/Balance";
@@ -200,13 +201,21 @@ function AppContent() {
                 </ProtectedRoute>
               } 
             />
-            <Route 
-              path="/provider/income" 
+            <Route
+              path="/provider/income"
               element={
                 <ProtectedRoute>
                   <Income />
                 </ProtectedRoute>
-              } 
+              }
+            />
+            <Route
+              path="/provider/referrals"
+              element={
+                <ProtectedRoute>
+                  <ProviderReferrals />
+                </ProtectedRoute>
+              }
             />
 
             {/* Mobile Me Page - must be before username route to avoid conflicts */}

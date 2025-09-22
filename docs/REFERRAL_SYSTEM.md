@@ -61,32 +61,24 @@ struct Booking {
 ### 1. Core Referral Tables
 
 ```sql
--- Referral relationships table
+-- Referral relationships table (simplified - no status needed!)
 CREATE TABLE public.referrals (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     referrer_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
     referee_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-    referral_code TEXT UNIQUE NOT NULL,
-    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'activated', 'expired')),
-    activated_at TIMESTAMP WITH TIME ZONE,
+    referral_code TEXT NOT NULL, -- Which code was used for this referral
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
 
     CONSTRAINT no_self_referral CHECK (referrer_id != referee_id),
     CONSTRAINT unique_referral_relationship UNIQUE (referrer_id, referee_id)
 );
 
--- Referral codes lookup table
+-- One referral code per user (simplified - no expiration/limits needed!)
 CREATE TABLE public.referral_codes (
     code TEXT PRIMARY KEY,
-    user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-    is_active BOOLEAN DEFAULT true,
+    user_id UUID NOT NULL UNIQUE REFERENCES public.users(id) ON DELETE CASCADE, -- UNIQUE = one code per user forever
     usage_count INTEGER DEFAULT 0,
-    max_usage INTEGER DEFAULT NULL,
-    expires_at TIMESTAMP WITH TIME ZONE DEFAULT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-
-    CONSTRAINT unique_user_active_code UNIQUE (user_id) WHERE is_active = true
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
 -- Update users table with referral fields
@@ -99,14 +91,15 @@ ADD COLUMN IF NOT EXISTS referred_by UUID REFERENCES public.users(id);
 ### 2. Database Indexes
 
 ```sql
+-- Indexes for referrals table
 CREATE INDEX IF NOT EXISTS idx_referrals_referrer_id ON public.referrals(referrer_id);
 CREATE INDEX IF NOT EXISTS idx_referrals_referee_id ON public.referrals(referee_id);
 CREATE INDEX IF NOT EXISTS idx_referrals_code ON public.referrals(referral_code);
-CREATE INDEX IF NOT EXISTS idx_referrals_status ON public.referrals(status);
 
-CREATE INDEX IF NOT EXISTS idx_referral_codes_user_id ON public.referral_codes(user_id);
-CREATE INDEX IF NOT EXISTS idx_referral_codes_active ON public.referral_codes(is_active) WHERE is_active = true;
+-- Indexes for referral_codes table (user_id already has UNIQUE constraint)
+CREATE INDEX IF NOT EXISTS idx_referral_codes_usage_count ON public.referral_codes(usage_count);
 
+-- Index for users table referral tracking
 CREATE INDEX IF NOT EXISTS idx_users_referred_by ON public.users(referred_by);
 ```
 
@@ -122,8 +115,8 @@ CREATE OR REPLACE FUNCTION apply_referral_code(
 BEGIN
   UPDATE users SET referred_by = referrer_user_id WHERE id = referee_user_id;
 
-  INSERT INTO referrals (referrer_id, referee_id, referral_code, status, activated_at)
-  VALUES (referrer_user_id, referee_user_id, referral_code, 'activated', now());
+  INSERT INTO referrals (referrer_id, referee_id, referral_code)
+  VALUES (referrer_user_id, referee_user_id, referral_code);
 
   UPDATE referral_codes
   SET usage_count = usage_count + 1
@@ -179,9 +172,9 @@ CREATE POLICY "referrals_own_data" ON public.referrals
 CREATE POLICY "referral_codes_own_data" ON public.referral_codes
   FOR ALL USING (user_id = auth.uid());
 
--- Public read for referral code validation
+-- Public read for referral code validation (all codes are active)
 CREATE POLICY "referral_codes_public_read" ON public.referral_codes
-  FOR SELECT USING (is_active = true);
+  FOR SELECT USING (true);
 ```
 
 ## Backend Implementation
@@ -208,7 +201,6 @@ export default function referralRoutes(app) {
         .from('referral_codes')
         .select('*')
         .eq('user_id', userId)
-        .eq('is_active', true)
         .single();
 
       if (!existingCode) {
@@ -218,8 +210,7 @@ export default function referralRoutes(app) {
           .from('referral_codes')
           .insert({
             code,
-            user_id: userId,
-            is_active: true
+            user_id: userId
           })
           .select()
           .single();
@@ -230,8 +221,7 @@ export default function referralRoutes(app) {
       const { data: stats } = await supabaseAdmin
         .from('referrals')
         .select('id')
-        .eq('referrer_id', userId)
-        .eq('status', 'activated');
+        .eq('referrer_id', userId);
 
       return c.json({
         code: existingCode.code,
@@ -309,11 +299,11 @@ export default function referralRoutes(app) {
 
       const { data: codeData } = await supabaseAdmin
         .from('referral_codes')
-        .select('user_id, is_active, expires_at, max_usage, usage_count')
+        .select('user_id, usage_count')
         .eq('code', referralCode)
         .single();
 
-      if (!codeData || !codeData.is_active) {
+      if (!codeData) {
         return c.json({ error: 'Invalid referral code' }, 400);
       }
 
@@ -357,9 +347,6 @@ export default function referralRoutes(app) {
         .from('referral_codes')
         .select(`
           code,
-          is_active,
-          expires_at,
-          max_usage,
           usage_count,
           user:users(display_name)
         `)
@@ -370,14 +357,11 @@ export default function referralRoutes(app) {
         return c.json({ valid: false, error: 'Code not found' });
       }
 
-      const isValid = codeData.is_active &&
-        (!codeData.expires_at || new Date(codeData.expires_at) > new Date()) &&
-        (!codeData.max_usage || codeData.usage_count < codeData.max_usage);
-
+      // All codes are valid (simplified logic)
       return c.json({
-        valid: isValid,
+        valid: true,
         referrerName: codeData.user?.display_name,
-        error: isValid ? null : 'Code is expired or inactive'
+        error: null
       });
 
     } catch (error) {
@@ -846,7 +830,7 @@ sequenceDiagram
 ### Prevention Mechanisms
 1. **No Self-Referrals**: Database constraint prevents users from referring themselves
 2. **Unique Relationships**: Each user can only be referred once
-3. **Code Validation**: Expiration and usage limits on referral codes
+3. **Code Validation**: Permanent referral codes with usage tracking
 4. **Wallet Verification**: Only verified wallet addresses receive commissions
 
 ### Data Protection
@@ -910,7 +894,7 @@ SELECT
   DATE_TRUNC('month', r.created_at) as month,
   COUNT(*) as new_referrals,
   COUNT(DISTINCT r.referrer_id) as active_referrers,
-  SUM(CASE WHEN r.status = 'activated' THEN 1 ELSE 0 END) as activated_referrals
+  COUNT(*) as total_referrals
 FROM referrals r
 GROUP BY DATE_TRUNC('month', r.created_at)
 ORDER BY month DESC;
@@ -921,37 +905,20 @@ WITH funnel AS (
     rc.code,
     rc.usage_count as clicks,
     COUNT(DISTINCT r.id) as signups,
-    COUNT(DISTINCT CASE WHEN r.status = 'activated' THEN r.id END) as activated,
     COUNT(DISTINCT b.id) as bookings_made
   FROM referral_codes rc
   LEFT JOIN referrals r ON rc.code = r.referral_code
-  LEFT JOIN bookings b ON r.referee_id = b.provider_id
+  LEFT JOIN bookings b ON r.referee_id = b.provider_id AND b.status = 'completed'
   GROUP BY rc.code, rc.usage_count
 )
 SELECT
   COUNT(*) as total_codes,
   AVG(clicks) as avg_clicks,
   AVG(CASE WHEN clicks > 0 THEN signups::float / clicks ELSE 0 END) as signup_rate,
-  AVG(CASE WHEN signups > 0 THEN activated::float / signups ELSE 0 END) as activation_rate,
-  AVG(CASE WHEN activated > 0 THEN bookings_made::float / activated ELSE 0 END) as booking_rate
+  AVG(CASE WHEN signups > 0 THEN bookings_made::float / signups ELSE 0 END) as booking_rate
 FROM funnel;
 ```
 
-## Success Metrics
-
-### Key Performance Indicators
-- **Referral Conversion Rate**: Target 15-20% of clicks to signups
-- **Activation Rate**: Target 60% of referred users completing first booking
-- **Average Commission per Referrer**: Target $50-100/month for active referrers
-- **Viral Coefficient**: Target 1.2+ (each user brings 1.2 new users)
-- **Time to First Earning**: Target < 30 days from referral activation
-
-### Monitoring Dashboard
-- Real-time referral tracking
-- Commission distribution status
-- Top referrer leaderboard
-- Geographic distribution of referrals
-- Referral source analytics
 
 ## Conclusion
 

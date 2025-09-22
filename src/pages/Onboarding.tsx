@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,17 +7,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
-import { Upload, ArrowRight, ArrowLeft, MapPin, User, FileText, Briefcase, Search, Loader2, Check } from "lucide-react";
+import { Upload, ArrowRight, ArrowLeft, MapPin, User, FileText, Briefcase, Search, Loader2, Check, Gift } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/PrivyAuthContext";
 import { ApiClient } from "@/lib/api-migration";
 import { H1, H3 } from "@/design-system";
+import { useReferralCode } from "@/hooks/useReferralCode";
 
 const Onboarding = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { userId, refreshProfile } = useAuth();
-  
+  const { referralCode, isValid, referrerName, applyReferralCode } = useReferralCode();
+
   // Get redirect context from URL params
   const returnTo = searchParams.get('returnTo');
   const fromProfile = searchParams.get('fromProfile');
@@ -84,7 +86,7 @@ const Onboarding = () => {
 
     try {
       setIsSubmitting(true);
-      
+
       // Update user profile with all the collected information
       await ApiClient.updateUserProfile(userId, {
         display_name: formData.display_name,
@@ -93,6 +95,12 @@ const Onboarding = () => {
         bio: formData.bio,
         is_provider: formData.wantsToProvideService || false
       });
+
+      // Note: Referral code is now automatically applied during authentication
+      // No need to manually apply it here
+
+      // Mark onboarding as completed
+      await ApiClient.completeOnboarding();
 
       await refreshProfile();
       toast.success('Welcome to BookMe! Your profile is ready.');
@@ -489,6 +497,19 @@ const Onboarding = () => {
               </div>
               <Progress value={progress} className="h-1.5" />
             </div>
+
+            {/* Referral banner if present */}
+            {referralCode && isValid && (
+              <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 flex items-center gap-3">
+                <Gift className="h-5 w-5 text-primary flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-primary">Referral Code Applied!</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    You've been referred by {referrerName || 'another provider'}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Step content */}
             <div className="space-y-8">

@@ -230,8 +230,27 @@ export default function bookingRoutes(app) {
         const EIP712Signer = (await import("../eip712-signer.js")).default;
         const eip712Signer = new EIP712Signer();
 
+        // Check if customer was referred
+        const { data: customerData } = await supabaseAdmin
+          .from('users')
+          .select('referred_by')
+          .eq('id', userId)
+          .single();
+
+        const hasInviter = !!customerData?.referred_by;
+        let inviterAddress = "0x0000000000000000000000000000000000000000";
+
+        if (hasInviter) {
+          const { data: referrerData } = await supabaseAdmin
+            .from('users')
+            .select('wallet_address')
+            .eq('id', customerData.referred_by)
+            .single();
+
+          inviterAddress = referrerData?.wallet_address || inviterAddress;
+        }
+
         // Calculate fee structure (from old code)
-        const hasInviter = false; // TODO: Add inviter logic when implemented
         const feeData = eip712Signer.calculateFees(
           booking.total_price,
           hasInviter,
@@ -242,7 +261,7 @@ export default function bookingRoutes(app) {
           bookingId: booking.id, // Pass UUID as in old code
           customer: customerAddress,
           provider: providerAddress,
-          inviter: "0x0000000000000000000000000000000000000000", // ethers.ZeroAddress equivalent
+          inviter: inviterAddress,
           amount: booking.total_price,
           platformFeeRate: feeData.platformFeeRate,
           inviterFeeRate: feeData.inviterFeeRate,
@@ -424,8 +443,27 @@ export default function bookingRoutes(app) {
         const EIP712Signer = (await import("../eip712-signer.js")).default;
         const eip712Signer = new EIP712Signer();
 
+        // Check if customer was referred
+        const { data: customerData } = await supabaseAdmin
+          .from('users')
+          .select('referred_by')
+          .eq('id', booking.customer_id)
+          .single();
+
+        const hasInviter = !!customerData?.referred_by;
+        let inviterAddress = "0x0000000000000000000000000000000000000000";
+
+        if (hasInviter) {
+          const { data: referrerData } = await supabaseAdmin
+            .from('users')
+            .select('wallet_address')
+            .eq('id', customerData.referred_by)
+            .single();
+
+          inviterAddress = referrerData?.wallet_address || inviterAddress;
+        }
+
         // Calculate fee structure
-        const hasInviter = false; // TODO: Add inviter logic when implemented
         const feeData = eip712Signer.calculateFees(
           booking.total_price,
           hasInviter,
@@ -436,7 +474,7 @@ export default function bookingRoutes(app) {
           bookingId: booking.id,
           customer: booking.customer.wallet_address,
           provider: booking.provider.wallet_address,
-          inviter: "0x0000000000000000000000000000000000000000", // ethers.ZeroAddress equivalent
+          inviter: inviterAddress,
           amount: booking.total_price,
           platformFeeRate: feeData.platformFeeRate,
           inviterFeeRate: feeData.inviterFeeRate,

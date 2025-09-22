@@ -53,6 +53,12 @@ export class BackendAPI {
     });
   }
 
+  async completeOnboarding(): Promise<any> {
+    return this.request('/api/profile/complete-onboarding', {
+      method: 'POST',
+    });
+  }
+
   // Services APIs
   async getServices(filters?: any): Promise<any[]> {
     const params = new URLSearchParams(filters);
@@ -344,5 +350,43 @@ export class BackendAPI {
     transactionsByType: Record<string, number>
   }> {
     return this.request(`/api/transactions/income/summary`);
+  }
+
+  // Referral APIs
+  async getReferralCode(): Promise<{
+    code: string
+    referralUrl: string
+    usageCount: number
+    activeReferrals: number
+  }> {
+    return this.request('/api/referrals/my-code');
+  }
+
+  async getReferralStats(): Promise<{
+    totalReferrals: number
+    totalEarnings: number
+    pendingEarnings: number
+    recentEarnings: any[]
+  }> {
+    return this.request('/api/referrals/stats');
+  }
+
+  async getReferralEarnings(limit: number = 20, offset: number = 0): Promise<any[]> {
+    return this.request(`/api/referrals/earnings?limit=${limit}&offset=${offset}`);
+  }
+
+  async applyReferralCode(referralCode: string): Promise<{ success: boolean }> {
+    return this.request('/api/referrals/register', {
+      method: 'POST',
+      body: JSON.stringify({ referralCode })
+    });
+  }
+
+  async validateReferralCode(code: string): Promise<{
+    valid: boolean
+    referrerName?: string
+    error?: string
+  }> {
+    return this.request(`/api/referrals/validate/${code}`);
   }
 }

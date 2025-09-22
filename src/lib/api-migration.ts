@@ -202,6 +202,11 @@ export class ApiClient {
     return this.backendApi!.updateUserProfile(updates)
   }
 
+  static async completeOnboarding(): Promise<{ success: boolean }> {
+    await this.waitForInitialization()
+    return this.backendApi!.completeOnboarding()
+  }
+
   // Service methods
   static async getUserServices(userId?: string): Promise<Service[]> {
     await this.waitForInitialization()
@@ -707,6 +712,35 @@ export class ApiClient {
   static async getIncomeSummary(): Promise<IncomeSummary> {
     await this.waitForInitialization()
     return this.backendApi!.getIncomeTransactionsSummary()
+  }
+
+  // Referral System APIs
+  static async getReferralCode() {
+    await this.waitForInitialization()
+    return this.backendApi!.getReferralCode()
+  }
+
+  static async getReferralStats() {
+    await this.waitForInitialization()
+    return this.backendApi!.getReferralStats()
+  }
+
+  static async getReferralEarnings(limit = 20, offset = 0) {
+    await this.waitForInitialization()
+    return this.backendApi!.getReferralEarnings(limit, offset)
+  }
+
+  static async applyReferralCode(referralCode: string) {
+    await this.waitForInitialization()
+    return this.backendApi!.applyReferralCode(referralCode)
+  }
+
+  static async validateReferralCode(code: string) {
+    // This is a public endpoint, no auth needed
+    const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://skating-destroyed-understanding-sas.trycloudflare.com'
+    const response = await fetch(`${BACKEND_URL}/api/referrals/validate/${code}`)
+    if (!response.ok) throw new Error('Failed to validate referral code')
+    return response.json()
   }
 }
 
