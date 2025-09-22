@@ -597,7 +597,7 @@ class BlockchainEventMonitor {
       .select(`
         *,
         services!inner(id, title),
-        users!bookings_customer_id_fkey(display_name, email)
+        users!bookings_customer_id_fkey(display_name, email, referred_by)
       `)
       .eq("blockchain_booking_id", eventData.bookingId)
       .single();
@@ -648,6 +648,55 @@ class BlockchainEventMonitor {
 
     if (transactionError) {
       console.error("⚠️ Error creating transaction record:", transactionError);
+    }
+
+    // Check if there's a referral commission to record
+    if (eventData.inviterAmount && eventData.inviter && eventData.inviter !== "0x0000000000000000000000000000000000000000") {
+      // Get the referrer's user ID from their wallet address
+      const { data: referrer } = await this.supabaseAdmin
+        .from("users")
+        .select("id")
+        .eq("wallet_address", eventData.inviter.toLowerCase())
+        .single();
+
+      if (referrer) {
+        // Calculate inviter amount
+        const inviterAmount = parseFloat(ethers.formatUnits(eventData.inviterAmount, 6));
+
+        // Create inviter fee transaction record
+        const { error: inviterTransactionError } = await this.supabaseAdmin
+          .from("transactions")
+          .insert({
+            provider_id: referrer.id, // Referrer receives the commission
+            type: 'inviter_fee',
+            amount: inviterAmount,
+            booking_id: booking.id,
+            source_user_id: booking.customer_id,
+            service_id: booking.service_id,
+            description: `Referral commission from ${customerName}'s booking`,
+            transaction_hash: eventData.transactionHash,
+          });
+
+        if (inviterTransactionError) {
+          console.error("⚠️ Error creating inviter fee transaction:", inviterTransactionError);
+        } else {
+          console.log("💰 Referral commission recorded for:", referrer.id, "Amount:", inviterAmount);
+
+          // Update referrer's total earnings
+          const { error: referrerEarningsError } = await this.supabaseAdmin
+            .from("users")
+            .update({
+              referral_earnings: this.supabaseAdmin.raw(
+                `COALESCE(referral_earnings, 0) + ${inviterAmount}`
+              ),
+            })
+            .eq("id", referrer.id);
+
+          if (referrerEarningsError) {
+            console.error("⚠️ Error updating referrer earnings:", referrerEarningsError);
+          }
+        }
+      }
     }
 
     // Update provider total_earnings by calculating from all transaction records
@@ -716,6 +765,73 @@ class BlockchainEventMonitor {
         meetingError.message,
       );
       // Don't throw error - meeting deletion failure shouldn't prevent cancellation processing
+    }
+
+    // Record refund transactions if amounts are provided
+    if (eventData.customerAmount) {
+      const customerRefundAmount = parseFloat(ethers.formatUnits(eventData.customerAmount, 6));
+
+      if (customerRefundAmount > 0) {
+        // Create refund transaction record for customer
+        const { error: refundError } = await this.supabaseAdmin
+          .from("transactions")
+          .insert({
+            provider_id: booking.customer_id, // Customer receives the refund
+            type: 'refund',
+            amount: customerRefundAmount,
+            booking_id: booking.id,
+            source_user_id: booking.customer_id,
+            service_id: booking.service_id,
+            description: `Refund for cancelled booking - ${eventData.reason || 'No reason provided'}`,
+            transaction_hash: eventData.transactionHash,
+          });
+
+        if (refundError) {
+          console.error("⚠️ Error creating refund transaction:", refundError);
+        } else {
+          console.log("💸 Refund transaction recorded for customer:", booking.customer_id, "Amount:", customerRefundAmount);
+        }
+      }
+    }
+
+    // Record partial payment to provider if any
+    if (eventData.providerAmount) {
+      const providerPartialAmount = parseFloat(ethers.formatUnits(eventData.providerAmount, 6));
+
+      if (providerPartialAmount > 0) {
+        const { error: providerPaymentError } = await this.supabaseAdmin
+          .from("transactions")
+          .insert({
+            provider_id: booking.provider_id,
+            type: 'booking_payment',
+            amount: providerPartialAmount,
+            booking_id: booking.id,
+            source_user_id: booking.customer_id,
+            service_id: booking.service_id,
+            description: `Partial payment for cancelled booking - ${eventData.reason || 'No reason provided'}`,
+            transaction_hash: eventData.transactionHash,
+          });
+
+        if (providerPaymentError) {
+          console.error("⚠️ Error creating provider partial payment transaction:", providerPaymentError);
+        } else {
+          console.log("💰 Partial payment recorded for provider:", booking.provider_id, "Amount:", providerPartialAmount);
+
+          // Update provider total_earnings
+          const { error: earningsError } = await this.supabaseAdmin
+            .from("users")
+            .update({
+              total_earnings: this.supabaseAdmin.raw(
+                `(SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE provider_id = '${booking.provider_id}')`
+              ),
+            })
+            .eq("id", booking.provider_id);
+
+          if (earningsError) {
+            console.error("⚠️ Error updating provider earnings:", earningsError);
+          }
+        }
+      }
     }
 
     console.log(

@@ -14,6 +14,19 @@ CREATE TABLE public.blockchain_events (
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT blockchain_events_pkey PRIMARY KEY (id)
 );
+CREATE TABLE public.booking_session_data (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  booking_id uuid NOT NULL,
+  provider_total_duration integer,
+  customer_total_duration integer,
+  provider_sessions jsonb,
+  customer_sessions jsonb,
+  last_checked_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT booking_session_data_pkey PRIMARY KEY (id),
+  CONSTRAINT booking_session_data_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES public.bookings(id)
+);
 CREATE TABLE public.bookings (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   service_id uuid NOT NULL,
@@ -53,12 +66,14 @@ CREATE TABLE public.bookings (
   completion_tx_hash character varying CHECK (completion_tx_hash IS NULL OR completion_tx_hash::text ~ '^0x[a-fA-F0-9]{64}$'::text),
   cancellation_tx_hash character varying CHECK (cancellation_tx_hash IS NULL OR cancellation_tx_hash::text ~ '^0x[a-fA-F0-9]{64}$'::text),
   blockchain_data jsonb,
+  auto_complete_blocked boolean DEFAULT false,
+  auto_complete_blocked_reason text,
   CONSTRAINT bookings_pkey PRIMARY KEY (id),
-  CONSTRAINT bookings_cancellation_policy_id_fkey FOREIGN KEY (cancellation_policy_id) REFERENCES public.cancellation_policies(id),
-  CONSTRAINT bookings_cancelled_by_fkey FOREIGN KEY (cancelled_by) REFERENCES public.users(id),
-  CONSTRAINT bookings_provider_id_fkey FOREIGN KEY (provider_id) REFERENCES public.users(id),
+  CONSTRAINT bookings_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id),
   CONSTRAINT bookings_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.users(id),
-  CONSTRAINT bookings_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id)
+  CONSTRAINT bookings_provider_id_fkey FOREIGN KEY (provider_id) REFERENCES public.users(id),
+  CONSTRAINT bookings_cancelled_by_fkey FOREIGN KEY (cancelled_by) REFERENCES public.users(id),
+  CONSTRAINT bookings_cancellation_policy_id_fkey FOREIGN KEY (cancellation_policy_id) REFERENCES public.cancellation_policies(id)
 );
 CREATE TABLE public.cancellation_policies (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -124,8 +139,8 @@ CREATE TABLE public.messages (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT messages_pkey PRIMARY KEY (id),
-  CONSTRAINT messages_sender_id_fkey FOREIGN KEY (sender_id) REFERENCES public.users(id),
-  CONSTRAINT messages_conversation_id_fkey FOREIGN KEY (conversation_id) REFERENCES public.conversations(id)
+  CONSTRAINT messages_conversation_id_fkey FOREIGN KEY (conversation_id) REFERENCES public.conversations(id),
+  CONSTRAINT messages_sender_id_fkey FOREIGN KEY (sender_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.notifications (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -157,9 +172,9 @@ CREATE TABLE public.payments (
   created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT payments_pkey PRIMARY KEY (id),
-  CONSTRAINT payments_provider_id_fkey FOREIGN KEY (provider_id) REFERENCES public.users(id),
   CONSTRAINT payments_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES public.bookings(id),
-  CONSTRAINT payments_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.users(id)
+  CONSTRAINT payments_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.users(id),
+  CONSTRAINT payments_provider_id_fkey FOREIGN KEY (provider_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.provider_availability (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -186,10 +201,10 @@ CREATE TABLE public.reviews (
   created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT reviews_pkey PRIMARY KEY (id),
-  CONSTRAINT reviews_reviewer_id_fkey FOREIGN KEY (reviewer_id) REFERENCES public.users(id),
   CONSTRAINT reviews_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES public.bookings(id),
-  CONSTRAINT reviews_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id),
-  CONSTRAINT reviews_reviewee_id_fkey FOREIGN KEY (reviewee_id) REFERENCES public.users(id)
+  CONSTRAINT reviews_reviewer_id_fkey FOREIGN KEY (reviewer_id) REFERENCES public.users(id),
+  CONSTRAINT reviews_reviewee_id_fkey FOREIGN KEY (reviewee_id) REFERENCES public.users(id),
+  CONSTRAINT reviews_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id)
 );
 CREATE TABLE public.services (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -242,10 +257,10 @@ CREATE TABLE public.transactions (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT transactions_pkey PRIMARY KEY (id),
-  CONSTRAINT transactions_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id),
+  CONSTRAINT transactions_provider_id_fkey FOREIGN KEY (provider_id) REFERENCES public.users(id),
   CONSTRAINT transactions_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES public.bookings(id),
   CONSTRAINT transactions_source_user_id_fkey FOREIGN KEY (source_user_id) REFERENCES public.users(id),
-  CONSTRAINT transactions_provider_id_fkey FOREIGN KEY (provider_id) REFERENCES public.users(id)
+  CONSTRAINT transactions_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id)
 );
 CREATE TABLE public.user_favorites (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
