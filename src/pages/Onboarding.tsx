@@ -11,6 +11,7 @@ import { Upload, ArrowRight, ArrowLeft, MapPin, User, FileText, Briefcase, Searc
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/PrivyAuthContext";
 import { ApiClient } from "@/lib/api-migration";
+import { APP_NAME } from "@/lib/constants";
 import { H1, H3 } from "@/design-system";
 import { useReferralCode } from "@/hooks/useReferralCode";
 
@@ -103,7 +104,7 @@ const Onboarding = () => {
       await ApiClient.completeOnboarding();
 
       await refreshProfile();
-      toast.success('Welcome to BookMe! Your profile is ready.');
+      toast.success(`Welcome to ${APP_NAME}! Your profile is ready.`);
 
       // Handle redirect logic based on user's context and preferences
       if (returnTo) {
@@ -403,7 +404,7 @@ const Onboarding = () => {
             <div className="space-y-4">
               <H1 className="tracking-tight">Ready to share your expertise?</H1>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                BookMe lets you earn by offering your skills and knowledge to others. You can always change this later.
+                {APP_NAME} lets you earn by offering your skills and knowledge to others. You can always change this later.
               </p>
             </div>
             
@@ -489,7 +490,7 @@ const Onboarding = () => {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="text-sm font-medium text-muted-foreground">
-                  Welcome to BookMe
+                  Welcome to {APP_NAME}
                 </div>
                 <div className="text-sm text-muted-foreground">
                   {currentStep} of {totalSteps}

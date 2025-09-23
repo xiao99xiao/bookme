@@ -1,11 +1,15 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/PrivyAuthContext";
+import { useReferralCode } from "@/hooks/useReferralCode";
 import { Loading } from "@/design-system";
 
 const Auth = () => {
   const { login, ready, authenticated } = useAuth();
   const navigate = useNavigate();
+
+  // Initialize referral code handling - this will capture any ?ref= parameter
+  useReferralCode();
 
   // Redirect authenticated users
   useEffect(() => {

@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient } from '@/lib/api-migration';
 import { GoogleAuth } from '@/lib/google-auth';
 import { GoogleMeetIcon, ZoomIcon, TeamsIcon } from '@/components/icons/MeetingPlatformIcons';
+import { APP_NAME } from '@/lib/constants';
 
 interface MeetingIntegration {
   id: string;
@@ -184,7 +185,7 @@ export default function ProviderIntegrations() {
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div className="space-y-2">
-                <p><strong>1. Connect your accounts:</strong> Authorize BookMe to create meetings on your behalf</p>
+                <p><strong>1. Connect your accounts:</strong> Authorize {APP_NAME} to create meetings on your behalf</p>
                 <p><strong>2. Create online services:</strong> When creating services, select your preferred meeting platform</p>
                 <p><strong>3. Automatic meeting creation:</strong> When bookings are confirmed, meeting links are automatically generated</p>
                 <p><strong>4. Share with customers:</strong> Meeting links appear in booking confirmations and customer dashboards</p>

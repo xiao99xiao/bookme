@@ -7,9 +7,13 @@ import bookServiceImg from "@/assets/book-service.jpg";
 import cryptoPaymentImg from "@/assets/crypto-payment.jpg";
 import { H1, H2, H3 } from "@/design-system";
 import { useAuth } from "@/contexts/PrivyAuthContext";
+import { useReferralCode } from "@/hooks/useReferralCode";
 
 const Index = () => {
   const { login } = useAuth();
+
+  // Initialize referral code handling for landing page visits
+  useReferralCode();
 
   return (
     <div>

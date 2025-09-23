@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Share2, Copy, Users, TrendingUp, DollarSign, Clock } from 'lucide-react';
 import { toast } from 'sonner';
+import { APP_NAME } from '@/lib/constants';
 
 interface ReferralData {
   code: string;
@@ -96,8 +97,8 @@ export default function ProviderReferrals() {
     if (navigator.share && referralData?.referralUrl) {
       try {
         await navigator.share({
-          title: 'Join BookMe as a Provider',
-          text: 'Start earning on BookMe with my referral link',
+          title: `Join ${APP_NAME} as a Provider`,
+          text: `Start earning on ${APP_NAME} with my referral link`,
           url: referralData.referralUrl
         });
       } catch (error) {

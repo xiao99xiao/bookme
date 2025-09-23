@@ -21,6 +21,7 @@ import { useBlockchainService } from '@/lib/blockchain-service';
 import { usePaymentTransaction } from '@/hooks/useTransaction';
 import { PaymentModal } from '@/components/TransactionModal';
 import { BlockchainErrorHandler } from '@/lib/blockchain-errors';
+import { APP_NAME } from '@/lib/constants';
 
 export default function CustomerBookings() {
   const { userId, user } = useAuth();
@@ -427,7 +428,7 @@ export default function CustomerBookings() {
     const icsContent = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
-      'PRODID:-//BookMe//Booking Calendar//EN',
+      `PRODID:-//${APP_NAME}//Booking Calendar//EN`,
       'METHOD:REQUEST',
       'BEGIN:VEVENT',
       `UID:${Date.now()}@bookme.com`,

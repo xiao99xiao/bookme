@@ -16,6 +16,7 @@ import ChatModal from '@/components/ChatModal';
 import { EnhancedCancelBookingModal } from '@/components/EnhancedCancelBookingModal';
 import { H2, H3, Text, Loading, EmptyState, Button as DSButton, StatusBadge, OnlineBadge, DurationBadge } from '@/design-system';
 import { calculatePlatformFee } from '@/lib/config';
+import { APP_NAME } from '@/lib/constants';
 
 export default function ProviderOrders() {
   const { userId, user } = useAuth();
@@ -346,7 +347,7 @@ export default function ProviderOrders() {
     const icsContent = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
-      'PRODID:-//BookMe//Booking Calendar//EN',
+      `PRODID:-//${APP_NAME}//Booking Calendar//EN`,
       'METHOD:REQUEST',
       'BEGIN:VEVENT',
       `UID:${Date.now()}@bookme.com`,
