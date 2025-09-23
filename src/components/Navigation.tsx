@@ -14,7 +14,8 @@ import {
   Settings,
   Plug,
   DollarSign,
-  BarChart3
+  BarChart3,
+  Users
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/PrivyAuthContext";
@@ -231,25 +232,25 @@ const Navigation = () => {
           >
             Services
           </Link>
-          <Link 
-            to="/provider/messages" 
+          <Link
+            to="/provider/messages"
             className={`text-sm transition-colors ${
-              location.pathname === '/provider/messages' 
-                ? 'font-bold text-gray-900' 
+              location.pathname === '/provider/messages'
+                ? 'font-bold text-gray-900'
                 : 'font-medium text-gray-600 hover:text-gray-900'
             }`}
           >
             Messages
           </Link>
-          <Link 
-            to="/provider/integrations" 
+          <Link
+            to="/provider/income"
             className={`text-sm transition-colors ${
-              location.pathname === '/provider/integrations' 
-                ? 'font-bold text-gray-900' 
+              location.pathname === '/provider/income'
+                ? 'font-bold text-gray-900'
                 : 'font-medium text-gray-600 hover:text-gray-900'
             }`}
           >
-            Integrations
+            Income
           </Link>
         </div>
       );
@@ -368,12 +369,22 @@ const Navigation = () => {
                 Balance
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/provider/income" className="flex items-center gap-2">
-                <DollarSign className="w-4 h-4" />
-                Income
-              </Link>
-            </DropdownMenuItem>
+            {userMode === 'provider' && (
+              <>
+                <DropdownMenuItem asChild>
+                  <Link to="/provider/referrals" className="flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    Referrals
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/provider/integrations" className="flex items-center gap-2">
+                    <Plug className="w-4 h-4" />
+                    Integrations
+                  </Link>
+                </DropdownMenuItem>
+              </>
+            )}
             <DropdownMenuSeparator />
             {userMode === 'customer' ? (
               !profile?.is_provider ? (

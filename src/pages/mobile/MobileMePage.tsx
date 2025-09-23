@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, ChevronRight, LogOut, CreditCard, ArrowUpDown, Globe, Plug, AtSign } from 'lucide-react';
+import { User, ChevronRight, LogOut, CreditCard, ArrowUpDown, Globe, Plug, AtSign, DollarSign, Users } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/PrivyAuthContext';
@@ -318,6 +318,18 @@ export default function MobileMePage() {
                 icon={Plug}
                 label="Integrations"
                 onClick={() => navigate('/mobile/integrations')}
+              />
+              <Divider />
+              <ListItem
+                icon={DollarSign}
+                label="Income"
+                onClick={() => navigate('/provider/income')}
+              />
+              <Divider />
+              <ListItem
+                icon={Users}
+                label="Referrals"
+                onClick={() => navigate('/provider/referrals')}
               />
             </>
           )}
