@@ -26,7 +26,6 @@ import CustomerMobileChat from "./pages/customer/CustomerMobileChat";
 
 // Settings pages
 import Customize from "./pages/settings/Customize";
-import Timezone from "./pages/settings/Timezone";
 
 // Provider pages
 import ProviderOrders from "./pages/provider/ProviderOrders";
@@ -43,7 +42,6 @@ import Balance from "./pages/Balance";
 
 // Mobile pages
 import MobileMePage from "./pages/mobile/MobileMePage";
-import MobileTimezoneSettings from "./pages/mobile/MobileTimezoneSettings";
 import MobileProfileSettings from "./pages/mobile/MobileProfileSettings";
 import MobileIntegrationsSettings from "./pages/mobile/MobileIntegrationsSettings";
 
@@ -84,14 +82,6 @@ function AppContent() {
               element={
                 <ProtectedRoute>
                   <Customize />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/settings/timezone" 
-              element={
-                <ProtectedRoute>
-                  <Timezone />
                 </ProtectedRoute>
               } 
             />
@@ -232,14 +222,6 @@ function AppContent() {
               element={
                 <ProtectedRoute>
                   <MobileProfileSettings />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/mobile/timezone"
-              element={
-                <ProtectedRoute>
-                  <MobileTimezoneSettings />
                 </ProtectedRoute>
               }
             />

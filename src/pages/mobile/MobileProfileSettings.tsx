@@ -5,10 +5,42 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, Camera, ArrowLeft, User, Mail, Phone, MapPin } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2, Camera, ArrowLeft, User, Mail, Phone, MapPin, Globe } from 'lucide-react';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient } from '@/lib/api-migration';
+import { getBrowserTimezone, getTimezoneOffset } from '@/lib/timezone';
 import { H2, H3, Text, Description } from '@/design-system';
+
+// Timezone data
+const TIMEZONE_BASE_DATA = [
+  { value: 'UTC', city: 'UTC (Coordinated Universal Time)' },
+  { value: 'America/New_York', city: 'New York' },
+  { value: 'America/Chicago', city: 'Chicago' },
+  { value: 'America/Denver', city: 'Denver' },
+  { value: 'America/Los_Angeles', city: 'Los Angeles' },
+  { value: 'America/Phoenix', city: 'Phoenix' },
+  { value: 'America/Anchorage', city: 'Anchorage' },
+  { value: 'Pacific/Honolulu', city: 'Honolulu' },
+  { value: 'America/Toronto', city: 'Toronto' },
+  { value: 'America/Vancouver', city: 'Vancouver' },
+  { value: 'Europe/London', city: 'London' },
+  { value: 'Europe/Paris', city: 'Paris' },
+  { value: 'Europe/Berlin', city: 'Berlin' },
+  { value: 'Europe/Rome', city: 'Rome' },
+  { value: 'Europe/Madrid', city: 'Madrid' },
+  { value: 'Europe/Moscow', city: 'Moscow' },
+  { value: 'Asia/Tokyo', city: 'Tokyo' },
+  { value: 'Asia/Shanghai', city: 'Shanghai' },
+  { value: 'Asia/Hong_Kong', city: 'Hong Kong' },
+  { value: 'Asia/Singapore', city: 'Singapore' },
+  { value: 'Asia/Dubai', city: 'Dubai' },
+  { value: 'Asia/Kolkata', city: 'Mumbai' },
+  { value: 'Australia/Sydney', city: 'Sydney' },
+  { value: 'Australia/Melbourne', city: 'Melbourne' },
+  { value: 'Australia/Perth', city: 'Perth' },
+  { value: 'Pacific/Auckland', city: 'Auckland' },
+];
 
 export default function MobileProfileSettings() {
   const { user, profile, userId, getUserDisplayName } = useAuth();
@@ -20,12 +52,40 @@ export default function MobileProfileSettings() {
     bio: '',
     phone: '',
     location: '',
+    timezone: '',
   });
 
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string>('');
   const [isFormDirty, setIsFormDirty] = useState(false);
+  const [timezoneOptions, setTimezoneOptions] = useState<Array<{
+    value: string;
+    city: string;
+    offset: string;
+    label: string;
+  }>>([]);
+
+  // Generate timezone options with current offsets
+  useEffect(() => {
+    const options = TIMEZONE_BASE_DATA.map(tz => {
+      const offset = getTimezoneOffset(tz.value);
+      return {
+        ...tz,
+        offset,
+        label: `${tz.city} (${offset})`
+      };
+    });
+
+    // Sort by offset for better UX
+    options.sort((a, b) => {
+      const aNum = parseFloat(a.offset.replace(/[^\d.-]/g, ''));
+      const bNum = parseFloat(b.offset.replace(/[^\d.-]/g, ''));
+      return aNum - bNum;
+    });
+
+    setTimezoneOptions(options);
+  }, []);
 
   // Load profile data into form when profile is available
   useEffect(() => {
@@ -35,6 +95,7 @@ export default function MobileProfileSettings() {
         bio: profile.bio || '',
         phone: profile.phone || '',
         location: profile.location || '',
+        timezone: profile.timezone || getBrowserTimezone(),
       });
       setAvatarUrl(profile.avatar || '');
       setIsFormDirty(false);
@@ -213,6 +274,28 @@ export default function MobileProfileSettings() {
                 placeholder="Enter your location"
                 className="w-full"
               />
+            </div>
+
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <Globe className="w-4 h-4" />
+                Timezone
+              </label>
+              <Select
+                value={formData.timezone}
+                onValueChange={(value) => handleInputChange('timezone', value)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Choose your timezone" />
+                </SelectTrigger>
+                <SelectContent className="max-h-60">
+                  {timezoneOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

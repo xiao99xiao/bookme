@@ -539,37 +539,28 @@ export default function MobileMePage() {
 
         <div className="px-4 space-y-4">
 
-        {/* Settings Section */}
-        <GroupedSection>
-          <ListItem
-            icon={Globe}
-            label="Timezone"
-            value={profile?.timezone || 'UTC'}
-            onClick={() => navigate('/mobile/timezone')}
-          />
-          {userMode === 'provider' && (
-            <>
-              <Divider />
-              <ListItem
-                icon={Plug}
-                label="Integrations"
-                onClick={() => navigate('/mobile/integrations')}
-              />
-              <Divider />
-              <ListItem
-                icon={DollarSign}
-                label="Income"
-                onClick={() => navigate('/provider/income')}
-              />
-              <Divider />
-              <ListItem
-                icon={Users}
-                label="Referrals"
-                onClick={() => navigate('/provider/referrals')}
-              />
-            </>
-          )}
-        </GroupedSection>
+        {/* Provider Tools Section */}
+        {userMode === 'provider' && (
+          <GroupedSection>
+            <ListItem
+              icon={Plug}
+              label="Integrations"
+              onClick={() => navigate('/mobile/integrations')}
+            />
+            <Divider />
+            <ListItem
+              icon={DollarSign}
+              label="Income"
+              onClick={() => navigate('/provider/income')}
+            />
+            <Divider />
+            <ListItem
+              icon={Users}
+              label="Referrals"
+              onClick={() => navigate('/provider/referrals')}
+            />
+          </GroupedSection>
+        )}
 
         {/* Become Provider Section - Only show for non-providers */}
         {!profile?.is_provider && (
