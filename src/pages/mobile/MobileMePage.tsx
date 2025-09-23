@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, ChevronRight, LogOut, CreditCard, ArrowUpDown, Globe, Plug, AtSign, DollarSign, Users } from 'lucide-react';
+import { User, ChevronRight, LogOut, CreditCard, ArrowUpDown, Globe, Plug, AtSign, DollarSign, Users, Star, MapPin } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/PrivyAuthContext';
@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { H2, H3, Text, Description, Loading } from '@/design-system';
 import BecomeProviderDialog from '@/components/BecomeProviderDialog';
 import { useBlockchainService } from '@/lib/blockchain-service';
+import ReactMarkdown from 'react-markdown';
 
 const STORAGE_KEY = 'bookme_user_mode';
 
@@ -93,6 +94,7 @@ export default function MobileMePage() {
   const [showBecomeProviderDialog, setShowBecomeProviderDialog] = useState(false);
   const [isBecomingProvider, setIsBecomingProvider] = useState(false);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [isBioExpanded, setIsBioExpanded] = useState(false);
 
   // Initialize user mode
   useEffect(() => {
@@ -264,37 +266,106 @@ export default function MobileMePage() {
 
   return (
     <div className="lg:hidden min-h-screen bg-gray-50 pb-20">
-      <div className="px-4 py-6 space-y-4">
-        {/* Page Title */}
-        <div className="mb-6">
-          <H2>Me</H2>
-        </div>
-
-        {/* User Profile Section */}
-        <GroupedSection>
-          <button
-            onClick={() => navigate('/mobile/profile')}
-            className="w-full p-4 flex items-center gap-3 hover:bg-gray-50 active:bg-gray-100 transition-colors"
-          >
-            <Avatar className="w-12 h-12">
-              <AvatarImage src={profile?.avatar} alt={userName} />
-              <AvatarFallback className="bg-gradient-to-br from-blue-400 to-blue-600 text-white font-semibold">
+      <div className="space-y-4">
+        {/* Profile Header Section - No border, Twitter-like */}
+        <div className="px-4 py-6">
+          <div className="flex gap-4 items-start mb-4">
+            {/* Avatar */}
+            <Avatar className="h-16 w-16 shrink-0">
+              <AvatarImage
+                src={profile?.avatar || ""}
+                alt={userName}
+              />
+              <AvatarFallback className="bg-gradient-to-br from-blue-400 to-blue-600 text-white font-semibold text-lg">
                 {userName.substring(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <div className="flex-1 text-left">
-              <Text className="font-semibold text-black">
+
+            {/* Name and Info */}
+            <div className="flex-1 min-w-0">
+              <H3 className="font-semibold text-black mb-1">
                 {userName}
-              </Text>
-              {userEmail && (
-                <Description className="text-[#666666]">
-                  {userEmail}
-                </Description>
+              </H3>
+
+              {/* Rating and Location */}
+              <div className="flex flex-wrap gap-2 mb-2">
+                {profile?.rating !== undefined && profile?.review_count !== undefined && (
+                  <div className="flex items-center gap-1">
+                    <Star className="h-4 w-4 text-gray-600 fill-current" />
+                    <Description className="text-gray-600">
+                      {profile.rating.toFixed(1)} ({profile.review_count} reviews)
+                    </Description>
+                  </div>
+                )}
+                {profile?.location && (
+                  <div className="flex items-center gap-1">
+                    <MapPin className="h-4 w-4 text-gray-600" />
+                    <Description className="text-gray-600">
+                      {profile.location}
+                    </Description>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Edit Profile Button */}
+            <Button
+              onClick={() => navigate('/mobile/profile')}
+              variant="outline"
+              size="xs"
+            >
+              Edit
+            </Button>
+          </div>
+
+          {/* Bio */}
+          {profile?.bio && (
+            <div className="mt-3">
+              <div
+                className={`text-sm text-gray-700 leading-relaxed ${
+                  !isBioExpanded ? 'line-clamp-3' : ''
+                }`}
+              >
+                <ReactMarkdown
+                  components={{
+                    // Render everything as plain text with consistent paragraph styling
+                    p: ({ children }) => <span>{children}</span>,
+                    h1: ({ children }) => <span>{children}</span>,
+                    h2: ({ children }) => <span>{children}</span>,
+                    h3: ({ children }) => <span>{children}</span>,
+                    h4: ({ children }) => <span>{children}</span>,
+                    h5: ({ children }) => <span>{children}</span>,
+                    h6: ({ children }) => <span>{children}</span>,
+                    ul: ({ children }) => <span>{children}</span>,
+                    ol: ({ children }) => <span>{children}</span>,
+                    li: ({ children }) => <span>• {children}</span>,
+                    blockquote: ({ children }) => <span>{children}</span>,
+                    strong: ({ children }) => <strong>{children}</strong>,
+                    em: ({ children }) => <em>{children}</em>,
+                    a: ({ children, href }) => (
+                      <a href={href} className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">
+                        {children}
+                      </a>
+                    ),
+                    br: () => <span> </span>,
+                  }}
+                >
+                  {profile.bio}
+                </ReactMarkdown>
+              </div>
+              {profile.bio.length > 150 && (
+                <button
+                  onClick={() => setIsBioExpanded(!isBioExpanded)}
+                  className="text-sm text-blue-600 hover:text-blue-700 mt-1 font-medium"
+                >
+                  {isBioExpanded ? 'Show less' : 'Show more'}
+                </button>
               )}
             </div>
-            <ChevronRight className="w-5 h-5 text-[#999999]" />
-          </button>
-        </GroupedSection>
+          )}
+        </div>
+
+        <div className="px-4 space-y-4">
 
         {/* Settings Section */}
         <GroupedSection>
@@ -409,6 +480,7 @@ export default function MobileMePage() {
             isDestructive={true}
           />
         </GroupedSection>
+        </div>
       </div>
 
       {/* Become Provider Dialog */}

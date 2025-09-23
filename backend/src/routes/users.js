@@ -123,12 +123,15 @@ export default function userRoutes(app) {
     try {
       const userId = c.get('userId');
       const updates = await c.req.json();
-      
+
+      console.log('Profile update request for user:', userId);
+      console.log('Updates received:', updates);
+
       // Remove any fields that shouldn't be updated
       delete updates.id;
       delete updates.email;
       delete updates.created_at;
-      
+
       const { data, error } = await supabaseAdmin
         .from('users')
         .update({
@@ -138,16 +141,22 @@ export default function userRoutes(app) {
         .eq('id', userId)
         .select()
         .single();
-      
+
       if (error) {
-        console.error('Profile update error:', error);
-        return c.json({ error: 'Failed to update profile' }, 500);
+        console.error('Profile update database error:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        return c.json({ error: error.message || 'Failed to update profile' }, 500);
       }
-      
+
+      console.log('Profile updated successfully:', data.id);
       return c.json(data);
     } catch (error) {
-      console.error('Profile update error:', error);
-      return c.json({ error: 'Internal server error' }, 500);
+      console.error('Profile update exception:', error);
+      return c.json({ error: error.message || 'Internal server error' }, 500);
     }
   });
 

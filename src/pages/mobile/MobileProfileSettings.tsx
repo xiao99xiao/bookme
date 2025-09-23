@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, Camera, ArrowLeft, User, Mail, Phone, MapPin, Globe } from 'lucide-react';
+import { Loader2, Camera, ArrowLeft, User, Mail, Phone, MapPin } from 'lucide-react';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient } from '@/lib/api-migration';
 import { H2, H3, Text, Description } from '@/design-system';
@@ -20,7 +20,6 @@ export default function MobileProfileSettings() {
     bio: '',
     phone: '',
     location: '',
-    website: '',
   });
 
   const [loading, setLoading] = useState(false);
@@ -36,7 +35,6 @@ export default function MobileProfileSettings() {
         bio: profile.bio || '',
         phone: profile.phone || '',
         location: profile.location || '',
-        website: profile.website || '',
       });
       setAvatarUrl(profile.avatar || '');
       setIsFormDirty(false);
@@ -215,20 +213,6 @@ export default function MobileProfileSettings() {
                 value={formData.location}
                 onChange={(e) => handleInputChange('location', e.target.value)}
                 placeholder="Enter your location"
-                className="w-full"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <Globe className="w-4 h-4" />
-                Website
-              </label>
-              <Input
-                type="url"
-                value={formData.website}
-                onChange={(e) => handleInputChange('website', e.target.value)}
-                placeholder="https://yourwebsite.com"
                 className="w-full"
               />
             </div>
