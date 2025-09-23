@@ -45,14 +45,12 @@ const TIMEZONE_BASE_DATA = [
 export default function Profile() {
   const { user, profile, userId, getUserDisplayName } = useAuth();
   
-  // Form state - using simple controlled components instead of react-hook-form
+  // Form state - using simple controlled components (timezone excluded as it's auto-updated)
   const [formData, setFormData] = useState({
     display_name: '',
     bio: '',
     phone: '',
     location: '',
-    website: '',
-    timezone: '',
   });
 
   const [loading, setLoading] = useState(false);
@@ -97,8 +95,6 @@ export default function Profile() {
         bio: profile.bio || '',
         phone: profile.phone || '',
         location: profile.location || '',
-        website: profile.website || '',
-        timezone: profile.timezone || getBrowserTimezone(),
       });
       setAvatarUrl(profile.avatar || '');
       setIsFormDirty(false);
@@ -153,7 +149,6 @@ export default function Profile() {
       // Prepare update data
       const updateData = {
         ...formData,
-        website: formData.website || undefined,
       };
       
       console.log('🔥 Sending update request:', updateData);
@@ -345,18 +340,6 @@ export default function Profile() {
                     </div>
                   </div>
 
-                  {/* Website */}
-                  <div className="content-stretch flex flex-col gap-2 items-start justify-start relative shrink-0 w-full">
-                    <div className="font-body font-semibold leading-[0] relative shrink-0 text-[16px] text-black w-full">
-                      <p className="leading-[1.5]">Website</p>
-                    </div>
-                    <Input
-                      placeholder="https://example.com"
-                      value={formData.website}
-                      onChange={(e) => handleInputChange('website', e.target.value)}
-                      className="text-[16px] text-black placeholder:text-[#666666]"
-                    />
-                  </div>
                 </div>
 
                 {/* Save Button */}
@@ -424,12 +407,6 @@ export default function Profile() {
                                   <span>{formData.location}</span>
                                 </div>
                               )}
-                              {formData.website && (
-                                <div className="flex items-center justify-center gap-1">
-                                  <LinkIcon className="w-3 h-3" />
-                                  <span className="truncate max-w-[200px]">{formData.website}</span>
-                                </div>
-                              )}
                             </div>
                           </div>
                         </div>
@@ -446,7 +423,6 @@ export default function Profile() {
                             <li>Add a clear profile picture to build trust</li>
                             <li>Write a compelling bio that showcases your expertise</li>
                             <li>Include your location to help customers find local services</li>
-                            <li>Add your website to drive traffic to your business</li>
                           </ul>
                         </div>
                       </div>
@@ -547,38 +523,23 @@ export default function Profile() {
                 </div>
 
                 <div>
-                  <label htmlFor="website" className="block text-sm font-medium text-gray-700 mb-1">
-                    Website
-                  </label>
-                  <Input
-                    id="website"
-                    value={formData.website}
-                    onChange={(e) => handleInputChange('website', e.target.value)}
-                    placeholder="https://example.com"
-                    className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-
-                <div>
                   <label htmlFor="timezone" className="block text-sm font-medium text-gray-700 mb-1">
                     <Globe className="w-4 h-4 inline mr-2" />
-                    Timezone
+                    Timezone (Auto-detected)
                   </label>
-                  <Select
-                    value={formData.timezone}
-                    onValueChange={(value) => handleInputChange('timezone', value)}
-                  >
-                    <SelectTrigger className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                      <SelectValue placeholder="Choose your timezone" />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-60">
-                      {timezoneOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Input
+                    value={(() => {
+                      const currentTimezone = profile?.timezone || getBrowserTimezone();
+                      const option = timezoneOptions.find(opt => opt.value === currentTimezone);
+                      return option ? option.label : `${currentTimezone} (${getTimezoneOffset(currentTimezone)})`;
+                    })()}
+                    disabled
+                    className="w-full p-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+                    placeholder="Timezone is automatically detected from your browser"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Your timezone is automatically detected and updated based on your browser settings.
+                  </p>
                 </div>
               </div>
 

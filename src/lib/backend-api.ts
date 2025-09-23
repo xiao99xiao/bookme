@@ -1,21 +1,24 @@
 // Simple backend API client that gets tokens from Privy hook
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://skating-destroyed-understanding-sas.trycloudflare.com';
 
+import { getBrowserTimezone } from './timezone';
+
 export class BackendAPI {
   constructor(private getAccessToken: () => Promise<string | null>) {}
 
   private async request(endpoint: string, options: RequestInit = {}) {
     const token = await this.getAccessToken();
-    
+
     // For public endpoints, don't require token
     const isPublicEndpoint = endpoint.includes('/public') || endpoint.includes('/categories');
-    
+
     if (!token && !isPublicEndpoint) {
       throw new Error('Not authenticated');
     }
 
     const headers: any = {
       'Content-Type': 'application/json',
+      'X-Client-Timezone': getBrowserTimezone(),
       ...options.headers,
     };
 

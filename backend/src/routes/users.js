@@ -26,17 +26,19 @@ export default function userRoutes(app) {
 
   /**
    * GET /api/profile
-   * 
+   *
    * Get or create authenticated user's profile.
    * This endpoint either returns an existing user profile or creates a new one
    * if the user doesn't exist in the database.
-   * 
+   * Automatically updates the user's timezone based on the client's browser timezone.
+   *
    * Headers:
    * - Authorization: Bearer {privyToken}
-   * 
+   * - X-Client-Timezone: Browser timezone (optional)
+   *
    * Response:
    * - Full user profile object
-   * 
+   *
    * @param {Context} c - Hono context
    * @returns {Response} JSON response with user profile or error
    */
@@ -44,15 +46,41 @@ export default function userRoutes(app) {
     try {
       const userId = c.get('userId');
       const privyUser = c.get('privyUser');
-      
+
+      // Get client timezone from header
+      const clientTimezone = c.req.header('X-Client-Timezone') || 'UTC';
+
       // Check if user exists
       const { data: existingUser, error: fetchError } = await supabaseAdmin
         .from('users')
         .select('*')
         .eq('id', userId)
         .single();
-      
+
       if (existingUser) {
+        // Auto-update timezone if it's different from the current one
+        if (existingUser.timezone !== clientTimezone) {
+          console.log(`Auto-updating timezone for user ${userId}: ${existingUser.timezone} -> ${clientTimezone}`);
+
+          const { data: updatedUser, error: updateError } = await supabaseAdmin
+            .from('users')
+            .update({
+              timezone: clientTimezone,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', userId)
+            .select()
+            .single();
+
+          if (updateError) {
+            console.error('Failed to auto-update timezone:', updateError);
+            // Still return the existing user even if timezone update fails
+            return c.json(existingUser);
+          }
+
+          return c.json(updatedUser);
+        }
+
         return c.json(existingUser);
       }
       
@@ -76,7 +104,7 @@ export default function userRoutes(app) {
           id: userId,
           email: email,
           display_name: displayName,
-          timezone: 'UTC',
+          timezone: clientTimezone,
           is_verified: false,
           rating: 0,
           review_count: 0,

@@ -46,13 +46,12 @@ export default function MobileProfileSettings() {
   const { user, profile, userId, getUserDisplayName } = useAuth();
   const navigate = useNavigate();
 
-  // Form state - using simple controlled components
+  // Form state - using simple controlled components (timezone excluded as it's auto-updated)
   const [formData, setFormData] = useState({
     display_name: '',
     bio: '',
     phone: '',
     location: '',
-    timezone: '',
   });
 
   const [loading, setLoading] = useState(false);
@@ -95,7 +94,6 @@ export default function MobileProfileSettings() {
         bio: profile.bio || '',
         phone: profile.phone || '',
         location: profile.location || '',
-        timezone: profile.timezone || getBrowserTimezone(),
       });
       setAvatarUrl(profile.avatar || '');
       setIsFormDirty(false);
@@ -136,6 +134,7 @@ export default function MobileProfileSettings() {
 
     setLoading(true);
     try {
+      // Timezone is excluded from formData since it's auto-updated by the backend
       await ApiClient.updateProfile(formData, userId);
       setIsFormDirty(false);
       toast.success('Profile updated successfully!');
@@ -279,23 +278,22 @@ export default function MobileProfileSettings() {
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                 <Globe className="w-4 h-4" />
-                Timezone
+                Timezone (Auto-detected)
               </label>
-              <Select
-                value={formData.timezone}
-                onValueChange={(value) => handleInputChange('timezone', value)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Choose your timezone" />
-                </SelectTrigger>
-                <SelectContent className="max-h-60">
-                  {timezoneOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                type="text"
+                value={(() => {
+                  const currentTimezone = profile?.timezone || getBrowserTimezone();
+                  const option = timezoneOptions.find(opt => opt.value === currentTimezone);
+                  return option ? option.label : `${currentTimezone} (${getTimezoneOffset(currentTimezone)})`;
+                })()}
+                disabled
+                className="w-full bg-gray-50 text-gray-600 cursor-not-allowed"
+                placeholder="Timezone is automatically detected from your browser"
+              />
+              <Description className="text-[#999999] text-xs">
+                Your timezone is automatically detected and updated based on your browser settings.
+              </Description>
             </div>
           </div>
 
