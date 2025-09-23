@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, ChevronRight, LogOut, CreditCard, ArrowUpDown, Globe, Plug, AtSign, DollarSign, Users, Star, MapPin } from 'lucide-react';
+import { User, ChevronRight, LogOut, CreditCard, ArrowUpDown, Globe, Plug, DollarSign, Users, Star, MapPin, Copy, Check, X, Loader2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { usePrivy, useWallets } from '@privy-io/react-auth';
 import { useSmartWallets } from '@privy-io/react-auth/smart-wallets';
@@ -95,6 +96,12 @@ export default function MobileMePage() {
   const [isBecomingProvider, setIsBecomingProvider] = useState(false);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [isBioExpanded, setIsBioExpanded] = useState(false);
+
+  // Username editing state
+  const [isEditingUsername, setIsEditingUsername] = useState(false);
+  const [editingUsername, setEditingUsername] = useState('');
+  const [usernameStatus, setUsernameStatus] = useState<'checking' | 'available' | 'taken' | null>(null);
+  const [usernameCheckTimeout, setUsernameCheckTimeout] = useState<NodeJS.Timeout | null>(null);
 
   // Initialize user mode
   useEffect(() => {
@@ -227,6 +234,74 @@ export default function MobileMePage() {
   const handleWithdraw = () => {
     // Navigate to balance page for withdrawal
     navigate('/balance');
+  };
+
+  // Username editing functions
+  const startEditingUsername = () => {
+    setIsEditingUsername(true);
+    setEditingUsername(profile?.username || '');
+    setUsernameStatus(null);
+  };
+
+  const checkUsernameAvailability = async (username: string) => {
+    if (!username || username === profile?.username) {
+      setUsernameStatus(null);
+      return;
+    }
+
+    try {
+      setUsernameStatus('checking');
+      const result = await ApiClient.checkUsernameAvailability(username);
+      setUsernameStatus(result.available ? 'available' : 'taken');
+    } catch (error) {
+      setUsernameStatus('taken');
+    }
+  };
+
+  const handleUsernameChange = (value: string) => {
+    setEditingUsername(value);
+
+    // Clear previous timeout
+    if (usernameCheckTimeout) {
+      clearTimeout(usernameCheckTimeout);
+    }
+
+    // Set new timeout for checking availability
+    const timeout = setTimeout(() => {
+      checkUsernameAvailability(value);
+    }, 500);
+
+    setUsernameCheckTimeout(timeout);
+  };
+
+  const submitUsernameChange = async () => {
+    if (!editingUsername || editingUsername === profile?.username) {
+      setIsEditingUsername(false);
+      return;
+    }
+
+    if (usernameStatus !== 'available') {
+      toast.error('Username is not available');
+      return;
+    }
+
+    try {
+      await ApiClient.updateUsername(editingUsername);
+      await refreshProfile(); // Refresh to get updated profile
+      setIsEditingUsername(false);
+      toast.success('Username updated successfully!');
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to update username');
+    }
+  };
+
+  const cancelEditingUsername = () => {
+    setIsEditingUsername(false);
+    setEditingUsername('');
+    setUsernameStatus(null);
+    if (usernameCheckTimeout) {
+      clearTimeout(usernameCheckTimeout);
+    }
   };
 
   // If not ready, show loading
@@ -363,19 +438,79 @@ export default function MobileMePage() {
               )}
             </div>
           )}
+
+          {/* Profile Link Share */}
+          {profile?.username && (
+            <div className="mt-4">
+              {!isEditingUsername ? (
+                <div className="flex items-center gap-2">
+                  <div className="text-sm text-gray-600">
+                    <span className="select-all">
+                      {window.location.host}/
+                      <button
+                        onClick={startEditingUsername}
+                        className="underline decoration-dotted decoration-gray-400 hover:decoration-gray-600 transition-colors leading-5"
+                      >
+                        {profile.username}
+                      </button>
+                    </span>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      try {
+                        const profileUrl = `${window.location.origin}/${profile.username}`;
+                        await navigator.clipboard.writeText(profileUrl);
+                        toast.success('Profile link copied!');
+                      } catch (error) {
+                        toast.error('Failed to copy link');
+                      }
+                    }}
+                    className="w-7 h-7 flex items-center justify-center hover:bg-gray-100 rounded-md transition-colors"
+                    aria-label="Copy profile link"
+                  >
+                    <Copy className="h-3.5 w-3.5 text-gray-500" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <div className="text-sm text-gray-600 flex items-center">
+                    <span>{window.location.host}/</span>
+                    <input
+                      value={editingUsername}
+                      onChange={(e) => handleUsernameChange(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          submitUsernameChange();
+                        } else if (e.key === 'Escape') {
+                          cancelEditingUsername();
+                        }
+                      }}
+                      className="bg-transparent border-none outline-none text-sm text-gray-600 underline decoration-dotted decoration-gray-400 hover:decoration-gray-600 transition-colors min-w-[120px] focus:ring-0 p-0 leading-5 h-5"
+                      autoFocus
+                      placeholder="username"
+                    />
+                  </div>
+                  <div className="flex items-center w-7 h-7 justify-center">
+                    {usernameStatus === 'checking' && (
+                      <Loader2 className="h-3.5 w-3.5 text-gray-400 animate-spin" />
+                    )}
+                    {usernameStatus === 'available' && (
+                      <Check className="h-3.5 w-3.5 text-green-500" />
+                    )}
+                    {usernameStatus === 'taken' && (
+                      <X className="h-3.5 w-3.5 text-red-500" />
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="px-4 space-y-4">
 
         {/* Settings Section */}
         <GroupedSection>
-          <ListItem
-            icon={AtSign}
-            label="Username"
-            value={profile?.username || 'Set username'}
-            onClick={() => navigate('/mobile/username')}
-          />
-          <Divider />
           <ListItem
             icon={Globe}
             label="Timezone"

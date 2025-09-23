@@ -43,7 +43,6 @@ import Balance from "./pages/Balance";
 
 // Mobile pages
 import MobileMePage from "./pages/mobile/MobileMePage";
-import MobileUsernameSettings from "./pages/mobile/MobileUsernameSettings";
 import MobileTimezoneSettings from "./pages/mobile/MobileTimezoneSettings";
 import MobileProfileSettings from "./pages/mobile/MobileProfileSettings";
 import MobileIntegrationsSettings from "./pages/mobile/MobileIntegrationsSettings";
@@ -233,14 +232,6 @@ function AppContent() {
               element={
                 <ProtectedRoute>
                   <MobileProfileSettings />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/mobile/username"
-              element={
-                <ProtectedRoute>
-                  <MobileUsernameSettings />
                 </ProtectedRoute>
               }
             />
