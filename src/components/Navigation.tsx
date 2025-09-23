@@ -62,7 +62,38 @@ const Navigation = () => {
       localStorage.removeItem(STORAGE_KEY);
     }
   }, [isLoggedIn, profile, ready]);
-  
+
+  // Listen for localStorage changes to sync user mode across components
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY) {
+        const newMode = e.newValue as UserMode;
+        if (newMode === 'customer' || newMode === 'provider') {
+          setUserMode(newMode);
+        }
+      }
+    };
+
+    // Listen for storage events from other windows/tabs
+    window.addEventListener('storage', handleStorageChange);
+
+    // Also listen for manual localStorage changes within the same window
+    const handleManualStorageChange = () => {
+      const storedMode = localStorage.getItem(STORAGE_KEY) as UserMode;
+      if (storedMode !== userMode && (storedMode === 'customer' || storedMode === 'provider')) {
+        setUserMode(storedMode);
+      }
+    };
+
+    // Check for changes periodically (fallback for same-window changes)
+    const interval = setInterval(handleManualStorageChange, 100);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, [userMode]);
+
   // Handle scroll visibility - disabled for desktop, only for mobile
   useEffect(() => {
     const controlNavbar = () => {

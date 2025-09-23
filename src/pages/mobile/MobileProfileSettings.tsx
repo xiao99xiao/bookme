@@ -38,6 +38,15 @@ export default function MobileProfileSettings() {
       });
       setAvatarUrl(profile.avatar || '');
       setIsFormDirty(false);
+
+      // Auto-resize bio textarea on load if there's existing content
+      setTimeout(() => {
+        const bioTextarea = document.querySelector('textarea[placeholder="Tell others about yourself..."]') as HTMLTextAreaElement;
+        if (bioTextarea && profile.bio) {
+          bioTextarea.style.height = 'auto';
+          bioTextarea.style.height = Math.max(160, bioTextarea.scrollHeight) + 'px';
+        }
+      }, 100);
     }
   }, [profile?.id]);
 
@@ -129,45 +138,34 @@ export default function MobileProfileSettings() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Avatar Section */}
-          <div className="bg-white rounded-2xl border border-[#eeeeee] p-6">
-            <div className="flex flex-col items-center text-center space-y-4">
-              <div className="relative">
-                <Avatar className="w-24 h-24">
-                  <AvatarImage src={avatarUrl} alt="Profile" />
-                  <AvatarFallback className="bg-gradient-to-br from-blue-400 to-blue-600 text-white text-2xl font-semibold">
-                    {getUserDisplayName()?.substring(0, 2).toUpperCase() || 'U'}
-                  </AvatarFallback>
-                </Avatar>
+          <div className="flex justify-center py-6">
+            <div className="relative">
+              <Avatar className="w-24 h-24">
+                <AvatarImage src={avatarUrl} alt="Profile" />
+                <AvatarFallback className="bg-gradient-to-br from-blue-400 to-blue-600 text-white text-2xl font-semibold">
+                  {getUserDisplayName()?.substring(0, 2).toUpperCase() || 'U'}
+                </AvatarFallback>
+              </Avatar>
 
-                <label
-                  htmlFor="avatar-upload"
-                  className="absolute bottom-0 right-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-700 transition-colors"
-                >
-                  {uploading ? (
-                    <Loader2 className="w-4 h-4 text-white animate-spin" />
-                  ) : (
-                    <Camera className="w-4 h-4 text-white" />
-                  )}
-                </label>
-
-                <input
-                  id="avatar-upload"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleAvatarUpload}
-                  className="hidden"
-                  disabled={uploading}
-                />
-              </div>
-
-              <div>
-                <H3 className="text-lg">{getUserDisplayName() || 'Your Name'}</H3>
-                {userEmail && (
-                  <Text variant="small" className="text-[#666666]">
-                    {userEmail}
-                  </Text>
+              <label
+                htmlFor="avatar-upload"
+                className="absolute bottom-0 right-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-700 transition-colors"
+              >
+                {uploading ? (
+                  <Loader2 className="w-4 h-4 text-white animate-spin" />
+                ) : (
+                  <Camera className="w-4 h-4 text-white" />
                 )}
-              </div>
+              </label>
+
+              <input
+                id="avatar-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarUpload}
+                className="hidden"
+                disabled={uploading}
+              />
             </div>
           </div>
 
@@ -228,10 +226,22 @@ export default function MobileProfileSettings() {
               </label>
               <Textarea
                 value={formData.bio}
-                onChange={(e) => handleInputChange('bio', e.target.value)}
+                onChange={(e) => {
+                  handleInputChange('bio', e.target.value);
+                  // Auto-resize textarea based on content
+                  e.target.style.height = 'auto';
+                  e.target.style.height = Math.max(160, e.target.scrollHeight) + 'px';
+                }}
                 placeholder="Tell others about yourself..."
-                className="w-full min-h-[120px] resize-none"
+                className="w-full min-h-[160px] resize-none overflow-hidden"
                 maxLength={500}
+                style={{ height: 'auto' }}
+                onInput={(e) => {
+                  // Additional auto-resize on input
+                  const target = e.target as HTMLTextAreaElement;
+                  target.style.height = 'auto';
+                  target.style.height = Math.max(160, target.scrollHeight) + 'px';
+                }}
               />
               <Text variant="small" className="text-[#999999] text-right">
                 {formData.bio.length}/500 characters

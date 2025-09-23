@@ -172,12 +172,9 @@ export default function MobileMePage() {
     setUserMode(newMode);
     localStorage.setItem(STORAGE_KEY, newMode);
 
-    // Navigate to appropriate landing
-    if (newMode === 'provider') {
-      navigate('/provider/services');
-    } else {
-      navigate('/customer/bookings');
-    }
+    // Stay on Me page when toggling from the mobile Me page
+    // Don't navigate away like other parts of the app do
+    toast.success(`Switched to ${newMode} mode`);
   };
 
   const handleBecomeProvider = () => {
@@ -342,6 +339,39 @@ export default function MobileMePage() {
   return (
     <div className="lg:hidden min-h-screen bg-gray-50 pb-20">
       <div className="space-y-4">
+        {/* Mode Toggle - Top of page */}
+        {profile?.is_provider && (
+          <div className="px-4 pt-4">
+            <div className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
+              userMode === 'provider'
+                ? 'bg-blue-50 border border-blue-200'
+                : 'bg-green-50 border border-green-200'
+            }`}>
+              <div className="flex items-center gap-2">
+                <span className={`text-sm font-medium ${
+                  userMode === 'provider' ? 'text-blue-700' : 'text-green-700'
+                }`}>
+                  {userMode === 'provider' ? 'Provider' : 'Customer'} mode
+                </span>
+              </div>
+              <button
+                onClick={handleModeSwitch}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                  userMode === 'provider'
+                    ? 'bg-blue-600 focus:ring-blue-500'
+                    : 'bg-green-600 focus:ring-green-500'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    userMode === 'provider' ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Profile Header Section - No border, Twitter-like */}
         <div className="px-4 py-6">
           <div className="flex gap-4 items-start mb-4">
@@ -541,9 +571,9 @@ export default function MobileMePage() {
           )}
         </GroupedSection>
 
-        {/* Mode Switch Section */}
-        <GroupedSection>
-          {!profile?.is_provider ? (
+        {/* Become Provider Section - Only show for non-providers */}
+        {!profile?.is_provider && (
+          <GroupedSection>
             <button
               onClick={handleBecomeProvider}
               className="w-full px-4 py-3.5 text-center hover:bg-gray-50 active:bg-gray-100 transition-colors"
@@ -555,23 +585,8 @@ export default function MobileMePage() {
                 Start earning by offering services
               </Description>
             </button>
-          ) : (
-            <button
-              onClick={handleModeSwitch}
-              className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-gray-50 active:bg-gray-100 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
-                  <ArrowUpDown className="w-5 h-5 text-blue-600" />
-                </div>
-                <Text className="font-medium text-black">
-                  Switch to {userMode === 'customer' ? 'Provider' : 'Customer'} Mode
-                </Text>
-              </div>
-              <ChevronRight className="w-5 h-5 text-[#999999]" />
-            </button>
-          )}
-        </GroupedSection>
+          </GroupedSection>
+        )}
 
         {/* Wallet Section */}
         <GroupedSection>
