@@ -429,7 +429,7 @@ const TrackEarningsCard = () => (
       </p>
     </div>
     <div className="relative h-[50vh] w-full shrink-0 overflow-hidden bg-[#ffe9fb] lg:size-[384px] lg:rounded-[40px]">
-      <div className="absolute left-[32px] top-[32px] flex w-[320px] flex-col gap-[16px]">
+      <div className="absolute inset-x-4 top-8 flex max-w-[320px] flex-col gap-[16px] lg:left-[32px] lg:right-auto lg:top-[32px] lg:w-[320px]">
         {/* First earning card */}
         <div className="flex w-full flex-col gap-[16px] rounded-[16px] border border-white bg-white p-[16px]">
           <div className="flex w-full gap-[16px]">
@@ -478,7 +478,7 @@ const TrackEarningsCard = () => (
         </div>
       </div>
       {/* Character illustration */}
-      <div className="absolute left-[180px] top-[328px] h-[84px] w-[137px]">
+      <div className="absolute bottom-4 right-4 h-[84px] w-[137px] lg:left-[180px] lg:right-auto lg:top-[328px]">
         <div className="absolute inset-[-0.71%_-0.44%]">
           <img src={ASSETS.andMore.leftChar} alt="" className="block size-full max-w-none" />
         </div>
@@ -497,7 +497,7 @@ const GetPaidUSDCCard = () => (
     </div>
     <div className="relative h-[50vh] w-full shrink-0 overflow-hidden bg-[#dcf3ff] lg:h-[384px] lg:rounded-[40px]">
       {/* Large coin - rotated with proper transform wrapper */}
-      <div className="absolute left-[88px] top-[70.08px] flex items-center justify-center" style={{ height: 'calc(1px * ((104 * 0.258819043636322) + (104 * 0.9659258127212524)))', width: 'calc(1px * ((104 * 0.9659258127212524) + (104 * 0.258819043636322)))' }}>
+      <div className="absolute left-[15%] top-[70.08px] flex items-center justify-center lg:left-[88px]" style={{ height: 'calc(1px * ((104 * 0.258819043636322) + (104 * 0.9659258127212524)))', width: 'calc(1px * ((104 * 0.9659258127212524) + (104 * 0.258819043636322)))' }}>
         <div className="flex-none rotate-[345deg]">
           <div className="relative size-[104px] overflow-clip">
             <div className="absolute inset-0">
@@ -517,71 +517,71 @@ const GetPaidUSDCCard = () => (
         <img alt="" className="block size-full max-w-none" src={ASSETS.andMore.wallet} />
       </div>
       {/* Character */}
-      <div className="absolute right-[23.73px] top-[252px] h-[104px] w-[123.275px]">
+      <div className="absolute bottom-4 right-4 h-[104px] w-[123.275px] lg:right-[23.73px] lg:top-[252px] lg:bottom-auto">
         <div className="absolute bottom-[-0.58%] left-0 right-[-0.49%] top-[-0.58%]">
           <img alt="" className="block size-full max-w-none" src={ASSETS.andMore.rightChar} />
         </div>
       </div>
-      {/* Decorative elements - dots */}
-      <div className="absolute left-[275px] top-[126.97px] flex items-center justify-center" style={{ height: 'calc(1px * ((8 * 0.258819043636322) + (8 * 0.9659258127212524)))', width: 'calc(1px * ((8 * 0.9659258127212524) + (8 * 0.258819043636322)))' }}>
+      {/* Decorative elements - dots - hidden on mobile */}
+      <div className="absolute left-[275px] top-[126.97px] hidden items-center justify-center lg:flex" style={{ height: 'calc(1px * ((8 * 0.258819043636322) + (8 * 0.9659258127212524)))', width: 'calc(1px * ((8 * 0.9659258127212524) + (8 * 0.258819043636322)))' }}>
         <div className="flex-none rotate-[345deg]">
           <div className="relative size-[8px]">
             <img alt="" className="block size-full max-w-none" src="http://localhost:3845/assets/a5e891b23d4d7bb85b8d29317867a530e4bd8331.svg" />
           </div>
         </div>
       </div>
-      <div className="absolute left-[322px] top-[35px] flex items-center justify-center" style={{ height: 'calc(1px * ((6 * 0.258819043636322) + (6 * 0.9659258127212524)))', width: 'calc(1px * ((6 * 0.9659258127212524) + (6 * 0.258819043636322)))' }}>
+      <div className="absolute left-[322px] top-[35px] hidden items-center justify-center lg:flex" style={{ height: 'calc(1px * ((6 * 0.258819043636322) + (6 * 0.9659258127212524)))', width: 'calc(1px * ((6 * 0.9659258127212524) + (6 * 0.258819043636322)))' }}>
         <div className="flex-none rotate-[345deg]">
           <div className="relative size-[6px]">
             <img alt="" className="block size-full max-w-none" src="http://localhost:3845/assets/370e5ce21768319797ba27c5063d2e3cd23ad554.svg" />
           </div>
         </div>
       </div>
-      <div className="absolute left-[130px] top-[55px] flex items-center justify-center" style={{ height: 'calc(1px * ((4 * 0.258819043636322) + (4 * 0.9659258127212524)))', width: 'calc(1px * ((4 * 0.9659258127212524) + (4 * 0.258819043636322)))' }}>
+      <div className="absolute left-[130px] top-[55px] hidden items-center justify-center lg:flex" style={{ height: 'calc(1px * ((4 * 0.258819043636322) + (4 * 0.9659258127212524)))', width: 'calc(1px * ((4 * 0.9659258127212524) + (4 * 0.258819043636322)))' }}>
         <div className="flex-none rotate-[345deg]">
           <div className="relative size-[4px]">
             <img alt="" className="block size-full max-w-none" src="http://localhost:3845/assets/fa1386b52070087243d0e416a6a1b0b15f30485b.svg" />
           </div>
         </div>
       </div>
-      {/* Colored sticks */}
-      <div className="absolute left-[225px] top-[125px] flex items-center justify-center" style={{ height: 'calc(1px * ((4 * 0.7714588046073914) + (8 * 0.6362792253494263)))', width: 'calc(1px * ((8 * 0.7714588046073914) + (4 * 0.6362792253494263)))' }}>
+      {/* Colored sticks - hidden on mobile */}
+      <div className="absolute left-[225px] top-[125px] hidden items-center justify-center lg:flex" style={{ height: 'calc(1px * ((4 * 0.7714588046073914) + (8 * 0.6362792253494263)))', width: 'calc(1px * ((8 * 0.7714588046073914) + (4 * 0.6362792253494263)))' }}>
         <div className="flex-none rotate-[50.485deg]">
           <div className="h-[8px] w-[4px] bg-[#7fd803]" />
         </div>
       </div>
-      <div className="absolute left-[79.62px] top-[74.03px] flex items-center justify-center" style={{ height: 'calc(1px * ((4 * 0.9659258127212524) + (8 * 0.258819043636322)))', width: 'calc(1px * ((8 * 0.9659258127212524) + (4 * 0.258819043636322)))' }}>
+      <div className="absolute left-[79.62px] top-[74.03px] hidden items-center justify-center lg:flex" style={{ height: 'calc(1px * ((4 * 0.9659258127212524) + (8 * 0.258819043636322)))', width: 'calc(1px * ((8 * 0.9659258127212524) + (4 * 0.258819043636322)))' }}>
         <div className="flex-none rotate-[105deg]">
           <div className="h-[8px] w-[4px] bg-[#ffca09]" />
         </div>
       </div>
-      <div className="absolute left-[104px] top-[39px] flex items-center justify-center" style={{ height: 'calc(1px * ((4 * 0.2588190734386444) + (8 * 0.9659258127212524)))', width: 'calc(1px * ((8 * 0.2588190734386444) + (4 * 0.9659258127212524)))' }}>
+      <div className="absolute left-[104px] top-[39px] hidden items-center justify-center lg:flex" style={{ height: 'calc(1px * ((4 * 0.2588190734386444) + (8 * 0.9659258127212524)))', width: 'calc(1px * ((8 * 0.2588190734386444) + (4 * 0.9659258127212524)))' }}>
         <div className="flex-none rotate-[165deg]">
           <div className="h-[8px] w-[4px] bg-[#7fd803]" />
         </div>
       </div>
-      <div className="absolute left-[310px] top-[112px] flex items-center justify-center" style={{ height: 'calc(1px * ((4 * 0.9659258127212524) + (8 * 0.258819043636322)))', width: 'calc(1px * ((8 * 0.9659258127212524) + (4 * 0.258819043636322)))' }}>
+      <div className="absolute left-[310px] top-[112px] hidden items-center justify-center lg:flex" style={{ height: 'calc(1px * ((4 * 0.9659258127212524) + (8 * 0.258819043636322)))', width: 'calc(1px * ((8 * 0.9659258127212524) + (4 * 0.258819043636322)))' }}>
         <div className="flex-none rotate-[285deg]">
           <div className="h-[8px] w-[4px] bg-[#73b6ff]" />
         </div>
       </div>
-      <div className="absolute left-[40px] top-[44px] flex items-center justify-center" style={{ height: 'calc(1px * ((4 * 0.8660253882408142) + (10 * 0.4999999701976776)))', width: 'calc(1px * ((10 * 0.8660253882408142) + (4 * 0.4999999701976776)))' }}>
+      <div className="absolute left-[40px] top-[44px] hidden items-center justify-center lg:flex" style={{ height: 'calc(1px * ((4 * 0.8660253882408142) + (10 * 0.4999999701976776)))', width: 'calc(1px * ((10 * 0.8660253882408142) + (4 * 0.4999999701976776)))' }}>
         <div className="flex-none rotate-[300deg]">
           <div className="h-[10px] w-[4px] bg-[#73b6ff]" />
         </div>
       </div>
-      <div className="absolute left-[187px] top-[47px] flex items-center justify-center" style={{ height: 'calc(1px * ((4 * 0.4999999701976776) + (10 * 0.8660253882408142)))', width: 'calc(1px * ((10 * 0.4999999701976776) + (4 * 0.8660253882408142)))' }}>
+      <div className="absolute left-[187px] top-[47px] hidden items-center justify-center lg:flex" style={{ height: 'calc(1px * ((4 * 0.4999999701976776) + (10 * 0.8660253882408142)))', width: 'calc(1px * ((10 * 0.4999999701976776) + (4 * 0.8660253882408142)))' }}>
         <div className="flex-none rotate-[210deg]">
           <div className="h-[10px] w-[4px] bg-[#ff81d1]" />
         </div>
       </div>
-      <div className="absolute left-[55px] top-[121px] flex items-center justify-center" style={{ height: 'calc(1px * ((4 * 0.8660253882408142) + (8 * 0.4999999701976776)))', width: 'calc(1px * ((8 * 0.8660253882408142) + (4 * 0.4999999701976776)))' }}>
+      <div className="absolute left-[55px] top-[121px] hidden items-center justify-center lg:flex" style={{ height: 'calc(1px * ((4 * 0.8660253882408142) + (8 * 0.4999999701976776)))', width: 'calc(1px * ((8 * 0.8660253882408142) + (4 * 0.4999999701976776)))' }}>
         <div className="flex-none rotate-[300deg]">
           <div className="h-[8px] w-[4px] bg-[#ff81d1]" />
         </div>
       </div>
       {/* Small coin - rotated with proper transform wrapper */}
-      <div className="absolute left-[209.29px] top-[25px] flex items-center justify-center" style={{ height: 'calc(1px * ((80 * 0.258819043636322) + (80 * 0.9659258127212524)))', width: 'calc(1px * ((80 * 0.9659258127212524) + (80 * 0.258819043636322)))' }}>
+      <div className="absolute right-[15%] top-[25px] flex items-center justify-center lg:left-[209.29px] lg:right-auto" style={{ height: 'calc(1px * ((80 * 0.258819043636322) + (80 * 0.9659258127212524)))', width: 'calc(1px * ((80 * 0.9659258127212524) + (80 * 0.258819043636322)))' }}>
         <div className="flex-none rotate-[15deg]">
           <div className="relative size-[80px] overflow-clip">
             <div className="absolute inset-0">
@@ -609,7 +609,7 @@ const ManageOrdersCard = () => (
       </p>
     </div>
     <div className="relative h-[50vh] w-full shrink-0 overflow-hidden bg-[#e0e6fb] lg:h-[384px] lg:rounded-[40px]">
-      <div className="absolute left-[32px] top-[32px] flex w-[320px] flex-col gap-[16px]">
+      <div className="absolute inset-x-4 top-8 flex max-w-[320px] flex-col gap-[16px] lg:left-[32px] lg:right-auto lg:top-[32px] lg:w-[320px]">
         {/* English Class Card */}
         <div className="flex w-full flex-col gap-[16px] rounded-[16px] border border-white bg-white px-[16px] pb-[16px] pt-[18px]">
           <p className="w-full font-['Inter'] text-[18px] font-extrabold leading-[1.5] text-black">English Class</p>
