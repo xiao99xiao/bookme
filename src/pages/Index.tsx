@@ -406,49 +406,45 @@ const TrackEarningsCard = () => (
     <div className="relative aspect-square w-full shrink-0 overflow-hidden rounded-b-[20px] bg-[#ffe9fb] sm:rounded-b-[24px] lg:size-[384px] lg:rounded-[40px]">
       <div className="absolute inset-x-4 top-4 flex max-w-[320px] flex-col gap-[12px] sm:inset-x-6 sm:top-6 sm:gap-[16px] lg:left-[32px] lg:right-auto lg:top-[32px] lg:w-[320px]">
         {/* First earning card */}
-        <div className="flex w-full flex-col gap-[16px] rounded-[16px] border border-white bg-white p-[16px] shadow-sm transition-shadow hover:shadow-md">
-          <div className="flex w-full gap-[16px]">
-            <div className="flex min-h-px min-w-px flex-1 flex-col gap-[4px]">
-              <p className="font-['Inter'] text-[12px] font-medium uppercase leading-[1.5] tracking-wide text-[#999999]">Date</p>
-              <div className="flex h-[32px] w-full items-center justify-center gap-[4px]">
-                <p className="h-[21px] min-h-px min-w-px flex-1 font-['Inter'] text-[14px] font-semibold leading-[1.5] text-black">
-                  Sep 15, 2025
-                </p>
-              </div>
+        <div className="flex w-full flex-col gap-[12px] rounded-[16px] border border-white bg-white p-[12px] shadow-sm transition-shadow hover:shadow-md sm:gap-[16px] sm:p-[16px]">
+          <div className="flex w-full flex-col gap-[12px] sm:flex-row sm:gap-[16px]">
+            <div className="flex flex-1 flex-col gap-[4px]">
+              <p className="font-['Inter'] text-[10px] font-medium uppercase leading-[1.5] tracking-wide text-[#999999] sm:text-[12px]">Date</p>
+              <p className="font-['Inter'] text-[13px] font-semibold leading-[1.5] text-black sm:text-[14px]">
+                Sep 15, 2025
+              </p>
             </div>
-            <div className="flex min-h-px min-w-px flex-1 flex-col gap-[4px]">
-              <p className="font-['Inter'] text-[12px] font-medium uppercase leading-[1.5] tracking-wide text-[#999999]">Type</p>
-              <div className="flex h-[32px] items-center justify-center gap-[8px] rounded-[12px] border border-[#eff7ff] bg-[#eff7ff] px-[8px] py-[12px]">
-                <p className="font-['Inter'] text-[14px] font-semibold leading-[1.5] text-black">Service</p>
+            <div className="flex flex-1 flex-col gap-[4px]">
+              <p className="font-['Inter'] text-[10px] font-medium uppercase leading-[1.5] tracking-wide text-[#999999] sm:text-[12px]">Type</p>
+              <div className="inline-flex w-fit items-center gap-[6px] rounded-[12px] border border-[#eff7ff] bg-[#eff7ff] px-[8px] py-[6px]">
+                <p className="font-['Inter'] text-[13px] font-semibold leading-[1.5] text-black sm:text-[14px]">Service</p>
               </div>
             </div>
           </div>
           <div className="flex w-full flex-col items-start leading-[1.5]">
-            <p className="font-['Inter'] text-[12px] font-medium uppercase leading-[1.5] tracking-wide text-[#999999]">Amount</p>
-            <p className="font-['Baloo_2'] text-[28px] font-extrabold text-[#0ea05d]">+ $58.00</p>
+            <p className="font-['Inter'] text-[10px] font-medium uppercase leading-[1.5] tracking-wide text-[#999999] sm:text-[12px]">Amount</p>
+            <p className="font-['Baloo_2'] text-[24px] font-extrabold text-[#0ea05d] sm:text-[28px]">+ $58.00</p>
           </div>
         </div>
         {/* Second earning card */}
-        <div className="flex w-full flex-col gap-[16px] rounded-[16px] border border-white bg-white p-[16px] shadow-sm transition-shadow hover:shadow-md">
-          <div className="flex w-full gap-[16px]">
-            <div className="flex min-h-px min-w-px flex-1 flex-col gap-[4px]">
-              <p className="font-['Inter'] text-[12px] font-medium uppercase leading-[1.5] tracking-wide text-[#999999]">Date</p>
-              <div className="flex h-[32px] w-full items-center justify-center gap-[4px]">
-                <p className="h-[21px] min-h-px min-w-px flex-1 font-['Inter'] text-[14px] font-semibold leading-[1.5] text-black">
-                  Sep 12, 2025
-                </p>
-              </div>
+        <div className="flex w-full flex-col gap-[12px] rounded-[16px] border border-white bg-white p-[12px] shadow-sm transition-shadow hover:shadow-md sm:gap-[16px] sm:p-[16px]">
+          <div className="flex w-full flex-col gap-[12px] sm:flex-row sm:gap-[16px]">
+            <div className="flex flex-1 flex-col gap-[4px]">
+              <p className="font-['Inter'] text-[10px] font-medium uppercase leading-[1.5] tracking-wide text-[#999999] sm:text-[12px]">Date</p>
+              <p className="font-['Inter'] text-[13px] font-semibold leading-[1.5] text-black sm:text-[14px]">
+                Sep 12, 2025
+              </p>
             </div>
-            <div className="flex min-h-px min-w-px flex-1 flex-col gap-[4px]">
-              <p className="font-['Inter'] text-[12px] font-medium uppercase leading-[1.5] tracking-wide text-[#999999]">Type</p>
-              <div className="flex h-[32px] items-center justify-center gap-[8px] rounded-[12px] border border-[#ffeff0] bg-[#ffeff0] px-[8px] py-[12px]">
-                <p className="font-['Inter'] text-[14px] font-semibold leading-[1.5] text-black">Referral</p>
+            <div className="flex flex-1 flex-col gap-[4px]">
+              <p className="font-['Inter'] text-[10px] font-medium uppercase leading-[1.5] tracking-wide text-[#999999] sm:text-[12px]">Type</p>
+              <div className="inline-flex w-fit items-center gap-[6px] rounded-[12px] border border-[#ffeff0] bg-[#ffeff0] px-[8px] py-[6px]">
+                <p className="font-['Inter'] text-[13px] font-semibold leading-[1.5] text-black sm:text-[14px]">Referral</p>
               </div>
             </div>
           </div>
           <div className="flex w-full flex-col items-start leading-[1.5]">
-            <p className="font-['Inter'] text-[12px] font-medium uppercase leading-[1.5] tracking-wide text-[#999999]">Amount</p>
-            <p className="font-['Baloo_2'] text-[28px] font-extrabold text-[#0ea05d]">+ $6.00</p>
+            <p className="font-['Inter'] text-[10px] font-medium uppercase leading-[1.5] tracking-wide text-[#999999] sm:text-[12px]">Amount</p>
+            <p className="font-['Baloo_2'] text-[24px] font-extrabold text-[#0ea05d] sm:text-[28px]">+ $6.00</p>
           </div>
         </div>
       </div>
@@ -586,102 +582,102 @@ const ManageOrdersCard = () => (
     <div className="relative aspect-square w-full shrink-0 overflow-hidden rounded-b-[20px] bg-[#e0e6fb] sm:rounded-b-[24px] lg:h-[384px] lg:w-[384px] lg:rounded-[40px]">
       <div className="absolute inset-x-4 top-4 flex max-w-[320px] flex-col gap-[12px] sm:inset-x-6 sm:top-6 sm:gap-[16px] lg:left-[32px] lg:right-auto lg:top-[32px] lg:w-[320px]">
         {/* English Class Card */}
-        <div className="flex w-full flex-col gap-[16px] rounded-[16px] border border-white bg-white px-[16px] pb-[16px] pt-[18px] shadow-sm transition-all hover:shadow-md">
-          <p className="w-full font-['Inter'] text-[16px] font-extrabold leading-[1.5] text-black sm:text-[18px]">English Class</p>
-          <div className="flex w-full flex-col gap-[12px]">
-            <div className="flex w-full flex-wrap gap-x-[8px] gap-y-[6px] font-['Inter'] text-[13px] font-medium leading-[1.5] sm:text-[14px]">
+        <div className="flex w-full flex-col gap-[12px] rounded-[16px] border border-white bg-white p-[12px] shadow-sm transition-all hover:shadow-md sm:gap-[16px] sm:px-[16px] sm:pb-[16px] sm:pt-[18px]">
+          <p className="w-full font-['Inter'] text-[15px] font-extrabold leading-[1.4] text-black sm:text-[16px] lg:text-[18px]">English Class</p>
+          <div className="flex w-full flex-col gap-[10px] sm:gap-[12px]">
+            <div className="flex w-full flex-wrap items-center gap-x-[6px] gap-y-[4px] font-['Inter'] text-[12px] font-medium leading-[1.5] sm:gap-x-[8px] sm:text-[13px] lg:text-[14px]">
               <p className="text-black">Xiao xiao</p>
-              <p className="text-center text-[#cccccc]">|</p>
+              <p className="hidden text-center text-[#cccccc] sm:inline">|</p>
               <p className="text-black">Mon, Sep 15, 2025</p>
-              <p className="text-center text-[#cccccc]">|</p>
+              <p className="hidden text-center text-[#cccccc] sm:inline">|</p>
               <p className="text-black">08:30</p>
             </div>
-            <div className="flex w-full flex-wrap gap-[8px]">
-              <div className="flex items-center gap-[4px] rounded-[8px] bg-[#e8f5e9] px-[8px] py-[4px]">
-                <div className="relative size-[18px] overflow-clip">
+            <div className="flex w-full flex-wrap gap-[6px] sm:gap-[8px]">
+              <div className="flex items-center gap-[3px] rounded-[8px] bg-[#e8f5e9] px-[6px] py-[3px] sm:gap-[4px] sm:px-[8px] sm:py-[4px]">
+                <div className="relative size-[16px] overflow-clip sm:size-[18px]">
                   <div className="absolute inset-[30.39%_17.89%_23.27%_22.05%]">
                     <img alt="" className="block size-full max-w-none" src={ASSETS.andMore.check} />
                   </div>
                 </div>
-                <p className="text-center font-['Inter'] text-[13px] font-semibold leading-[1.5] text-[#2e7d32]">Confirmed</p>
+                <p className="whitespace-nowrap font-['Inter'] text-[11px] font-semibold leading-[1.5] text-[#2e7d32] sm:text-[13px]">Confirmed</p>
               </div>
-              <div className="flex items-center gap-[4px] rounded-[8px] bg-[#f3f3f3] px-[8px] py-[4px]">
-                <div className="relative size-[18px] overflow-clip">
+              <div className="flex items-center gap-[3px] rounded-[8px] bg-[#f3f3f3] px-[6px] py-[3px] sm:gap-[4px] sm:px-[8px] sm:py-[4px]">
+                <div className="relative size-[16px] overflow-clip sm:size-[18px]">
                   <div className="absolute inset-[12.5%_8.33%_16.67%_8.33%]">
                     <img alt="" className="block size-full max-w-none" src={ASSETS.andMore.laptop} />
                   </div>
                 </div>
-                <p className="text-center font-['Inter'] text-[13px] font-semibold leading-[1.5] text-[#666666]">Online</p>
+                <p className="whitespace-nowrap font-['Inter'] text-[11px] font-semibold leading-[1.5] text-[#666666] sm:text-[13px]">Online</p>
               </div>
-              <div className="flex items-center gap-[4px] rounded-[8px] bg-[#f3f3f3] px-[8px] py-[4px]">
-                <div className="relative size-[18px] overflow-clip">
+              <div className="flex items-center gap-[3px] rounded-[8px] bg-[#f3f3f3] px-[6px] py-[3px] sm:gap-[4px] sm:px-[8px] sm:py-[4px]">
+                <div className="relative size-[16px] overflow-clip sm:size-[18px]">
                   <div className="absolute inset-[8.33%_12.5%]">
                     <img alt="" className="block size-full max-w-none" src={ASSETS.andMore.calendar} />
                   </div>
                 </div>
-                <p className="text-center font-['Inter'] text-[13px] font-semibold leading-[1.5] text-[#666666]">60 min</p>
+                <p className="whitespace-nowrap font-['Inter'] text-[11px] font-semibold leading-[1.5] text-[#666666] sm:text-[13px]">60 min</p>
               </div>
             </div>
           </div>
           <div className="h-px w-full bg-gradient-to-r from-transparent via-[#e0e0e0] to-transparent" />
-          <div className="flex h-[36px] w-full items-center justify-end gap-[12px]">
-            <div className="flex h-[36px] items-center justify-center gap-[8px] rounded-[12px] border border-black bg-black px-[16px] py-[8px] transition-all hover:bg-[#0073ff] hover:border-[#0073ff]">
-              <div className="relative size-[18px] overflow-clip">
+          <div className="flex w-full items-center justify-end">
+            <div className="flex h-[32px] items-center justify-center gap-[6px] rounded-[12px] border border-black bg-black px-[12px] py-[6px] transition-all hover:border-[#0073ff] hover:bg-[#0073ff] sm:h-[36px] sm:gap-[8px] sm:px-[16px] sm:py-[8px]">
+              <div className="relative size-[16px] overflow-clip sm:size-[18px]">
                 <div className="absolute bottom-[9.38%] left-0 right-0 top-[8.33%]">
                   <img alt="" className="block size-full max-w-none" src={ASSETS.andMore.googleMeet} />
                 </div>
               </div>
-              <p className="font-['Inter'] text-[14px] font-semibold leading-[1.5] text-white">Join</p>
+              <p className="font-['Inter'] text-[13px] font-semibold leading-[1.5] text-white sm:text-[14px]">Join</p>
             </div>
           </div>
         </div>
         {/* Japanese Lessons Card */}
-        <div className="flex w-full flex-col gap-[16px] rounded-[16px] border border-white bg-white px-[16px] pb-[16px] pt-[18px] shadow-sm transition-all hover:shadow-md">
-          <p className="w-full font-['Inter'] text-[16px] font-extrabold leading-[1.5] text-black sm:text-[18px]">Japanese Lessons</p>
-          <div className="flex w-full flex-col gap-[12px]">
-            <div className="flex w-full flex-wrap gap-x-[8px] gap-y-[6px] font-['Inter'] text-[13px] font-medium leading-[1.5] sm:text-[14px]">
+        <div className="flex w-full flex-col gap-[12px] rounded-[16px] border border-white bg-white p-[12px] shadow-sm transition-all hover:shadow-md sm:gap-[16px] sm:px-[16px] sm:pb-[16px] sm:pt-[18px]">
+          <p className="w-full font-['Inter'] text-[15px] font-extrabold leading-[1.4] text-black sm:text-[16px] lg:text-[18px]">Japanese Lessons</p>
+          <div className="flex w-full flex-col gap-[10px] sm:gap-[12px]">
+            <div className="flex w-full flex-wrap items-center gap-x-[6px] gap-y-[4px] font-['Inter'] text-[12px] font-medium leading-[1.5] sm:gap-x-[8px] sm:text-[13px] lg:text-[14px]">
               <p className="text-black">Akira</p>
-              <p className="text-center text-[#cccccc]">|</p>
+              <p className="hidden text-center text-[#cccccc] sm:inline">|</p>
               <p className="text-black">Wed, Aug 27, 2025</p>
-              <p className="text-center text-[#cccccc]">|</p>
+              <p className="hidden text-center text-[#cccccc] sm:inline">|</p>
               <p className="text-black">19:30</p>
             </div>
-            <div className="flex w-full flex-wrap gap-[8px]">
-              <div className="flex items-center gap-[4px] rounded-[8px] bg-[#e8f5e9] px-[8px] py-[4px]">
-                <div className="relative size-[18px] overflow-clip">
+            <div className="flex w-full flex-wrap gap-[6px] sm:gap-[8px]">
+              <div className="flex items-center gap-[3px] rounded-[8px] bg-[#e8f5e9] px-[6px] py-[3px] sm:gap-[4px] sm:px-[8px] sm:py-[4px]">
+                <div className="relative size-[16px] overflow-clip sm:size-[18px]">
                   <div className="absolute inset-[30.39%_17.89%_23.27%_22.05%]">
                     <img alt="" className="block size-full max-w-none" src={ASSETS.andMore.check} />
                   </div>
                 </div>
-                <p className="text-center font-['Inter'] text-[13px] font-semibold leading-[1.5] text-[#2e7d32]">Confirmed</p>
+                <p className="whitespace-nowrap font-['Inter'] text-[11px] font-semibold leading-[1.5] text-[#2e7d32] sm:text-[13px]">Confirmed</p>
               </div>
-              <div className="flex items-center gap-[4px] rounded-[8px] bg-[#f3f3f3] px-[8px] py-[4px]">
-                <div className="relative size-[18px] overflow-clip">
+              <div className="flex items-center gap-[3px] rounded-[8px] bg-[#f3f3f3] px-[6px] py-[3px] sm:gap-[4px] sm:px-[8px] sm:py-[4px]">
+                <div className="relative size-[16px] overflow-clip sm:size-[18px]">
                   <div className="absolute inset-[8.31%_8.33%_8.33%_8.31%]">
                     <img alt="" className="block size-full max-w-none" src={ASSETS.andMore.homeAlt} />
                   </div>
                 </div>
-                <p className="text-center font-['Inter'] text-[13px] font-semibold leading-[1.5] text-[#666666]">Offline</p>
+                <p className="whitespace-nowrap font-['Inter'] text-[11px] font-semibold leading-[1.5] text-[#666666] sm:text-[13px]">Offline</p>
               </div>
-              <div className="flex items-center gap-[4px] rounded-[8px] bg-[#f3f3f3] px-[8px] py-[4px]">
-                <div className="relative size-[18px] overflow-clip">
+              <div className="flex items-center gap-[3px] rounded-[8px] bg-[#f3f3f3] px-[6px] py-[3px] sm:gap-[4px] sm:px-[8px] sm:py-[4px]">
+                <div className="relative size-[16px] overflow-clip sm:size-[18px]">
                   <div className="absolute inset-[8.33%_12.5%]">
                     <img alt="" className="block size-full max-w-none" src={ASSETS.andMore.calendar} />
                   </div>
                 </div>
-                <p className="text-center font-['Inter'] text-[13px] font-semibold leading-[1.5] text-[#666666]">45 min</p>
+                <p className="whitespace-nowrap font-['Inter'] text-[11px] font-semibold leading-[1.5] text-[#666666] sm:text-[13px]">45 min</p>
               </div>
             </div>
           </div>
           <div className="h-px w-full bg-gradient-to-r from-transparent via-[#e0e0e0] to-transparent" />
-          <div className="flex h-[36px] w-full items-center justify-end gap-[12px]">
-            <div className="flex h-[36px] items-center justify-center gap-[8px] rounded-[12px] border border-black bg-black px-[16px] py-[8px] transition-all hover:bg-[#0073ff] hover:border-[#0073ff]">
-              <div className="relative size-[18px] overflow-clip">
+          <div className="flex w-full items-center justify-end">
+            <div className="flex h-[32px] items-center justify-center gap-[6px] rounded-[12px] border border-black bg-black px-[12px] py-[6px] transition-all hover:border-[#0073ff] hover:bg-[#0073ff] sm:h-[36px] sm:gap-[8px] sm:px-[16px] sm:py-[8px]">
+              <div className="relative size-[16px] overflow-clip sm:size-[18px]">
                 <div className="absolute bottom-[9.38%] left-0 right-0 top-[8.33%]">
                   <img alt="" className="block size-full max-w-none" src={ASSETS.andMore.googleMeet} />
                 </div>
               </div>
-              <p className="font-['Inter'] text-[14px] font-semibold leading-[1.5] text-white">Join</p>
+              <p className="font-['Inter'] text-[13px] font-semibold leading-[1.5] text-white sm:text-[14px]">Join</p>
             </div>
           </div>
         </div>
