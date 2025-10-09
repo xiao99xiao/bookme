@@ -421,8 +421,8 @@ const AndMore = () => (
 );
 
 const TrackEarningsCard = () => (
-  <div className="flex min-h-screen min-w-px flex-1 flex-col items-center justify-center bg-[#ffe9fb] transition-all duration-700 snap-start snap-always lg:items-start lg:justify-start lg:min-h-px lg:rounded-tl-[24px] lg:rounded-tr-[24px] lg:rounded-bl-[40px] lg:rounded-br-[40px] lg:bg-[#fafafa] lg:snap-none">
-    <div className="flex w-full flex-col gap-[16px] px-6 py-12 lg:flex-initial lg:bg-transparent lg:p-[32px]">
+  <div className="flex min-h-screen min-w-px flex-1 flex-col items-center justify-center bg-[#ffe9fb] transition-all duration-700 snap-start snap-always lg:block lg:rounded-tl-[24px] lg:rounded-tr-[24px] lg:rounded-bl-[40px] lg:rounded-br-[40px] lg:bg-[#fafafa] lg:snap-none">
+    <div className="flex w-full flex-col gap-[16px] px-6 py-12 lg:w-auto lg:bg-transparent lg:p-[32px]">
       <p className="font-['Inter'] text-[32px] font-bold leading-[1.2] text-black lg:text-[20px] lg:leading-[1.4]">Track your earnings</p>
       <p className="font-['Inter'] text-[18px] font-normal leading-[1.5] text-[#666666] lg:text-[16px]">
         Timee takes care of everything else — secure payments, effortless booking, and the right users who value your time.
@@ -488,8 +488,8 @@ const TrackEarningsCard = () => (
 );
 
 const GetPaidUSDCCard = () => (
-  <div className="flex min-h-screen min-w-px flex-1 flex-col items-center justify-center bg-[#dcf3ff] transition-all duration-700 snap-start snap-always lg:items-start lg:justify-start lg:min-h-px lg:rounded-tl-[24px] lg:rounded-tr-[24px] lg:rounded-bl-[40px] lg:rounded-br-[40px] lg:bg-[#fafafa] lg:snap-none">
-    <div className="flex w-full flex-col gap-[16px] items-center px-6 py-12 lg:flex-initial lg:bg-transparent lg:p-[32px]">
+  <div className="flex min-h-screen min-w-px flex-1 flex-col items-center justify-center bg-[#dcf3ff] transition-all duration-700 snap-start snap-always lg:block lg:rounded-tl-[24px] lg:rounded-tr-[24px] lg:rounded-bl-[40px] lg:rounded-br-[40px] lg:bg-[#fafafa] lg:snap-none">
+    <div className="flex w-full flex-col gap-[16px] items-center px-6 py-12 lg:w-auto lg:items-start lg:bg-transparent lg:p-[32px]">
       <p className="w-full font-['Inter'] text-[32px] font-bold leading-[1.2] text-black lg:text-[20px] lg:leading-[1.4]">Get paid in USDC</p>
       <p className="w-full font-['Inter'] text-[18px] font-normal leading-[1.5] text-[#666666] lg:text-[16px]">
         With transparent pricing and safe USDC payments, every effort you give turns directly into rewards you keep.
@@ -601,8 +601,8 @@ const GetPaidUSDCCard = () => (
 );
 
 const ManageOrdersCard = () => (
-  <div className="flex min-h-screen min-w-px flex-1 flex-col items-center justify-center bg-[#e0e6fb] transition-all duration-700 snap-start snap-always lg:items-start lg:justify-start lg:min-h-px lg:rounded-tl-[24px] lg:rounded-tr-[24px] lg:rounded-bl-[40px] lg:rounded-br-[40px] lg:bg-[#fafafa] lg:snap-none">
-    <div className="flex w-full flex-col gap-[16px] items-center px-6 py-12 lg:flex-initial lg:bg-transparent lg:p-[32px]">
+  <div className="flex min-h-screen min-w-px flex-1 flex-col items-center justify-center bg-[#e0e6fb] transition-all duration-700 snap-start snap-always lg:block lg:rounded-tl-[24px] lg:rounded-tr-[24px] lg:rounded-bl-[40px] lg:rounded-br-[40px] lg:bg-[#fafafa] lg:snap-none">
+    <div className="flex w-full flex-col gap-[16px] items-center px-6 py-12 lg:w-auto lg:items-start lg:bg-transparent lg:p-[32px]">
       <p className="w-full font-['Inter'] text-[32px] font-bold leading-[1.2] text-black lg:text-[20px] lg:leading-[1.4]">Manage your orders</p>
       <p className="w-full font-['Inter'] text-[18px] font-normal leading-[1.5] text-[#666666] lg:text-[16px]">
         From tutors to therapists, coaches to creators — Timee brings providers together, so clients can find
