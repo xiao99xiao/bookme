@@ -35,6 +35,23 @@ const ASSETS = {
     coinDollar: "http://localhost:3845/assets/da176571b63a239e41bc3a646141cc7ebdecc469.svg",
     sparkle: "http://localhost:3845/assets/6083e47a190d89e484932bf358371b84baaae396.svg",
   },
+  andMore: {
+    check: "http://localhost:3845/assets/b6a1dd069303dc19de38b163027941400ec0c083.svg",
+    laptop: "http://localhost:3845/assets/f0d4007f94a2f1f8c2c9915368f69464c2c733cf.svg",
+    calendar: "http://localhost:3845/assets/26d82e6dd446cf9a321bd786c465634fab030b7a.svg",
+    line: "http://localhost:3845/assets/1af9a0add2a2994f4076bbc6f27747a78786f83c.svg",
+    googleMeet: "http://localhost:3845/assets/9661df557f27fdc267cc0621f641e5673542f88a.svg",
+    homeAlt: "http://localhost:3845/assets/d2482277759d5ce494d2c18083074c0e5bd345b0.svg",
+    leftChar: "http://localhost:3845/assets/d8a41e5fced525b248d7c8ff1d41d64ed7010325.svg",
+    wallet: "http://localhost:3845/assets/409be5ba101830cb76a7b02a92d5c9d56f15109d.svg",
+    rightChar: "http://localhost:3845/assets/653613b31c6958ca0a00cdf8abefd21ad09f9c72.svg",
+    coin1: "http://localhost:3845/assets/10671ec77ca9ef8a96f9e57bcf6dc7d49b607a07.svg",
+    coin1Inner1: "http://localhost:3845/assets/5fe911335bdbe72bd7182e6a2ce3c3e79711ff03.svg",
+    coin1Inner2: "http://localhost:3845/assets/2b90f4c89f9e19b15c00802de35af2bb33edd058.svg",
+    coin2: "http://localhost:3845/assets/1018bc703415c6612739295e3810552da047b2f7.svg",
+    coin2Inner1: "http://localhost:3845/assets/bef45ed9987bf628d58f63dd153111bfc4b83256.svg",
+    coin2Inner2: "http://localhost:3845/assets/fa9ee4d4b8dfbbddc0022c4cbf7ba5fe4e69a99c.svg",
+  },
 };
 
 const Index = () => {
@@ -45,6 +62,7 @@ const Index = () => {
     <main className="relative overflow-hidden">
       <Hero onPrimaryClick={login} />
       <Highlights />
+      <AndMore />
     </main>
   );
 };
@@ -353,6 +371,325 @@ const ReferralCard = () => (
         <p className="text-[18px] font-bold leading-[1.5] text-black">invite's income</p>
       </div>
       <p className="mt-4 w-full text-[14px] font-extrabold text-[#ea6177]">* without affecting their payout.</p>
+    </div>
+  </div>
+);
+
+const AndMore = () => (
+  <section className="relative px-6 pb-20 pt-20 sm:px-10 lg:px-[120px] lg:pb-[80px] lg:pt-[80px]">
+    <Container maxWidth="xl" className="relative z-10">
+      <div className="mx-auto w-full max-w-[1200px]">
+        <h2 className="mb-16 text-center font-['Inter'] text-[48px] font-bold leading-[1.2] text-black">And more</h2>
+        <div className="flex flex-col gap-6 lg:flex-row lg:gap-[24px]">
+          <TrackEarningsCard />
+          <GetPaidUSDCCard />
+          <ManageOrdersCard />
+        </div>
+      </div>
+    </Container>
+  </section>
+);
+
+const TrackEarningsCard = () => (
+  <div className="flex min-h-px min-w-px flex-1 flex-col items-start rounded-tl-[24px] rounded-tr-[24px] rounded-bl-[40px] rounded-br-[40px] bg-[#fafafa]">
+    <div className="flex w-full flex-col gap-[16px] p-[32px]">
+      <p className="font-['Inter'] text-[20px] font-bold leading-[1.4] text-black">Track your earnings</p>
+      <p className="font-['Inter'] text-[16px] font-normal leading-[1.5] text-[#666666]">
+        Timee takes care of everything else — secure payments, effortless booking, and the right users who value your time.
+      </p>
+    </div>
+    <div className="relative size-[384px] shrink-0 overflow-hidden rounded-[40px] bg-[#ffe9fb]">
+      <div className="absolute left-[32px] top-[32px] flex w-[320px] flex-col gap-[16px]">
+        {/* First earning card */}
+        <div className="flex w-full flex-col gap-[16px] rounded-[16px] border border-white bg-white p-[16px]">
+          <div className="flex w-full gap-[16px]">
+            <div className="flex min-h-px min-w-px flex-1 flex-col gap-[4px]">
+              <p className="font-['Inter'] text-[14px] font-normal leading-[1.5] text-[#666666]">Date</p>
+              <div className="flex h-[32px] w-full items-center justify-center gap-[4px]">
+                <p className="h-[21px] min-h-px min-w-px flex-1 font-['Inter'] text-[14px] font-semibold leading-[1.5] text-black">
+                  Sep 15, 2025
+                </p>
+              </div>
+            </div>
+            <div className="flex min-h-px min-w-px flex-1 flex-col gap-[4px]">
+              <p className="min-w-full font-['Inter'] text-[14px] font-normal leading-[1.5] text-[#666666]" style={{ width: 'min-content' }}>Type</p>
+              <div className="flex h-[32px] items-center justify-center gap-[8px] rounded-[12px] border border-[#eff7ff] bg-[#eff7ff] px-[8px] py-[12px]">
+                <p className="font-['Inter'] text-[14px] font-semibold leading-[1.5] text-black">Service</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex w-full flex-col items-start leading-[1.5]">
+            <p className="min-w-full font-['Inter'] text-[14px] font-normal text-[#666666]" style={{ width: 'min-content' }}>Amount</p>
+            <p className="font-['Baloo_2'] text-[28px] font-extrabold text-black">+ $58.00</p>
+          </div>
+        </div>
+        {/* Second earning card */}
+        <div className="flex w-full flex-col gap-[16px] rounded-[16px] border border-white bg-white p-[16px]">
+          <div className="flex w-full gap-[16px]">
+            <div className="flex min-h-px min-w-px flex-1 flex-col gap-[4px]">
+              <p className="font-['Inter'] text-[14px] font-normal leading-[1.5] text-[#666666]">Date</p>
+              <div className="flex h-[32px] w-full items-center justify-center gap-[4px]">
+                <p className="h-[21px] min-h-px min-w-px flex-1 font-['Inter'] text-[14px] font-semibold leading-[1.5] text-black">
+                  Sep 12, 2025
+                </p>
+              </div>
+            </div>
+            <div className="flex min-h-px min-w-px flex-1 flex-col gap-[4px]">
+              <p className="min-w-full font-['Inter'] text-[14px] font-normal leading-[1.5] text-[#666666]" style={{ width: 'min-content' }}>Type</p>
+              <div className="flex h-[32px] items-center justify-center gap-[8px] rounded-[12px] border border-[#ffeff0] bg-[#ffeff0] px-[8px] py-[12px]">
+                <p className="font-['Inter'] text-[14px] font-semibold leading-[1.5] text-black">Referral</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex w-full flex-col items-start leading-[1.5]">
+            <p className="min-w-full font-['Inter'] text-[14px] font-normal text-[#666666]" style={{ width: 'min-content' }}>Amount</p>
+            <p className="font-['Baloo_2'] text-[28px] font-extrabold text-black">+ $6.00</p>
+          </div>
+        </div>
+      </div>
+      {/* Character illustration */}
+      <div className="absolute left-[180px] top-[328px] h-[84px] w-[137px]">
+        <div className="absolute inset-[-0.71%_-0.44%]">
+          <img src={ASSETS.andMore.leftChar} alt="" className="block size-full max-w-none" />
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+const GetPaidUSDCCard = () => (
+  <div className="flex min-h-px min-w-px flex-1 flex-col items-start rounded-tl-[24px] rounded-tr-[24px] rounded-bl-[40px] rounded-br-[40px] bg-[#fafafa]">
+    <div className="flex w-full flex-col gap-[16px] items-center p-[32px]">
+      <p className="w-full font-['Inter'] text-[20px] font-bold leading-[1.4] text-black">Get paid in USDC</p>
+      <p className="w-full font-['Inter'] text-[16px] font-normal leading-[1.5] text-[#666666]">
+        With transparent pricing and safe USDC payments, every effort you give turns directly into rewards you keep.
+      </p>
+    </div>
+    <div className="relative h-[384px] w-full shrink-0 overflow-hidden rounded-[40px] bg-[#dcf3ff]">
+      {/* Large coin - rotated with proper transform wrapper */}
+      <div className="absolute left-[88px] top-[70.08px] flex items-center justify-center" style={{ height: 'calc(1px * ((104 * 0.258819043636322) + (104 * 0.9659258127212524)))', width: 'calc(1px * ((104 * 0.9659258127212524) + (104 * 0.258819043636322)))' }}>
+        <div className="flex-none rotate-[345deg]">
+          <div className="relative size-[104px] overflow-clip">
+            <div className="absolute inset-0">
+              <img alt="" className="block size-full max-w-none" src={ASSETS.andMore.coin1} />
+            </div>
+            <div className="absolute inset-[25.4%_36.25%_24.39%_35.81%]">
+              <img alt="" className="block size-full max-w-none" src={ASSETS.andMore.coin1Inner1} />
+            </div>
+            <div className="absolute inset-[14.57%_12.44%_13.32%_12.41%]">
+              <img alt="" className="block size-full max-w-none" src={ASSETS.andMore.coin1Inner2} />
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Wallet */}
+      <div className="absolute left-1/2 top-[147px] h-[209px] w-[240px] -translate-x-1/2">
+        <img alt="" className="block size-full max-w-none" src={ASSETS.andMore.wallet} />
+      </div>
+      {/* Character */}
+      <div className="absolute right-[23.73px] top-[252px] h-[104px] w-[123.275px]">
+        <div className="absolute bottom-[-0.58%] left-0 right-[-0.49%] top-[-0.58%]">
+          <img alt="" className="block size-full max-w-none" src={ASSETS.andMore.rightChar} />
+        </div>
+      </div>
+      {/* Decorative elements - dots */}
+      <div className="absolute left-[275px] top-[126.97px] flex items-center justify-center" style={{ height: 'calc(1px * ((8 * 0.258819043636322) + (8 * 0.9659258127212524)))', width: 'calc(1px * ((8 * 0.9659258127212524) + (8 * 0.258819043636322)))' }}>
+        <div className="flex-none rotate-[345deg]">
+          <div className="relative size-[8px]">
+            <img alt="" className="block size-full max-w-none" src="http://localhost:3845/assets/a5e891b23d4d7bb85b8d29317867a530e4bd8331.svg" />
+          </div>
+        </div>
+      </div>
+      <div className="absolute left-[322px] top-[35px] flex items-center justify-center" style={{ height: 'calc(1px * ((6 * 0.258819043636322) + (6 * 0.9659258127212524)))', width: 'calc(1px * ((6 * 0.9659258127212524) + (6 * 0.258819043636322)))' }}>
+        <div className="flex-none rotate-[345deg]">
+          <div className="relative size-[6px]">
+            <img alt="" className="block size-full max-w-none" src="http://localhost:3845/assets/370e5ce21768319797ba27c5063d2e3cd23ad554.svg" />
+          </div>
+        </div>
+      </div>
+      <div className="absolute left-[130px] top-[55px] flex items-center justify-center" style={{ height: 'calc(1px * ((4 * 0.258819043636322) + (4 * 0.9659258127212524)))', width: 'calc(1px * ((4 * 0.9659258127212524) + (4 * 0.258819043636322)))' }}>
+        <div className="flex-none rotate-[345deg]">
+          <div className="relative size-[4px]">
+            <img alt="" className="block size-full max-w-none" src="http://localhost:3845/assets/fa1386b52070087243d0e416a6a1b0b15f30485b.svg" />
+          </div>
+        </div>
+      </div>
+      {/* Colored sticks */}
+      <div className="absolute left-[225px] top-[125px] flex items-center justify-center" style={{ height: 'calc(1px * ((4 * 0.7714588046073914) + (8 * 0.6362792253494263)))', width: 'calc(1px * ((8 * 0.7714588046073914) + (4 * 0.6362792253494263)))' }}>
+        <div className="flex-none rotate-[50.485deg]">
+          <div className="h-[8px] w-[4px] bg-[#7fd803]" />
+        </div>
+      </div>
+      <div className="absolute left-[79.62px] top-[74.03px] flex items-center justify-center" style={{ height: 'calc(1px * ((4 * 0.9659258127212524) + (8 * 0.258819043636322)))', width: 'calc(1px * ((8 * 0.9659258127212524) + (4 * 0.258819043636322)))' }}>
+        <div className="flex-none rotate-[105deg]">
+          <div className="h-[8px] w-[4px] bg-[#ffca09]" />
+        </div>
+      </div>
+      <div className="absolute left-[104px] top-[39px] flex items-center justify-center" style={{ height: 'calc(1px * ((4 * 0.2588190734386444) + (8 * 0.9659258127212524)))', width: 'calc(1px * ((8 * 0.2588190734386444) + (4 * 0.9659258127212524)))' }}>
+        <div className="flex-none rotate-[165deg]">
+          <div className="h-[8px] w-[4px] bg-[#7fd803]" />
+        </div>
+      </div>
+      <div className="absolute left-[310px] top-[112px] flex items-center justify-center" style={{ height: 'calc(1px * ((4 * 0.9659258127212524) + (8 * 0.258819043636322)))', width: 'calc(1px * ((8 * 0.9659258127212524) + (4 * 0.258819043636322)))' }}>
+        <div className="flex-none rotate-[285deg]">
+          <div className="h-[8px] w-[4px] bg-[#73b6ff]" />
+        </div>
+      </div>
+      <div className="absolute left-[40px] top-[44px] flex items-center justify-center" style={{ height: 'calc(1px * ((4 * 0.8660253882408142) + (10 * 0.4999999701976776)))', width: 'calc(1px * ((10 * 0.8660253882408142) + (4 * 0.4999999701976776)))' }}>
+        <div className="flex-none rotate-[300deg]">
+          <div className="h-[10px] w-[4px] bg-[#73b6ff]" />
+        </div>
+      </div>
+      <div className="absolute left-[187px] top-[47px] flex items-center justify-center" style={{ height: 'calc(1px * ((4 * 0.4999999701976776) + (10 * 0.8660253882408142)))', width: 'calc(1px * ((10 * 0.4999999701976776) + (4 * 0.8660253882408142)))' }}>
+        <div className="flex-none rotate-[210deg]">
+          <div className="h-[10px] w-[4px] bg-[#ff81d1]" />
+        </div>
+      </div>
+      <div className="absolute left-[55px] top-[121px] flex items-center justify-center" style={{ height: 'calc(1px * ((4 * 0.8660253882408142) + (8 * 0.4999999701976776)))', width: 'calc(1px * ((8 * 0.8660253882408142) + (4 * 0.4999999701976776)))' }}>
+        <div className="flex-none rotate-[300deg]">
+          <div className="h-[8px] w-[4px] bg-[#ff81d1]" />
+        </div>
+      </div>
+      {/* Small coin - rotated with proper transform wrapper */}
+      <div className="absolute left-[209.29px] top-[25px] flex items-center justify-center" style={{ height: 'calc(1px * ((80 * 0.258819043636322) + (80 * 0.9659258127212524)))', width: 'calc(1px * ((80 * 0.9659258127212524) + (80 * 0.258819043636322)))' }}>
+        <div className="flex-none rotate-[15deg]">
+          <div className="relative size-[80px] overflow-clip">
+            <div className="absolute inset-0">
+              <img alt="" className="block size-full max-w-none" src={ASSETS.andMore.coin2} />
+            </div>
+            <div className="absolute inset-[25.4%_36.25%_24.39%_35.81%]">
+              <img alt="" className="block size-full max-w-none" src={ASSETS.andMore.coin2Inner1} />
+            </div>
+            <div className="absolute inset-[14.57%_12.44%_13.32%_12.41%]">
+              <img alt="" className="block size-full max-w-none" src={ASSETS.andMore.coin2Inner2} />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+const ManageOrdersCard = () => (
+  <div className="flex min-h-px min-w-px flex-1 flex-col items-start rounded-tl-[24px] rounded-tr-[24px] rounded-bl-[40px] rounded-br-[40px] bg-[#fafafa]">
+    <div className="flex w-full flex-col gap-[16px] items-center p-[32px]">
+      <p className="w-full font-['Inter'] text-[20px] font-bold leading-[1.4] text-black">Manage your orders</p>
+      <p className="w-full font-['Inter'] text-[16px] font-normal leading-[1.5] text-[#666666]">
+        From tutors to therapists, coaches to creators — Timee brings providers together, so clients can find
+      </p>
+    </div>
+    <div className="relative h-[384px] w-full shrink-0 overflow-hidden rounded-[40px] bg-[#e0e6fb]">
+      <div className="absolute left-[32px] top-[32px] flex w-[320px] flex-col gap-[16px]">
+        {/* English Class Card */}
+        <div className="flex w-full flex-col gap-[16px] rounded-[16px] border border-white bg-white px-[16px] pb-[16px] pt-[18px]">
+          <p className="w-full font-['Inter'] text-[18px] font-extrabold leading-[1.5] text-black">English Class</p>
+          <div className="flex w-full flex-col gap-[12px]">
+            <div className="flex w-full gap-[8px] whitespace-pre font-['Inter'] text-[14px] font-medium leading-[1.5] text-nowrap">
+              <p className="text-black">Xiao xiao</p>
+              <p className="text-center text-[#cccccc]">|</p>
+              <p className="text-black"> Mon, Sep 15, 2025</p>
+              <p className="text-center text-[#cccccc]">|</p>
+              <p className="text-black">08:30</p>
+            </div>
+            <div className="flex w-full gap-[8px]">
+              <div className="flex items-center gap-[4px] rounded-[8px] bg-[#eff7ff] px-[6px] py-[4px]">
+                <div className="relative size-[20px] overflow-clip">
+                  <div className="absolute inset-[30.39%_17.89%_23.27%_22.05%]">
+                    <img alt="" className="block size-full max-w-none" src={ASSETS.andMore.check} />
+                  </div>
+                </div>
+                <p className="text-center font-['Inter'] text-[14px] font-semibold leading-[1.5] text-black">Confirmed</p>
+              </div>
+              <div className="flex items-center gap-[4px] rounded-[8px] bg-[#f3f3f3] px-[6px] py-[4px]">
+                <div className="relative size-[20px] overflow-clip">
+                  <div className="absolute inset-[12.5%_8.33%_16.67%_8.33%]">
+                    <img alt="" className="block size-full max-w-none" src={ASSETS.andMore.laptop} />
+                  </div>
+                </div>
+                <p className="text-center font-['Inter'] text-[14px] font-semibold leading-[1.5] text-[#666666]">Online</p>
+              </div>
+              <div className="flex items-center gap-[4px] rounded-[8px] bg-[#f3f3f3] px-[6px] py-[4px]">
+                <div className="relative size-[20px] overflow-clip">
+                  <div className="absolute inset-[8.33%_12.5%]">
+                    <img alt="" className="block size-full max-w-none" src={ASSETS.andMore.calendar} />
+                  </div>
+                </div>
+                <p className="text-center font-['Inter'] text-[14px] font-semibold leading-[1.5] text-[#666666]">60 min</p>
+              </div>
+            </div>
+          </div>
+          <div className="relative h-0 w-full">
+            <div className="absolute bottom-[-0.5px] left-0 right-0 top-[-0.5px]">
+              <img alt="" className="block size-full max-w-none" src={ASSETS.andMore.line} />
+            </div>
+          </div>
+          <div className="flex h-[32px] w-full gap-[12px] items-center justify-end">
+            <div className="flex h-[32px] w-[110px] items-center justify-center gap-[8px] rounded-[12px] border border-black bg-black px-[8px] py-[12px]">
+              <div className="relative size-[20px] overflow-clip">
+                <div className="absolute bottom-[9.38%] left-0 right-0 top-[8.33%]">
+                  <img alt="" className="block size-full max-w-none" src={ASSETS.andMore.googleMeet} />
+                </div>
+              </div>
+              <p className="font-['Inter'] text-[14px] font-semibold leading-[1.5] text-white">Join</p>
+            </div>
+          </div>
+        </div>
+        {/* Japanese Lessons Card */}
+        <div className="flex w-full flex-col gap-[16px] rounded-[16px] border border-white bg-white px-[16px] pb-[16px] pt-[18px]">
+          <p className="w-full font-['Inter'] text-[18px] font-extrabold leading-[1.5] text-black">Japanese Lessons</p>
+          <div className="flex w-full flex-col gap-[12px]">
+            <div className="flex w-full gap-[8px] whitespace-pre font-['Inter'] text-[14px] font-medium leading-[1.5] text-nowrap">
+              <p className="text-black">Akira</p>
+              <p className="text-center text-[#cccccc]">|</p>
+              <p className="text-black"> Wed, Aug 27, 2025</p>
+              <p className="text-center text-[#cccccc]">|</p>
+              <p className="text-black">19:30</p>
+            </div>
+            <div className="flex w-full gap-[8px]">
+              <div className="flex items-center gap-[4px] rounded-[8px] bg-[#eff7ff] px-[6px] py-[4px]">
+                <div className="relative size-[20px] overflow-clip">
+                  <div className="absolute inset-[30.39%_17.89%_23.27%_22.05%]">
+                    <img alt="" className="block size-full max-w-none" src={ASSETS.andMore.check} />
+                  </div>
+                </div>
+                <p className="text-center font-['Inter'] text-[14px] font-semibold leading-[1.5] text-black">Confirmed</p>
+              </div>
+              <div className="flex items-center gap-[4px] rounded-[8px] bg-[#f3f3f3] px-[6px] py-[4px]">
+                <div className="relative size-[20px] overflow-clip">
+                  <div className="absolute inset-[8.31%_8.33%_8.33%_8.31%]">
+                    <img alt="" className="block size-full max-w-none" src={ASSETS.andMore.homeAlt} />
+                  </div>
+                </div>
+                <p className="text-center font-['Inter'] text-[14px] font-semibold leading-[1.5] text-[#666666]">Offline</p>
+              </div>
+              <div className="flex items-center gap-[4px] rounded-[8px] bg-[#f3f3f3] px-[6px] py-[4px]">
+                <div className="relative size-[20px] overflow-clip">
+                  <div className="absolute inset-[8.33%_12.5%]">
+                    <img alt="" className="block size-full max-w-none" src={ASSETS.andMore.calendar} />
+                  </div>
+                </div>
+                <p className="text-center font-['Inter'] text-[14px] font-semibold leading-[1.5] text-[#666666]">45 min</p>
+              </div>
+            </div>
+          </div>
+          <div className="relative h-0 w-full">
+            <div className="absolute bottom-[-0.5px] left-0 right-0 top-[-0.5px]">
+              <img alt="" className="block size-full max-w-none" src={ASSETS.andMore.line} />
+            </div>
+          </div>
+          <div className="flex h-[32px] w-full gap-[12px] items-center justify-end">
+            <div className="flex h-[32px] w-[110px] items-center justify-center gap-[8px] rounded-[12px] border border-black bg-black px-[8px] py-[12px]">
+              <div className="relative size-[20px] overflow-clip">
+                <div className="absolute bottom-[9.38%] left-0 right-0 top-[8.33%]">
+                  <img alt="" className="block size-full max-w-none" src={ASSETS.andMore.googleMeet} />
+                </div>
+              </div>
+              <p className="font-['Inter'] text-[14px] font-semibold leading-[1.5] text-white">Join</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="pointer-events-none absolute inset-0 shadow-[0px_-4px_8px_0px_inset_rgba(0,0,0,0.04)]" />
     </div>
   </div>
 );
