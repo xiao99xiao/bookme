@@ -59,16 +59,34 @@ const Index = () => {
   useReferralCode();
 
   return (
-    <main className="relative overflow-hidden">
-      <Hero onPrimaryClick={login} />
-      <Highlights />
-      <AndMore />
+    <main className="relative overflow-hidden lg:overflow-visible">
+      {/* Desktop version - normal layout */}
+      <div className="hidden lg:block">
+        <Hero onPrimaryClick={login} />
+        <Highlights />
+        <AndMore />
+      </div>
+
+      {/* Mobile version - with scroll snap - all cards as direct children */}
+      <div className="h-screen snap-y snap-mandatory overflow-y-scroll lg:hidden">
+        <Hero onPrimaryClick={login} />
+        {/* Highlights cards - direct children */}
+        <YourOwnPageCard />
+        <GuaranteedByEscrowCard />
+        <SyncsCard />
+        <ReputationCard />
+        <ReferralCard />
+        {/* And More cards - direct children */}
+        <TrackEarningsCard />
+        <GetPaidUSDCCard />
+        <ManageOrdersCard />
+      </div>
     </main>
   );
 };
 
 const Hero = ({ onPrimaryClick }: { onPrimaryClick: () => void }) => (
-  <section className="relative px-6 pb-20 pt-20 sm:px-10 lg:px-[120px]">
+  <section className="relative min-h-screen snap-start snap-always px-6 pb-20 pt-20 sm:px-10 lg:min-h-0 lg:snap-none lg:px-[120px]">
     <HeroDecor />
     <div className="pointer-events-none absolute left-1/2 top-20 flex -translate-x-1/2 items-center justify-center overflow-hidden" style={{ width: '1200px', height: '336px' }}>
       <img
@@ -135,9 +153,16 @@ const SecondaryCta = ({ to, children }: { to: string; children: React.ReactNode 
 );
 
 const Highlights = () => (
-  <section className="relative px-6 pb-20 pt-20 sm:px-10 lg:px-[120px]">
-    <Container maxWidth="xl" className="relative z-10">
-      <div className="mx-auto grid w-full max-w-[1200px] gap-6 lg:grid-cols-3">
+  <section className="relative lg:px-6 lg:pb-20 lg:pt-20 sm:lg:px-10 lg:px-[120px]">
+    <div className="lg:hidden flex w-full flex-col">
+      <YourOwnPageCard />
+      <GuaranteedByEscrowCard />
+      <SyncsCard />
+      <ReputationCard />
+      <ReferralCard />
+    </div>
+    <Container maxWidth="xl" className="relative z-10 hidden lg:block">
+      <div className="mx-auto grid w-full max-w-[1200px] gap-6 grid-cols-3">
         <YourOwnPageCard />
         <div className="flex flex-col gap-6">
           <GuaranteedByEscrowCard />
@@ -153,14 +178,14 @@ const Highlights = () => (
 );
 
 const YourOwnPageCard = () => (
-  <div className="h-[542px] rounded-[40px] bg-[#dcf3ff] p-8">
-    <div className="flex items-center gap-3">
-      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white">
-        <Paintbrush className="h-5 w-5 text-black" />
+  <div className="flex min-h-screen flex-col justify-center bg-[#dcf3ff] px-6 py-12 transition-all duration-700 snap-start snap-always lg:block lg:h-[542px] lg:rounded-[40px] lg:p-8 lg:snap-none">
+    <div className="flex items-center gap-3 lg:mb-0">
+      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white lg:h-8 lg:w-8">
+        <Paintbrush className="h-6 w-6 text-black lg:h-5 lg:w-5" />
       </div>
-      <p className="text-[20px] font-bold leading-[1.4] text-black">Your own page</p>
+      <p className="text-[32px] font-bold leading-[1.2] text-black lg:text-[20px] lg:leading-[1.4]">Your own page</p>
     </div>
-    <div className="mt-6 h-[422px] overflow-hidden rounded-[24px] bg-white p-8">
+    <div className="mt-8 overflow-hidden rounded-[24px] bg-white p-6 lg:mt-6 lg:h-[422px] lg:p-8">
       <ProfileRow />
       <div className="mt-4 h-2 w-64 rounded-md bg-[#ebebeb]" />
       <div className="mt-2 h-2 w-44 rounded-md bg-[#ebebeb]" />
@@ -210,7 +235,7 @@ const ProfileRow = () => (
 );
 
 const GuaranteedByEscrowCard = () => (
-  <div className="relative h-[296px] overflow-hidden rounded-[40px] bg-[#ffeda3] p-8">
+  <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#ffeda3] px-6 py-12 transition-all duration-700 snap-start snap-always lg:block lg:h-[296px] lg:rounded-[40px] lg:p-8 lg:snap-none">
     <div className="relative h-[232px] w-[320px] overflow-clip rounded-[24px] bg-white">
       {/* Left Coin Group */}
       <div className="pointer-events-none absolute" style={{ left: '18px', top: '29px' }}>
@@ -283,12 +308,12 @@ const GuaranteedByEscrowCard = () => (
 );
 
 const SyncsCard = () => (
-  <div className="relative h-[222px] overflow-hidden rounded-[40px] bg-[#f2f2f2] p-8">
+  <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[#f2f2f2] px-6 py-12 transition-all duration-700 snap-start snap-always lg:block lg:h-[222px] lg:rounded-[40px] lg:p-8 lg:snap-none">
     <div className="flex items-center gap-3">
-      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white">
-        <Clock className="h-5 w-5 text-black" />
+      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white lg:h-8 lg:w-8">
+        <Clock className="h-6 w-6 text-black lg:h-5 lg:w-5" />
       </div>
-      <div className="text-[20px] font-bold leading-[1.4] text-black">
+      <div className="text-[32px] font-bold leading-[1.2] text-black lg:text-[20px] lg:leading-[1.4]">
         <p className="mb-0">Syncs with Zoom &</p>
         <p>Google Calendar</p>
       </div>
@@ -307,12 +332,12 @@ const SyncsCard = () => (
 );
 
 const ReputationCard = () => (
-  <div className="rounded-[40px] bg-[#eaffa3] p-8">
+  <div className="flex min-h-screen flex-col justify-center bg-[#eaffa3] px-6 py-12 transition-all duration-700 snap-start snap-always lg:block lg:rounded-[40px] lg:p-8 lg:snap-none">
     <div className="flex items-center gap-3">
-      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white">
-        <MessageSquare className="h-5 w-5 text-black" />
+      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white lg:h-8 lg:w-8">
+        <MessageSquare className="h-6 w-6 text-black lg:h-5 lg:w-5" />
       </div>
-      <p className="text-[20px] font-bold leading-[1.4] text-black">Build your reputation</p>
+      <p className="text-[32px] font-bold leading-[1.2] text-black lg:text-[20px] lg:leading-[1.4]">Build your reputation</p>
     </div>
     <div className="mt-4 rounded-2xl border border-white bg-white p-4">
       <p className="text-[14px] font-semibold leading-[1.5] text-black">
@@ -331,7 +356,7 @@ const ReputationCard = () => (
 );
 
 const ReferralCard = () => (
-  <div className="relative h-[271px] overflow-hidden rounded-[40px] bg-[#ffe9fb] p-8">
+  <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#ffe9fb] px-6 py-12 transition-all duration-700 snap-start snap-always lg:block lg:h-[271px] lg:rounded-[40px] lg:p-8 lg:snap-none">
     {/* White blob background */}
     <img
       src={ASSETS.referral.share}
@@ -376,11 +401,16 @@ const ReferralCard = () => (
 );
 
 const AndMore = () => (
-  <section className="relative px-6 pb-20 pt-20 sm:px-10 lg:px-[120px] lg:pb-[80px] lg:pt-[80px]">
-    <Container maxWidth="xl" className="relative z-10">
+  <section className="relative lg:px-6 lg:pb-20 lg:pt-20 sm:lg:px-10 lg:px-[120px] lg:pb-[80px] lg:pt-[80px]">
+    <div className="lg:hidden flex w-full flex-col">
+      <TrackEarningsCard />
+      <GetPaidUSDCCard />
+      <ManageOrdersCard />
+    </div>
+    <Container maxWidth="xl" className="relative z-10 hidden lg:block">
       <div className="mx-auto w-full max-w-[1200px]">
         <h2 className="mb-16 text-center font-['Inter'] text-[48px] font-bold leading-[1.2] text-black">And more</h2>
-        <div className="flex flex-col gap-6 lg:flex-row lg:gap-[24px]">
+        <div className="flex flex-row gap-[24px]">
           <TrackEarningsCard />
           <GetPaidUSDCCard />
           <ManageOrdersCard />
@@ -391,14 +421,14 @@ const AndMore = () => (
 );
 
 const TrackEarningsCard = () => (
-  <div className="flex min-h-px min-w-px flex-1 flex-col items-start rounded-tl-[24px] rounded-tr-[24px] rounded-bl-[40px] rounded-br-[40px] bg-[#fafafa]">
-    <div className="flex w-full flex-col gap-[16px] p-[32px]">
-      <p className="font-['Inter'] text-[20px] font-bold leading-[1.4] text-black">Track your earnings</p>
-      <p className="font-['Inter'] text-[16px] font-normal leading-[1.5] text-[#666666]">
+  <div className="flex min-h-screen min-w-px flex-1 flex-col items-center justify-center bg-[#ffe9fb] transition-all duration-700 snap-start snap-always lg:items-start lg:justify-start lg:min-h-px lg:rounded-tl-[24px] lg:rounded-tr-[24px] lg:rounded-bl-[40px] lg:rounded-br-[40px] lg:bg-[#fafafa] lg:snap-none">
+    <div className="flex w-full flex-col gap-[16px] px-6 py-12 lg:flex-initial lg:bg-transparent lg:p-[32px]">
+      <p className="font-['Inter'] text-[32px] font-bold leading-[1.2] text-black lg:text-[20px] lg:leading-[1.4]">Track your earnings</p>
+      <p className="font-['Inter'] text-[18px] font-normal leading-[1.5] text-[#666666] lg:text-[16px]">
         Timee takes care of everything else — secure payments, effortless booking, and the right users who value your time.
       </p>
     </div>
-    <div className="relative size-[384px] shrink-0 overflow-hidden rounded-[40px] bg-[#ffe9fb]">
+    <div className="relative h-[50vh] w-full shrink-0 overflow-hidden bg-[#ffe9fb] lg:size-[384px] lg:rounded-[40px]">
       <div className="absolute left-[32px] top-[32px] flex w-[320px] flex-col gap-[16px]">
         {/* First earning card */}
         <div className="flex w-full flex-col gap-[16px] rounded-[16px] border border-white bg-white p-[16px]">
@@ -458,14 +488,14 @@ const TrackEarningsCard = () => (
 );
 
 const GetPaidUSDCCard = () => (
-  <div className="flex min-h-px min-w-px flex-1 flex-col items-start rounded-tl-[24px] rounded-tr-[24px] rounded-bl-[40px] rounded-br-[40px] bg-[#fafafa]">
-    <div className="flex w-full flex-col gap-[16px] items-center p-[32px]">
-      <p className="w-full font-['Inter'] text-[20px] font-bold leading-[1.4] text-black">Get paid in USDC</p>
-      <p className="w-full font-['Inter'] text-[16px] font-normal leading-[1.5] text-[#666666]">
+  <div className="flex min-h-screen min-w-px flex-1 flex-col items-center justify-center bg-[#dcf3ff] transition-all duration-700 snap-start snap-always lg:items-start lg:justify-start lg:min-h-px lg:rounded-tl-[24px] lg:rounded-tr-[24px] lg:rounded-bl-[40px] lg:rounded-br-[40px] lg:bg-[#fafafa] lg:snap-none">
+    <div className="flex w-full flex-col gap-[16px] items-center px-6 py-12 lg:flex-initial lg:bg-transparent lg:p-[32px]">
+      <p className="w-full font-['Inter'] text-[32px] font-bold leading-[1.2] text-black lg:text-[20px] lg:leading-[1.4]">Get paid in USDC</p>
+      <p className="w-full font-['Inter'] text-[18px] font-normal leading-[1.5] text-[#666666] lg:text-[16px]">
         With transparent pricing and safe USDC payments, every effort you give turns directly into rewards you keep.
       </p>
     </div>
-    <div className="relative h-[384px] w-full shrink-0 overflow-hidden rounded-[40px] bg-[#dcf3ff]">
+    <div className="relative h-[50vh] w-full shrink-0 overflow-hidden bg-[#dcf3ff] lg:h-[384px] lg:rounded-[40px]">
       {/* Large coin - rotated with proper transform wrapper */}
       <div className="absolute left-[88px] top-[70.08px] flex items-center justify-center" style={{ height: 'calc(1px * ((104 * 0.258819043636322) + (104 * 0.9659258127212524)))', width: 'calc(1px * ((104 * 0.9659258127212524) + (104 * 0.258819043636322)))' }}>
         <div className="flex-none rotate-[345deg]">
@@ -571,14 +601,14 @@ const GetPaidUSDCCard = () => (
 );
 
 const ManageOrdersCard = () => (
-  <div className="flex min-h-px min-w-px flex-1 flex-col items-start rounded-tl-[24px] rounded-tr-[24px] rounded-bl-[40px] rounded-br-[40px] bg-[#fafafa]">
-    <div className="flex w-full flex-col gap-[16px] items-center p-[32px]">
-      <p className="w-full font-['Inter'] text-[20px] font-bold leading-[1.4] text-black">Manage your orders</p>
-      <p className="w-full font-['Inter'] text-[16px] font-normal leading-[1.5] text-[#666666]">
+  <div className="flex min-h-screen min-w-px flex-1 flex-col items-center justify-center bg-[#e0e6fb] transition-all duration-700 snap-start snap-always lg:items-start lg:justify-start lg:min-h-px lg:rounded-tl-[24px] lg:rounded-tr-[24px] lg:rounded-bl-[40px] lg:rounded-br-[40px] lg:bg-[#fafafa] lg:snap-none">
+    <div className="flex w-full flex-col gap-[16px] items-center px-6 py-12 lg:flex-initial lg:bg-transparent lg:p-[32px]">
+      <p className="w-full font-['Inter'] text-[32px] font-bold leading-[1.2] text-black lg:text-[20px] lg:leading-[1.4]">Manage your orders</p>
+      <p className="w-full font-['Inter'] text-[18px] font-normal leading-[1.5] text-[#666666] lg:text-[16px]">
         From tutors to therapists, coaches to creators — Timee brings providers together, so clients can find
       </p>
     </div>
-    <div className="relative h-[384px] w-full shrink-0 overflow-hidden rounded-[40px] bg-[#e0e6fb]">
+    <div className="relative h-[50vh] w-full shrink-0 overflow-hidden bg-[#e0e6fb] lg:h-[384px] lg:rounded-[40px]">
       <div className="absolute left-[32px] top-[32px] flex w-[320px] flex-col gap-[16px]">
         {/* English Class Card */}
         <div className="flex w-full flex-col gap-[16px] rounded-[16px] border border-white bg-white px-[16px] pb-[16px] pt-[18px]">
