@@ -125,7 +125,7 @@ const HeroDecor = () => (
 const PrimaryCta = ({ children, onClick }: { children: React.ReactNode; onClick: () => void }) => (
   <button
     onClick={onClick}
-    className="relative w-[200px] shrink-0 overflow-hidden rounded-[40px] border border-solid border-white px-6 py-3 shadow-[0_0_40px_rgba(0,115,255,0.6)]"
+    className="relative w-[200px] shrink-0 overflow-hidden rounded-[40px] px-6 py-3 shadow-[0_15px_40px_-10px_rgba(0,115,255,0.8)]"
   >
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-[40px]">
       <div className="absolute inset-0 rounded-[40px] bg-gradient-to-b from-[#0073ff] to-[#0da2ff]" />
@@ -137,7 +137,7 @@ const PrimaryCta = ({ children, onClick }: { children: React.ReactNode; onClick:
     <p className="relative shrink-0 whitespace-nowrap font-['Inter'] text-[16px] font-semibold leading-[1.5] text-white">
       {children}
     </p>
-    <div className="pointer-events-none absolute inset-0 shadow-[0px_1px_18px_2px_inset_#d2eaff,0px_1px_4px_2px_inset_#d2eaff]" />
+    <div className="pointer-events-none absolute inset-0 rounded-[40px] opacity-80 shadow-[0px_1px_18px_4px_inset_#d2eaff]" />
   </button>
 );
 
