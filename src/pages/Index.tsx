@@ -68,26 +68,26 @@ const Index = () => {
 };
 
 const Hero = ({ onPrimaryClick }: { onPrimaryClick: () => void }) => (
-  <section className="relative px-6 pb-20 pt-20 sm:px-10 lg:px-[120px]">
+  <section className="relative px-4 pb-12 pt-12 sm:px-6 sm:pb-16 sm:pt-16 md:px-10 md:pb-20 md:pt-20 lg:px-[120px]">
     <HeroDecor />
-    <div className="pointer-events-none absolute left-1/2 top-20 flex -translate-x-1/2 items-center justify-center overflow-hidden" style={{ width: '1200px', height: '336px' }}>
+    <div className="pointer-events-none absolute left-1/2 top-12 flex -translate-x-1/2 items-center justify-center overflow-hidden sm:top-16 lg:top-20" style={{ width: '100%', maxWidth: '1200px', height: 'auto', aspectRatio: '1200/336' }}>
       <img
         src={ASSETS.hero}
         alt=""
-        className="min-h-full min-w-full"
+        className="h-auto w-full object-contain"
       />
     </div>
     <Container maxWidth="xl" className="relative z-10">
-      <div className="flex flex-col items-center gap-10 pt-40 text-center">
-        <div className="flex flex-col items-center gap-4">
-          <h1 className="max-w-[720px] text-[48px] font-bold leading-[1.2] text-black">
+      <div className="flex flex-col items-center gap-6 pt-24 text-center sm:gap-8 sm:pt-32 lg:gap-10 lg:pt-40">
+        <div className="flex flex-col items-center gap-3 sm:gap-4">
+          <h1 className="max-w-[720px] px-4 text-[32px] font-bold leading-[1.2] text-black sm:text-[40px] lg:text-[48px]">
             Get paid for your time.
           </h1>
-          <p className="max-w-[540px] text-[18px] leading-[1.5] text-[#666666]">
+          <p className="max-w-[540px] px-4 text-[16px] leading-[1.5] text-[#666666] sm:text-[18px]">
             Share your skills or spare hours—earn safely with guaranteed payment.
           </p>
         </div>
-        <div className="flex flex-col items-center gap-6 sm:flex-row">
+        <div className="flex w-full max-w-md flex-col items-center gap-4 px-4 sm:flex-row sm:gap-6">
           <SecondaryCta to="/book-services">Looking for Services</SecondaryCta>
           <PrimaryCta onClick={onPrimaryClick}>Start Earning Today</PrimaryCta>
         </div>
@@ -107,7 +107,7 @@ const HeroDecor = () => (
 const PrimaryCta = ({ children, onClick }: { children: React.ReactNode; onClick: () => void }) => (
   <button
     onClick={onClick}
-    className="relative w-[200px] shrink-0 overflow-hidden rounded-[40px] px-6 py-3 shadow-[0_15px_40px_-10px_rgba(0,115,255,0.8)]"
+    className="relative w-full shrink-0 overflow-hidden rounded-[40px] px-6 py-3 shadow-[0_15px_40px_-10px_rgba(0,115,255,0.8)] sm:w-[200px]"
   >
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-[40px]">
       <div className="absolute inset-0 rounded-[40px] bg-gradient-to-b from-[#0073ff] to-[#0da2ff]" />
@@ -126,7 +126,7 @@ const PrimaryCta = ({ children, onClick }: { children: React.ReactNode; onClick:
 const SecondaryCta = ({ to, children }: { to: string; children: React.ReactNode }) => (
   <Link
     to={to}
-    className="flex w-[200px] items-center justify-center gap-2 rounded-[40px] border border-[#cccccc] border-solid px-6 py-3"
+    className="flex w-full items-center justify-center gap-2 rounded-[40px] border border-[#cccccc] border-solid px-6 py-3 sm:w-[200px]"
   >
     <p className="whitespace-nowrap font-['Inter'] text-[16px] font-semibold leading-[1.5] text-black">
       {children}
@@ -135,15 +135,20 @@ const SecondaryCta = ({ to, children }: { to: string; children: React.ReactNode 
 );
 
 const Highlights = () => (
-  <section className="relative px-6 pb-20 pt-20 sm:px-10 lg:px-[120px]">
+  <section className="relative px-4 pb-12 pt-12 sm:px-6 sm:pb-16 sm:pt-16 md:px-10 md:pb-20 md:pt-20 lg:px-[120px]">
     <Container maxWidth="xl" className="relative z-10">
-      <div className="mx-auto grid w-full max-w-[1200px] gap-6 lg:grid-cols-3">
-        <YourOwnPageCard />
-        <div className="flex flex-col gap-6">
+      <div className="mx-auto grid w-full max-w-[1200px] gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {/* Column 1: Your Own Page - spans full width on mobile, 1 col on tablet, 1 col on desktop */}
+        <div className="md:col-span-2 lg:col-span-1">
+          <YourOwnPageCard />
+        </div>
+        {/* Column 2: Guaranteed by Escrow + Syncs - stacked */}
+        <div className="flex flex-col gap-4 sm:gap-6">
           <GuaranteedByEscrowCard />
           <SyncsCard />
         </div>
-        <div className="flex flex-col gap-6">
+        {/* Column 3: Reputation + Referral - stacked */}
+        <div className="flex flex-col gap-4 sm:gap-6">
           <ReputationCard />
           <ReferralCard />
         </div>
@@ -153,14 +158,14 @@ const Highlights = () => (
 );
 
 const YourOwnPageCard = () => (
-  <div className="h-[542px] rounded-[40px] bg-[#dcf3ff] p-8">
-    <div className="flex items-center gap-3">
-      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white">
-        <Paintbrush className="h-5 w-5 text-black" />
+  <div className="min-h-[400px] rounded-[24px] bg-[#dcf3ff] p-4 sm:rounded-[32px] sm:p-6 lg:h-[542px] lg:rounded-[40px] lg:p-8">
+    <div className="flex items-center gap-2 sm:gap-3">
+      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white sm:h-8 sm:w-8">
+        <Paintbrush className="h-4 w-4 text-black sm:h-5 sm:w-5" />
       </div>
-      <p className="text-[20px] font-bold leading-[1.4] text-black">Your own page</p>
+      <p className="text-[18px] font-bold leading-[1.4] text-black sm:text-[20px]">Your own page</p>
     </div>
-    <div className="mt-6 h-[422px] overflow-hidden rounded-[24px] bg-white p-8">
+    <div className="mt-4 min-h-[300px] overflow-hidden rounded-[16px] bg-white p-4 sm:mt-6 sm:rounded-[20px] sm:p-6 lg:h-[422px] lg:rounded-[24px] lg:p-8">
       <ProfileRow />
       <div className="mt-4 h-2 w-64 rounded-md bg-[#ebebeb]" />
       <div className="mt-2 h-2 w-44 rounded-md bg-[#ebebeb]" />
@@ -210,8 +215,8 @@ const ProfileRow = () => (
 );
 
 const GuaranteedByEscrowCard = () => (
-  <div className="relative h-[296px] overflow-hidden rounded-[40px] bg-[#ffeda3] p-8">
-    <div className="relative mx-auto h-[232px] w-full max-w-[320px] overflow-clip rounded-[24px] bg-white">
+  <div className="relative min-h-[280px] overflow-hidden rounded-[24px] bg-[#ffeda3] p-4 sm:rounded-[32px] sm:p-6 lg:h-[296px] lg:rounded-[40px] lg:p-8">
+    <div className="relative mx-auto h-[220px] w-full max-w-[320px] overflow-clip rounded-[16px] bg-white sm:h-[232px] sm:rounded-[20px] lg:rounded-[24px]">
       {/* Left Coin Group */}
       <div className="pointer-events-none absolute" style={{ left: '18px', top: '29px' }}>
         <img src={ASSETS.escrow.coin1} alt="" className="absolute" style={{ left: '2px', top: '2px', width: '34px', height: '34px' }} />
@@ -283,12 +288,12 @@ const GuaranteedByEscrowCard = () => (
 );
 
 const SyncsCard = () => (
-  <div className="relative h-[222px] overflow-hidden rounded-[40px] bg-[#f2f2f2] p-8">
-    <div className="flex items-center gap-3">
-      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white">
-        <Clock className="h-5 w-5 text-black" />
+  <div className="relative min-h-[200px] overflow-hidden rounded-[24px] bg-[#f2f2f2] p-4 sm:rounded-[32px] sm:p-6 lg:h-[222px] lg:rounded-[40px] lg:p-8">
+    <div className="flex items-center gap-2 sm:gap-3">
+      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white sm:h-8 sm:w-8">
+        <Clock className="h-4 w-4 text-black sm:h-5 sm:w-5" />
       </div>
-      <div className="text-[20px] font-bold leading-[1.4] text-black">
+      <div className="text-[18px] font-bold leading-[1.4] text-black sm:text-[20px]">
         <p className="mb-0">Syncs with Zoom &</p>
         <p>Google Calendar</p>
       </div>
@@ -307,12 +312,12 @@ const SyncsCard = () => (
 );
 
 const ReputationCard = () => (
-  <div className="rounded-[40px] bg-[#eaffa3] p-8">
-    <div className="flex items-center gap-3">
-      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white">
-        <MessageSquare className="h-5 w-5 text-black" />
+  <div className="min-h-[200px] rounded-[24px] bg-[#eaffa3] p-4 sm:rounded-[32px] sm:p-6 lg:rounded-[40px] lg:p-8">
+    <div className="flex items-center gap-2 sm:gap-3">
+      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white sm:h-8 sm:w-8">
+        <MessageSquare className="h-4 w-4 text-black sm:h-5 sm:w-5" />
       </div>
-      <p className="text-[20px] font-bold leading-[1.4] text-black">Build your reputation</p>
+      <p className="text-[18px] font-bold leading-[1.4] text-black sm:text-[20px]">Build your reputation</p>
     </div>
     <div className="mt-4 rounded-2xl border border-white bg-white p-4">
       <p className="text-[14px] font-semibold leading-[1.5] text-black">
@@ -331,7 +336,7 @@ const ReputationCard = () => (
 );
 
 const ReferralCard = () => (
-  <div className="relative h-[271px] overflow-hidden rounded-[40px] bg-[#ffe9fb] p-8">
+  <div className="relative min-h-[240px] overflow-hidden rounded-[24px] bg-[#ffe9fb] p-4 sm:rounded-[32px] sm:p-6 lg:h-[271px] lg:rounded-[40px] lg:p-8">
     {/* White blob background */}
     <img
       src={ASSETS.referral.share}
@@ -376,11 +381,11 @@ const ReferralCard = () => (
 );
 
 const AndMore = () => (
-  <section className="relative px-6 pb-20 pt-20 sm:px-10 lg:px-[120px] lg:pb-[80px] lg:pt-[80px]">
+  <section className="relative px-4 pb-12 pt-12 sm:px-6 sm:pb-16 sm:pt-16 md:px-10 md:pb-20 md:pt-20 lg:px-[120px] lg:pb-[80px] lg:pt-[80px]">
     <Container maxWidth="xl" className="relative z-10">
       <div className="mx-auto w-full max-w-[1200px]">
-        <h2 className="mb-16 text-center font-['Inter'] text-[48px] font-bold leading-[1.2] text-black">And more</h2>
-        <div className="flex flex-col gap-6 lg:flex-row lg:gap-[24px]">
+        <h2 className="mb-8 text-center font-['Inter'] text-[32px] font-bold leading-[1.2] text-black sm:mb-12 sm:text-[40px] lg:mb-16 lg:text-[48px]">And more</h2>
+        <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
           <TrackEarningsCard />
           <GetPaidUSDCCard />
           <ManageOrdersCard />
@@ -391,15 +396,15 @@ const AndMore = () => (
 );
 
 const TrackEarningsCard = () => (
-  <div className="flex min-h-px min-w-px flex-1 flex-col items-start rounded-tl-[24px] rounded-tr-[24px] rounded-bl-[40px] rounded-br-[40px] bg-[#fafafa]">
-    <div className="flex w-full flex-col gap-[16px] p-[32px]">
-      <p className="font-['Inter'] text-[20px] font-bold leading-[1.4] text-black">Track your earnings</p>
-      <p className="font-['Inter'] text-[16px] font-normal leading-[1.5] text-[#666666]">
+  <div className="flex min-h-[400px] flex-col items-start rounded-[20px] bg-[#fafafa] sm:rounded-[24px] lg:min-h-px lg:rounded-tl-[24px] lg:rounded-tr-[24px] lg:rounded-bl-[40px] lg:rounded-br-[40px]">
+    <div className="flex w-full flex-col gap-[12px] p-[20px] sm:gap-[16px] sm:p-[24px] lg:p-[32px]">
+      <p className="font-['Inter'] text-[18px] font-bold leading-[1.4] text-black sm:text-[20px]">Track your earnings</p>
+      <p className="font-['Inter'] text-[14px] font-normal leading-[1.5] text-[#666666] sm:text-[16px]">
         Timee takes care of everything else — secure payments, effortless booking, and the right users who value your time.
       </p>
     </div>
-    <div className="relative size-[384px] shrink-0 overflow-hidden rounded-[40px] bg-[#ffe9fb]">
-      <div className="absolute left-[32px] top-[32px] flex w-[320px] flex-col gap-[16px]">
+    <div className="relative aspect-square w-full shrink-0 overflow-hidden rounded-[20px] bg-[#ffe9fb] sm:rounded-[24px] lg:size-[384px] lg:rounded-[40px]">
+      <div className="absolute inset-x-4 top-4 flex max-w-[320px] flex-col gap-[12px] sm:gap-[16px] lg:left-[32px] lg:right-auto lg:top-[32px] lg:w-[320px]">
         {/* First earning card */}
         <div className="flex w-full flex-col gap-[16px] rounded-[16px] border border-white bg-white p-[16px]">
           <div className="flex w-full gap-[16px]">
@@ -458,14 +463,14 @@ const TrackEarningsCard = () => (
 );
 
 const GetPaidUSDCCard = () => (
-  <div className="flex min-h-px min-w-px flex-1 flex-col items-start rounded-tl-[24px] rounded-tr-[24px] rounded-bl-[40px] rounded-br-[40px] bg-[#fafafa]">
-    <div className="flex w-full flex-col gap-[16px] items-center p-[32px]">
-      <p className="w-full font-['Inter'] text-[20px] font-bold leading-[1.4] text-black">Get paid in USDC</p>
-      <p className="w-full font-['Inter'] text-[16px] font-normal leading-[1.5] text-[#666666]">
+  <div className="flex min-h-[400px] flex-col items-start rounded-[20px] bg-[#fafafa] sm:rounded-[24px] lg:min-h-px lg:rounded-tl-[24px] lg:rounded-tr-[24px] lg:rounded-bl-[40px] lg:rounded-br-[40px]">
+    <div className="flex w-full flex-col gap-[12px] items-center p-[20px] sm:gap-[16px] sm:p-[24px] lg:p-[32px]">
+      <p className="w-full font-['Inter'] text-[18px] font-bold leading-[1.4] text-black sm:text-[20px]">Get paid in USDC</p>
+      <p className="w-full font-['Inter'] text-[14px] font-normal leading-[1.5] text-[#666666] sm:text-[16px]">
         With transparent pricing and safe USDC payments, every effort you give turns directly into rewards you keep.
       </p>
     </div>
-    <div className="relative h-[384px] w-full shrink-0 overflow-hidden rounded-[40px] bg-[#dcf3ff]">
+    <div className="relative aspect-square w-full shrink-0 overflow-hidden rounded-[20px] bg-[#dcf3ff] sm:rounded-[24px] lg:h-[384px] lg:w-[384px] lg:rounded-[40px]">
       {/* Large coin - rotated with proper transform wrapper */}
       <div className="absolute left-[88px] top-[70.08px] flex items-center justify-center" style={{ height: 'calc(1px * ((104 * 0.258819043636322) + (104 * 0.9659258127212524)))', width: 'calc(1px * ((104 * 0.9659258127212524) + (104 * 0.258819043636322)))' }}>
         <div className="flex-none rotate-[345deg]">
@@ -571,15 +576,15 @@ const GetPaidUSDCCard = () => (
 );
 
 const ManageOrdersCard = () => (
-  <div className="flex min-h-px min-w-px flex-1 flex-col items-start rounded-tl-[24px] rounded-tr-[24px] rounded-bl-[40px] rounded-br-[40px] bg-[#fafafa]">
-    <div className="flex w-full flex-col gap-[16px] items-center p-[32px]">
-      <p className="w-full font-['Inter'] text-[20px] font-bold leading-[1.4] text-black">Manage your orders</p>
-      <p className="w-full font-['Inter'] text-[16px] font-normal leading-[1.5] text-[#666666]">
+  <div className="flex min-h-[400px] flex-col items-start rounded-[20px] bg-[#fafafa] sm:rounded-[24px] lg:min-h-px lg:rounded-tl-[24px] lg:rounded-tr-[24px] lg:rounded-bl-[40px] lg:rounded-br-[40px]">
+    <div className="flex w-full flex-col gap-[12px] items-center p-[20px] sm:gap-[16px] sm:p-[24px] lg:p-[32px]">
+      <p className="w-full font-['Inter'] text-[18px] font-bold leading-[1.4] text-black sm:text-[20px]">Manage your orders</p>
+      <p className="w-full font-['Inter'] text-[14px] font-normal leading-[1.5] text-[#666666] sm:text-[16px]">
         From tutors to therapists, coaches to creators — Timee brings providers together, so clients can find
       </p>
     </div>
-    <div className="relative h-[384px] w-full shrink-0 overflow-hidden rounded-[40px] bg-[#e0e6fb]">
-      <div className="absolute left-[32px] top-[32px] flex w-[320px] flex-col gap-[16px]">
+    <div className="relative aspect-square w-full shrink-0 overflow-hidden rounded-[20px] bg-[#e0e6fb] sm:rounded-[24px] lg:h-[384px] lg:w-[384px] lg:rounded-[40px]">
+      <div className="absolute inset-x-4 top-4 flex max-w-[320px] flex-col gap-[12px] sm:gap-[16px] lg:left-[32px] lg:right-auto lg:top-[32px] lg:w-[320px]">
         {/* English Class Card */}
         <div className="flex w-full flex-col gap-[16px] rounded-[16px] border border-white bg-white px-[16px] pb-[16px] pt-[18px]">
           <p className="w-full font-['Inter'] text-[18px] font-extrabold leading-[1.5] text-black">English Class</p>
