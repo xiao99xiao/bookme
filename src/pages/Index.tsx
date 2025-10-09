@@ -211,7 +211,7 @@ const ProfileRow = () => (
 
 const GuaranteedByEscrowCard = () => (
   <div className="relative h-[296px] overflow-hidden rounded-[40px] bg-[#ffeda3] p-8">
-    <div className="relative h-[232px] w-[320px] overflow-clip rounded-[24px] bg-white">
+    <div className="relative h-[232px] w-full overflow-clip rounded-[24px] bg-white">
       {/* Left Coin Group */}
       <div className="pointer-events-none absolute" style={{ left: '18px', top: '29px' }}>
         <img src={ASSETS.escrow.coin1} alt="" className="absolute" style={{ left: '2px', top: '2px', width: '34px', height: '34px' }} />
