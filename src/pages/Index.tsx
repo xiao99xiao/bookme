@@ -428,7 +428,7 @@ const TrackEarningsCard = () => (
         Timee takes care of everything else — secure payments, effortless booking, and the right users who value your time.
       </p>
     </div>
-    <div className="relative h-[50vh] w-full shrink-0 overflow-hidden bg-[#ffe9fb] lg:size-[384px] lg:rounded-[40px]">
+    <div className="relative h-[50vh] w-full shrink-0 overflow-hidden bg-[#ffe9fb] lg:h-[384px] lg:w-[384px] lg:rounded-[40px]">
       <div className="absolute inset-x-4 top-8 flex max-w-[320px] flex-col gap-[16px] lg:left-[32px] lg:right-auto lg:top-[32px] lg:w-[320px]">
         {/* First earning card */}
         <div className="flex w-full flex-col gap-[16px] rounded-[16px] border border-white bg-white p-[16px]">
@@ -495,7 +495,7 @@ const GetPaidUSDCCard = () => (
         With transparent pricing and safe USDC payments, every effort you give turns directly into rewards you keep.
       </p>
     </div>
-    <div className="relative h-[50vh] w-full shrink-0 overflow-hidden bg-[#dcf3ff] lg:h-[384px] lg:rounded-[40px]">
+    <div className="relative h-[50vh] w-full shrink-0 overflow-hidden bg-[#dcf3ff] lg:h-[384px] lg:w-[384px] lg:rounded-[40px]">
       {/* Large coin - rotated with proper transform wrapper */}
       <div className="absolute left-[15%] top-[70.08px] flex items-center justify-center lg:left-[88px]" style={{ height: 'calc(1px * ((104 * 0.258819043636322) + (104 * 0.9659258127212524)))', width: 'calc(1px * ((104 * 0.9659258127212524) + (104 * 0.258819043636322)))' }}>
         <div className="flex-none rotate-[345deg]">
@@ -608,7 +608,7 @@ const ManageOrdersCard = () => (
         From tutors to therapists, coaches to creators — Timee brings providers together, so clients can find
       </p>
     </div>
-    <div className="relative h-[50vh] w-full shrink-0 overflow-hidden bg-[#e0e6fb] lg:h-[384px] lg:rounded-[40px]">
+    <div className="relative h-[50vh] w-full shrink-0 overflow-hidden bg-[#e0e6fb] lg:h-[384px] lg:w-[384px] lg:rounded-[40px]">
       <div className="absolute inset-x-4 top-8 flex max-w-[320px] flex-col gap-[16px] lg:left-[32px] lg:right-auto lg:top-[32px] lg:w-[320px]">
         {/* English Class Card */}
         <div className="flex w-full flex-col gap-[16px] rounded-[16px] border border-white bg-white px-[16px] pb-[16px] pt-[18px]">
