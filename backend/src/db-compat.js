@@ -1,10 +1,11 @@
 /**
- * Supabase 兼容查询构建器
+ * Database Query Builder
  *
- * 提供与 Supabase JS Client 完全兼容的 API
- * 内部使用原生 PostgreSQL (pg) 驱动
+ * Provides a fluent query builder API similar to Supabase JS Client
+ * Uses native PostgreSQL (pg) driver internally
+ * Connects to Railway PostgreSQL
  *
- * 这样可以最小化路由文件的修改
+ * This allows minimal changes to route files during migration
  */
 
 import { pool, query, queryOne, queryAll } from './db.js'
@@ -539,15 +540,15 @@ class QueryBuilder {
 }
 
 /**
- * Storage 兼容层 - 使用 Cloudflare R2
- * API 与 Supabase Storage 完全兼容
+ * Storage layer - uses Cloudflare R2
+ * API compatible with Supabase Storage
  */
 
 /**
- * Channel 兼容层 (用于 Realtime，现在使用 pg NOTIFY)
+ * Channel compatibility layer (for Realtime, now uses pg NOTIFY)
  */
 function createChannel(name) {
-  console.warn(`⚠️ Supabase Channel "${name}" 已被 pg NOTIFY 替代`)
+  console.warn(`⚠️ Channel "${name}" - use pg NOTIFY instead`)
   return {
     on: () => ({
       subscribe: () => ({
@@ -558,7 +559,7 @@ function createChannel(name) {
 }
 
 /**
- * 主导出对象 - 与 Supabase Admin Client API 兼容
+ * Main export object - compatible with Supabase Admin Client API
  */
 export const db = {
   from: (table) => new QueryBuilder(table),

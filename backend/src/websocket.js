@@ -10,7 +10,7 @@ import { PrivyClient } from '@privy-io/server-auth'
 import { v5 as uuidv5 } from 'uuid'
 import dotenv from 'dotenv'
 import { pool } from './db.js'
-import db from './supabase-compat.js'
+import db from './db-compat.js'
 
 dotenv.config({ path: '.env' })
 

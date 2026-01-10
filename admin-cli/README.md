@@ -43,9 +43,8 @@ CONTRACT_CHAIN_ID=84532
 # Backend Signer (Required for emergency cancellations)
 BACKEND_SIGNER_PRIVATE_KEY=your_private_key_here
 
-# Database Access (For booking details)
-SUPABASE_URL=your_supabase_url
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+# Database Access (Railway PostgreSQL)
+DATABASE_URL=postgresql://user:password@host:port/database
 
 # USDC Token Address
 USDC_ADDRESS=0x036CbD53842c5426634e7929541eC2318f3dCF7e
@@ -201,9 +200,9 @@ Common issues:
 - **Insufficient ETH**: Backend signer needs ETH for gas fees
 
 ### Database Issues
-- **Supabase URL**: Check format `https://xxx.supabase.co`
-- **Service role key**: Must be service role, not anon key
-- **Network access**: Ensure Supabase allows connections
+- **DATABASE_URL**: Check PostgreSQL connection string format
+- **Network access**: Ensure Railway PostgreSQL allows connections
+- **SSL Mode**: May need `?sslmode=require` in connection string
 
 ### Smart Contract Issues
 - **Contract not found**: Verify contract is deployed at address

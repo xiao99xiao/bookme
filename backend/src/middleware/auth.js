@@ -19,7 +19,7 @@
 
 import { PrivyClient } from '@privy-io/server-auth';
 import { v5 as uuidv5 } from 'uuid';
-import db from '../supabase-compat.js';
+import db from '../db-compat.js';
 import dotenv from 'dotenv';
 
 // Load environment variables

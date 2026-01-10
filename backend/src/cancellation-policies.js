@@ -3,7 +3,7 @@
  * Handles advanced cancellation logic with policies, conditions, and refund calculations
  */
 
-import db from './supabase-compat.js';
+import db from './db-compat.js';
 
 /**
  * Get all applicable cancellation policies for a booking

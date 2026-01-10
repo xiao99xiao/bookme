@@ -135,12 +135,12 @@ Critical pattern: Frontend sends Privy token to backend, which validates and per
 ```
 src/
 ├── contexts/
-│   └── PrivyAuthContext.tsx    # Main auth provider, handles Privy user and Supabase profile sync
+│   └── PrivyAuthContext.tsx    # Main auth provider, handles Privy user and profile sync
 ├── lib/
 │   ├── api-migration.ts         # ApiClient with Promise-based initialization (prevents race conditions)
 │   ├── backend-api.ts           # Backend API client for token-based auth
 │   ├── api.ts                   # Legacy API client (deprecated - use ApiClient)
-│   ├── supabase.ts              # Legacy file (deprecated - database now uses Railway PostgreSQL)
+│   ├── db-compat.ts             # Database query builder (Railway PostgreSQL with Supabase-like API)
 │   ├── id-mapping.ts            # Converts Privy DIDs to UUIDs
 │   └── username.ts              # Username validation, generation, and URL utilities
 ├── pages/

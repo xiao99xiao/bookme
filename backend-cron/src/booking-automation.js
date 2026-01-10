@@ -3,7 +3,7 @@
  * Handles time-based booking status transitions and notifications
  */
 
-import { supabaseAdmin } from './supabase-admin.js';
+import { dbClient } from './db-client.js';
 
 /**
  * Main automation function - updates booking statuses based on time
@@ -56,7 +56,7 @@ async function transitionConfirmedToInProgress(nowISO) {
   
   try {
     // Find confirmed bookings whose start time has passed
-    const { data: bookingsToStart, error: fetchError } = await supabaseAdmin
+    const { data: bookingsToStart, error: fetchError } = await dbClient
       .from('bookings')
       .select('id, scheduled_at, duration_minutes, customer_id, provider_id, service_id, is_online, meeting_link')
       .eq('status', 'confirmed')
@@ -77,7 +77,7 @@ async function transitionConfirmedToInProgress(nowISO) {
 
     // Update status to in_progress
     const bookingIds = bookingsToStart.map(b => b.id);
-    const { error: updateError, count } = await supabaseAdmin
+    const { error: updateError, count } = await dbClient
       .from('bookings')
       .update({ 
         status: 'in_progress',
@@ -132,7 +132,7 @@ async function transitionInProgressToCompleted(nowISO) {
   
   try {
     // First, check how many in_progress bookings are blocked
-    const { data: blockedBookings, error: blockedError } = await supabaseAdmin
+    const { data: blockedBookings, error: blockedError } = await dbClient
       .from('bookings')
       .select('id, auto_complete_blocked_reason')
       .eq('status', 'in_progress')
@@ -146,7 +146,7 @@ async function transitionInProgressToCompleted(nowISO) {
     }
 
     // Find in_progress bookings that are NOT blocked from auto-completion
-    const { data: inProgressBookings, error: fetchError } = await supabaseAdmin
+    const { data: inProgressBookings, error: fetchError } = await dbClient
       .from('bookings')
       .select('id, scheduled_at, duration_minutes, auto_complete_blocked')
       .eq('status', 'in_progress')
@@ -213,7 +213,7 @@ async function transitionInProgressToCompleted(nowISO) {
           console.error(`❌ Blockchain completion failed for ${booking.id.slice(0, 8)}...:`, error);
           
           // Fallback: Update database directly if blockchain fails
-          await supabaseAdmin
+          await dbClient
             .from('bookings')
             .update({ 
               status: 'completed',
@@ -231,7 +231,7 @@ async function transitionInProgressToCompleted(nowISO) {
         
         // Fallback: Update database directly if request fails
         try {
-          await supabaseAdmin
+          await dbClient
             .from('bookings')
             .update({ 
               status: 'completed',
@@ -271,7 +271,7 @@ async function sendUpcomingReminders(now) {
     const oneHour = new Date(now.getTime() + (60 * 60 * 1000));
     const twoHours = new Date(now.getTime() + (2 * 60 * 60 * 1000));
     
-    const { data: upcomingBookings, error } = await supabaseAdmin
+    const { data: upcomingBookings, error } = await dbClient
       .from('bookings')
       .select(`
         id, 
@@ -305,7 +305,7 @@ async function sendUpcomingReminders(now) {
 
     // Mark reminders as sent
     const bookingIds = upcomingBookings.map(b => b.id);
-    await supabaseAdmin
+    await dbClient
       .from('bookings')
       .update({ reminder_1h_sent: now.toISOString() })
       .in('id', bookingIds);

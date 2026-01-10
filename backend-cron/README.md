@@ -22,9 +22,8 @@ npm install
 ### Environment Variables
 Create `.env` in backend-cron directory with:
 ```env
-# Supabase Database Configuration
-SUPABASE_URL=https://esfowzdgituqktemrmle.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+# Railway PostgreSQL Database
+DATABASE_URL=postgresql://user:password@host:port/database
 
 # Backend API Configuration
 BACKEND_URL=https://localhost:4443
@@ -65,9 +64,8 @@ node src/index.js
 ### 2. Configure Environment Variables
 In Railway service settings → Variables:
 ```env
-# Supabase Database Configuration
-SUPABASE_URL=https://esfowzdgituqktemrmle.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+# Railway PostgreSQL Database
+DATABASE_URL=postgresql://user:password@host:port/database
 
 # Backend API Configuration (use your production backend URL)
 BACKEND_URL=https://your-production-backend.railway.app
@@ -132,7 +130,7 @@ backend-cron/
 ├── src/
 │   ├── index.js              # Main entry point - exits after completion
 │   ├── booking-automation.js # Core automation logic
-│   └── supabase-admin.js     # Database client
+│   └── db-client.js          # Database client (uses Railway PostgreSQL)
 ├── package.json              # Dependencies and scripts
 └── README.md                 # This file
 ```

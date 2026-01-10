@@ -1,5 +1,5 @@
 import { google } from 'googleapis';
-import db from './supabase-compat.js';
+import db from './db-compat.js';
 
 /**
  * Google Meet Session Duration Tracker

@@ -4,7 +4,7 @@
  * Uses the same database layer as the main backend service.
  */
 
-import db from '../../backend/src/supabase-compat.js'
+import db from '../../backend/src/db-compat.js'
 
 export class DatabaseService {
   constructor() {

@@ -1,5 +1,6 @@
 # Render Blueprint - Deploy both frontend and backend from same repo
 # This file tells Render how to deploy your services
+# Note: Production uses Railway PostgreSQL, not Supabase
 
 services:
   # Backend API Service
@@ -12,15 +13,13 @@ services:
     envVars:
       - key: PORT
         value: 10000
-      - key: VITE_SUPABASE_URL
-        sync: false # Set in dashboard
-      - key: VITE_SUPABASE_SERVICE_ROLE_KEY
-        sync: false # Set in dashboard
+      - key: DATABASE_URL
+        sync: false # Railway PostgreSQL - Set in dashboard
       - key: VITE_PRIVY_APP_ID
         sync: false # Set in dashboard
       - key: PRIVY_APP_SECRET
         sync: false # Set in dashboard
-    
+
   # Frontend Static Site
   - type: web
     name: nook-frontend
@@ -33,12 +32,6 @@ services:
         name: X-Frame-Options
         value: DENY
     envVars:
-      - key: VITE_SUPABASE_URL
-        sync: false # Set in dashboard
-      - key: VITE_SUPABASE_ANON_KEY
-        sync: false # Set in dashboard
-      - key: VITE_SUPABASE_SERVICE_ROLE_KEY
-        sync: false # Set in dashboard
       - key: VITE_PRIVY_APP_ID
         sync: false # Set in dashboard
       - key: VITE_BACKEND_URL

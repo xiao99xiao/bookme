@@ -10,9 +10,9 @@
  */
 
 import { ethers } from "ethers";
-import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
 import contractABI from "../src/contract-abi.json" with { type: "json" };
+import db from "../src/db-compat.js";
 
 // Load environment variables
 dotenv.config({ path: '../.env' });
@@ -20,8 +20,7 @@ dotenv.config(); // Also load from backend/.env
 
 // Validate required environment variables
 const requiredEnvVars = [
-  'SUPABASE_URL',
-  'SUPABASE_SERVICE_ROLE_KEY',
+  'DATABASE_URL',
   'CONTRACT_ADDRESS',
   'BLOCKCHAIN_RPC_URL'
 ];
@@ -32,18 +31,6 @@ for (const envVar of requiredEnvVars) {
     process.exit(1);
   }
 }
-
-// Initialize Supabase client
-const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-);
 
 // Initialize blockchain provider and contract
 const provider = new ethers.JsonRpcProvider(process.env.BLOCKCHAIN_RPC_URL);
@@ -59,7 +46,7 @@ async function checkBookingCompletion(bookingId) {
   try {
     // 1. Fetch booking from database
     console.log(`📊 Fetching booking details...`);
-    const { data: booking, error: bookingError } = await supabaseAdmin
+    const { data: booking, error: bookingError } = await db
       .from("bookings")
       .select(`
         *,
@@ -79,9 +66,9 @@ async function checkBookingCompletion(bookingId) {
     console.log(`📋 Booking found:`);
     console.log(`   - Status: ${booking.status}`);
     console.log(`   - Blockchain ID: ${booking.blockchain_booking_id}`);
-    console.log(`   - Provider: ${booking.provider.display_name}`);
-    console.log(`   - Customer: ${booking.users.display_name}`);
-    console.log(`   - Service: ${booking.services.title}`);
+    console.log(`   - Provider: ${booking.provider?.display_name || 'N/A'}`);
+    console.log(`   - Customer: ${booking.users?.display_name || 'N/A'}`);
+    console.log(`   - Service: ${booking.services?.title || 'N/A'}`);
     console.log(`   - Total Price: $${booking.total_price}`);
 
     if (booking.status === 'completed') {
@@ -138,7 +125,7 @@ async function checkBookingCompletion(bookingId) {
 
     // 4. Update booking status
     console.log(`\n📝 Updating booking status to completed...`);
-    const { error: updateError } = await supabaseAdmin
+    const { error: updateError } = await db
       .from("bookings")
       .update({
         status: "completed",
@@ -156,11 +143,11 @@ async function checkBookingCompletion(bookingId) {
 
     // 5. Create transaction record for provider earnings
     const netAmount = parseFloat(ethers.formatUnits(eventFound.args.providerAmount, 6));
-    const customerName = booking.users.display_name || booking.users.email?.split('@')[0] || 'Unknown Customer';
-    const serviceTitle = booking.services.title;
+    const customerName = booking.users?.display_name || booking.users?.email?.split('@')[0] || 'Unknown Customer';
+    const serviceTitle = booking.services?.title || 'Unknown Service';
 
     console.log(`\n💰 Creating transaction record...`);
-    const { error: transactionError } = await supabaseAdmin
+    const { error: transactionError } = await db
       .from("transactions")
       .insert({
         user_id: booking.provider_id,
@@ -185,7 +172,7 @@ async function checkBookingCompletion(bookingId) {
 
     // 6. Update provider's total earnings
     console.log(`\n📊 Updating provider total earnings...`);
-    const { data: currentProvider, error: fetchError } = await supabaseAdmin
+    const { data: currentProvider, error: fetchError } = await db
       .from("users")
       .select("total_earnings")
       .eq("id", booking.provider_id)
@@ -194,7 +181,7 @@ async function checkBookingCompletion(bookingId) {
     if (!fetchError && currentProvider) {
       const newTotalEarnings = (currentProvider.total_earnings || 0) + netAmount;
 
-      const { error: earningsError } = await supabaseAdmin
+      const { error: earningsError } = await db
         .from("users")
         .update({ total_earnings: newTotalEarnings })
         .eq("id", booking.provider_id);

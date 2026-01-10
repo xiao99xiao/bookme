@@ -1,4 +1,4 @@
-import db from './supabase-compat.js'
+import db from './db-compat.js'
 import dotenv from 'dotenv'
 
 // Load environment variables (local development only)
