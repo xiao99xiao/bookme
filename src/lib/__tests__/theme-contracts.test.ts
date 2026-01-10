@@ -73,7 +73,7 @@ describe('Theme API Contracts', () => {
     const validThemeConfig = {
       id: 'default',
       name: 'Classic',
-      description: 'The original BookMe look',
+      description: 'The original Nook look',
       colors: {
         background: '#ffffff',
         backgroundSecondary: '#fafafa',

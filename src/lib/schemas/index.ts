@@ -1,5 +1,5 @@
 /**
- * BookMe API Schemas
+ * Nook API Schemas
  *
  * Centralized export for all Zod schemas used for API contract validation.
  * These schemas define the expected shape of API responses and can be used for:

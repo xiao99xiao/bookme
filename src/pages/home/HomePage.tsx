@@ -68,11 +68,11 @@ const HomePage = () => {
             {/* Header / Hero */}
             <div className={`${THEME_CLASS_PREFIX}-header home-hero`}>
               <div className="home-logo">
-                <div className="home-logo-icon">B</div>
+                <div className="home-logo-icon">N</div>
               </div>
               <div className={`${THEME_CLASS_PREFIX}-header-info`}>
                 <h1 className={`${THEME_CLASS_PREFIX}-name home-title`}>
-                  BookMe
+                  Nook
                 </h1>
                 <div className={`${THEME_CLASS_PREFIX}-badges`}>
                   <span className={`${THEME_CLASS_PREFIX}-badge`}>
@@ -90,7 +90,7 @@ const HomePage = () => {
             {/* Bio / Introduction */}
             <div className={`${THEME_CLASS_PREFIX}-bio home-intro`}>
               <p>
-                BookMe is a peer-to-peer booking platform where you can offer your services
+                Nook is a peer-to-peer booking platform where you can offer your services
                 or book time with skilled professionals. Get paid securely with blockchain-powered
                 escrow payments.
               </p>
@@ -99,7 +99,7 @@ const HomePage = () => {
             <div className={`${THEME_CLASS_PREFIX}-divider`} />
 
             {/* Features Section */}
-            <h2 className={`${THEME_CLASS_PREFIX}-section-title`}>Why BookMe?</h2>
+            <h2 className={`${THEME_CLASS_PREFIX}-section-title`}>Why Nook?</h2>
             <div className="home-features">
               <FeatureCard
                 icon={<Shield />}
@@ -228,7 +228,7 @@ const HomePage = () => {
             <h2 className={`${THEME_CLASS_PREFIX}-section-title`}>Contact Us</h2>
             <div className="home-contact">
               <a
-                href="https://twitter.com/bookme_app"
+                href="https://twitter.com/nook_talk"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="home-contact-link"
@@ -238,11 +238,11 @@ const HomePage = () => {
                 </div>
                 <div className="home-contact-info">
                   <span className="home-contact-label">Twitter</span>
-                  <span className="home-contact-value">@bookme_app</span>
+                  <span className="home-contact-value">@nook_talk</span>
                 </div>
               </a>
               <a
-                href="mailto:support@bookme.app"
+                href="mailto:support@nook.talk"
                 className="home-contact-link"
               >
                 <div className="home-contact-icon">
@@ -250,14 +250,14 @@ const HomePage = () => {
                 </div>
                 <div className="home-contact-info">
                   <span className="home-contact-label">Email</span>
-                  <span className="home-contact-value">support@bookme.app</span>
+                  <span className="home-contact-value">support@nook.talk</span>
                 </div>
               </a>
             </div>
 
             {/* Footer */}
             <div className="home-footer">
-              <p>&copy; 2025 BookMe. All rights reserved.</p>
+              <p>&copy; 2025 Nook. All rights reserved.</p>
               <div className="home-footer-links">
                 <Link to="/terms">Terms of Service</Link>
                 <Link to="/privacy">Privacy Policy</Link>

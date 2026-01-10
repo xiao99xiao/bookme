@@ -1,7 +1,7 @@
 {
-  "name": "bookme-admin-cli",
+  "name": "nook-admin-cli",
   "version": "1.0.0",
-  "description": "BookMe Admin CLI for smart contract management",
+  "description": "Nook Admin CLI for smart contract management",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
@@ -14,7 +14,7 @@
     "gen-tx-dry": "node src/index.js generate-transactions --dry-run"
   },
   "bin": {
-    "bookme-admin": "src/index.js"
+    "nook-admin": "src/index.js"
   },
   "dependencies": {
     "ethers": "^6.8.0",
@@ -25,7 +25,7 @@
     "pg": "^8.16.3"
   },
   "devDependencies": {},
-  "keywords": ["bookme", "admin", "cli", "smart-contract"],
-  "author": "BookMe Team",
+  "keywords": ["nook", "admin", "cli", "smart-contract"],
+  "author": "Nook Team",
   "license": "MIT"
 }

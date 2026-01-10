@@ -1,8 +1,8 @@
-# BookMe Smart Contracts - Product Requirements Document
+# Nook Smart Contracts - Product Requirements Document
 
 ## 📋 Executive Summary
 
-The BookMe smart contract system provides a decentralized escrow solution for service bookings on the Base blockchain. It ensures secure payment handling, fair fund distribution, and dispute resolution while maintaining flexibility for future enhancements.
+The Nook smart contract system provides a decentralized escrow solution for service bookings on the Base blockchain. It ensures secure payment handling, fair fund distribution, and dispute resolution while maintaining flexibility for future enhancements.
 
 ## 🎯 Objectives
 
@@ -376,7 +376,7 @@ function _validateNonce(uint256 nonce) internal {
 ### EIP-712 Domain
 ```solidity
 EIP712Domain({
-    name: "BookMe Escrow",
+    name: "Nook Escrow",
     version: "1",
     chainId: 84532,  // Base Sepolia (or 8453 for Base mainnet)
     verifyingContract: address(this)
@@ -622,6 +622,6 @@ struct Dispute {
 
 ## 🎯 Conclusion
 
-The BookMe smart contract system provides a robust, secure, and flexible foundation for decentralized service booking escrow. With careful attention to security, clear state management, and extensible architecture, it will serve as the trustless backbone for the BookMe platform's growth and evolution.
+The Nook smart contract system provides a robust, secure, and flexible foundation for decentralized service booking escrow. With careful attention to security, clear state management, and extensible architecture, it will serve as the trustless backbone for the Nook platform's growth and evolution.
 
 The phased implementation approach ensures we can deliver value quickly while building towards a comprehensive feature set that supports the platform's long-term vision of becoming the premier decentralized marketplace for professional services.

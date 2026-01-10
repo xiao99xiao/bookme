@@ -350,7 +350,7 @@ export default function ProviderOrders() {
       `PRODID:-//${APP_NAME}//Booking Calendar//EN`,
       'METHOD:REQUEST',
       'BEGIN:VEVENT',
-      `UID:${Date.now()}@bookme.com`,
+      `UID:${Date.now()}@nook.talk`,
       `DTSTAMP:${formatDateForICS(new Date())}`,
       `DTSTART:${formatDateForICS(startDate)}`,
       `DTEND:${formatDateForICS(endDate)}`,

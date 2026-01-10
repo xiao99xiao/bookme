@@ -1,7 +1,7 @@
-# BookMe Smart Contract Implementation Plan
+# Nook Smart Contract Implementation Plan
 
 ## 📋 Overview
-This document outlines the detailed implementation plan for the BookMe escrow smart contract system based on the PRD specifications. The implementation follows a test-driven development (TDD) approach.
+This document outlines the detailed implementation plan for the Nook escrow smart contract system based on the PRD specifications. The implementation follows a test-driven development (TDD) approach.
 
 ## 🎯 Implementation Phases
 

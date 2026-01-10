@@ -10,7 +10,7 @@ import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 
 /**
  * @title BookingEscrow
- * @dev Escrow contract for BookMe service bookings on Base blockchain
+ * @dev Escrow contract for Nook service bookings on Base blockchain
  * @notice Handles USDC escrow for service bookings with backend-signed authorizations
  */
 contract BookingEscrow is EIP712, Ownable, Pausable, ReentrancyGuard {
@@ -133,7 +133,7 @@ contract BookingEscrow is EIP712, Ownable, Pausable, ReentrancyGuard {
         address _usdc,
         address _backendSigner,
         address _platformFeeWallet
-    ) EIP712("BookMe Escrow", "1") Ownable(msg.sender) {
+    ) EIP712("Nook Escrow", "1") Ownable(msg.sender) {
         require(_usdc != address(0), "BookingEscrow: invalid USDC address");
         require(_backendSigner != address(0), "BookingEscrow: invalid backend signer");
         require(_platformFeeWallet != address(0), "BookingEscrow: invalid platform wallet");

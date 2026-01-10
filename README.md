@@ -1,4 +1,4 @@
-# BookMe - Peer-to-Peer Booking Platform
+# Nook - Peer-to-Peer Booking Platform
 
 A modern, responsive P2P booking platform where users can both offer their time slots and book from others.
 
@@ -23,7 +23,7 @@ A modern, responsive P2P booking platform where users can both offer their time 
 ## Project Structure
 
 ```
-bookme/
+nook/
 ├── index.html          # Main application page
 ├── css/
 │   ├── style.css       # Main styles

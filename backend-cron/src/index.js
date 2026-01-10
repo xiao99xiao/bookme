@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * BookMe Cron Service
+ * Nook Cron Service
  * Railway cron job for booking automation
  * 
  * This service runs on Railway's cron schedule every 15 minutes
@@ -14,7 +14,7 @@
 import { updateBookingStatuses } from './booking-automation.js';
 
 async function main() {
-  console.log('🚀 BookMe Cron Service Starting...');
+  console.log('🚀 Nook Cron Service Starting...');
   console.log('📅 Execution time:', new Date().toISOString());
   
   try {

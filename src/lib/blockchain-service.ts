@@ -5,7 +5,7 @@ import { encodeFunctionData } from 'viem'
 import { baseSepolia } from 'viem/chains'
 
 // Contract configuration
-const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS || '0x33ddEd6F8183aa4dAB04E2aE216a5a3f9871405a'
+const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS || '0xdBf76eAc2B7aa6CCb5BB744d85F89F01A8Da6e51'
 const USDC_ADDRESS = import.meta.env.VITE_USDC_ADDRESS || '0x036CbD53842c5426634e7929541eC2318f3dCF7e'
 const CHAIN_ID = parseInt(import.meta.env.VITE_CHAIN_ID || '84532') // Base Sepolia
 const BLOCKCHAIN_EXPLORER = import.meta.env.VITE_BLOCKCHAIN_EXPLORER || 'https://sepolia.basescan.org'

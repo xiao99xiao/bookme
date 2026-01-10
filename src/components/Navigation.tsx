@@ -23,7 +23,7 @@ import { ApiClient } from "@/lib/api-migration";
 import BecomeProviderDialog from "./BecomeProviderDialog";
 import { toast } from "sonner";
 
-const STORAGE_KEY = 'bookme_user_mode';
+const STORAGE_KEY = 'nook_user_mode';
 
 type UserMode = 'customer' | 'provider' | null;
 
@@ -482,10 +482,10 @@ const Navigation = () => {
               <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                 <img
                   src="/images/logo.svg"
-alt="Timee logo"
+alt="Nook logo"
                   className="w-8 h-8"
                 />
-<span className="text-2xl font-bold font-heading text-foreground">Timee</span>
+<span className="text-2xl font-bold font-heading text-foreground">Nook</span>
               </Link>
             </div>
 

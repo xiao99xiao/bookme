@@ -4,7 +4,7 @@
 services:
   # Backend API Service
   - type: web
-    name: bookme-backend
+    name: nook-backend
     runtime: node
     rootDir: backend
     buildCommand: npm install
@@ -23,7 +23,7 @@ services:
     
   # Frontend Static Site
   - type: web
-    name: bookme-frontend
+    name: nook-frontend
     runtime: static
     rootDir: .
     buildCommand: pwd && ls -la && npm install && npm run build

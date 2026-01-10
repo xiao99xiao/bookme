@@ -1,6 +1,6 @@
-# BookMe Smart Contracts
+# Nook Smart Contracts
 
-This directory contains the smart contracts for the BookMe platform, built with Foundry and deployed on Base blockchain.
+This directory contains the smart contracts for the Nook platform, built with Foundry and deployed on Base blockchain.
 
 ## 🏗️ Setup
 

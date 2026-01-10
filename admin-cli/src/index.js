@@ -12,8 +12,8 @@ const program = new Command()
 
 // CLI Information
 program
-  .name('bookme-admin')
-  .description(chalk.blue('BookMe Admin CLI - Smart Contract Management Tool'))
+  .name('nook-admin')
+  .description(chalk.blue('Nook Admin CLI - Smart Contract Management Tool'))
   .version('1.0.0')
 
 // Global error handler
@@ -31,7 +31,7 @@ async function initializeCommands() {
       .command('test')
       .description('Test connection to blockchain and database')
       .action(async () => {
-        console.log(chalk.blue('🚀 BookMe Admin CLI - Connection Test\n'))
+        console.log(chalk.blue('🚀 Nook Admin CLI - Connection Test\n'))
         const success = await commands.testConnection()
         process.exit(success ? 0 : 1)
       })
@@ -43,7 +43,7 @@ async function initializeCommands() {
       .description('List all active bookings in smart contract')
       .action(async () => {
         try {
-          console.log(chalk.blue('🚀 BookMe Admin CLI - List Active Bookings\n'))
+          console.log(chalk.blue('🚀 Nook Admin CLI - List Active Bookings\n'))
           await commands.listActiveBookings()
           process.exit(0)
         } catch (error) {
@@ -59,7 +59,7 @@ async function initializeCommands() {
       .option('-r, --reason <reason>', 'Cancellation reason')
       .action(async (bookingId, options) => {
         try {
-          console.log(chalk.blue('🚀 BookMe Admin CLI - Cancel Booking\n'))
+          console.log(chalk.blue('🚀 Nook Admin CLI - Cancel Booking\n'))
           await commands.cancelBooking(bookingId, options.reason)
           process.exit(0)
         } catch (error) {
@@ -75,7 +75,7 @@ async function initializeCommands() {
       .option('-r, --reason <reason>', 'Cancellation reason')
       .action(async (options) => {
         try {
-          console.log(chalk.blue('🚀 BookMe Admin CLI - Cancel All Bookings\n'))
+          console.log(chalk.blue('🚀 Nook Admin CLI - Cancel All Bookings\n'))
           await commands.cancelAllBookings(options.reason)
           process.exit(0)
         } catch (error) {
@@ -91,7 +91,7 @@ async function initializeCommands() {
       .option('-p, --mark-paid', 'Automatically mark booking as paid if found')
       .action(async (txHash, options) => {
         try {
-          console.log(chalk.blue('🚀 BookMe Admin CLI - Find Booking by Transaction Hash\n'))
+          console.log(chalk.blue('🚀 Nook Admin CLI - Find Booking by Transaction Hash\n'))
           await commands.findBookingByTxHash(txHash, options.markPaid)
           process.exit(0)
         } catch (error) {
@@ -108,7 +108,7 @@ async function initializeCommands() {
       .option('--dry-run', 'Preview what would be created without making changes')
       .action(async (options) => {
         try {
-          console.log(chalk.blue('🚀 BookMe Admin CLI - Generate Transaction Records\n'))
+          console.log(chalk.blue('🚀 Nook Admin CLI - Generate Transaction Records\n'))
           await commands.generateTransactionRecords(options.dryRun)
           process.exit(0)
         } catch (error) {
@@ -123,7 +123,7 @@ async function initializeCommands() {
       .description('Mark booking as completed using completion transaction hash')
       .action(async (txHash) => {
         try {
-          console.log(chalk.blue('🚀 BookMe Admin CLI - Mark Booking as Complete\n'))
+          console.log(chalk.blue('🚀 Nook Admin CLI - Mark Booking as Complete\n'))
           await commands.markBookingCompleteByTxHash(txHash)
           process.exit(0)
         } catch (error) {
@@ -153,7 +153,7 @@ async function initializeCommands() {
 async function runInteractiveMode(commands) {
   const inquirer = (await import('inquirer')).default
   
-  console.log(chalk.blue('🚀 BookMe Admin CLI - Interactive Mode\n'))
+  console.log(chalk.blue('🚀 Nook Admin CLI - Interactive Mode\n'))
   
   // Test connection first
   const connectionOk = await commands.testConnection()
@@ -251,7 +251,7 @@ async function runInteractiveMode(commands) {
 
 // Show help if no command provided
 if (process.argv.length === 2) {
-  console.log(chalk.blue('🚀 BookMe Admin CLI\n'))
+  console.log(chalk.blue('🚀 Nook Admin CLI\n'))
   console.log(chalk.yellow('Usage:'))
   console.log('  npm start                    # Interactive mode')
   console.log('  npm run list                 # List active bookings')

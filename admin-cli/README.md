@@ -1,6 +1,6 @@
-# BookMe Admin CLI
+# Nook Admin CLI
 
-A command-line interface for managing BookMe smart contract bookings. This tool allows administrators to view and emergency-cancel active bookings directly from the smart contract.
+A command-line interface for managing Nook smart contract bookings. This tool allows administrators to view and emergency-cancel active bookings directly from the smart contract.
 
 ## Features
 
@@ -16,7 +16,7 @@ A command-line interface for managing BookMe smart contract bookings. This tool 
 ## Prerequisites
 
 - Node.js 18+ 
-- Access to BookMe environment variables
+- Access to Nook environment variables
 - Backend signer private key (for emergency cancellations)
 
 ## Setup
@@ -36,7 +36,7 @@ cp .env.example .env
 Edit `.env` with your configuration:
 ```env
 # Smart Contract Configuration
-CONTRACT_ADDRESS=0x33ddEd6F8183aa4dAB04E2aE216a5a3f9871405a
+CONTRACT_ADDRESS=0xdBf76eAc2B7aa6CCb5BB744d85F89F01A8Da6e51
 BLOCKCHAIN_RPC_URL=https://sepolia.base.org
 CONTRACT_CHAIN_ID=84532
 

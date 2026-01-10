@@ -1,7 +1,7 @@
 /**
  * Default Theme - Classic
  *
- * The original BookMe styling, warm and professional.
+ * The original Nook styling, warm and professional.
  */
 
 import { ThemeConfig } from '../types';
@@ -9,7 +9,7 @@ import { ThemeConfig } from '../types';
 export const defaultTheme: ThemeConfig = {
   id: 'default',
   name: 'Classic',
-  description: 'The original BookMe look - warm, professional, and inviting',
+  description: 'The original Nook look - warm, professional, and inviting',
 
   colors: {
     // Background

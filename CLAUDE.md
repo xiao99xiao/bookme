@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Commands assume you're in the correct directory unless explicitly stated
 
 ## Project Overview
-BookMe is a peer-to-peer booking platform where users can offer services and book time slots from others. Built with Vite, React, TypeScript, Railway PostgreSQL, and Cloudflare R2.
+Nook is a peer-to-peer booking platform where users can offer services and book time slots from others. Built with Vite, React, TypeScript, Railway PostgreSQL, and Cloudflare R2.
 
 ## Commands
 
@@ -176,7 +176,7 @@ Tables in Supabase (see `/database/*.sql`):
 ### Smart Wallets & Blockchain
 
 #### Smart Contract Integration
-- **Contract Address**: `0x33ddEd6F8183aa4dAB04E2aE216a5a3f9871405a` (Base Sepolia)
+- **Contract Address**: `0xdBf76eAc2B7aa6CCb5BB744d85F89F01A8Da6e51` (Base Sepolia)
 - **Smart Wallets**: Automatically created via Privy's SmartWalletsProvider
 - **Networks**: Base (production) and Base Sepolia (development)
 - **USDC Addresses**: 
@@ -209,7 +209,7 @@ Tables in Supabase (see `/database/*.sql`):
 
 ### Username System
 
-BookMe features a comprehensive username system for clean public user page URLs.
+Nook features a comprehensive username system for clean public user page URLs.
 
 #### Username Requirements
 - **Length**: 3-30 characters
@@ -294,7 +294,7 @@ VITE_GOOGLE_CLIENT_SECRET=
 VITE_BACKEND_URL=  # Backend URL (use Cloudflare tunnel URL for SSL in dev)
 
 # Blockchain Configuration
-VITE_CONTRACT_ADDRESS=0x33ddEd6F8183aa4dAB04E2aE216a5a3f9871405a
+VITE_CONTRACT_ADDRESS=0xdBf76eAc2B7aa6CCb5BB744d85F89F01A8Da6e51
 VITE_USDC_ADDRESS=0x036CbD53842c5426634e7929541eC2318f3dCF7e
 VITE_CHAIN_ID=84532
 VITE_BLOCKCHAIN_EXPLORER=https://sepolia.basescan.org
@@ -313,7 +313,7 @@ DATABASE_URL=postgresql://user:password@host:port/database
 R2_ENDPOINT=https://<ACCOUNT_ID>.r2.cloudflarestorage.com
 R2_ACCESS_KEY_ID=your_access_key_id
 R2_SECRET_ACCESS_KEY=your_secret_access_key
-R2_BUCKET=bookme-uploads
+R2_BUCKET=nook-uploads
 R2_PUBLIC_URL=https://pub-xxx.r2.dev
 
 # Privy Configuration
@@ -328,7 +328,7 @@ GOOGLE_CLIENT_SECRET=
 PORT=4000
 
 # Smart Contract Configuration
-CONTRACT_ADDRESS=0x33ddEd6F8183aa4dAB04E2aE216a5a3f9871405a
+CONTRACT_ADDRESS=0xdBf76eAc2B7aa6CCb5BB744d85F89F01A8Da6e51
 CONTRACT_CHAIN_ID=84532
 BLOCKCHAIN_RPC_URL=https://sepolia.base.org
 BLOCKCHAIN_WEBSOCKET_URL=wss://base-sepolia.g.alchemy.com/v2/YOUR_ALCHEMY_API_KEY
@@ -397,7 +397,7 @@ ENABLE_BLOCKCHAIN_MONITORING=false
 ## Case Convention Standards
 
 ### Overview
-BookMe follows a **layered approach** to naming conventions, where each layer uses the appropriate convention for its platform:
+Nook follows a **layered approach** to naming conventions, where each layer uses the appropriate convention for its platform:
 
 ### Database Layer (Railway PostgreSQL)
 - **Convention**: `snake_case` (PostgreSQL standard)

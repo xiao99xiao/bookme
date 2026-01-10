@@ -159,7 +159,7 @@ export class AdminCommands {
         console.log(chalk.green(`✅ Found ${transactionData.eventName} event with booking ID: ${transactionData.bookingId.slice(0, 10)}...${transactionData.bookingId.slice(-6)}`))
       } catch (error) {
         console.log(chalk.red('❌ Failed to parse transaction or extract booking ID:'), error.message)
-        console.log(chalk.yellow('💡 This might not be a BookMe transaction or the transaction may not contain booking events'))
+        console.log(chalk.yellow('💡 This might not be a Nook transaction or the transaction may not contain booking events'))
         return null
       }
       

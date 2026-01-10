@@ -1,7 +1,7 @@
 {
-  "name": "bookme-cron",
+  "name": "nook-cron",
   "version": "1.0.0",
-  "description": "BookMe booking automation cron service for Railway",
+  "description": "Nook booking automation cron service for Railway",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
@@ -17,6 +17,6 @@
     "node": ">=22.0.0"
   },
   "keywords": ["cron", "booking", "automation", "railway"],
-  "author": "BookMe Team",
+  "author": "Nook Team",
   "license": "MIT"
 }

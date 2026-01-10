@@ -14,7 +14,7 @@ import BecomeProviderDialog from '@/components/BecomeProviderDialog';
 import { useBlockchainService } from '@/lib/blockchain-service';
 import ReactMarkdown from 'react-markdown';
 
-const STORAGE_KEY = 'bookme_user_mode';
+const STORAGE_KEY = 'nook_user_mode';
 
 type UserMode = 'customer' | 'provider' | null;
 

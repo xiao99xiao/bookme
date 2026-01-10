@@ -18,7 +18,7 @@ class EIP712Signer {
     
     // EIP-712 Domain - Must match contract's EIP712 constructor
     this.domain = {
-      name: "BookMe Escrow", // Must match contract: EIP712("BookMe Escrow", "1")
+      name: "Nook Escrow", // Must match contract: EIP712("Nook Escrow", "1")
       version: "1",
       chainId: this.CHAIN_ID,
       verifyingContract: this.CONTRACT_ADDRESS

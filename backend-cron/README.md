@@ -1,4 +1,4 @@
-# BookMe Cron Service
+# Nook Cron Service
 
 Railway-based cron service for booking automation and time-based status transitions.
 
@@ -30,7 +30,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 BACKEND_URL=https://localhost:4443
 
 # Smart Contract Configuration (for production backend calls)
-CONTRACT_ADDRESS=0x33ddEd6F8183aa4dAB04E2aE216a5a3f9871405a
+CONTRACT_ADDRESS=0xdBf76eAc2B7aa6CCb5BB744d85F89F01A8Da6e51
 CONTRACT_CHAIN_ID=84532
 BLOCKCHAIN_RPC_URL=https://base-sepolia.g.alchemy.com/v2/YOUR_ALCHEMY_API_KEY
 
@@ -73,7 +73,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 BACKEND_URL=https://your-production-backend.railway.app
 
 # Smart Contract Configuration (for production backend calls)
-CONTRACT_ADDRESS=0x33ddEd6F8183aa4dAB04E2aE216a5a3f9871405a
+CONTRACT_ADDRESS=0xdBf76eAc2B7aa6CCb5BB744d85F89F01A8Da6e51
 CONTRACT_CHAIN_ID=84532
 BLOCKCHAIN_RPC_URL=https://base-sepolia.g.alchemy.com/v2/YOUR_ALCHEMY_API_KEY
 
@@ -103,7 +103,7 @@ This runs every 15 minutes.
 ## Expected Log Output
 
 ```
-🚀 BookMe Cron Service Starting...
+🚀 Nook Cron Service Starting...
 📅 Execution time: 2025-01-15T10:15:00.000Z
 🤖 Starting booking automation job...
 ⏰ Current time: 2025-01-15T10:15:00.000Z

@@ -3,7 +3,7 @@ import contractABI from './contract-abi.json' with { type: 'json' }
 
 export class AdminBlockchainService {
   constructor() {
-    this.CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || '0x33ddEd6F8183aa4dAB04E2aE216a5a3f9871405a'
+    this.CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || '0xdBf76eAc2B7aa6CCb5BB744d85F89F01A8Da6e51'
     this.RPC_URL = process.env.BLOCKCHAIN_RPC_URL
     this.BACKEND_SIGNER_PRIVATE_KEY = process.env.BACKEND_SIGNER_PRIVATE_KEY
     this.USDC_ADDRESS = process.env.USDC_ADDRESS
