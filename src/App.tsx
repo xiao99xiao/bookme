@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { PrivyAuthProvider } from "./contexts/PrivyAuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Index from "./pages/Index";
+import { HomePage } from "./pages/home";
 import Discover from "./pages/Discover";
 import BookServices from "./pages/BookServices";
 import Auth from "./pages/Auth";
@@ -59,7 +60,7 @@ function AppContent() {
       <OnboardingNavigator />
       <Navigation />
       <Routes>
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={<HomePage />} />
             <Route path="/discover" element={<Discover />} />
             <Route path="/design-system-demo" element={<DesignSystemDemo />} />
             <Route 

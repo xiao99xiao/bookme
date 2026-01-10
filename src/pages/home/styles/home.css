@@ -1,0 +1,333 @@
+/**
+ * Home Page Styles
+ *
+ * Extends the public profile CSS with home-specific styles.
+ * Uses the same CSS variable system for visual consistency.
+ */
+
+/* =====================================================
+   Home Page Overrides
+   ===================================================== */
+
+.home-page {
+  /* Override padding for home page - no need for nav spacing */
+}
+
+.home-page .pp-main {
+  padding-top: 0;
+}
+
+.home-content {
+  padding-top: 80px;
+  padding-bottom: 80px;
+}
+
+/* =====================================================
+   Hero / Logo Section
+   ===================================================== */
+
+.home-hero {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 24px;
+}
+
+.home-logo {
+  width: 120px;
+  height: 120px;
+  border-radius: var(--pp-avatar-radius);
+  background: linear-gradient(135deg, var(--pp-accent) 0%, #0da2ff 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 32px rgba(59, 158, 249, 0.3);
+}
+
+.home-logo-icon {
+  font-size: 48px;
+  font-weight: 800;
+  color: white;
+  font-family: var(--pp-font-heading);
+}
+
+.home-hero .pp-header-info {
+  align-items: center;
+}
+
+.home-title {
+  font-size: 36px;
+  background: linear-gradient(135deg, var(--pp-text-primary) 0%, var(--pp-accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.home-hero .pp-badges {
+  justify-content: center;
+}
+
+/* =====================================================
+   Introduction
+   ===================================================== */
+
+.home-intro {
+  text-align: center;
+  font-size: 18px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* =====================================================
+   Features Grid
+   ===================================================== */
+
+.home-features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.home-feature-card {
+  display: flex;
+  gap: 16px;
+  padding: var(--pp-card-padding);
+  background: var(--pp-card-background);
+  border: var(--pp-border-width) solid var(--pp-card-border);
+  border-radius: var(--pp-card-radius);
+  transition: all 0.2s ease;
+}
+
+.home-feature-card:hover {
+  background: var(--pp-card-hover);
+  border-color: var(--pp-accent-light);
+}
+
+.home-feature-icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--pp-accent-light);
+  border-radius: 12px;
+  color: var(--pp-accent);
+}
+
+.home-feature-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.home-feature-content {
+  flex: 1;
+}
+
+.home-feature-title {
+  font-family: var(--pp-font-heading);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--pp-text-primary);
+  margin: 0 0 4px;
+}
+
+.home-feature-description {
+  font-size: 14px;
+  color: var(--pp-text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* =====================================================
+   CTA Cards
+   ===================================================== */
+
+.home-cta-card {
+  border-color: var(--pp-accent-light);
+  background: var(--pp-accent-light);
+}
+
+.home-cta-card:hover {
+  border-color: var(--pp-accent);
+  background: linear-gradient(135deg, var(--pp-accent-light) 0%, rgba(59, 158, 249, 0.15) 100%);
+}
+
+.home-cta-label {
+  color: var(--pp-accent);
+}
+
+.home-cta-badge {
+  background: var(--pp-button-primary);
+  color: var(--pp-button-primary-text);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.home-login-card {
+  background: var(--pp-card-background);
+  border-color: var(--pp-card-border);
+}
+
+.home-login-card:hover {
+  background: var(--pp-card-hover);
+  border-color: var(--pp-text-secondary);
+}
+
+.home-login-card .home-cta-label {
+  color: var(--pp-text-primary);
+}
+
+.home-login-card .home-cta-badge {
+  background: var(--pp-button-secondary);
+  color: var(--pp-button-secondary-text);
+}
+
+/* =====================================================
+   Contact Section
+   ===================================================== */
+
+.home-contact {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.home-contact-link {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  background: var(--pp-card-background);
+  border: var(--pp-border-width) solid var(--pp-card-border);
+  border-radius: var(--pp-card-radius);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.home-contact-link:hover {
+  background: var(--pp-card-hover);
+  border-color: var(--pp-accent);
+}
+
+.home-contact-icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--pp-badge-background);
+  border-radius: 12px;
+  color: var(--pp-text-secondary);
+}
+
+.home-contact-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.home-contact-link:hover .home-contact-icon {
+  background: var(--pp-accent-light);
+  color: var(--pp-accent);
+}
+
+.home-contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.home-contact-label {
+  font-size: 12px;
+  color: var(--pp-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.home-contact-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--pp-text-primary);
+}
+
+/* =====================================================
+   Footer
+   ===================================================== */
+
+.home-footer {
+  margin-top: var(--pp-section-gap);
+  padding-top: var(--pp-section-gap);
+  border-top: var(--pp-border-width) solid var(--pp-divider);
+  text-align: center;
+  color: var(--pp-text-muted);
+  font-size: 14px;
+}
+
+.home-footer p {
+  margin: 0 0 16px;
+}
+
+.home-footer-links {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+}
+
+.home-footer-links a {
+  color: var(--pp-text-secondary);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.home-footer-links a:hover {
+  color: var(--pp-accent);
+}
+
+/* =====================================================
+   Responsive
+   ===================================================== */
+
+@media (max-width: 640px) {
+  .home-content {
+    padding-top: 40px;
+    padding-bottom: 40px;
+  }
+
+  .home-logo {
+    width: 80px;
+    height: 80px;
+  }
+
+  .home-logo-icon {
+    font-size: 32px;
+  }
+
+  .home-title {
+    font-size: 28px;
+  }
+
+  .home-intro {
+    font-size: 16px;
+  }
+
+  .home-features {
+    grid-template-columns: 1fr;
+  }
+
+  .home-feature-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .home-feature-icon {
+    margin: 0 auto;
+  }
+
+  .home-footer-links {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
