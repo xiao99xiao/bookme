@@ -3,7 +3,7 @@
  * Handles advanced cancellation logic with policies, conditions, and refund calculations
  */
 
-import { supabaseAdmin } from './supabase-admin.js';
+import db from './supabase-compat.js';
 
 /**
  * Get all applicable cancellation policies for a booking
@@ -14,9 +14,9 @@ import { supabaseAdmin } from './supabase-admin.js';
 export async function getApplicableCancellationPolicies(bookingId, userId) {
   try {
     console.log('🔍 DEBUG: Getting cancellation policies for booking:', bookingId, 'user:', userId);
-    
+
     // First, get the booking details
-    const { data: booking, error: bookingError } = await supabaseAdmin
+    const { data: booking, error: bookingError } = await db
       .from('bookings')
       .select('*')
       .eq('id', bookingId)
@@ -58,7 +58,7 @@ export async function getApplicableCancellationPolicies(bookingId, userId) {
     });
 
     // Get all active policies with their conditions
-    const { data: policies, error: policiesError } = await supabaseAdmin
+    const { data: policies, error: policiesError } = await db
       .from('cancellation_policies')
       .select(`
         *,
@@ -182,7 +182,7 @@ export async function getApplicableCancellationPolicies(bookingId, userId) {
 export async function calculateRefundBreakdown(bookingId, policyId) {
   try {
     // Get booking details
-    const { data: booking, error: bookingError } = await supabaseAdmin
+    const { data: booking, error: bookingError } = await db
       .from('bookings')
       .select('total_price, service_fee')
       .eq('id', bookingId)
@@ -193,7 +193,7 @@ export async function calculateRefundBreakdown(bookingId, policyId) {
     }
 
     // Get policy details
-    const { data: policy, error: policyError } = await supabaseAdmin
+    const { data: policy, error: policyError } = await db
       .from('cancellation_policies')
       .select('*')
       .eq('id', policyId)
@@ -263,7 +263,7 @@ export async function processCancellation(bookingId, userId, policyId, explanati
     const refundBreakdown = await calculateRefundBreakdown(bookingId, policyId);
 
     // Update booking with cancellation details
-    const { data: updatedBooking, error: updateError } = await supabaseAdmin
+    const { data: updatedBooking, error: updateError } = await db
       .from('bookings')
       .update({
         status: 'cancelled',
@@ -315,7 +315,7 @@ export async function processCancellation(bookingId, userId, policyId, explanati
  */
 export async function getCancellationPolicy(policyId) {
   try {
-    const { data: policy, error } = await supabaseAdmin
+    const { data: policy, error } = await db
       .from('cancellation_policies')
       .select('*')
       .eq('id', policyId)

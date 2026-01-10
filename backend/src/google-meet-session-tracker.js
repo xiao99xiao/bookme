@@ -1,5 +1,5 @@
 import { google } from 'googleapis';
-import { supabaseAdmin } from './supabase-admin.js';
+import db from './supabase-compat.js';
 
 /**
  * Google Meet Session Duration Tracker
@@ -141,7 +141,7 @@ class GoogleMeetSessionTracker {
    */
   async mapEmailToUserId(email) {
     try {
-      const { data: user, error } = await supabaseAdmin
+      const { data: user, error } = await db
         .from('users')
         .select('id')
         .eq('email', email)
@@ -198,7 +198,7 @@ class GoogleMeetSessionTracker {
   async saveSessionData(bookingId, sessionData) {
     try {
       // Check if booking_session_data table exists
-      const { error: tableError } = await supabaseAdmin
+      const { error: tableError } = await db
         .from('booking_session_data')
         .select('booking_id')
         .limit(1);
@@ -209,7 +209,7 @@ class GoogleMeetSessionTracker {
       }
 
       // Try to update existing record first, then insert if it doesn't exist
-      const { error: updateError } = await supabaseAdmin
+      const { error: updateError } = await db
         .from('booking_session_data')
         .update({
           provider_total_duration: sessionData.providerDuration,
@@ -222,7 +222,7 @@ class GoogleMeetSessionTracker {
 
       // If update failed (no rows affected), insert new record
       if (updateError || updateError?.code === 'PGRST116') {
-        const { error: insertError } = await supabaseAdmin
+        const { error: insertError } = await db
           .from('booking_session_data')
           .insert({
             booking_id: bookingId,
@@ -256,7 +256,7 @@ class GoogleMeetSessionTracker {
       console.log('🔍 Checking Google Meet session duration for booking:', bookingId);
 
       // Get booking details
-      const { data: booking, error: bookingError } = await supabaseAdmin
+      const { data: booking, error: bookingError } = await db
         .from('bookings')
         .select(`
           id,

@@ -7,9 +7,9 @@ if (existsSync('.env')) {
 }
 
 // Check required environment variables (backend uses no VITE_ prefix)
+// Note: DATABASE_URL replaces SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY for Railway PostgreSQL
 const required = [
-  'SUPABASE_URL',
-  'SUPABASE_SERVICE_ROLE_KEY', 
+  'DATABASE_URL',
   'PRIVY_APP_ID',
   'PRIVY_APP_SECRET',
   'GOOGLE_CLIENT_ID',

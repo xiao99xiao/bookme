@@ -1,15 +1,14 @@
-import { createClient } from '@supabase/supabase-js'
+/**
+ * Database Service for Admin CLI
+ *
+ * Uses the same database layer as the main backend service.
+ */
+
+import db from '../../backend/src/supabase-compat.js'
 
 export class DatabaseService {
   constructor() {
-    this.SUPABASE_URL = process.env.SUPABASE_URL
-    this.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
-    
-    if (!this.SUPABASE_URL || !this.SUPABASE_SERVICE_ROLE_KEY) {
-      throw new Error('Missing Supabase configuration. Check SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY')
-    }
-    
-    this.supabase = createClient(this.SUPABASE_URL, this.SUPABASE_SERVICE_ROLE_KEY)
+    this.db = db
     console.log('💾 Database service initialized')
   }
 
@@ -18,7 +17,7 @@ export class DatabaseService {
    */
   async getBookingByBlockchainId(blockchainBookingId) {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await this.db
         .from('bookings')
         .select(`
           id,
@@ -32,7 +31,7 @@ export class DatabaseService {
           is_online,
           blockchain_booking_id,
           created_at,
-          services!inner(
+          services:service_id(
             title,
             description,
             price
@@ -68,7 +67,7 @@ export class DatabaseService {
    */
   async getAllBlockchainBookings() {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await this.db
         .from('bookings')
         .select(`
           id,
@@ -81,10 +80,10 @@ export class DatabaseService {
           location,
           is_online,
           blockchain_booking_id,
-          payment_tx_hash,
+          blockchain_tx_hash,
           completion_tx_hash,
           created_at,
-          services!inner(
+          services:service_id(
             title,
             description,
             price
@@ -98,7 +97,7 @@ export class DatabaseService {
             username
           )
         `)
-        .not('blockchain_booking_id', 'is', null)
+        .neq('blockchain_booking_id', null)
         .in('status', ['paid', 'confirmed', 'ongoing'])
         .order('created_at', { ascending: false })
 
@@ -120,10 +119,10 @@ export class DatabaseService {
   async getEnhancedBookingDetails(blockchainBookings) {
     try {
       const enhancedBookings = []
-      
+
       for (const booking of blockchainBookings) {
         const dbBooking = await this.getBookingByBlockchainId(booking.blockchainId)
-        
+
         if (dbBooking) {
           enhancedBookings.push({
             ...booking,
@@ -152,7 +151,7 @@ export class DatabaseService {
           })
         }
       }
-      
+
       return enhancedBookings
     } catch (error) {
       console.error('❌ Error enhancing booking details:', error)
@@ -165,7 +164,7 @@ export class DatabaseService {
    */
   async updateBookingStatus(blockchainBookingId, status, cancellationTxHash) {
     try {
-      const { error } = await this.supabase
+      const { error } = await this.db
         .from('bookings')
         .update({
           status: status,
@@ -190,7 +189,7 @@ export class DatabaseService {
    */
   async getBookingByTransactionHash(txHash) {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await this.db
         .from('bookings')
         .select(`
           id,
@@ -207,7 +206,7 @@ export class DatabaseService {
           completion_tx_hash,
           cancellation_tx_hash,
           created_at,
-          services!inner(
+          services:service_id(
             title,
             description,
             price
@@ -244,12 +243,12 @@ export class DatabaseService {
    */
   async markBookingAsPaid(bookingId, paymentTxHash) {
     try {
-      const { error } = await this.supabase
+      const { error } = await this.db
         .from('bookings')
         .update({
           status: 'paid',
           blockchain_tx_hash: paymentTxHash,
-          blockchain_confirmed_at: new Date().toISOString(), // CRITICAL: Add this field!
+          blockchain_confirmed_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
         .eq('id', bookingId)
@@ -271,7 +270,7 @@ export class DatabaseService {
    */
   async getCompletedBookingsWithoutTransactions() {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await this.db
         .from('bookings')
         .select(`
           id,
@@ -292,7 +291,7 @@ export class DatabaseService {
           blockchain_tx_hash,
           completion_tx_hash,
           created_at,
-          services!inner(
+          services:service_id(
             id,
             title,
             description,
@@ -310,8 +309,8 @@ export class DatabaseService {
           )
         `)
         .eq('status', 'completed')
-        .not('completed_at', 'is', null)
-        
+        .neq('completed_at', null)
+
       if (error) {
         throw error
       }
@@ -324,7 +323,7 @@ export class DatabaseService {
       const completedBookings = []
       for (const booking of data) {
         // Check if transaction record already exists for this booking
-        const { data: existingTransaction, error: txError } = await this.supabase
+        const { data: existingTransaction, error: txError } = await this.db
           .from('transactions')
           .select('id')
           .eq('booking_id', booking.id)
@@ -343,7 +342,7 @@ export class DatabaseService {
 
       console.log(`📊 Found ${completedBookings.length} completed bookings without transaction records (out of ${data.length} total completed)`)
       return completedBookings
-      
+
     } catch (error) {
       console.error('❌ Error fetching completed bookings:', error)
       throw error
@@ -356,7 +355,7 @@ export class DatabaseService {
   async markBookingAsCompleted(bookingId, completionTxHash, blockNumber = 0) {
     try {
       // First check if booking exists and is in a valid state
-      const { data: booking, error: fetchError } = await this.supabase
+      const { data: booking, error: fetchError } = await this.db
         .from('bookings')
         .select('id, status, blockchain_booking_id')
         .eq('id', bookingId)
@@ -376,7 +375,7 @@ export class DatabaseService {
       }
 
       // Update booking to completed status
-      const { error } = await this.supabase
+      const { error } = await this.db
         .from('bookings')
         .update({
           status: 'completed',
@@ -393,13 +392,13 @@ export class DatabaseService {
       console.log(`✅ Marked booking ${bookingId} as completed with transaction ${completionTxHash}`)
 
       // Also create blockchain event record for tracking
-      const { error: eventError } = await this.supabase
+      const { error: eventError } = await this.db
         .from('blockchain_events')
         .insert({
           event_type: 'ServiceCompleted',
-          booking_id: booking.blockchain_booking_id, // This is the blockchain booking ID (bytes32)
+          booking_id: booking.blockchain_booking_id,
           transaction_hash: completionTxHash,
-          block_number: blockNumber || 0, // Use provided block number or default to 0
+          block_number: blockNumber || 0,
           event_data: {
             bookingId: booking.blockchain_booking_id,
             completedViaAdmin: true,
@@ -431,9 +430,9 @@ export class DatabaseService {
       const totalPrice = parseFloat(booking.total_price)
       const providerEarnings = totalPrice * 0.9 // 90% to provider
       const platformFee = totalPrice * 0.1 // 10% platform fee
-      
+
       // Create transaction record for provider earnings
-      const { data: transactionData, error: transactionError } = await this.supabase
+      const { data: transactionData, error: transactionError } = await this.db
         .from('transactions')
         .insert({
           provider_id: booking.provider_id,
@@ -458,14 +457,14 @@ export class DatabaseService {
       console.log(`✅ Created transaction record ${transactionData.id} for booking ${booking.id}`)
       console.log(`   💰 Provider earnings: $${providerEarnings.toFixed(2)} for ${booking.providers?.display_name || 'Unknown'}`)
       console.log(`   🏢 Platform fee: $${platformFee.toFixed(2)}`)
-      
-      return { 
-        success: true, 
+
+      return {
+        success: true,
         transactionId: transactionData.id,
         providerEarnings,
         platformFee
       }
-      
+
     } catch (error) {
       console.error('❌ Error creating transaction record:', error)
       return { success: false, error: error.message }

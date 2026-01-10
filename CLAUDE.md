@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Commands assume you're in the correct directory unless explicitly stated
 
 ## Project Overview
-BookMe is a peer-to-peer booking platform where users can offer services and book time slots from others. Built with Vite, React, TypeScript, and Supabase.
+BookMe is a peer-to-peer booking platform where users can offer services and book time slots from others. Built with Vite, React, TypeScript, Railway PostgreSQL, and Cloudflare R2.
 
 ## Commands
 
@@ -117,13 +117,15 @@ The app now includes a **backend service** at `/backend` for secure Privy token 
 - **Framework**: Hono (lightweight Node.js server)
 - **Purpose**: Validates Privy tokens and performs secure database operations
 - **Ports**: 4001 (HTTP), 4443 (HTTPS with SSL)
-- **Auth Flow**: Frontend sends Privy token → Backend validates → Backend uses Supabase service role
+- **Database**: Railway PostgreSQL (direct pg connection)
+- **Storage**: Cloudflare R2 (S3-compatible)
+- **Auth Flow**: Frontend sends Privy token → Backend validates → Backend performs database operations
 
 ### Authentication System
 The app uses a **dual authentication approach**:
 - **Privy**: Primary authentication for user identity (stored as DID format: `did:privy:xxx`)
 - **Backend**: Validates Privy tokens and handles all database operations
-- **Supabase**: Database only (not for auth) - backend uses service role key
+- **PostgreSQL**: Direct connection to Railway PostgreSQL (no Supabase)
 - **ID Mapping**: Privy DIDs are converted to UUIDs for database operations via `src/lib/id-mapping.ts`
 
 Critical pattern: Frontend sends Privy token to backend, which validates and performs secure operations.
@@ -138,7 +140,7 @@ src/
 │   ├── api-migration.ts         # ApiClient with Promise-based initialization (prevents race conditions)
 │   ├── backend-api.ts           # Backend API client for token-based auth
 │   ├── api.ts                   # Legacy API client (deprecated - use ApiClient)
-│   ├── supabase.ts              # Supabase client configurations
+│   ├── supabase.ts              # Legacy file (deprecated - database now uses Railway PostgreSQL)
 │   ├── id-mapping.ts            # Converts Privy DIDs to UUIDs
 │   └── username.ts              # Username validation, generation, and URL utilities
 ├── pages/
@@ -262,12 +264,12 @@ export class ApiClient {
 - All methods that require auth use `waitForInitialization()`
 
 #### Legacy API (api.ts) - DEPRECATED
-Old pattern using supabaseAdmin directly:
+Old pattern - no longer used:
 ```typescript
-// Uses supabaseAdmin to bypass RLS
+// Legacy pattern - now all database access goes through backend API
 static async methodName(userId: string, data: any) {
   // Validate userId
-  // Use supabaseAdmin for operations
+  // Use backend API for operations
   // Return transformed data
 }
 ```
@@ -286,8 +288,6 @@ static async methodName(userId: string, data: any) {
 ### Frontend (.env.local)
 ```bash
 # Frontend variables (VITE_ prefix for browser access)
-VITE_SUPABASE_URL=
-VITE_SUPABASE_ANON_KEY=
 VITE_PRIVY_APP_ID=
 VITE_GOOGLE_CLIENT_ID=
 VITE_GOOGLE_CLIENT_SECRET=
@@ -306,13 +306,23 @@ VITE_BACKEND_URL=https://192.168.0.10:4443  # Your local IP with HTTPS
 
 ### Backend (.env)
 ```bash
-# Supabase Configuration (NO VITE_ prefix in backend!)
-SUPABASE_URL=
-SUPABASE_SERVICE_ROLE_KEY=
+# Railway PostgreSQL
+DATABASE_URL=postgresql://user:password@host:port/database
+
+# Cloudflare R2 Storage
+R2_ENDPOINT=https://<ACCOUNT_ID>.r2.cloudflarestorage.com
+R2_ACCESS_KEY_ID=your_access_key_id
+R2_SECRET_ACCESS_KEY=your_secret_access_key
+R2_BUCKET=bookme-uploads
+R2_PUBLIC_URL=https://pub-xxx.r2.dev
 
 # Privy Configuration
 PRIVY_APP_ID=
 PRIVY_APP_SECRET=
+
+# Google OAuth
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
 
 # Server port
 PORT=4000
@@ -346,7 +356,7 @@ ENABLE_BLOCKCHAIN_MONITORING=false
 - Access via https://YOUR-LOCAL-IP:8443 from any device on your network
 
 ### Authentication
-- Never use `supabase.auth.getUser()` - we use Privy for auth
+- Always use Privy for auth (no Supabase auth)
 - Always pass `userId` to API methods explicitly
 - Use `ensureUuid()` to convert Privy DIDs to database UUIDs
 
@@ -358,9 +368,9 @@ ENABLE_BLOCKCHAIN_MONITORING=false
 - This ensures consistent theming and prevents background color conflicts
 
 ### Environment Variables Security
-- **CRITICAL**: Never use `VITE_` prefix for sensitive keys like service role keys
+- **CRITICAL**: Never use `VITE_` prefix for sensitive keys like DATABASE_URL, R2 credentials
 - `VITE_` prefixed variables are exposed to the browser and public
-- Backend-only secrets use no prefix (e.g., `SUPABASE_SERVICE_ROLE_KEY`)
+- Backend-only secrets use no prefix (e.g., `DATABASE_URL`, `R2_SECRET_ACCESS_KEY`)
 
 ### Smart Wallets
 - Requires Buffer polyfill (configured in vite.config.ts)
@@ -368,7 +378,7 @@ ENABLE_BLOCKCHAIN_MONITORING=false
 - Test on Base Sepolia for development
 
 ### Real-time Features
-- Chat uses Supabase real-time subscriptions
+- Chat uses PostgreSQL NOTIFY/LISTEN via WebSocket
 - Meeting links generated via Google OAuth integration
 - Reviews have 7-day edit window after booking completion
 
@@ -389,7 +399,7 @@ ENABLE_BLOCKCHAIN_MONITORING=false
 ### Overview
 BookMe follows a **layered approach** to naming conventions, where each layer uses the appropriate convention for its platform:
 
-### Database Layer (PostgreSQL/Supabase)
+### Database Layer (Railway PostgreSQL)
 - **Convention**: `snake_case` (PostgreSQL standard)
 - **Examples**: `user_id`, `display_name`, `username`, `created_at`, `is_visible`, `total_earnings`
 - **All database tables and columns follow this pattern consistently**

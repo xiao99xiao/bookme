@@ -19,7 +19,7 @@
 
 import { PrivyClient } from '@privy-io/server-auth';
 import { v5 as uuidv5 } from 'uuid';
-import { createClient } from '@supabase/supabase-js';
+import db from '../supabase-compat.js';
 import dotenv from 'dotenv';
 
 // Load environment variables
@@ -29,12 +29,6 @@ dotenv.config({ path: '.env' });
 const privyClient = new PrivyClient(
   process.env.PRIVY_APP_ID,
   process.env.PRIVY_APP_SECRET
-);
-
-// Initialize Supabase admin client
-const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
 // UUID namespace - same as frontend
@@ -107,13 +101,13 @@ export async function verifyPrivyAuth(c, next) {
       if (walletAddress) {
         console.log('💾 Updating wallet address in database for user:', userId);
         // Update existing user's wallet address (don't create new users)
-        const { data, error } = await supabaseAdmin
+        const { data, error } = await db
           .from('users')
-          .update({ 
-            wallet_address: walletAddress 
+          .update({
+            wallet_address: walletAddress
           })
           .eq('id', userId);
-        
+
         if (error) {
           console.error('❌ Database update error:', error);
         } else {
@@ -144,9 +138,10 @@ export function getPrivyClient() {
 }
 
 /**
- * Get Supabase admin client instance (for use in other modules)
- * @returns {SupabaseClient} The initialized Supabase admin client
+ * Get database client instance (for use in other modules)
+ * Returns Supabase-compatible API backed by PostgreSQL
+ * @returns {Object} The database client with Supabase-compatible API
  */
 export function getSupabaseAdmin() {
-  return supabaseAdmin;
+  return db;
 }

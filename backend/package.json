@@ -9,15 +9,16 @@
     "start:ssl": "node src/check-env.js && PORT=4443 node --expose-gc src/https-server.js"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.966.0",
     "@hono/node-server": "^1.14.0",
     "@privy-io/server-auth": "^1.32.5",
-    "@supabase/supabase-js": "^2.39.0",
     "dotenv": "^16.3.1",
     "ethers": "^6.15.0",
     "googleapis": "^160.0.0",
     "hono": "^4.6.14",
     "ioredis": "^5.7.0",
     "jsonwebtoken": "^9.0.2",
+    "pg": "^8.16.3",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "uuid": "^9.0.1"
@@ -26,5 +27,8 @@
   "main": "index.js",
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "vitest": "^4.0.16"
+  }
 }

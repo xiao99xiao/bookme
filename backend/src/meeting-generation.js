@@ -1,13 +1,8 @@
-import { createClient } from '@supabase/supabase-js'
+import db from './supabase-compat.js'
 import dotenv from 'dotenv'
 
 // Load environment variables (local development only)
 dotenv.config({ path: '.env' })
-
-const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-)
 
 // Google OAuth helper
 class GoogleAuth {
@@ -111,7 +106,7 @@ export async function generateMeetingLinkForBooking(bookingId) {
     console.log('Booking ID:', bookingId)
 
     // 1. Get booking details with service and customer info  
-    const { data: booking, error: bookingError } = await supabaseAdmin
+    const { data: booking, error: bookingError } = await db
       .from('bookings')
       .select(`
         *,
@@ -147,7 +142,7 @@ export async function generateMeetingLinkForBooking(bookingId) {
     }
 
     // 3. Get provider's meeting integration
-    const { data: integration, error: integrationError } = await supabaseAdmin
+    const { data: integration, error: integrationError } = await db
       .from('user_meeting_integrations')
       .select('*')
       .eq('user_id', booking.services.provider_id)
@@ -196,7 +191,7 @@ export async function generateMeetingLinkForBooking(bookingId) {
           }
           
           // Update the integration with new token
-          await supabaseAdmin
+          await db
             .from('user_meeting_integrations')
             .update({
               access_token: refreshResult.access_token,
@@ -249,7 +244,7 @@ export async function generateMeetingLinkForBooking(bookingId) {
             const refreshResult = await GoogleAuth.refreshToken(integration.refresh_token)
             
             if (refreshResult.access_token) {
-              await supabaseAdmin
+              await db
                 .from('user_meeting_integrations')
                 .update({
                   access_token: refreshResult.access_token,
@@ -286,7 +281,7 @@ export async function generateMeetingLinkForBooking(bookingId) {
 
     // 5. Update booking with meeting information
     if (meetingLink) {
-      await supabaseAdmin
+      await db
         .from('bookings')
         .update({
           meeting_link: meetingLink
@@ -310,7 +305,7 @@ export async function generateMeetingLinkForBooking(bookingId) {
 export async function deleteMeetingForBooking(bookingId) {
   try {
     // Get booking details
-    const { data: booking, error } = await supabaseAdmin
+    const { data: booking, error } = await db
       .from('bookings')
       .select('meeting_link, provider_id')
       .eq('id', bookingId)
@@ -324,7 +319,7 @@ export async function deleteMeetingForBooking(bookingId) {
     // Just clear the meeting link
 
     // Clear meeting info from booking
-    await supabaseAdmin
+    await db
       .from('bookings')
       .update({
         meeting_link: null

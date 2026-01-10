@@ -1,21 +1,23 @@
+/**
+ * WebSocket 模块
+ *
+ * 使用 Socket.io 提供实时通信
+ * 使用 PostgreSQL NOTIFY/LISTEN 替代 Supabase Realtime
+ */
+
 import { Server } from 'socket.io'
 import { PrivyClient } from '@privy-io/server-auth'
-import { createClient } from '@supabase/supabase-js'
 import { v5 as uuidv5 } from 'uuid'
 import dotenv from 'dotenv'
+import { pool } from './db.js'
+import db from './supabase-compat.js'
 
-// Load environment variables
 dotenv.config({ path: '.env' })
 
-// Initialize clients
+// Initialize Privy client
 const privyClient = new PrivyClient(
   process.env.PRIVY_APP_ID,
   process.env.PRIVY_APP_SECRET
-)
-
-const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
 // UUID namespace - same as main server
@@ -29,16 +31,128 @@ function privyDidToUuid(privyDid) {
   return uuidv5(privyDid, PRIVY_NAMESPACE)
 }
 
-// Store active subscriptions
-const activeSubscriptions = new Map()
-
-// Store the io instance globally so it can be accessed from HTTP endpoints
+// Store the io instance globally
 let ioInstance = null
+let listenerClient = null
 
 export function getIO() {
   return ioInstance
 }
 
+/**
+ * 设置 PostgreSQL NOTIFY 监听器
+ */
+async function setupPgListener(io) {
+  try {
+    // 获取专用连接用于 LISTEN
+    listenerClient = await pool.connect()
+
+    // 订阅通道
+    await listenerClient.query('LISTEN new_message')
+    await listenerClient.query('LISTEN booking_change')
+    await listenerClient.query('LISTEN conversation_update')
+
+    console.log('✅ PostgreSQL LISTEN 通道已激活')
+
+    // 处理通知
+    listenerClient.on('notification', async (msg) => {
+      try {
+        const payload = JSON.parse(msg.payload)
+
+        switch (msg.channel) {
+          case 'new_message':
+            await handleNewMessage(io, payload)
+            break
+          case 'booking_change':
+            await handleBookingChange(io, payload)
+            break
+          case 'conversation_update':
+            await handleConversationUpdate(io, payload)
+            break
+        }
+      } catch (error) {
+        console.error('通知处理错误:', error)
+      }
+    })
+
+    // 处理连接错误
+    listenerClient.on('error', (err) => {
+      console.error('PostgreSQL 监听器错误:', err)
+      // 尝试重连
+      setTimeout(() => {
+        console.log('尝试重新连接 PostgreSQL 监听器...')
+        setupPgListener(io)
+      }, 5000)
+    })
+
+  } catch (error) {
+    console.error('设置 PostgreSQL 监听器失败:', error)
+    // 尝试重连
+    setTimeout(() => setupPgListener(io), 5000)
+  }
+}
+
+/**
+ * 处理新消息通知
+ */
+async function handleNewMessage(io, payload) {
+  try {
+    // 获取完整消息信息
+    const { data: message } = await db
+      .from('messages')
+      .select('*, sender:users!sender_id(id, display_name, avatar)')
+      .eq('id', payload.id)
+      .single()
+
+    if (message) {
+      // 广播到对话房间
+      io.to(`conversation:${payload.conversation_id}`).emit('new_message', message)
+    }
+  } catch (error) {
+    console.error('处理新消息通知错误:', error)
+  }
+}
+
+/**
+ * 处理预订变更通知
+ */
+async function handleBookingChange(io, payload) {
+  try {
+    // 获取完整 booking 信息
+    const { data: booking } = await db
+      .from('bookings')
+      .select('*, service:services(*), customer:users!customer_id(id, display_name, avatar), provider:users!provider_id(id, display_name, avatar)')
+      .eq('id', payload.id)
+      .single()
+
+    if (booking) {
+      const event = payload.event_type === 'INSERT' ? 'new_booking' : 'booking_updated'
+
+      // 通知 customer
+      io.to(`user:${payload.customer_id}`).emit(event, booking)
+      // 通知 provider
+      io.to(`user:${payload.provider_id}`).emit(event, booking)
+    }
+  } catch (error) {
+    console.error('处理预订变更通知错误:', error)
+  }
+}
+
+/**
+ * 处理对话更新通知
+ */
+async function handleConversationUpdate(io, payload) {
+  try {
+    io.to(`user:${payload.user1_id}`).emit('conversation_updated', payload)
+    io.to(`user:${payload.user2_id}`).emit('conversation_updated', payload)
+  } catch (error) {
+    console.error('处理对话更新通知错误:', error)
+  }
+}
+
+/**
+ * 设置 WebSocket 服务器
+ */
 export function setupWebSocket(server) {
   const io = new Server(server, {
     cors: {
@@ -47,7 +161,7 @@ export function setupWebSocket(server) {
         'http://localhost:5173',
         'https://localhost:8443',
         'https://192.168.0.10:8443',
-        /^https:\/\/192\.168\.\d+\.\d+:8443$/, // Allow any local IP on port 8443
+        /^https:\/\/192\.168\.\d+\.\d+:8443$/,
         'https://roulette-phenomenon-airfare-claire.trycloudflare.com',
         /https:\/\/.*\.trycloudflare\.com$/
       ],
@@ -55,25 +169,24 @@ export function setupWebSocket(server) {
     }
   })
 
-  // Middleware to verify Privy token
+  // Privy 认证中间件
   io.use(async (socket, next) => {
     try {
       const token = socket.handshake.auth.token
-      
+
       if (!token) {
         return next(new Error('Authentication required'))
       }
 
       const user = await privyClient.verifyAuthToken(token)
-      
+
       if (!user) {
         return next(new Error('Invalid token'))
       }
 
-      // Store user info in socket
       socket.data.privyUser = user
       socket.data.userId = privyDidToUuid(user.userId)
-      
+
       next()
     } catch (error) {
       console.error('Socket auth error:', error)
@@ -85,33 +198,27 @@ export function setupWebSocket(server) {
     const userId = socket.data.userId
     console.log(`User ${userId} connected via WebSocket`)
 
-    // Join user's personal room
+    // 加入用户个人房间
     socket.join(`user:${userId}`)
-    
-    // Handle conversation subscriptions
+
+    // 处理对话订阅
     socket.on('subscribe_conversation', ({ conversationId }) => {
       console.log(`User ${userId} subscribing to conversation ${conversationId}`)
       socket.join(`conversation:${conversationId}`)
     })
-    
+
     socket.on('unsubscribe_conversation', ({ conversationId }) => {
       console.log(`User ${userId} unsubscribing from conversation ${conversationId}`)
       socket.leave(`conversation:${conversationId}`)
     })
 
-    // Subscribe to user's conversations
-    subscribeToUserConversations(socket, userId)
-
-    // Subscribe to user's bookings
-    subscribeToUserBookings(socket, userId)
-
-    // Handle sending messages
+    // 发送消息
     socket.on('send_message', async (data) => {
       try {
         const { conversationId, content } = data
 
-        // Verify user is part of conversation
-        const { data: conversation, error: convError } = await supabaseAdmin
+        // 验证用户是对话的一方
+        const { data: conversation, error: convError } = await db
           .from('conversations')
           .select('user1_id, user2_id')
           .eq('id', conversationId)
@@ -127,8 +234,8 @@ export function setupWebSocket(server) {
           return
         }
 
-        // Create message
-        const { data: message, error } = await supabaseAdmin
+        // 创建消息
+        const { data: message, error } = await db
           .from('messages')
           .insert({
             conversation_id: conversationId,
@@ -136,7 +243,7 @@ export function setupWebSocket(server) {
             content,
             is_read: false
           })
-          .select('*')
+          .select()
           .single()
 
         if (error) {
@@ -144,33 +251,27 @@ export function setupWebSocket(server) {
           socket.emit('error', { message: 'Failed to send message' })
           return
         }
-        
-        // Fetch sender details
-        const { data: sender } = await supabaseAdmin
+
+        // 获取发送者信息
+        const { data: sender } = await db
           .from('users')
-          .select('id, display_name, avatar_url')
+          .select('id, display_name, avatar')
           .eq('id', userId)
           .single()
-        
-        // Add sender info to message
+
         const messageWithSender = { ...message, sender }
 
-        // Update conversation last activity
-        await supabaseAdmin
+        // 更新对话最后活动时间
+        await db
           .from('conversations')
           .update({ last_message_at: new Date().toISOString() })
           .eq('id', conversationId)
 
-        // Emit to both users in conversation
-        const recipientId = conversation.user1_id === userId 
-          ? conversation.user2_id 
-          : conversation.user1_id
-
-        // Send confirmation to sender
+        // 发送确认给发送者
         socket.emit('message_sent', messageWithSender)
-        
-        // Broadcast ONLY to conversation room (everyone subscribed gets it)
-        // Don't send to individual user rooms to avoid duplicates
+
+        // 广播到对话房间
+        // 注意：PostgreSQL NOTIFY 触发器也会触发，但这里先手动广播确保即时性
         io.to(`conversation:${conversationId}`).emit('new_message', messageWithSender)
 
       } catch (error) {
@@ -179,12 +280,12 @@ export function setupWebSocket(server) {
       }
     })
 
-    // Handle marking messages as read
+    // 标记消息已读
     socket.on('mark_read', async (data) => {
       try {
         const { conversationId } = data
 
-        await supabaseAdmin
+        await db
           .from('messages')
           .update({ is_read: true })
           .eq('conversation_id', conversationId)
@@ -196,154 +297,31 @@ export function setupWebSocket(server) {
       }
     })
 
-    // Handle disconnect
+    // 断开连接
     socket.on('disconnect', () => {
       console.log(`User ${userId} disconnected`)
-      
-      // Clean up subscriptions
-      const userSubs = activeSubscriptions.get(userId)
-      if (userSubs) {
-        userSubs.forEach(sub => sub.unsubscribe())
-        activeSubscriptions.delete(userId)
-      }
     })
   })
 
-  // Store the io instance globally
+  // 启动 PostgreSQL LISTEN
+  setupPgListener(io)
+
+  // 存储 io 实例
   ioInstance = io
-  
+
   return io
 }
 
-// Subscribe to user's conversations for real-time updates
-function subscribeToUserConversations(socket, userId) {
-  // Subscribe to new messages in user's conversations
-  const messageChannel = supabaseAdmin
-    .channel(`messages:${userId}`)
-    .on(
-      'postgres_changes',
-      {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'messages',
-        filter: `conversation_id=in.(
-          SELECT id FROM conversations 
-          WHERE customer_id=${userId} OR provider_id=${userId}
-        )`
-      },
-      async (payload) => {
-        // Get full message with sender info
-        const { data: message } = await supabaseAdmin
-          .from('messages')
-          .select(`
-            *,
-            sender:users!sender_id(id, display_name, avatar_url)
-          `)
-          .eq('id', payload.new.id)
-          .single()
-
-        if (message && message.sender_id !== userId) {
-          socket.emit('new_message', message)
-        }
-      }
-    )
-    .subscribe()
-
-  // Store subscription
-  if (!activeSubscriptions.has(userId)) {
-    activeSubscriptions.set(userId, [])
-  }
-  activeSubscriptions.get(userId).push(messageChannel)
-}
-
-// Subscribe to user's bookings for real-time updates
-function subscribeToUserBookings(socket, userId) {
-  // Subscribe to booking updates
-  const bookingChannel = supabaseAdmin
-    .channel(`bookings:${userId}`)
-    .on(
-      'postgres_changes',
-      {
-        event: '*',
-        schema: 'public',
-        table: 'bookings',
-        filter: `customer_id=eq.${userId}`
-      },
-      async (payload) => {
-        // Get full booking with relations
-        if (payload.eventType === 'UPDATE') {
-          const { data: booking } = await supabaseAdmin
-            .from('bookings')
-            .select(`
-              *,
-              service:services(*),
-              provider:users!provider_id(display_name, avatar_url)
-            `)
-            .eq('id', payload.new.id)
-            .single()
-
-          if (booking) {
-            socket.emit('booking_updated', booking)
-          }
-        }
-      }
-    )
-    .on(
-      'postgres_changes',
-      {
-        event: '*',
-        schema: 'public',
-        table: 'bookings',
-        filter: `provider_id=eq.${userId}`
-      },
-      async (payload) => {
-        // Get full booking with relations
-        if (payload.eventType === 'INSERT') {
-          const { data: booking } = await supabaseAdmin
-            .from('bookings')
-            .select(`
-              *,
-              service:services(*),
-              customer:users!customer_id(display_name, avatar_url)
-            `)
-            .eq('id', payload.new.id)
-            .single()
-
-          if (booking) {
-            socket.emit('new_booking', booking)
-          }
-        } else if (payload.eventType === 'UPDATE') {
-          const { data: booking } = await supabaseAdmin
-            .from('bookings')
-            .select(`
-              *,
-              service:services(*),
-              customer:users!customer_id(display_name, avatar_url)
-            `)
-            .eq('id', payload.new.id)
-            .single()
-
-          if (booking) {
-            socket.emit('booking_updated', booking)
-          }
-        }
-      }
-    )
-    .subscribe()
-
-  // Store subscription
-  if (!activeSubscriptions.has(userId)) {
-    activeSubscriptions.set(userId, [])
-  }
-  activeSubscriptions.get(userId).push(bookingChannel)
-}
-
-// Broadcast notification to specific user
+/**
+ * 向特定用户发送通知
+ */
 export function notifyUser(io, userId, event, data) {
   io.to(`user:${userId}`).emit(event, data)
 }
 
-// Broadcast to all users in a conversation
+/**
+ * 向对话中的所有用户发送通知
+ */
 export function notifyConversation(io, conversationId, event, data) {
   io.to(`conversation:${conversationId}`).emit(event, data)
 }
