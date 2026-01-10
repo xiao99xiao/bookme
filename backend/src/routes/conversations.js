@@ -76,71 +76,122 @@ export default function conversationRoutes(app) {
         });
       }
 
-      // Enrich conversations with user data and last messages (matching original implementation)
-      const enrichedConversations = await Promise.all(
-        (conversations || []).map(async (conversation) => {
-          // Get both users
-          const { data: user1Data } = await supabaseAdmin
-            .from('users')
-            .select('id, display_name, avatar')
-            .eq('id', conversation.user1_id)
-            .single();
-
-          const { data: user2Data } = await supabaseAdmin
-            .from('users')
-            .select('id, display_name, avatar')
-            .eq('id', conversation.user2_id)
-            .single();
-
-          // Map to customer/provider structure for consistency
-          // The current user is "customer", the other user is "provider"
-          let customer, provider, otherUser;
-          if (conversation.user1_id === userId) {
-            customer = user1Data;
-            provider = user2Data;
-            otherUser = user2Data;
-          } else {
-            customer = user2Data;
-            provider = user1Data;
-            otherUser = user1Data;
+      if (!conversations || conversations.length === 0) {
+        return c.json({
+          conversations: [],
+          pagination: {
+            limit: limitNum,
+            offset: offsetNum,
+            total: 0,
+            has_more: false
           }
+        });
+      }
 
-          // Get last message (return as array to match frontend expectations)
-          const { data: lastMessageArray } = await supabaseAdmin
-            .from('messages')
-            .select('id, content, created_at, sender_id')
-            .eq('conversation_id', conversation.id)
-            .order('created_at', { ascending: false })
-            .limit(1);
+      // ========== OPTIMIZED: Batch fetch all related data to avoid N+1 queries ==========
 
-          // Get booking information between these two users (most recent booking)
-          const { data: booking } = await supabaseAdmin
-            .from('bookings')
-            .select(`
-              id,
-              status,
-              scheduled_at,
-              services!inner(
-                id,
-                title,
-                description
-              )
-            `)
-            .or(`and(customer_id.eq.${conversation.user1_id},provider_id.eq.${conversation.user2_id}),and(customer_id.eq.${conversation.user2_id},provider_id.eq.${conversation.user1_id})`)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single();
+      // 1. Collect all unique user IDs from conversations
+      const userIds = new Set();
+      const conversationIds = [];
+      conversations.forEach(conv => {
+        userIds.add(conv.user1_id);
+        userIds.add(conv.user2_id);
+        conversationIds.push(conv.id);
+      });
 
-          return {
-            ...conversation,
-            customer,
-            provider,
-            other_user: otherUser,
-            last_message: lastMessageArray || [], // Frontend expects array
-            booking: booking || null // Add booking information for frontend
-          };
-        })
+      // 2. Batch fetch all users in a single query
+      const { data: allUsers } = await supabaseAdmin
+        .from('users')
+        .select('id, display_name, avatar')
+        .in('id', Array.from(userIds));
+
+      // Create a map for quick user lookup
+      const usersMap = new Map();
+      (allUsers || []).forEach(user => {
+        usersMap.set(user.id, user);
+      });
+
+      // 3. Batch fetch last message for each conversation using a lateral join approach
+      // We use a raw query-like approach with window functions
+      const { data: allLastMessages } = await supabaseAdmin
+        .from('messages')
+        .select('id, content, created_at, sender_id, conversation_id')
+        .in('conversation_id', conversationIds)
+        .order('created_at', { ascending: false });
+
+      // Group messages by conversation and take only the first (latest) one
+      const lastMessagesMap = new Map();
+      (allLastMessages || []).forEach(msg => {
+        if (!lastMessagesMap.has(msg.conversation_id)) {
+          lastMessagesMap.set(msg.conversation_id, msg);
+        }
+      });
+
+      // 4. Batch fetch bookings for all conversation pairs
+      // Build OR conditions for all user pairs
+      const userPairs = conversations.map(conv =>
+        `(customer_id.eq.${conv.user1_id}.and.provider_id.eq.${conv.user2_id}),` +
+        `(customer_id.eq.${conv.user2_id}.and.provider_id.eq.${conv.user1_id})`
       );
+
+      const { data: allBookings } = await supabaseAdmin
+        .from('bookings')
+        .select(`
+          id,
+          status,
+          scheduled_at,
+          customer_id,
+          provider_id,
+          services!inner(id, title, description)
+        `)
+        .or(userPairs.join(','))
+        .order('created_at', { ascending: false });
+
+      // Create a map for bookings by user pair (using sorted IDs as key)
+      const bookingsMap = new Map();
+      (allBookings || []).forEach(booking => {
+        // Create a consistent key for the user pair (sorted to handle both directions)
+        const pairKey = [booking.customer_id, booking.provider_id].sort().join('-');
+        // Only keep the first (most recent) booking for each pair
+        if (!bookingsMap.has(pairKey)) {
+          bookingsMap.set(pairKey, booking);
+        }
+      });
+
+      // 5. Enrich conversations using the pre-fetched data (no additional queries!)
+      const enrichedConversations = conversations.map(conversation => {
+        const user1Data = usersMap.get(conversation.user1_id) || null;
+        const user2Data = usersMap.get(conversation.user2_id) || null;
+
+        // Map to customer/provider structure for consistency
+        let customer, provider, otherUser;
+        if (conversation.user1_id === userId) {
+          customer = user1Data;
+          provider = user2Data;
+          otherUser = user2Data;
+        } else {
+          customer = user2Data;
+          provider = user1Data;
+          otherUser = user1Data;
+        }
+
+        // Get last message from map
+        const lastMessage = lastMessagesMap.get(conversation.id);
+        const lastMessageArray = lastMessage ? [lastMessage] : [];
+
+        // Get booking from map using sorted user pair key
+        const pairKey = [conversation.user1_id, conversation.user2_id].sort().join('-');
+        const booking = bookingsMap.get(pairKey) || null;
+
+        return {
+          ...conversation,
+          customer,
+          provider,
+          other_user: otherUser,
+          last_message: lastMessageArray, // Frontend expects array
+          booking // Add booking information for frontend
+        };
+      });
 
       const formattedConversations = enrichedConversations;
 

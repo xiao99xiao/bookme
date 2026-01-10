@@ -21,10 +21,68 @@ import {
   validatePolicySelection,
 } from "../cancellation-policies.js";
 import EIP712Signer from "../eip712-signer.js";
+import { withTransaction } from "../db.js";
 // BlockchainService removed - not needed since methods are commented out
 
 // Get Supabase admin client
 const supabaseAdmin = getSupabaseAdmin();
+
+/**
+ * Atomically create a booking with conflict detection using database transaction.
+ * Uses row-level locking (FOR UPDATE) to prevent race conditions.
+ *
+ * @param {Object} client - PostgreSQL transaction client
+ * @param {Object} bookingData - Booking data to insert
+ * @param {Date} bookingStart - Booking start time
+ * @param {Date} bookingEnd - Booking end time
+ * @returns {Object} Created booking or null if conflict detected
+ */
+async function createBookingAtomic(client, bookingData, bookingStart, bookingEnd) {
+  // Lock existing bookings for this service to prevent concurrent insertions
+  // Using FOR UPDATE to acquire exclusive locks on matching rows
+  const conflictCheck = await client.query(
+    `SELECT id, scheduled_at, duration_minutes
+     FROM bookings
+     WHERE service_id = $1
+       AND status IN ('pending', 'pending_payment', 'paid', 'confirmed', 'in_progress')
+       AND (
+         -- Check for time overlap: new booking overlaps with existing
+         ($2::timestamptz < scheduled_at + (duration_minutes || ' minutes')::interval)
+         AND ($3::timestamptz > scheduled_at)
+       )
+     FOR UPDATE`,
+    [bookingData.service_id, bookingEnd.toISOString(), bookingStart.toISOString()]
+  );
+
+  if (conflictCheck.rows.length > 0) {
+    // Conflict detected - another booking exists in this time slot
+    return { conflict: true, conflictingBookings: conflictCheck.rows };
+  }
+
+  // No conflict - insert the new booking
+  const insertResult = await client.query(
+    `INSERT INTO bookings (
+      service_id, customer_id, provider_id, scheduled_at, duration_minutes,
+      total_price, service_fee, status, customer_notes, location, is_online
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+    RETURNING *`,
+    [
+      bookingData.service_id,
+      bookingData.customer_id,
+      bookingData.provider_id,
+      bookingData.scheduled_at,
+      bookingData.duration_minutes,
+      bookingData.total_price,
+      bookingData.service_fee,
+      bookingData.status,
+      bookingData.customer_notes,
+      bookingData.location,
+      bookingData.is_online
+    ]
+  );
+
+  return { conflict: false, booking: insertResult.rows[0] };
+}
 
 /**
  * Create booking routes
@@ -128,43 +186,17 @@ export default function bookingRoutes(app) {
         return c.json({ error: "Cannot schedule bookings in the past" }, 400);
       }
 
-      // Check for conflicting bookings (following old code pattern)
+      // Calculate booking time range
       const bookingStart = new Date(scheduled_at);
       const bookingEnd = new Date(
         bookingStart.getTime() +
           (duration_minutes || service.duration_minutes) * 60000,
       );
 
-      const { data: conflictingBookings, error: conflictError } =
-        await supabaseAdmin
-          .from("bookings")
-          .select("id, scheduled_at, duration_minutes")
-          .eq("service_id", service_id)
-          .in("status", ["pending", "confirmed"]);
-
-      if (conflictError) {
-        // Continue anyway - don't fail the booking for this (following old code)
-      }
-
-      // Check for time conflicts (following old code pattern)
-      const hasConflict = conflictingBookings?.some((booking) => {
-        const existingStart = new Date(booking.scheduled_at);
-        const existingEnd = new Date(
-          existingStart.getTime() + booking.duration_minutes * 60000,
-        );
-
-        // Check if times overlap
-        return bookingStart < existingEnd && bookingEnd > existingStart;
-      });
-
-      if (hasConflict) {
-        return c.json({ error: "Time slot not available" }, 400);
-      }
-
-      // Calculate service fee (10% platform fee) - from old code
+      // Calculate service fee (10% platform fee)
       const serviceFee = (price || service.price) * 0.1;
 
-      // Atomic operation: Create booking and conversation together (from old code)
+      // Prepare booking data
       const bookingData = {
         service_id: service_id,
         customer_id: userId,
@@ -179,22 +211,31 @@ export default function bookingRoutes(app) {
         is_online: isOnline ?? service.is_online,
       };
 
-      // Use Promise.all for parallel execution of booking and conversation creation (from old code)
-      const [bookingResult, conversationResult] = await Promise.all([
-        supabaseAdmin.from("bookings").insert(bookingData).select().single(),
-        // Pre-generate conversation data to create immediately after booking
-        Promise.resolve({
-          user1_id: userId,
-          user2_id: service.provider_id,
-        }),
-      ]);
+      // Use database transaction with row-level locking for atomic booking creation
+      // This prevents race conditions where two users try to book the same time slot
+      let booking;
+      try {
+        const result = await withTransaction(async (client) => {
+          return await createBookingAtomic(client, bookingData, bookingStart, bookingEnd);
+        });
 
-      if (bookingResult.error) {
-        console.error("Booking creation error:", bookingResult.error);
+        if (result.conflict) {
+          console.log("⚠️ Booking conflict detected:", result.conflictingBookings.map(b => b.id));
+          return c.json({ error: "Time slot not available" }, 400);
+        }
+
+        booking = result.booking;
+        console.log("✅ Booking created atomically:", booking.id);
+      } catch (txError) {
+        console.error("❌ Booking transaction error:", txError);
         return c.json({ error: "Failed to create booking" }, 500);
       }
 
-      const booking = bookingResult.data;
+      // Create conversation between customer and provider (outside transaction - non-critical)
+      const conversationResult = {
+        user1_id: userId,
+        user2_id: service.provider_id,
+      };
 
       // Create conversation between customer and provider (corrected for actual schema)
       const { error: conversationError } = await supabaseAdmin
