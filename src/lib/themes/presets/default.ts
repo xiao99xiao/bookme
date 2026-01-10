@@ -40,6 +40,12 @@ export const defaultTheme: ThemeConfig = {
     buttonSecondary: '#f3f3f3',
     buttonSecondaryText: '#000000',
 
+    // Link button
+    linkButtonBackground: '#ffffff',
+    linkButtonText: '#000000',
+    linkButtonBorder: '#e0e0e0',
+    linkButtonHoverBackground: '#f5f5f5',
+
     // Star
     starColor: '#ffd43c',
 

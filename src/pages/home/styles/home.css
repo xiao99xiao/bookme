@@ -37,11 +37,11 @@
   width: 120px;
   height: 120px;
   border-radius: var(--pp-avatar-radius);
-  background: linear-gradient(135deg, var(--pp-accent) 0%, #0da2ff 100%);
+  background: var(--pp-accent);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 32px rgba(59, 158, 249, 0.3);
+  box-shadow: 0 8px 32px var(--pp-accent-light);
 }
 
 .home-logo-icon {
@@ -151,7 +151,7 @@
 
 .home-cta-card:hover {
   border-color: var(--pp-accent);
-  background: linear-gradient(135deg, var(--pp-accent-light) 0%, rgba(59, 158, 249, 0.15) 100%);
+  background: var(--pp-accent-light);
 }
 
 .home-cta-label {

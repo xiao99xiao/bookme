@@ -603,4 +603,141 @@ export default function userRoutes(app) {
       return c.json({ error: 'Internal server error' }, 500);
     }
   });
+
+  // =====================================================
+  // Profile Buttons Endpoints
+  // =====================================================
+
+  /**
+   * GET /api/user/:userId/buttons
+   *
+   * Get user's profile buttons (no authentication required).
+   * Used by the public profile page to display link buttons.
+   *
+   * Parameters:
+   * - userId: UUID of the user
+   *
+   * Response:
+   * - buttons: array of ProfileButton objects
+   *
+   * @param {Context} c - Hono context
+   * @returns {Response} JSON response with buttons array
+   */
+  app.get('/api/user/:userId/buttons', async (c) => {
+    try {
+      const userId = c.req.param('userId');
+
+      const { data, error } = await supabaseAdmin
+        .from('users')
+        .select('profile_buttons')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return c.json({ error: 'User not found' }, 404);
+        }
+        console.error('Profile buttons lookup error:', error);
+        return c.json({ error: 'Failed to fetch buttons' }, 500);
+      }
+
+      return c.json({
+        buttons: data.profile_buttons || [],
+      });
+    } catch (error) {
+      console.error('Profile buttons lookup error:', error);
+      return c.json({ error: 'Internal server error' }, 500);
+    }
+  });
+
+  /**
+   * PUT /api/user/buttons
+   *
+   * Update authenticated user's profile buttons.
+   * Replaces the entire buttons array.
+   *
+   * Headers:
+   * - Authorization: Bearer {privyToken}
+   *
+   * Body:
+   * - buttons: array of ProfileButton objects
+   *   - id: string (unique identifier)
+   *   - label: string (button text)
+   *   - url: string (link URL)
+   *   - icon: string (optional, icon name)
+   *   - order: number (display order)
+   *
+   * Response:
+   * - success: boolean
+   * - buttons: updated buttons array
+   *
+   * @param {Context} c - Hono context
+   * @returns {Response} JSON response with updated buttons
+   */
+  app.put('/api/user/buttons', verifyPrivyAuth, async (c) => {
+    try {
+      const userId = c.get('userId');
+      const body = await c.req.json();
+
+      const { buttons } = body;
+
+      // Validate buttons array
+      if (!Array.isArray(buttons)) {
+        return c.json({ error: 'Buttons must be an array' }, 400);
+      }
+
+      // Validate each button
+      const maxButtons = 10; // Limit number of buttons
+      if (buttons.length > maxButtons) {
+        return c.json({ error: `Maximum ${maxButtons} buttons allowed` }, 400);
+      }
+
+      for (const button of buttons) {
+        if (!button.id || typeof button.id !== 'string') {
+          return c.json({ error: 'Each button must have a valid id' }, 400);
+        }
+        if (!button.label || typeof button.label !== 'string' || button.label.length > 50) {
+          return c.json({ error: 'Each button must have a label (max 50 characters)' }, 400);
+        }
+        if (!button.url || typeof button.url !== 'string') {
+          return c.json({ error: 'Each button must have a valid URL' }, 400);
+        }
+        // Basic URL validation
+        try {
+          new URL(button.url);
+        } catch {
+          return c.json({ error: `Invalid URL: ${button.url}` }, 400);
+        }
+        if (typeof button.order !== 'number') {
+          return c.json({ error: 'Each button must have an order number' }, 400);
+        }
+      }
+
+      // Sort buttons by order
+      const sortedButtons = [...buttons].sort((a, b) => a.order - b.order);
+
+      const { data, error } = await supabaseAdmin
+        .from('users')
+        .update({
+          profile_buttons: sortedButtons,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', userId)
+        .select('profile_buttons')
+        .single();
+
+      if (error) {
+        console.error('Profile buttons update error:', error);
+        return c.json({ error: 'Failed to update buttons' }, 500);
+      }
+
+      return c.json({
+        success: true,
+        buttons: data.profile_buttons || [],
+      });
+    } catch (error) {
+      console.error('Profile buttons update error:', error);
+      return c.json({ error: 'Internal server error' }, 500);
+    }
+  });
 }

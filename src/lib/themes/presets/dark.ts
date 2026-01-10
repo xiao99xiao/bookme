@@ -41,6 +41,12 @@ export const darkTheme: ThemeConfig = {
     buttonSecondary: '#2a2a2a',
     buttonSecondaryText: '#f5f5f5',
 
+    // Link button - dark style
+    linkButtonBackground: '#1f1f1f',
+    linkButtonText: '#f5f5f5',
+    linkButtonBorder: '#3a3a3a',
+    linkButtonHoverBackground: '#2a2a2a',
+
     // Star - golden glow
     starColor: '#fbbf24',
 

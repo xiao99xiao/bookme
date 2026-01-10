@@ -73,6 +73,7 @@ CREATE TABLE users (
   page_theme TEXT DEFAULT 'default',
   page_custom_css TEXT,
   page_theme_settings JSONB DEFAULT '{}'::jsonb,
+  profile_buttons JSONB DEFAULT '[]'::jsonb,
 
   -- 时间戳
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

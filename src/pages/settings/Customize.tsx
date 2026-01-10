@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/design-system/components/Input';
 import { Label } from '@/components/ui/label';
-import { Loader2, CheckCircle, XCircle, Settings, Copy, Check, Clock, Users } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, Settings, Copy, Check, Users, Link as LinkIcon } from 'lucide-react';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient } from '@/lib/api-migration';
 import { validateUsername, getUserPageUrl } from '@/lib/username';
@@ -212,12 +212,12 @@ export default function Customize() {
                     <p className="leading-[1.5]">Customize</p>
                   </div>
                 </div>
-                <Link to="/settings/timezone" className="box-border content-stretch flex gap-2 items-center justify-start px-2 py-3 relative rounded-[12px] shrink-0 w-full hover:bg-[#f3f3f3] transition-colors">
+                <Link to="/settings/profile-theme" className="box-border content-stretch flex gap-2 items-center justify-start px-2 py-3 relative rounded-[12px] shrink-0 w-full hover:bg-[#f3f3f3] transition-colors">
                   <div className="overflow-clip relative shrink-0 size-5">
-                    <Clock className="w-5 h-5 text-[#666666]" />
+                    <LinkIcon className="w-5 h-5 text-[#666666]" />
                   </div>
                   <div className="basis-0 font-body font-normal grow leading-[0] min-h-px min-w-px relative shrink-0 text-[#666666] text-[16px] hover:text-black transition-colors">
-                    <p className="leading-[1.5]">Timezone</p>
+                    <p className="leading-[1.5]">Theme & Buttons</p>
                   </div>
                 </Link>
               </div>
@@ -413,10 +413,10 @@ export default function Customize() {
                 Customize
               </div>
               <Link
-                to="/settings/timezone"
+                to="/settings/profile-theme"
                 className="flex-1 min-w-fit px-3 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap font-body text-gray-600 hover:text-black"
               >
-                Timezone
+                Theme
               </Link>
             </div>
           </div>

@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Camera, Users, Settings, Clock, MapPin, Link as LinkIcon, User, Globe } from 'lucide-react';
+import { Loader2, Camera, Users, Settings, MapPin, Link as LinkIcon, User, Globe } from 'lucide-react';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient } from '@/lib/api-migration';
 import { getBrowserTimezone, getTimezoneOffset } from '@/lib/timezone';
@@ -234,12 +234,12 @@ export default function Profile() {
                     <p className="leading-[1.5]">Customize</p>
                   </div>
                 </Link>
-                <Link to="/settings/timezone" className="box-border content-stretch flex gap-2 items-center justify-start px-2 py-3 relative rounded-[12px] shrink-0 w-full hover:bg-[#f3f3f3] transition-colors">
+                <Link to="/settings/profile-theme" className="box-border content-stretch flex gap-2 items-center justify-start px-2 py-3 relative rounded-[12px] shrink-0 w-full hover:bg-[#f3f3f3] transition-colors">
                   <div className="overflow-clip relative shrink-0 size-5">
-                    <Clock className="w-5 h-5 text-[#666666]" />
+                    <LinkIcon className="w-5 h-5 text-[#666666]" />
                   </div>
                   <div className="basis-0 font-body font-normal grow leading-[0] min-h-px min-w-px relative shrink-0 text-[#666666] text-[16px] hover:text-black transition-colors">
-                    <p className="leading-[1.5]">Timezone</p>
+                    <p className="leading-[1.5]">Theme & Buttons</p>
                   </div>
                 </Link>
               </div>
@@ -435,7 +435,35 @@ export default function Profile() {
         </div>
 
         {/* Mobile Layout */}
-        <div className="lg:hidden space-y-6">
+        <div className="lg:hidden pb-20">
+          {/* Top Header with Title and Tabs */}
+          <div className="mb-6">
+            {/* Title Section */}
+            <div className="mb-4">
+              <H2 className="mb-1">Settings</H2>
+              <p className="text-sm text-gray-500 font-body">Update your profile</p>
+            </div>
+
+            {/* Horizontal Tab Navigation */}
+            <div className="flex gap-1 p-1 bg-gray-100 rounded-lg overflow-x-auto">
+              <div className="flex-1 min-w-fit px-3 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap font-body bg-white text-black shadow-sm">
+                Profile
+              </div>
+              <Link
+                to="/settings/customize"
+                className="flex-1 min-w-fit px-3 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap font-body text-gray-600 hover:text-black"
+              >
+                Customize
+              </Link>
+              <Link
+                to="/settings/profile-theme"
+                className="flex-1 min-w-fit px-3 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap font-body text-gray-600 hover:text-black"
+              >
+                Theme
+              </Link>
+            </div>
+          </div>
+
           <div className="bg-white rounded-lg p-6 shadow-sm">
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Mobile Avatar */}

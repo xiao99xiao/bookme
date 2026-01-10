@@ -9,7 +9,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, MapPin, Star, Video, Users, Phone, ChevronDown } from "lucide-react";
+import { ArrowLeft, MapPin, Star, Video, Users, Phone, ChevronDown, ExternalLink, Twitter, Instagram, Youtube, Github, Linkedin, Globe, Mail, MessageCircle } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { useAuth } from "@/contexts/PrivyAuthContext";
 import { usePrivy } from "@privy-io/react-auth";
@@ -32,6 +32,7 @@ import {
   sanitizeCSS,
   ThemeConfig,
   ThemeSettings,
+  ProfileButton,
   THEME_CLASS_PREFIX,
 } from "@/lib/themes";
 
@@ -125,6 +126,30 @@ const shouldTruncateComment = (comment: string, maxLength: number = 150): boolea
   return comment.length > maxLength;
 };
 
+/**
+ * Map icon name to Lucide icon component
+ */
+const getButtonIcon = (iconName?: string) => {
+  if (!iconName) return ExternalLink;
+
+  const iconMap: Record<string, typeof ExternalLink> = {
+    twitter: Twitter,
+    instagram: Instagram,
+    youtube: Youtube,
+    github: Github,
+    linkedin: Linkedin,
+    globe: Globe,
+    website: Globe,
+    email: Mail,
+    mail: Mail,
+    telegram: MessageCircle,
+    discord: MessageCircle,
+    link: ExternalLink,
+  };
+
+  return iconMap[iconName.toLowerCase()] || ExternalLink;
+};
+
 // =====================================================
 // Component
 // =====================================================
@@ -146,6 +171,9 @@ const PublicProfile = () => {
 
   // Theme state
   const [themeData, setThemeData] = useState<UserThemeData | null>(null);
+
+  // Profile buttons state
+  const [profileButtons, setProfileButtons] = useState<ProfileButton[]>([]);
 
   // Booking state
   const [selectedService, setSelectedService] = useState<Service | null>(null);
@@ -212,13 +240,16 @@ const PublicProfile = () => {
         setLoading(true);
         setError(null);
 
-        // Fetch profile, services, reviews, and theme in parallel
-        const [profileData, servicesData, reviewsData, themeResponse] = await Promise.all([
+        // Fetch profile, services, reviews, theme, and buttons in parallel
+        const [profileData, servicesData, reviewsData, themeResponse, buttonsResponse] = await Promise.all([
           ApiClient.getPublicUserProfile(resolvedUserId),
           ApiClient.getPublicUserServices(resolvedUserId, getBrowserTimezone()),
           ApiClient.getProviderReviews(resolvedUserId),
           fetch(`${import.meta.env.VITE_BACKEND_URL}/api/user/${resolvedUserId}/theme`).then((r) =>
             r.ok ? r.json() : { theme: "default", custom_css: null, settings: {} }
+          ),
+          fetch(`${import.meta.env.VITE_BACKEND_URL}/api/user/${resolvedUserId}/buttons`).then((r) =>
+            r.ok ? r.json() : { buttons: [] }
           ),
         ]);
 
@@ -226,6 +257,7 @@ const PublicProfile = () => {
         setServices(servicesData);
         setReviews(reviewsData);
         setThemeData(themeResponse);
+        setProfileButtons(buttonsResponse.buttons || []);
       } catch (err) {
         console.error("Failed to load profile:", err);
         setError("Failed to load profile");
@@ -328,8 +360,8 @@ const PublicProfile = () => {
       <div className={`${THEME_CLASS_PREFIX}-container`} style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ textAlign: "center", maxWidth: "400px" }}>
           <div style={{ fontSize: "64px", marginBottom: "16px" }}>😕</div>
-          <h2 style={{ fontSize: "20px", fontWeight: 600, marginBottom: "8px" }}>Profile Not Found</h2>
-          <p style={{ color: "#666" }}>{error || "This profile does not exist or could not be loaded."}</p>
+          <h2 style={{ fontSize: "20px", fontWeight: 600, marginBottom: "8px", color: "var(--pp-text-primary)" }}>Profile Not Found</h2>
+          <p style={{ color: "var(--pp-text-secondary)" }}>{error || "This profile does not exist or could not be loaded."}</p>
         </div>
       </div>
     );
@@ -386,6 +418,27 @@ const PublicProfile = () => {
             {profile.bio && (
               <div className={`${THEME_CLASS_PREFIX}-bio`}>
                 <ReactMarkdown>{profile.bio}</ReactMarkdown>
+              </div>
+            )}
+
+            {/* Profile Link Buttons */}
+            {profileButtons.length > 0 && (
+              <div className={`${THEME_CLASS_PREFIX}-link-buttons`}>
+                {profileButtons.map((button) => {
+                  const ButtonIcon = getButtonIcon(button.icon);
+                  return (
+                    <a
+                      key={button.id}
+                      href={button.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`${THEME_CLASS_PREFIX}-link-button`}
+                    >
+                      <ButtonIcon className={`${THEME_CLASS_PREFIX}-link-button-icon`} />
+                      <span className={`${THEME_CLASS_PREFIX}-link-button-label`}>{button.label}</span>
+                    </a>
+                  );
+                })}
               </div>
             )}
 

@@ -41,6 +41,12 @@ export const minimalTheme: ThemeConfig = {
     buttonSecondary: '#f5f5f5',
     buttonSecondaryText: '#1a1a1a',
 
+    // Link button - borderless, subtle
+    linkButtonBackground: '#fafafa',
+    linkButtonText: '#1a1a1a',
+    linkButtonBorder: 'transparent',
+    linkButtonHoverBackground: '#f0f0f0',
+
     // Star
     starColor: '#fbbf24',
 

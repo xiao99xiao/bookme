@@ -794,6 +794,68 @@ export class ApiClient {
 
     return response.json()
   }
+
+  // =====================================================
+  // Profile Buttons APIs
+  // =====================================================
+
+  /**
+   * Get user's profile buttons (no auth required)
+   */
+  static async getUserButtons(userId: string): Promise<{
+    buttons: Array<{
+      id: string
+      label: string
+      url: string
+      icon?: string
+      order: number
+    }>
+  }> {
+    this.ensureInitialized()
+    const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://192.168.0.10:4443'
+    const response = await fetch(`${BACKEND_URL}/api/user/${userId}/buttons`)
+    if (!response.ok) {
+      return { buttons: [] }
+    }
+    return response.json()
+  }
+
+  /**
+   * Update current user's profile buttons (auth required)
+   */
+  static async updateUserButtons(buttons: Array<{
+    id: string
+    label: string
+    url: string
+    icon?: string
+    order: number
+  }>): Promise<{
+    success: boolean
+    buttons: Array<{
+      id: string
+      label: string
+      url: string
+      icon?: string
+      order: number
+    }>
+  }> {
+    await this.waitForInitialization()
+    const response = await fetch(`${this.backendApi!.baseUrl}/api/user/buttons`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.backendApi!.token}`
+      },
+      body: JSON.stringify({ buttons })
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Failed to update buttons')
+    }
+
+    return response.json()
+  }
 }
 
 // Export for backwards compatibility

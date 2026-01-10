@@ -41,6 +41,12 @@ export const vibrantTheme: ThemeConfig = {
     buttonSecondary: '#fef3c7',
     buttonSecondaryText: '#92400e',
 
+    // Link button - warm, playful
+    linkButtonBackground: '#ffffff',
+    linkButtonText: '#92400e',
+    linkButtonBorder: '#fde68a',
+    linkButtonHoverBackground: '#fef9c3',
+
     // Star - orange to match theme
     starColor: '#fb923c',
 

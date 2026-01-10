@@ -36,6 +36,12 @@ export interface ThemeColors {
   buttonSecondary: string;
   buttonSecondaryText: string;
 
+  // Link button colors (for custom profile links)
+  linkButtonBackground: string;
+  linkButtonText: string;
+  linkButtonBorder: string;
+  linkButtonHoverBackground: string;
+
   // Star/rating color
   starColor: string;
 
@@ -102,6 +108,17 @@ export interface UserThemeData {
   theme: string;
   custom_css: string | null;
   settings: ThemeSettings;
+}
+
+/**
+ * Profile link button configuration
+ */
+export interface ProfileButton {
+  id: string;
+  label: string;
+  url: string;
+  icon?: string; // Optional icon name (e.g., 'twitter', 'instagram', 'link')
+  order: number;
 }
 
 /**
