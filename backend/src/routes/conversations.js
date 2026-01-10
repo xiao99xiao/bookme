@@ -158,7 +158,23 @@ export default function conversationRoutes(app) {
         }
       });
 
-      // 5. Enrich conversations using the pre-fetched data (no additional queries!)
+      // 5. Batch fetch unread message counts for current user
+      // Count messages where: conversation matches, sender is NOT current user, is_read is false
+      const { data: unreadCounts } = await supabaseAdmin
+        .from('messages')
+        .select('conversation_id')
+        .in('conversation_id', conversationIds)
+        .neq('sender_id', userId)
+        .eq('is_read', false);
+
+      // Create a map of unread counts per conversation
+      const unreadCountMap = new Map();
+      (unreadCounts || []).forEach(msg => {
+        const count = unreadCountMap.get(msg.conversation_id) || 0;
+        unreadCountMap.set(msg.conversation_id, count + 1);
+      });
+
+      // 6. Enrich conversations using the pre-fetched data (no additional queries!)
       const enrichedConversations = conversations.map(conversation => {
         const user1Data = usersMap.get(conversation.user1_id) || null;
         const user2Data = usersMap.get(conversation.user2_id) || null;
@@ -183,13 +199,17 @@ export default function conversationRoutes(app) {
         const pairKey = [conversation.user1_id, conversation.user2_id].sort().join('-');
         const booking = bookingsMap.get(pairKey) || null;
 
+        // Get unread count from map
+        const unreadCount = unreadCountMap.get(conversation.id) || 0;
+
         return {
           ...conversation,
           customer,
           provider,
           other_user: otherUser,
           last_message: lastMessageArray, // Frontend expects array
-          booking // Add booking information for frontend
+          booking, // Add booking information for frontend
+          unread_count: unreadCount // Add unread message count
         };
       });
 

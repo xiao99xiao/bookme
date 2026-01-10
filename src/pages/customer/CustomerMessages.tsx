@@ -50,10 +50,6 @@ export default function CustomerMessages() {
           otherUser = conv.customer || conv.provider;
         }
         
-        // Calculate unread count (for now, we'll use a placeholder)
-        // TODO: Implement proper unread count calculation
-        const unreadCount = 0;
-        
         return {
           id: conv.id,
           otherUser: {
@@ -66,7 +62,7 @@ export default function CustomerMessages() {
             created_at: conv.last_message[0].created_at,
             sender_id: conv.last_message[0].sender_id
           } : undefined,
-          unreadCount,
+          unreadCount: conv.unread_count || 0,
           lastActivity: conv.updated_at || conv.created_at,
           booking: conv.booking ? {
             id: conv.booking.id,
