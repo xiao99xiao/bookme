@@ -64,6 +64,25 @@ All colors MUST be HSL.
     --text-tertiary: 0 0% 67%; /* #AAAAAA */
     --text-inverse: 0 0% 100%;
     --text-accent: 209 96% 60%; /* Blue */
+
+    /* 2025 Glass Effect System */
+    --glass-blur: 16px;
+    --glass-blur-lg: 24px;
+    --glass-bg-light: rgba(255, 255, 255, 0.15);
+    --glass-bg-medium: rgba(255, 255, 255, 0.25);
+    --glass-bg-heavy: rgba(255, 255, 255, 0.4);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --glass-border-hover: rgba(255, 255, 255, 0.35);
+    --glass-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+    --glass-shadow-hover: 0 12px 40px rgba(31, 38, 135, 0.2);
+
+    /* 2025 Spring Animation Timing */
+    --timing-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --timing-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --timing-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --duration-fast: 0.15s;
+    --duration-normal: 0.3s;
+    --duration-slow: 0.5s;
   }
 
   /* Dark mode not implemented in Figma design - keeping light theme for now */
@@ -234,8 +253,157 @@ All colors MUST be HSL.
   100% { transform: translateX(0); }
 }
 
+@keyframes stagger-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
 @layer utilities {
   .animate-slide-in-right {
     animation: slide-in-right 0.3s ease-out both;
+  }
+
+  /* 2025 Glass Effect Utilities */
+  .glass {
+    background: var(--glass-bg-medium);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+  }
+
+  .glass-light {
+    background: var(--glass-bg-light);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+  }
+
+  .glass-heavy {
+    background: var(--glass-bg-heavy);
+    backdrop-filter: blur(var(--glass-blur-lg));
+    -webkit-backdrop-filter: blur(var(--glass-blur-lg));
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+  }
+
+  /* Interactive Glass Card */
+  .glass-card {
+    background: var(--glass-bg-medium);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    border-radius: 24px;
+    transition:
+      transform var(--duration-normal) var(--timing-spring),
+      box-shadow var(--duration-normal) var(--timing-ease-out),
+      background var(--duration-fast) var(--timing-ease-out),
+      border-color var(--duration-fast) var(--timing-ease-out);
+  }
+
+  .glass-card:hover {
+    transform: translateY(-4px) scale(1.02);
+    background: var(--glass-bg-heavy);
+    border-color: var(--glass-border-hover);
+    box-shadow: var(--glass-shadow-hover);
+  }
+
+  .glass-card:active {
+    transform: translateY(-2px) scale(0.99);
+    transition-duration: var(--duration-fast);
+  }
+
+  /* 2025 Spring Animation Utilities */
+  .spring-hover {
+    transition: transform var(--duration-normal) var(--timing-spring);
+  }
+
+  .spring-hover:hover {
+    transform: scale(1.02);
+  }
+
+  .spring-hover:active {
+    transform: scale(0.98);
+    transition-duration: var(--duration-fast);
+  }
+
+  .lift-hover {
+    transition:
+      transform var(--duration-normal) var(--timing-spring),
+      box-shadow var(--duration-normal) var(--timing-ease-out);
+  }
+
+  .lift-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+  }
+
+  /* Staggered entrance animation */
+  .stagger-item {
+    opacity: 0;
+    transform: translateY(16px);
+    animation: stagger-in var(--duration-slow) var(--timing-ease-out) forwards;
+  }
+
+  .stagger-item:nth-child(1) { animation-delay: 0ms; }
+  .stagger-item:nth-child(2) { animation-delay: 50ms; }
+  .stagger-item:nth-child(3) { animation-delay: 100ms; }
+  .stagger-item:nth-child(4) { animation-delay: 150ms; }
+  .stagger-item:nth-child(5) { animation-delay: 200ms; }
+  .stagger-item:nth-child(6) { animation-delay: 250ms; }
+  .stagger-item:nth-child(7) { animation-delay: 300ms; }
+  .stagger-item:nth-child(8) { animation-delay: 350ms; }
+
+  /* Press feedback */
+  .press-feedback {
+    transition: transform var(--duration-fast) var(--timing-spring);
+  }
+
+  .press-feedback:active {
+    transform: scale(0.97);
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    .glass-card,
+    .spring-hover,
+    .lift-hover,
+    .stagger-item,
+    .press-feedback {
+      animation: none;
+      transition: none;
+    }
+
+    .stagger-item {
+      opacity: 1;
+      transform: none;
+    }
   }
 }

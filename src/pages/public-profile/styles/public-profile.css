@@ -552,3 +552,174 @@
     padding: 24px 16px;
   }
 }
+
+/* =====================================================
+   2025 Glass Theme Styles
+   ===================================================== */
+
+/* 2025 Glass Theme - Enhanced container */
+.pp-container[data-theme-version="2025"] {
+  /* Subtle gradient background for glass effect visibility */
+  background: linear-gradient(
+    135deg,
+    var(--pp-background) 0%,
+    var(--pp-background-secondary) 100%
+  );
+}
+
+/* Glass effect for cards */
+.pp-container[data-theme-version="2025"] .pp-service-card {
+  background: var(--pp-glass-background-color, rgba(255, 255, 255, 0.7));
+  backdrop-filter: blur(var(--pp-glass-blur, 16px));
+  -webkit-backdrop-filter: blur(var(--pp-glass-blur, 16px));
+  border: 1px solid var(--pp-glass-border-color, rgba(255, 255, 255, 0.4));
+  box-shadow: 0 8px 32px var(--pp-glass-shadow-color, rgba(31, 38, 135, 0.15));
+  transition:
+    transform var(--pp-anim-duration, 0.3s) var(--pp-anim-timing-spring, cubic-bezier(0.34, 1.56, 0.64, 1)),
+    box-shadow var(--pp-anim-duration, 0.3s) var(--pp-anim-timing-ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    background var(--pp-anim-duration-fast, 0.15s) var(--pp-anim-timing-ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    border-color var(--pp-anim-duration-fast, 0.15s) var(--pp-anim-timing-ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.pp-container[data-theme-version="2025"] .pp-service-card:hover {
+  transform: translateY(var(--pp-anim-hover-lift, -4px)) scale(var(--pp-anim-hover-scale, 1.02));
+  background: var(--pp-glass-background-color-hover, rgba(255, 255, 255, 0.85));
+  border-color: var(--pp-glass-border-color-hover, rgba(255, 255, 255, 0.5));
+  box-shadow: 0 12px 40px var(--pp-glass-shadow-color, rgba(31, 38, 135, 0.2));
+}
+
+.pp-container[data-theme-version="2025"] .pp-service-card:active {
+  transform: translateY(-2px) scale(var(--pp-anim-press-scale, 0.98));
+  transition-duration: var(--pp-anim-duration-fast, 0.15s);
+}
+
+/* Glass effect for link buttons */
+.pp-container[data-theme-version="2025"] .pp-link-button {
+  background: var(--pp-glass-background-color, rgba(255, 255, 255, 0.6));
+  backdrop-filter: blur(var(--pp-glass-blur, 16px));
+  -webkit-backdrop-filter: blur(var(--pp-glass-blur, 16px));
+  border: 1px solid var(--pp-glass-border-color, rgba(255, 255, 255, 0.3));
+  box-shadow: 0 4px 16px var(--pp-glass-shadow-color, rgba(31, 38, 135, 0.1));
+  transition:
+    transform var(--pp-anim-duration, 0.3s) var(--pp-anim-timing-spring, cubic-bezier(0.34, 1.56, 0.64, 1)),
+    box-shadow var(--pp-anim-duration, 0.3s) var(--pp-anim-timing-ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    background var(--pp-anim-duration-fast, 0.15s) var(--pp-anim-timing-ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.pp-container[data-theme-version="2025"] .pp-link-button:hover {
+  transform: translateY(-2px) scale(1.01);
+  background: var(--pp-glass-background-color-hover, rgba(255, 255, 255, 0.8));
+  box-shadow: 0 8px 24px var(--pp-glass-shadow-color, rgba(31, 38, 135, 0.15));
+}
+
+.pp-container[data-theme-version="2025"] .pp-link-button:active {
+  transform: scale(var(--pp-anim-press-scale, 0.98));
+  transition-duration: var(--pp-anim-duration-fast, 0.15s);
+}
+
+/* Glass effect for badges */
+.pp-container[data-theme-version="2025"] .pp-badge {
+  background: var(--pp-glass-background-color, rgba(255, 255, 255, 0.5));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--pp-glass-border-color, rgba(255, 255, 255, 0.2));
+}
+
+/* Glass effect for booking panel */
+.pp-container[data-theme-version="2025"] .pp-sidebar {
+  background: linear-gradient(
+    180deg,
+    var(--pp-background-secondary) 0%,
+    var(--pp-background) 100%
+  );
+}
+
+.pp-container[data-theme-version="2025"] .pp-price-card {
+  background: var(--pp-glass-background-color, rgba(255, 255, 255, 0.7));
+  backdrop-filter: blur(var(--pp-glass-blur, 16px));
+  -webkit-backdrop-filter: blur(var(--pp-glass-blur, 16px));
+  border: 1px solid var(--pp-glass-border-color, rgba(255, 255, 255, 0.4));
+  box-shadow: 0 4px 16px var(--pp-glass-shadow-color, rgba(31, 38, 135, 0.1));
+}
+
+/* Staggered entrance animation for service cards */
+.pp-container[data-theme-version="2025"] .pp-services .pp-service-card {
+  opacity: 0;
+  transform: translateY(16px);
+  animation: pp-stagger-in 0.5s var(--pp-anim-timing-ease-out, cubic-bezier(0.16, 1, 0.3, 1)) forwards;
+}
+
+.pp-container[data-theme-version="2025"] .pp-services .pp-service-card:nth-child(1) { animation-delay: 0ms; }
+.pp-container[data-theme-version="2025"] .pp-services .pp-service-card:nth-child(2) { animation-delay: var(--pp-anim-stagger-delay, 50ms); }
+.pp-container[data-theme-version="2025"] .pp-services .pp-service-card:nth-child(3) { animation-delay: calc(var(--pp-anim-stagger-delay, 50ms) * 2); }
+.pp-container[data-theme-version="2025"] .pp-services .pp-service-card:nth-child(4) { animation-delay: calc(var(--pp-anim-stagger-delay, 50ms) * 3); }
+.pp-container[data-theme-version="2025"] .pp-services .pp-service-card:nth-child(5) { animation-delay: calc(var(--pp-anim-stagger-delay, 50ms) * 4); }
+.pp-container[data-theme-version="2025"] .pp-services .pp-service-card:nth-child(6) { animation-delay: calc(var(--pp-anim-stagger-delay, 50ms) * 5); }
+
+/* Staggered entrance for link buttons */
+.pp-container[data-theme-version="2025"] .pp-link-buttons .pp-link-button {
+  opacity: 0;
+  transform: translateY(12px);
+  animation: pp-stagger-in 0.4s var(--pp-anim-timing-ease-out, cubic-bezier(0.16, 1, 0.3, 1)) forwards;
+}
+
+.pp-container[data-theme-version="2025"] .pp-link-buttons .pp-link-button:nth-child(1) { animation-delay: 100ms; }
+.pp-container[data-theme-version="2025"] .pp-link-buttons .pp-link-button:nth-child(2) { animation-delay: 150ms; }
+.pp-container[data-theme-version="2025"] .pp-link-buttons .pp-link-button:nth-child(3) { animation-delay: 200ms; }
+.pp-container[data-theme-version="2025"] .pp-link-buttons .pp-link-button:nth-child(4) { animation-delay: 250ms; }
+
+/* Avatar scale-in animation */
+.pp-container[data-theme-version="2025"] .pp-avatar {
+  animation: pp-scale-in 0.5s var(--pp-anim-timing-spring, cubic-bezier(0.34, 1.56, 0.64, 1)) forwards;
+}
+
+/* Submit button with spring press */
+.pp-container[data-theme-version="2025"] .pp-submit-button {
+  transition:
+    transform var(--pp-anim-duration, 0.3s) var(--pp-anim-timing-spring, cubic-bezier(0.34, 1.56, 0.64, 1)),
+    opacity var(--pp-anim-duration-fast, 0.15s) ease;
+}
+
+.pp-container[data-theme-version="2025"] .pp-submit-button:hover:not(:disabled) {
+  transform: scale(1.02);
+}
+
+.pp-container[data-theme-version="2025"] .pp-submit-button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* 2025 Glass keyframes */
+@keyframes pp-stagger-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pp-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .pp-container[data-theme-version="2025"] .pp-service-card,
+  .pp-container[data-theme-version="2025"] .pp-link-button,
+  .pp-container[data-theme-version="2025"] .pp-avatar,
+  .pp-container[data-theme-version="2025"] .pp-submit-button {
+    animation: none;
+    transition: none;
+    opacity: 1;
+    transform: none;
+  }
+}

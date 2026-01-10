@@ -29,6 +29,7 @@ import {
   getTheme,
   mergeThemeWithSettings,
   themeToCSSVars,
+  getThemeVersionAttribute,
   sanitizeCSS,
   ThemeConfig,
   ThemeSettings,
@@ -374,6 +375,7 @@ const PublicProfile = () => {
     <div
       className={`${THEME_CLASS_PREFIX}-container`}
       style={themeToCSSVars(currentTheme)}
+      data-theme-version={getThemeVersionAttribute(currentTheme)}
     >
       {/* Inject custom CSS if any */}
       {sanitizedCustomCSS && (

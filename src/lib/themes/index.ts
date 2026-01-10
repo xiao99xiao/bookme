@@ -12,6 +12,7 @@ import { defaultTheme } from './presets/default';
 import { minimalTheme } from './presets/minimal';
 import { darkTheme } from './presets/dark';
 import { vibrantTheme } from './presets/vibrant';
+import { glassTheme } from './presets/glass';
 
 import { ThemeConfig, ThemeSettings, THEME_CSS_PREFIX } from './types';
 
@@ -23,6 +24,7 @@ export const PRESET_THEMES: Record<string, ThemeConfig> = {
   minimal: minimalTheme,
   dark: darkTheme,
   vibrant: vibrantTheme,
+  glass: glassTheme,
 };
 
 /**
@@ -78,7 +80,34 @@ export function themeToCSSVars(theme: ThemeConfig): React.CSSProperties {
     vars[cssKey] = value;
   });
 
+  // Glass effects (for 2025 themes)
+  if (theme.glass) {
+    Object.entries(theme.glass).forEach(([key, value]) => {
+      if (key !== 'enabled') {
+        const cssKey = `${THEME_CSS_PREFIX}-glass-${camelToKebab(key)}`;
+        vars[cssKey] = String(value);
+      }
+    });
+  }
+
+  // Animations (for 2025 themes)
+  if (theme.animations) {
+    Object.entries(theme.animations).forEach(([key, value]) => {
+      if (key !== 'enabled') {
+        const cssKey = `${THEME_CSS_PREFIX}-anim-${camelToKebab(key)}`;
+        vars[cssKey] = String(value);
+      }
+    });
+  }
+
   return vars as React.CSSProperties;
+}
+
+/**
+ * Get the data attribute for theme version (used for conditional CSS)
+ */
+export function getThemeVersionAttribute(theme: ThemeConfig): string {
+  return theme.version || '2024';
 }
 
 /**
@@ -89,4 +118,4 @@ function camelToKebab(str: string): string {
 }
 
 // Re-export themes for direct access
-export { defaultTheme, minimalTheme, darkTheme, vibrantTheme };
+export { defaultTheme, minimalTheme, darkTheme, vibrantTheme, glassTheme };

@@ -74,6 +74,40 @@ export interface ThemeSpacing {
 }
 
 /**
+ * Glass/Glassmorphism effect configuration (2025 design trend)
+ */
+export interface ThemeGlassEffects {
+  enabled: boolean;
+  blur: string;
+  blurLg: string;
+  backgroundColor: string;
+  backgroundColorHover: string;
+  borderColor: string;
+  borderColorHover: string;
+  shadowColor: string;
+}
+
+/**
+ * Animation configuration for micro-interactions (2025 design trend)
+ */
+export interface ThemeAnimations {
+  enabled: boolean;
+  timingSpring: string;
+  timingEaseOut: string;
+  duration: string;
+  durationFast: string;
+  hoverScale: string;
+  hoverLift: string;
+  pressScale: string;
+  staggerDelay: string;
+}
+
+/**
+ * Theme version for backwards compatibility
+ */
+export type ThemeVersion = '2024' | '2025';
+
+/**
  * Complete theme configuration
  */
 export interface ThemeConfig {
@@ -82,9 +116,18 @@ export interface ThemeConfig {
   description: string;
   preview?: string;
 
+  /** Theme version - '2025' enables glass effects and animations */
+  version?: ThemeVersion;
+
   colors: ThemeColors;
   typography: ThemeTypography;
   spacing: ThemeSpacing;
+
+  /** Glass/Glassmorphism effects (optional, for 2025 themes) */
+  glass?: ThemeGlassEffects;
+
+  /** Animation settings (optional, for 2025 themes) */
+  animations?: ThemeAnimations;
 }
 
 /**
@@ -99,6 +142,12 @@ export interface ThemeSettings {
 
   // Spacing overrides
   spacing?: Partial<ThemeSpacing>;
+
+  // Glass effect overrides (2025 themes)
+  glass?: Partial<ThemeGlassEffects>;
+
+  // Animation overrides (2025 themes)
+  animations?: Partial<ThemeAnimations>;
 }
 
 /**

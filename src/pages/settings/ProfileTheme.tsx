@@ -23,6 +23,7 @@ import {
   getAllThemes,
   getTheme,
   themeToCSSVars,
+  getThemeVersionAttribute,
   getCSSIssues,
   mergeThemeWithSettings,
   ThemeConfig,
@@ -951,6 +952,8 @@ interface ThemeCardProps {
 }
 
 const ThemeCard = ({ theme, selected, onSelect }: ThemeCardProps) => {
+  const is2025Theme = theme.version === '2025';
+
   return (
     <Card
       className={`cursor-pointer transition-all hover:shadow-md ${
@@ -961,8 +964,20 @@ const ThemeCard = ({ theme, selected, onSelect }: ThemeCardProps) => {
       <CardContent className="p-4">
         <div className="flex justify-between items-start mb-3">
           <div>
-            <h3 className="font-semibold text-lg">{theme.name}</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-lg">{theme.name}</h3>
+              {is2025Theme && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
+                  2025
+                </span>
+              )}
+            </div>
             <p className="text-sm text-muted-foreground">{theme.description}</p>
+            {is2025Theme && (
+              <p className="text-xs text-indigo-600 mt-1">
+                Glass effects • Spring animations • Modern design
+              </p>
+            )}
           </div>
           {selected && (
             <div className="bg-primary text-primary-foreground rounded-full p-1">
@@ -999,6 +1014,21 @@ const ThemeCard = ({ theme, selected, onSelect }: ThemeCardProps) => {
             title="Badge"
           />
         </div>
+
+        {/* Glass Effect Indicator for 2025 themes */}
+        {is2025Theme && (
+          <div className="mt-3 flex items-center gap-2">
+            <div
+              className="w-full h-8 rounded-lg border"
+              style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 100%)',
+                backdropFilter: 'blur(4px)',
+                WebkitBackdropFilter: 'blur(4px)',
+                borderColor: 'rgba(255,255,255,0.3)',
+              }}
+            />
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -1022,6 +1052,7 @@ const ThemePreview = ({ theme, profile }: ThemePreviewProps) => {
         minHeight: "400px",
         padding: "24px",
       }}
+      data-theme-version={theme.version || '2024'}
     >
       <div className={`${THEME_CLASS_PREFIX}-content`} style={{ maxWidth: "100%" }}>
         {/* Header Preview */}
