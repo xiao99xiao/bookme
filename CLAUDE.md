@@ -310,11 +310,11 @@ VITE_BACKEND_URL=https://192.168.0.10:4443  # Your local IP with HTTPS
 DATABASE_URL=postgresql://user:password@host:port/database
 
 # Cloudflare R2 Storage
-R2_ENDPOINT=https://<ACCOUNT_ID>.r2.cloudflarestorage.com
+R2_ENDPOINT=https://5b0c628391e4b115d1225997cb7e7177.r2.cloudflarestorage.com
 R2_ACCESS_KEY_ID=your_access_key_id
 R2_SECRET_ACCESS_KEY=your_secret_access_key
 R2_BUCKET=nook-uploads
-R2_PUBLIC_URL=https://pub-xxx.r2.dev
+R2_PUBLIC_URL=https://pub-bd86e14482d544f99b635bd8ad0d2c5b.r2.dev
 
 # Privy Configuration
 PRIVY_APP_ID=
