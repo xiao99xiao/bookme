@@ -742,6 +742,58 @@ export class ApiClient {
     if (!response.ok) throw new Error('Failed to validate referral code')
     return response.json()
   }
+
+  // =====================================================
+  // Theme APIs
+  // =====================================================
+
+  /**
+   * Get user's public page theme (no auth required)
+   */
+  static async getUserTheme(userId: string): Promise<{
+    theme: string
+    custom_css: string | null
+    settings: Record<string, unknown>
+  }> {
+    this.ensureInitialized()
+    const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://192.168.0.10:4443'
+    const response = await fetch(`${BACKEND_URL}/api/user/${userId}/theme`)
+    if (!response.ok) {
+      return { theme: 'default', custom_css: null, settings: {} }
+    }
+    return response.json()
+  }
+
+  /**
+   * Update current user's public page theme (auth required)
+   */
+  static async updateUserTheme(data: {
+    theme?: string
+    custom_css?: string | null
+    settings?: Record<string, unknown>
+  }): Promise<{
+    success: boolean
+    theme: string
+    custom_css: string | null
+    settings: Record<string, unknown>
+  }> {
+    await this.waitForInitialization()
+    const response = await fetch(`${this.backendApi!.baseUrl}/api/user/theme`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.backendApi!.token}`
+      },
+      body: JSON.stringify(data)
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Failed to update theme')
+    }
+
+    return response.json()
+  }
 }
 
 // Export for backwards compatibility

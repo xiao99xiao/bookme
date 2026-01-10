@@ -1,0 +1,485 @@
+/**
+ * Public Profile Styles
+ *
+ * All styles are scoped to .pp-container using CSS custom properties.
+ * These styles are completely isolated from the main application.
+ */
+
+/* =====================================================
+   Container & Layout
+   ===================================================== */
+
+.pp-container {
+  /* Apply theme variables to container */
+  background: var(--pp-background);
+  color: var(--pp-text-primary);
+  font-family: var(--pp-font-body);
+  font-size: var(--pp-base-font-size);
+  min-height: 100vh;
+  width: 100%;
+}
+
+.pp-container * {
+  box-sizing: border-box;
+}
+
+.pp-layout {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+}
+
+.pp-main {
+  flex: 1;
+  transition: all 0.3s ease-in-out;
+  height: 100vh;
+  overflow-y: auto;
+  padding-top: 80px; /* Nav height */
+  background: var(--pp-background);
+}
+
+.pp-main.with-sidebar {
+  width: 50%;
+}
+
+.pp-sidebar {
+  width: 50%;
+  background: var(--pp-background-secondary);
+  height: 100vh;
+  overflow-y: auto;
+  border-left: var(--pp-border-width) solid var(--pp-divider);
+}
+
+.pp-content {
+  max-width: 672px;
+  margin: 0 auto;
+  padding: 40px 24px;
+}
+
+/* =====================================================
+   Profile Header
+   ===================================================== */
+
+.pp-header {
+  display: flex;
+  gap: 40px;
+  align-items: center;
+  width: 100%;
+  margin-bottom: var(--pp-section-gap);
+}
+
+.pp-avatar {
+  flex-shrink: 0;
+  width: 120px;
+  height: 120px;
+  border-radius: var(--pp-avatar-radius);
+  overflow: hidden;
+  background: var(--pp-background-secondary);
+}
+
+.pp-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pp-avatar-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--pp-text-secondary);
+  background: var(--pp-background-secondary);
+}
+
+.pp-header-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.pp-name {
+  font-family: var(--pp-font-heading);
+  font-size: 24px;
+  font-weight: var(--pp-heading-weight);
+  color: var(--pp-text-primary);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.pp-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 16px;
+  background: var(--pp-badge-background);
+  color: var(--pp-badge-text);
+  border-radius: var(--pp-badge-radius);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.pp-badge-icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* =====================================================
+   Bio Section
+   ===================================================== */
+
+.pp-bio {
+  color: var(--pp-text-secondary);
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: var(--pp-section-gap);
+}
+
+.pp-bio p {
+  margin: 0 0 1em;
+}
+
+.pp-bio p:last-child {
+  margin-bottom: 0;
+}
+
+/* =====================================================
+   Divider
+   ===================================================== */
+
+.pp-divider {
+  width: 100%;
+  height: 1px;
+  background: var(--pp-divider);
+  margin: var(--pp-section-gap) 0;
+}
+
+/* =====================================================
+   Section Headers
+   ===================================================== */
+
+.pp-section-title {
+  font-family: var(--pp-font-heading);
+  font-size: 20px;
+  font-weight: var(--pp-heading-weight);
+  color: var(--pp-text-primary);
+  margin: 0 0 24px;
+}
+
+/* =====================================================
+   Service Cards
+   ===================================================== */
+
+.pp-services {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pp-service-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: var(--pp-card-padding);
+  background: var(--pp-card-background);
+  border: var(--pp-border-width) solid var(--pp-card-border);
+  border-radius: var(--pp-card-radius);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pp-service-card:hover {
+  background: var(--pp-card-hover);
+}
+
+.pp-service-card.selected {
+  border-color: var(--pp-accent);
+  background: var(--pp-accent-light);
+}
+
+.pp-service-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.pp-service-title {
+  font-family: var(--pp-font-heading);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--pp-text-primary);
+  margin: 0;
+}
+
+.pp-service-description {
+  font-size: 14px;
+  color: var(--pp-text-secondary);
+  line-height: 1.5;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.pp-service-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pp-service-price {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--pp-text-primary);
+}
+
+.pp-service-duration {
+  font-size: 14px;
+  color: var(--pp-text-secondary);
+}
+
+.pp-service-location-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  background: var(--pp-badge-background);
+  color: var(--pp-badge-text);
+  border-radius: var(--pp-badge-radius);
+  font-size: 12px;
+}
+
+/* =====================================================
+   Reviews
+   ===================================================== */
+
+.pp-reviews {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.pp-review-item {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.pp-review-content {
+  flex: 1;
+  font-size: 16px;
+  color: var(--pp-text-secondary);
+  line-height: 1.5;
+  font-style: italic;
+}
+
+.pp-review-rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 8px;
+  background: var(--pp-badge-background);
+  border-radius: var(--pp-badge-radius);
+  flex-shrink: 0;
+}
+
+.pp-star {
+  width: 20px;
+  height: 20px;
+  color: var(--pp-star-color);
+  fill: currentColor;
+}
+
+.pp-rating-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--pp-text-primary);
+}
+
+.pp-load-more {
+  background: var(--pp-button-secondary);
+  color: var(--pp-button-secondary-text);
+  border: none;
+  padding: 12px 24px;
+  border-radius: var(--pp-border-radius);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.pp-load-more:hover {
+  opacity: 0.8;
+}
+
+/* =====================================================
+   Booking Panel (Sidebar)
+   ===================================================== */
+
+.pp-booking-panel {
+  padding: 40px 32px;
+}
+
+.pp-booking-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--pp-text-secondary);
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 24px;
+}
+
+.pp-booking-back:hover {
+  color: var(--pp-text-primary);
+}
+
+.pp-booking-service-title {
+  font-family: var(--pp-font-heading);
+  font-size: 24px;
+  font-weight: var(--pp-heading-weight);
+  color: var(--pp-text-primary);
+  margin: 0 0 12px;
+}
+
+.pp-booking-service-description {
+  font-size: 16px;
+  color: var(--pp-text-secondary);
+  line-height: 1.6;
+  margin: 0 0 24px;
+}
+
+.pp-price-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  background: var(--pp-card-background);
+  border: var(--pp-border-width) solid var(--pp-card-border);
+  border-radius: var(--pp-card-radius);
+  margin-bottom: 24px;
+}
+
+.pp-price-amount {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--pp-text-primary);
+}
+
+.pp-price-duration {
+  font-size: 14px;
+  color: var(--pp-text-secondary);
+}
+
+.pp-booking-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--pp-text-primary);
+  margin: 0 0 16px;
+}
+
+.pp-booking-notes {
+  width: 100%;
+  min-height: 100px;
+  padding: 16px;
+  border: var(--pp-border-width) solid var(--pp-card-border);
+  border-radius: var(--pp-border-radius);
+  font-family: var(--pp-font-body);
+  font-size: 16px;
+  resize: vertical;
+  background: var(--pp-card-background);
+  color: var(--pp-text-primary);
+}
+
+.pp-booking-notes:focus {
+  outline: none;
+  border-color: var(--pp-accent);
+}
+
+.pp-booking-notes::placeholder {
+  color: var(--pp-text-muted);
+}
+
+.pp-submit-button {
+  width: 100%;
+  padding: 16px;
+  background: var(--pp-button-primary);
+  color: var(--pp-button-primary-text);
+  border: none;
+  border-radius: var(--pp-border-radius);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  margin-top: 24px;
+}
+
+.pp-submit-button:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.pp-submit-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* =====================================================
+   Responsive
+   ===================================================== */
+
+@media (max-width: 1024px) {
+  .pp-layout {
+    flex-direction: column;
+  }
+
+  .pp-main,
+  .pp-main.with-sidebar {
+    width: 100%;
+    height: auto;
+    min-height: auto;
+  }
+
+  .pp-sidebar {
+    width: 100%;
+    height: auto;
+    border-left: none;
+    border-top: var(--pp-border-width) solid var(--pp-divider);
+  }
+}
+
+@media (max-width: 640px) {
+  .pp-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
+  }
+
+  .pp-avatar {
+    width: 80px;
+    height: 80px;
+  }
+
+  .pp-content {
+    padding: 24px 16px;
+  }
+
+  .pp-booking-panel {
+    padding: 24px 16px;
+  }
+}

@@ -20,12 +20,13 @@ import CustomerBookings from "./pages/customer/CustomerBookings";
 import SettingsProfile from "./pages/settings/Profile";
 import CustomerMessages from "./pages/customer/CustomerMessages";
 
-// Public Profile page
-import Profile from "./pages/Profile";
+// Public Profile page (with theme support)
+import { PublicProfile } from "./pages/public-profile";
 import CustomerMobileChat from "./pages/customer/CustomerMobileChat";
 
 // Settings pages
 import Customize from "./pages/settings/Customize";
+import ProfileTheme from "./pages/settings/ProfileTheme";
 
 // Provider pages
 import ProviderOrders from "./pages/provider/ProviderOrders";
@@ -77,13 +78,21 @@ function AppContent() {
                 </ProtectedRoute>
               } 
             />
-            <Route 
-              path="/settings/customize" 
+            <Route
+              path="/settings/customize"
               element={
                 <ProtectedRoute>
                   <Customize />
                 </ProtectedRoute>
-              } 
+              }
+            />
+            <Route
+              path="/settings/profile-theme"
+              element={
+                <ProtectedRoute>
+                  <ProfileTheme />
+                </ProtectedRoute>
+              }
             />
             {/* Username-based user page - must be last to avoid conflicts */}
             <Route 
@@ -236,9 +245,10 @@ function AppContent() {
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             {/* Username-based user page - must be at the bottom to avoid conflicts */}
+            {/* Uses PublicProfile with theme support for complete style isolation */}
             <Route
               path="/:username"
-              element={<Profile />}
+              element={<PublicProfile />}
             />
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -477,4 +477,130 @@ export default function userRoutes(app) {
       return c.json({ error: 'Internal server error' }, 500);
     }
   });
+
+  // =====================================================
+  // Theme Management Endpoints
+  // =====================================================
+
+  /**
+   * GET /api/user/:userId/theme
+   *
+   * Get user's public page theme settings (no authentication required).
+   * Used by the public profile page to apply the correct theme.
+   *
+   * Parameters:
+   * - userId: UUID of the user
+   *
+   * Response:
+   * - theme: string (theme ID)
+   * - custom_css: string | null
+   * - settings: object (theme customizations)
+   *
+   * @param {Context} c - Hono context
+   * @returns {Response} JSON response with theme data
+   */
+  app.get('/api/user/:userId/theme', async (c) => {
+    try {
+      const userId = c.req.param('userId');
+
+      const { data, error } = await supabaseAdmin
+        .from('users')
+        .select('page_theme, page_custom_css, page_theme_settings')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return c.json({ error: 'User not found' }, 404);
+        }
+        console.error('Theme lookup error:', error);
+        return c.json({ error: 'Failed to fetch theme' }, 500);
+      }
+
+      return c.json({
+        theme: data.page_theme || 'default',
+        custom_css: data.page_custom_css,
+        settings: data.page_theme_settings || {},
+      });
+    } catch (error) {
+      console.error('Theme lookup error:', error);
+      return c.json({ error: 'Internal server error' }, 500);
+    }
+  });
+
+  /**
+   * PUT /api/user/theme
+   *
+   * Update authenticated user's public page theme settings.
+   *
+   * Headers:
+   * - Authorization: Bearer {privyToken}
+   *
+   * Body:
+   * - theme: string (theme ID)
+   * - custom_css: string | null
+   * - settings: object (theme customizations)
+   *
+   * Response:
+   * - success: boolean
+   * - theme data
+   *
+   * @param {Context} c - Hono context
+   * @returns {Response} JSON response with updated theme data
+   */
+  app.put('/api/user/theme', verifyPrivyAuth, async (c) => {
+    try {
+      const userId = c.get('userId');
+      const body = await c.req.json();
+
+      const { theme, custom_css, settings } = body;
+
+      // Validate theme ID (allowed values)
+      const allowedThemes = ['default', 'minimal', 'dark', 'vibrant'];
+      if (theme && !allowedThemes.includes(theme)) {
+        return c.json({ error: 'Invalid theme ID' }, 400);
+      }
+
+      // Build update object
+      const updateData = {
+        updated_at: new Date().toISOString(),
+      };
+
+      if (theme !== undefined) {
+        updateData.page_theme = theme;
+      }
+
+      if (custom_css !== undefined) {
+        // Note: CSS sanitization should happen on the frontend before display
+        // We store the raw CSS here for flexibility
+        updateData.page_custom_css = custom_css;
+      }
+
+      if (settings !== undefined) {
+        updateData.page_theme_settings = settings;
+      }
+
+      const { data, error } = await supabaseAdmin
+        .from('users')
+        .update(updateData)
+        .eq('id', userId)
+        .select('page_theme, page_custom_css, page_theme_settings')
+        .single();
+
+      if (error) {
+        console.error('Theme update error:', error);
+        return c.json({ error: 'Failed to update theme' }, 500);
+      }
+
+      return c.json({
+        success: true,
+        theme: data.page_theme,
+        custom_css: data.page_custom_css,
+        settings: data.page_theme_settings,
+      });
+    } catch (error) {
+      console.error('Theme update error:', error);
+      return c.json({ error: 'Internal server error' }, 500);
+    }
+  });
 }
