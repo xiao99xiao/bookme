@@ -41,7 +41,8 @@ CREATE INDEX IF NOT EXISTS idx_reschedule_requests_status
 CREATE INDEX IF NOT EXISTS idx_reschedule_requests_expires_at
     ON reschedule_requests(expires_at) WHERE status = 'pending';
 
--- Trigger to update updated_at
+-- Trigger to update updated_at (drop if exists for idempotency)
+DROP TRIGGER IF EXISTS trigger_reschedule_requests_updated_at ON reschedule_requests;
 CREATE TRIGGER trigger_reschedule_requests_updated_at
     BEFORE UPDATE ON reschedule_requests
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

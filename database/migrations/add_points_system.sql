@@ -27,7 +27,8 @@ CREATE TABLE IF NOT EXISTS user_points (
 
 CREATE INDEX IF NOT EXISTS idx_user_points_user_id ON user_points(user_id);
 
--- Trigger for updated_at
+-- Trigger for updated_at (drop if exists for idempotency)
+DROP TRIGGER IF EXISTS trigger_user_points_updated_at ON user_points;
 CREATE TRIGGER trigger_user_points_updated_at
   BEFORE UPDATE ON user_points
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
