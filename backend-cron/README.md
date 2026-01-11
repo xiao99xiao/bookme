@@ -130,7 +130,8 @@ backend-cron/
 ├── src/
 │   ├── index.js              # Main entry point - exits after completion
 │   ├── booking-automation.js # Core automation logic
-│   └── db-client.js          # Database client (uses Railway PostgreSQL)
+│   ├── db.js                 # PostgreSQL connection pool
+│   └── db-client.js          # Query builder (Supabase-like API)
 ├── package.json              # Dependencies and scripts
 └── README.md                 # This file
 ```
