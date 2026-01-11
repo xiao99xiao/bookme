@@ -13,6 +13,7 @@ import { H2, H3, Text, Description, Loading } from '@/design-system';
 import BecomeProviderDialog from '@/components/BecomeProviderDialog';
 import { useBlockchainService } from '@/lib/blockchain-service';
 import ReactMarkdown from 'react-markdown';
+import { useFunding } from '@/hooks/useFunding';
 
 const STORAGE_KEY = 'nook_user_mode';
 
@@ -83,8 +84,9 @@ const Divider = () => <div className="h-[1px] bg-[#eeeeee] mx-4" />;
 
 export default function MobileMePage() {
   const { authenticated, profile, userId, logout, refreshProfile, ready } = useAuth();
-  const { user, ready: privyReady, fundWallet } = usePrivy();
+  const { user, ready: privyReady } = usePrivy();
   const { wallets } = useWallets();
+  const { fundWallet } = useFunding();
   const { client: smartWallet } = useSmartWallets();
   const { blockchainService, initializeService } = useBlockchainService();
   const navigate = useNavigate();
@@ -220,12 +222,15 @@ export default function MobileMePage() {
       return;
     }
 
-    try {
-      await fundWallet();
-    } catch (error) {
-      console.error('Failed to fund wallet:', error);
-      toast.error('Failed to fund wallet');
-    }
+    await fundWallet({
+      onSuccess: (fundedAmount, pointsAwarded) => {
+        // Refresh balance after funding
+        fetchBalance();
+      },
+      onError: (error) => {
+        console.error('Failed to fund wallet:', error);
+      }
+    });
   };
 
   const handleWithdraw = () => {

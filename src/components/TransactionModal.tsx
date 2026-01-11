@@ -191,6 +191,12 @@ export interface PaymentModalProps {
   currency?: string
   status: TransactionStatus
   onRetry?: () => void
+  // Points info for display
+  pointsInfo?: {
+    pointsUsed: number
+    pointsValue: number
+    originalAmount: number
+  }
 }
 
 export function PaymentModal({
@@ -199,18 +205,123 @@ export function PaymentModal({
   amount,
   currency = 'USDC',
   status,
-  onRetry
+  onRetry,
+  pointsInfo
 }: PaymentModalProps) {
+  const hasPointsDiscount = pointsInfo && pointsInfo.pointsUsed > 0
+
   return (
-    <TransactionModal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Payment Processing"
-      description={`Processing payment of ${amount} ${currency}`}
-      status={status}
-      onRetry={onRetry}
-      showRetryButton={true}
-    />
+    <Dialog open={isOpen} onOpenChange={status.status !== 'pending' && status.status !== 'prompting' && status.status !== 'preparing' ? onClose : undefined}>
+      <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => {
+        if (['preparing', 'prompting', 'pending'].includes(status.status)) e.preventDefault()
+      }}>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            {status.status === 'preparing' && <Loader2 className="h-6 w-6 animate-spin text-blue-500" />}
+            {status.status === 'prompting' && <CreditCard className="h-6 w-6 text-orange-500 animate-pulse" />}
+            {status.status === 'pending' && <Loader2 className="h-6 w-6 animate-spin text-blue-500" />}
+            {status.status === 'success' && <CheckCircle className="h-6 w-6 text-green-500" />}
+            {status.status === 'error' && <XCircle className="h-6 w-6 text-red-500" />}
+            Payment Processing
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {/* Payment Summary */}
+          <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+            {hasPointsDiscount ? (
+              <>
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>Original Price</span>
+                  <span>${pointsInfo.originalAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm text-emerald-600">
+                  <span>Points Discount ({pointsInfo.pointsUsed} pts)</span>
+                  <span>-${pointsInfo.pointsValue.toFixed(2)}</span>
+                </div>
+                <div className="border-t border-gray-200 pt-2 mt-2">
+                  <div className="flex justify-between font-semibold">
+                    <span>Total to Pay</span>
+                    <span>{amount.toFixed(2)} {currency}</span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="flex justify-between font-semibold">
+                <span>Amount</span>
+                <span>{amount} {currency}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Status Message */}
+          <div className={cn(
+            "text-center py-2",
+            status.status === 'success' ? 'text-green-600' :
+            status.status === 'error' ? 'text-red-600' :
+            'text-blue-600'
+          )}>
+            <p className="font-medium">{status.message}</p>
+          </div>
+
+          {/* Transaction Hash */}
+          {status.txHash && (
+            <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+              <p className="text-sm font-medium text-gray-700">Transaction Hash:</p>
+              <p className="text-xs font-mono bg-white px-2 py-1 rounded border break-all">
+                {status.txHash}
+              </p>
+              <a
+                href={`https://sepolia.basescan.org/tx/${status.txHash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+              >
+                <ExternalLink className="h-4 w-4" />
+                View on Explorer
+              </a>
+            </div>
+          )}
+
+          {/* Error Details */}
+          {status.status === 'error' && status.error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <p className="text-sm font-medium text-red-800 mb-1">Error Details:</p>
+              <p className="text-sm text-red-700">{status.error}</p>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex gap-2 justify-end">
+            {status.status === 'error' && onRetry && (
+              <Button onClick={onRetry} variant="outline" size="sm">
+                Try Again
+              </Button>
+            )}
+
+            {!['preparing', 'prompting', 'pending'].includes(status.status) && (
+              <Button
+                onClick={onClose}
+                variant={status.status === 'success' ? 'default' : 'outline'}
+                size="sm"
+              >
+                {status.status === 'success' ? 'Done' : 'Close'}
+              </Button>
+            )}
+          </div>
+
+          {/* Processing Note */}
+          {['preparing', 'prompting', 'pending'].includes(status.status) && (
+            <p className="text-xs text-center text-gray-500">
+              {status.status === 'prompting'
+                ? 'Please check your wallet to confirm the transaction'
+                : 'Please wait while the transaction is being processed...'
+              }
+            </p>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 

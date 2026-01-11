@@ -25,7 +25,7 @@ contract AdvancedSecurityTests is Test {
     
     bytes32 private constant BOOKING_AUTHORIZATION_TYPEHASH =
         keccak256(
-            "BookingAuthorization(bytes32 bookingId,address customer,address provider,address inviter,uint256 amount,uint256 platformFeeRate,uint256 inviterFeeRate,uint256 expiry,uint256 nonce)"
+            "BookingAuthorization(bytes32 bookingId,address customer,address provider,address inviter,uint256 amount,uint256 originalAmount,uint256 platformFeeRate,uint256 inviterFeeRate,uint256 expiry,uint256 nonce)"
         );
     
     bytes32 private constant CANCELLATION_AUTHORIZATION_TYPEHASH =
@@ -46,9 +46,9 @@ contract AdvancedSecurityTests is Test {
         usdc = new MockUSDC();
         escrow = new BookingEscrow(address(usdc), backendSigner, platformFeeWallet);
         
-        // Setup test balances
-        usdc.mintUSDC(attacker, 1000000e6); // 1M USDC
-        usdc.mintUSDC(victim, 1000000e6);
+        // Setup test balances (mintUSDC already multiplies by 1e6)
+        usdc.mintUSDC(attacker, 1000000); // 1M USDC
+        usdc.mintUSDC(victim, 1000000);   // 1M USDC
         
         vm.prank(attacker);
         usdc.approve(address(escrow), type(uint256).max);
@@ -70,6 +70,7 @@ contract AdvancedSecurityTests is Test {
             provider: victim,
             inviter: address(0),
             amount: 1000e6,
+            originalAmount: 1000e6,
             platformFeeRate: 1500,
             inviterFeeRate: 0,
             expiry: block.timestamp + 1 hours,
@@ -97,16 +98,44 @@ contract AdvancedSecurityTests is Test {
         // First signature should work
         vm.prank(attacker);
         escrow.createAndPayBooking(auth, validSignature);
-        
-        // Malleated signature should be rejected due to OpenZeppelin's ECDSA protection
-        auth.nonce = 2; // Different nonce to avoid nonce reuse error
-        auth.bookingId = keccak256("malleability_test_2");
-        bytes memory newMalleatedSig = abi.encodePacked(r, malleatedS, malleatedV);
-        
-        // OpenZeppelin ECDSA.recover now rejects malleated signatures with custom error
-        vm.expectRevert(); // Expecting ECDSAInvalidSignatureS error
+
+        // Test malleated signature on a new booking
+        // OpenZeppelin ECDSA.tryRecover handles malleated signatures by returning address(0)
+        // This results in "invalid backend signature" error from our contract
+        BookingEscrow.BookingAuthorization memory auth2 = BookingEscrow.BookingAuthorization({
+            bookingId: keccak256("malleability_test_2"),
+            customer: attacker,
+            provider: victim,
+            inviter: address(0),
+            amount: 1000e6,
+            originalAmount: 1000e6,
+            platformFeeRate: 1500,
+            inviterFeeRate: 0,
+            expiry: block.timestamp + 1 hours,
+            nonce: 2
+        });
+
+        bytes memory validSig2 = signBookingAuthorization(auth2, backendSignerPrivateKey);
+
+        // Extract signature components and mallate
+        bytes32 r2;
+        bytes32 s2;
+        uint8 v2;
+        assembly {
+            r2 := mload(add(validSig2, 0x20))
+            s2 := mload(add(validSig2, 0x40))
+            v2 := byte(0, mload(add(validSig2, 0x60)))
+        }
+
+        bytes32 malleatedS2 = bytes32(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141 - uint256(s2));
+        uint8 malleatedV2 = v2 == 27 ? 28 : 27;
+        bytes memory malleatedSig = abi.encodePacked(r2, malleatedS2, malleatedV2);
+
+        // Malleated signature should be rejected
+        // OpenZeppelin ECDSA throws ECDSAInvalidSignatureS custom error for malleated s values
+        vm.expectRevert();  // Any revert is acceptable (ECDSAInvalidSignatureS or invalid backend signature)
         vm.prank(attacker);
-        escrow.createAndPayBooking(auth, signBookingAuthorization(auth, backendSignerPrivateKey));
+        escrow.createAndPayBooking(auth2, malleatedSig);
     }
 
     // ============ CROSS-FUNCTION REENTRANCY TESTS ============
@@ -145,6 +174,7 @@ contract AdvancedSecurityTests is Test {
             provider: victim,
             inviter: address(0),
             amount: dustAmount,
+            originalAmount: dustAmount,
             platformFeeRate: 1500, // 15%
             inviterFeeRate: 500,   // 5%
             expiry: block.timestamp + 1 hours,
@@ -161,13 +191,13 @@ contract AdvancedSecurityTests is Test {
         escrow.completeService(bookingId);
         
         // Verify proper handling of dust amounts in fee calculations
-        // Platform fee: 1 * 1500 / 10000 = 0 (rounds down)
-        // Inviter fee: 1 * 500 / 10000 = 0 (rounds down) 
-        // Provider should get the full amount due to rounding
-        uint256 expectedPlatformFee = dustAmount * 1500 / 10000; // Should be 0
-        uint256 expectedInviterFee = dustAmount * 500 / 10000;   // Should be 0
-        uint256 expectedProviderAmount = dustAmount - expectedPlatformFee - expectedInviterFee;
-        
+        // With new originalAmount-based calculation:
+        // Provider gets: originalAmount * (10000 - platformFeeRate - inviterFeeRate) / 10000
+        // = 1 * (10000 - 1500 - 500) / 10000 = 0 (rounds down)
+        // Platform gets the remainder: 1 - 0 - 0 = 1
+        uint256 expectedProviderAmount = dustAmount * (10000 - 1500 - 500) / 10000; // Should be 0
+        uint256 expectedPlatformFee = dustAmount - expectedProviderAmount; // Should be 1
+
         assertEq(usdc.balanceOf(victim), 1000000e6 + expectedProviderAmount);
         assertEq(usdc.balanceOf(platformFeeWallet), expectedPlatformFee);
     }
@@ -177,10 +207,11 @@ contract AdvancedSecurityTests is Test {
      */
     function test_MaxValueAttack() public {
         // Test with large but safe USDC amount (avoiding overflow in multiplications)
-        uint256 maxAmount = 1e30; // 1 trillion USDC with 18 decimals
-        
-        // Mint enough USDC for the test
-        usdc.mintUSDC(attacker, maxAmount);
+        // Using raw amount since mintUSDC already multiplies by 1e6
+        uint256 maxAmount = 1e30; // Large amount in raw token units
+
+        // Mint enough USDC for the test (using mint directly for raw amount)
+        usdc.mint(attacker, maxAmount);
         
         bytes32 bookingId = keccak256("max_value_attack");
         
@@ -190,6 +221,7 @@ contract AdvancedSecurityTests is Test {
             provider: victim,
             inviter: address(0),
             amount: maxAmount,
+            originalAmount: maxAmount,
             platformFeeRate: 1000, // 10% (to avoid overflow)
             inviterFeeRate: 500,   // 5%
             expiry: block.timestamp + 1 hours,
@@ -206,10 +238,13 @@ contract AdvancedSecurityTests is Test {
         escrow.completeService(bookingId);
         
         // Verify no overflow occurred in fee calculations
-        uint256 platformFee = maxAmount * 1000 / 10000;
-        uint256 inviterFee = maxAmount * 500 / 10000;
-        uint256 providerAmount = maxAmount - platformFee - inviterFee;
-        
+        // With new originalAmount-based calculation:
+        // Provider gets: originalAmount * (10000 - platformFeeRate - inviterFeeRate) / 10000
+        // = maxAmount * (10000 - 1000 - 500) / 10000 = maxAmount * 8500 / 10000
+        // Platform gets the remainder: maxAmount - providerAmount
+        uint256 providerAmount = maxAmount * (10000 - 1000 - 500) / 10000;
+        uint256 platformFee = maxAmount - providerAmount;
+
         assertEq(usdc.balanceOf(platformFeeWallet), platformFee);
         assertEq(usdc.balanceOf(victim), 1000000e6 + providerAmount);
     }
@@ -229,6 +264,7 @@ contract AdvancedSecurityTests is Test {
             provider: victim,
             inviter: address(0),
             amount: 1000e6,
+            originalAmount: 1000e6,
             platformFeeRate: 1500,
             inviterFeeRate: 0,
             expiry: block.timestamp + 1 hours,
@@ -262,6 +298,7 @@ contract AdvancedSecurityTests is Test {
             provider: attacker,
             inviter: address(0),
             amount: 1000e6,
+            originalAmount: 1000e6,
             platformFeeRate: 1500,
             inviterFeeRate: 0,
             expiry: block.timestamp + 1 hours,
@@ -274,6 +311,7 @@ contract AdvancedSecurityTests is Test {
             provider: victim,
             inviter: address(0),
             amount: 2000e6,
+            originalAmount: 2000e6,
             platformFeeRate: 1500,
             inviterFeeRate: 0,
             expiry: block.timestamp + 1 hours,
@@ -374,6 +412,7 @@ contract AdvancedSecurityTests is Test {
             provider: victim,
             inviter: address(0),
             amount: 1000e6,
+            originalAmount: 1000e6,
             platformFeeRate: 2000, // 20% (MAX_PLATFORM_FEE)
             inviterFeeRate: 1000,  // 10% (MAX_INVITER_FEE)  
             expiry: block.timestamp + 1 hours,
@@ -388,11 +427,14 @@ contract AdvancedSecurityTests is Test {
         // Complete and verify calculations at boundaries
         vm.prank(attacker);
         escrow.completeService(bookingId);
-        
-        uint256 expectedPlatformFee = 1000e6 * 2000 / 10000; // 200e6
-        uint256 expectedInviterFee = 1000e6 * 1000 / 10000;  // 100e6
-        uint256 expectedProviderAmount = 1000e6 - expectedPlatformFee - expectedInviterFee; // 700e6
-        
+
+        // With new originalAmount-based calculation:
+        // Provider gets: originalAmount * (10000 - platformFeeRate - inviterFeeRate) / 10000
+        // = 1000e6 * (10000 - 2000 - 1000) / 10000 = 1000e6 * 7000 / 10000 = 700e6
+        // Platform gets the remainder: 1000e6 - 700e6 = 300e6 (includes unused inviter fee)
+        uint256 expectedProviderAmount = 1000e6 * (10000 - 2000 - 1000) / 10000; // 700e6
+        uint256 expectedPlatformFee = 1000e6 - expectedProviderAmount; // 300e6
+
         assertEq(usdc.balanceOf(platformFeeWallet), expectedPlatformFee);
         assertEq(usdc.balanceOf(victim), 1000000e6 + expectedProviderAmount);
     }
@@ -408,6 +450,7 @@ contract AdvancedSecurityTests is Test {
             provider: victim,
             inviter: address(0),
             amount: 1000e6,
+            originalAmount: 1000e6,
             platformFeeRate: 1500,
             inviterFeeRate: 0,
             expiry: block.timestamp + 1 hours,
@@ -446,6 +489,7 @@ contract AdvancedSecurityTests is Test {
                 auth.provider,
                 auth.inviter,
                 auth.amount,
+                auth.originalAmount,
                 auth.platformFeeRate,
                 auth.inviterFeeRate,
                 auth.expiry,

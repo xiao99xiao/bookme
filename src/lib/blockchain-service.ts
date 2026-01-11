@@ -27,6 +27,7 @@ export interface PaymentAuthorization {
   provider: string
   inviter: string
   amount: string
+  originalAmount: string  // Original service price (for fee calculation)
   platformFeeRate: string
   inviterFeeRate: string
   expiry: string
@@ -164,7 +165,8 @@ export class BlockchainService {
         customer: authorization.customer as `0x${string}`,
         provider: authorization.provider as `0x${string}`,
         inviter: authorization.inviter as `0x${string}`,
-        amount: BigInt(authorization.amount), // Convert string to BigInt
+        amount: BigInt(authorization.amount), // Convert string to BigInt - actual USDC to pay
+        originalAmount: BigInt(authorization.originalAmount), // Original service price for fee calculation
         platformFeeRate: BigInt(authorization.platformFeeRate), // Convert to BigInt
         inviterFeeRate: BigInt(authorization.inviterFeeRate), // Convert to BigInt
         expiry: BigInt(authorization.expiry), // Convert to BigInt

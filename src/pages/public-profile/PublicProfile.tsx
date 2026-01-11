@@ -23,6 +23,8 @@ import { useBlockchainService } from "@/lib/blockchain-service";
 import { usePaymentTransaction } from "@/hooks/useTransaction";
 import { PaymentModal } from "@/components/TransactionModal";
 import { BlockchainErrorHandler } from "@/lib/blockchain-errors";
+import { usePoints } from "@/hooks/usePoints";
+import { useFunding } from "@/hooks/useFunding";
 
 // Theme system imports
 import {
@@ -188,6 +190,21 @@ const PublicProfile = () => {
   const paymentTransaction = usePaymentTransaction();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
+  // Points system
+  const { balance: pointsBalance, formatPoints, formatUsdValue, calculateForService } = usePoints();
+  const [usePointsForPayment, setUsePointsForPayment] = useState(false);
+  const [pointsCalculation, setPointsCalculation] = useState<{
+    pointsToUse: number;
+    pointsValue: number;
+    usdcToPay: number;
+    originalPrice: number;
+  } | null>(null);
+
+  // Funding system
+  const { fundWallet } = useFunding();
+  const [usdcBalance, setUsdcBalance] = useState<number | null>(null);
+  const [loadingBalance, setLoadingBalance] = useState(false);
+
   // Computed values
   const isOwnProfile = resolvedUserId && currentUserId && resolvedUserId === currentUserId;
 
@@ -283,19 +300,80 @@ const PublicProfile = () => {
     }
   }, [searchParams, services]);
 
+  // Calculate points when service is selected and user has points
+  useEffect(() => {
+    const updatePointsCalculation = async () => {
+      if (selectedService && pointsBalance > 0) {
+        const calc = await calculateForService(selectedService.price);
+        setPointsCalculation(calc);
+      } else {
+        setPointsCalculation(null);
+      }
+    };
+    updatePointsCalculation();
+  }, [selectedService, pointsBalance, calculateForService]);
+
   // =====================================================
   // Event Handlers
   // =====================================================
+
+  // Fetch USDC balance
+  const fetchUsdcBalance = async () => {
+    if (!blockchainService) return;
+
+    try {
+      setLoadingBalance(true);
+      await initializeService();
+      const balance = await blockchainService.getUSDCBalance();
+      setUsdcBalance(parseFloat(balance));
+    } catch (error) {
+      console.error("Error fetching USDC balance:", error);
+      setUsdcBalance(null);
+    } finally {
+      setLoadingBalance(false);
+    }
+  };
+
+  // Fetch balance when user selects a service and is authenticated
+  useEffect(() => {
+    if (selectedService && authenticated && currentUserId) {
+      fetchUsdcBalance();
+    }
+  }, [selectedService, authenticated, currentUserId]);
 
   const handleServiceClick = (service: Service) => {
     setSelectedService(service);
     setSelectedTimeSlot(null);
     setCustomerNotes("");
+    setUsePointsForPayment(false);
   };
 
   const handleBookingSubmit = async () => {
     if (!selectedService || !selectedTimeSlot || !currentUserId || !profile) {
       toast.error("Please select a time slot");
+      return;
+    }
+
+    // Calculate required amount (after points if applicable)
+    const requiredAmount = usePointsForPayment && pointsCalculation
+      ? pointsCalculation.usdcToPay
+      : selectedService.price;
+
+    // Check if user has sufficient balance - if not, open funding flow directly
+    if (usdcBalance !== null && usdcBalance < requiredAmount) {
+      const shortfall = requiredAmount - usdcBalance;
+      toast.info(`You need $${shortfall.toFixed(2)} more USDC. Opening funding...`);
+
+      await fundWallet({
+        onSuccess: (fundedAmount, pointsAwarded) => {
+          // Refresh balance after funding
+          fetchUsdcBalance();
+          toast.success(`Wallet funded! Click Pay again to complete your booking.`);
+        },
+        onError: (error) => {
+          console.error('Funding error:', error);
+        }
+      });
       return;
     }
 
@@ -310,6 +388,7 @@ const PublicProfile = () => {
         customer_notes: customerNotes.trim() || undefined,
         location: selectedService.location,
         is_online: selectedService.is_online,
+        use_points: usePointsForPayment && pointsCalculation && pointsCalculation.pointsToUse > 0,
       };
 
       const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/bookings`, {
@@ -582,6 +661,36 @@ const PublicProfile = () => {
 
                   <div className={`${THEME_CLASS_PREFIX}-divider`} />
 
+                  {/* Points Usage Option */}
+                  {pointsBalance > 0 && pointsCalculation && pointsCalculation.pointsToUse > 0 && (
+                    <>
+                      <div className={`${THEME_CLASS_PREFIX}-points-section`}>
+                        <div className={`${THEME_CLASS_PREFIX}-points-header`}>
+                          <h3 className={`${THEME_CLASS_PREFIX}-booking-section-title`} style={{ marginBottom: 0 }}>
+                            Use Points
+                          </h3>
+                          <span className={`${THEME_CLASS_PREFIX}-points-balance`}>
+                            Balance: {formatPoints(pointsBalance)} pts ({formatUsdValue(pointsBalance)})
+                          </span>
+                        </div>
+                        <label className={`${THEME_CLASS_PREFIX}-points-toggle`}>
+                          <input
+                            type="checkbox"
+                            checked={usePointsForPayment}
+                            onChange={(e) => setUsePointsForPayment(e.target.checked)}
+                          />
+                          <span className={`${THEME_CLASS_PREFIX}-points-label`}>
+                            Use {formatPoints(pointsCalculation.pointsToUse)} points (-${pointsCalculation.pointsValue.toFixed(2)})
+                          </span>
+                        </label>
+                        <p className={`${THEME_CLASS_PREFIX}-points-note`}>
+                          Max 5% of service price can be paid with points
+                        </p>
+                      </div>
+                      <div className={`${THEME_CLASS_PREFIX}-divider`} />
+                    </>
+                  )}
+
                   <h3 className={`${THEME_CLASS_PREFIX}-booking-section-title`}>Additional Notes (Optional)</h3>
                   <textarea
                     className={`${THEME_CLASS_PREFIX}-booking-notes`}
@@ -590,6 +699,34 @@ const PublicProfile = () => {
                     placeholder="Tell the provider anything specific about your booking..."
                     maxLength={500}
                   />
+
+                  {/* Payment Summary */}
+                  {usePointsForPayment && pointsCalculation && pointsCalculation.pointsToUse > 0 && (
+                    <div className={`${THEME_CLASS_PREFIX}-payment-summary`}>
+                      <div className={`${THEME_CLASS_PREFIX}-payment-row`}>
+                        <span>Service Price</span>
+                        <span>${selectedService.price.toFixed(2)}</span>
+                      </div>
+                      <div className={`${THEME_CLASS_PREFIX}-payment-row ${THEME_CLASS_PREFIX}-payment-discount`}>
+                        <span>Points Discount</span>
+                        <span>-${pointsCalculation.pointsValue.toFixed(2)}</span>
+                      </div>
+                      <div className={`${THEME_CLASS_PREFIX}-payment-row ${THEME_CLASS_PREFIX}-payment-total`}>
+                        <span>Total to Pay</span>
+                        <span>${pointsCalculation.usdcToPay.toFixed(2)} USDC</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Wallet Balance Display */}
+                  {authenticated && (
+                    <div className={`${THEME_CLASS_PREFIX}-wallet-balance`}>
+                      <span>Your USDC Balance:</span>
+                      <span className={`${THEME_CLASS_PREFIX}-balance-amount`}>
+                        {loadingBalance ? "..." : usdcBalance !== null ? `$${usdcBalance.toFixed(2)}` : "—"}
+                      </span>
+                    </div>
+                  )}
 
                   <button
                     className={`${THEME_CLASS_PREFIX}-submit-button`}
@@ -601,7 +738,7 @@ const PublicProfile = () => {
                       : isBooking
                       ? "Processing..."
                       : selectedTimeSlot
-                      ? `Pay ${selectedService.price} USDC`
+                      ? `Pay ${usePointsForPayment && pointsCalculation ? pointsCalculation.usdcToPay.toFixed(2) : selectedService.price} USDC`
                       : "Select a time"}
                   </button>
                 </>
@@ -627,7 +764,7 @@ const PublicProfile = () => {
           setShowPaymentModal(false);
           setIsBooking(false);
         }}
-        amount={selectedService?.price || 0}
+        amount={usePointsForPayment && pointsCalculation ? pointsCalculation.usdcToPay : (selectedService?.price || 0)}
         currency="USDC"
         status={{
           status: paymentTransaction.status,
@@ -640,6 +777,11 @@ const PublicProfile = () => {
             handleBookingSubmit();
           }
         }}
+        pointsInfo={usePointsForPayment && pointsCalculation && pointsCalculation.pointsToUse > 0 ? {
+          pointsUsed: pointsCalculation.pointsToUse,
+          pointsValue: pointsCalculation.pointsValue,
+          originalAmount: pointsCalculation.originalPrice,
+        } : undefined}
       />
     </div>
   );

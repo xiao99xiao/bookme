@@ -22,6 +22,7 @@ import {
 } from "../cancellation-policies.js";
 import EIP712Signer from "../eip712-signer.js";
 import { withTransaction } from "../db.js";
+import pointsService from "../services/points-service.js";
 // BlockchainService removed - not needed since methods are commented out
 
 // Get Supabase admin client
@@ -128,6 +129,7 @@ export default function bookingRoutes(app) {
         price,
         location,
         is_online: isOnline,
+        use_points: usePoints = false,  // Whether to use points for payment
       } = body;
 
       if (!service_id || !scheduled_at) {
@@ -297,16 +299,41 @@ export default function bookingRoutes(app) {
           hasInviter,
         );
 
-        // Generate EIP-712 signature FIRST (following old code parameters)
+        // Calculate points usage if requested
+        let pointsData = {
+          pointsToUse: 0,
+          pointsValue: 0,
+          usdcToPay: booking.total_price,
+          originalPrice: booking.total_price
+        };
+
+        if (usePoints) {
+          const userPointsBalance = await pointsService.getBalance(userId);
+          if (userPointsBalance > 0) {
+            pointsData = pointsService.calculatePointsUsage(
+              booking.total_price,
+              userPointsBalance
+            );
+            console.log(`💎 Points calculation: ${pointsData.pointsToUse} points = $${pointsData.pointsValue}, USDC to pay: $${pointsData.usdcToPay}`);
+
+            // Reserve points (they'll be deducted after successful blockchain payment)
+            if (pointsData.pointsToUse > 0) {
+              await pointsService.reservePoints(userId, booking.id, pointsData.pointsToUse);
+            }
+          }
+        }
+
+        // Generate EIP-712 signature with originalAmount for fee calculation
         const authResult = await eip712Signer.signBookingAuthorization({
-          bookingId: booking.id, // Pass UUID as in old code
+          bookingId: booking.id,
           customer: customerAddress,
           provider: providerAddress,
           inviter: inviterAddress,
-          amount: booking.total_price,
+          amount: pointsData.usdcToPay,  // Actual USDC to pay (after points)
+          originalAmount: booking.total_price,  // Original service price (for fee calculation)
           platformFeeRate: feeData.platformFeeRate,
           inviterFeeRate: feeData.inviterFeeRate,
-          expiryMinutes: 5, // 5 minute expiry from old code
+          expiryMinutes: 5,
         });
 
         // Use the ACTUAL hashed bookingId from the authorization (this is what gets emitted on-chain)
@@ -317,12 +344,16 @@ export default function bookingRoutes(app) {
           blockchainBookingId,
         );
 
-        // Update booking with the SAME blockchain booking ID that will be emitted (from old code)
+        // Update booking with blockchain ID and points info
         const { error: updateError } = await supabaseAdmin
           .from("bookings")
           .update({
             blockchain_booking_id: blockchainBookingId,
             status: "pending_payment",
+            original_amount: booking.total_price,
+            points_used: pointsData.pointsToUse,
+            points_value: pointsData.pointsValue,
+            usdc_paid: pointsData.usdcToPay,
           })
           .eq("id", booking.id);
 
@@ -358,11 +389,15 @@ export default function bookingRoutes(app) {
           ...authResult.authorization,
           bookingId: authResult.authorization.bookingId.toString(),
           amount: authResult.authorization.amount.toString(),
+          originalAmount: authResult.authorization.originalAmount.toString(),
         };
 
         console.log(
           `✅ Booking creation with payment authorization | Booking ID: ${booking.id}`,
         );
+        if (pointsData.pointsToUse > 0) {
+          console.log(`💎 Points used: ${pointsData.pointsToUse} ($${pointsData.pointsValue})`);
+        }
 
         // Send notification emails asynchronously (don't await)
         setImmediate(async () => {
@@ -374,12 +409,16 @@ export default function bookingRoutes(app) {
           }
         });
 
-        // Return response in same format as old code
+        // Return response with points info
         return c.json({
           booking: {
             ...booking,
             status: "pending_payment",
             blockchain_booking_id: blockchainBookingId,
+            original_amount: booking.total_price,
+            points_used: pointsData.pointsToUse,
+            points_value: pointsData.pointsValue,
+            usdc_paid: pointsData.usdcToPay,
           },
           authorization: serializableAuthorization,
           signature: authResult.signature,
@@ -387,6 +426,12 @@ export default function bookingRoutes(app) {
           usdcAddress: process.env.USDC_ADDRESS,
           feeBreakdown: feeData,
           expiresAt: new Date(authResult.expiry * 1000).toISOString(),
+          pointsInfo: pointsData.pointsToUse > 0 ? {
+            pointsUsed: pointsData.pointsToUse,
+            pointsValue: pointsData.pointsValue,
+            usdcToPay: pointsData.usdcToPay,
+            originalPrice: pointsData.originalPrice,
+          } : null,
         });
       } catch (authError) {
         console.error("❌ Payment authorization error:", authError);
@@ -510,13 +555,18 @@ export default function bookingRoutes(app) {
           hasInviter,
         );
 
-        // Generate EIP-712 signature FIRST
+        // Use existing points data from booking or default to no points
+        const originalAmount = booking.original_amount || booking.total_price;
+        const usdcToPay = booking.usdc_paid || booking.total_price;
+
+        // Generate EIP-712 signature with originalAmount for fee calculation
         const authResult = await eip712Signer.signBookingAuthorization({
           bookingId: booking.id,
           customer: booking.customer.wallet_address,
           provider: booking.provider.wallet_address,
           inviter: inviterAddress,
-          amount: booking.total_price,
+          amount: usdcToPay,  // Actual USDC to pay (after any points)
+          originalAmount: originalAmount,  // Original service price (for fee calculation)
           platformFeeRate: feeData.platformFeeRate,
           inviterFeeRate: feeData.inviterFeeRate,
           expiryMinutes: 5, // 5 minute expiry
@@ -572,6 +622,7 @@ export default function bookingRoutes(app) {
           ...authResult.authorization,
           bookingId: authResult.authorization.bookingId.toString(),
           amount: authResult.authorization.amount.toString(),
+          originalAmount: authResult.authorization.originalAmount.toString(),
         };
 
         return c.json({
@@ -581,6 +632,12 @@ export default function bookingRoutes(app) {
           usdcAddress: process.env.USDC_ADDRESS,
           feeBreakdown: feeData,
           expiresAt: new Date(authResult.expiry * 1000).toISOString(),
+          pointsInfo: booking.points_used > 0 ? {
+            pointsUsed: booking.points_used,
+            pointsValue: booking.points_value,
+            usdcToPay: usdcToPay,
+            originalPrice: originalAmount,
+          } : null,
         });
       } catch (error) {
         console.error("❌ Payment authorization error:", error);
@@ -1959,4 +2016,181 @@ export default function bookingRoutes(app) {
       }
     },
   );
+
+  // ============ POINTS ENDPOINTS ============
+
+  /**
+   * GET /api/points/balance
+   *
+   * Get the current user's points balance and info.
+   *
+   * Headers:
+   * - Authorization: Bearer {privyToken}
+   *
+   * Response:
+   * - balance: Current points balance
+   * - totalEarned: Total points ever earned
+   * - totalSpent: Total points ever spent
+   *
+   * @param {Context} c - Hono context
+   * @returns {Response} JSON response with points info
+   */
+  app.get("/api/points/balance", verifyPrivyAuth, async (c) => {
+    try {
+      const userId = c.get("userId");
+      const pointsInfo = await pointsService.getPointsInfo(userId);
+
+      return c.json({
+        balance: pointsInfo.balance,
+        totalEarned: pointsInfo.totalEarned,
+        totalSpent: pointsInfo.totalSpent,
+        usdValue: pointsService.pointsToUsd(pointsInfo.balance),
+        updatedAt: pointsInfo.updatedAt,
+      });
+    } catch (error) {
+      console.error("Get points balance error:", error);
+      return c.json({ error: "Failed to get points balance" }, 500);
+    }
+  });
+
+  /**
+   * GET /api/points/history
+   *
+   * Get the current user's points transaction history.
+   *
+   * Headers:
+   * - Authorization: Bearer {privyToken}
+   *
+   * Query Parameters:
+   * - limit: Max transactions to return (default 50)
+   * - offset: Pagination offset (default 0)
+   *
+   * Response:
+   * - transactions: Array of point transactions
+   *
+   * @param {Context} c - Hono context
+   * @returns {Response} JSON response with transaction history
+   */
+  app.get("/api/points/history", verifyPrivyAuth, async (c) => {
+    try {
+      const userId = c.get("userId");
+      const limit = parseInt(c.req.query("limit") || "50");
+      const offset = parseInt(c.req.query("offset") || "0");
+
+      const transactions = await pointsService.getTransactionHistory(
+        userId,
+        limit,
+        offset
+      );
+
+      return c.json({ transactions });
+    } catch (error) {
+      console.error("Get points history error:", error);
+      return c.json({ error: "Failed to get points history" }, 500);
+    }
+  });
+
+  /**
+   * POST /api/points/calculate
+   *
+   * Calculate how many points can be used for a service price.
+   * This is a preview endpoint - no points are reserved.
+   *
+   * Headers:
+   * - Authorization: Bearer {privyToken}
+   *
+   * Body:
+   * - service_price: The service price in USD
+   *
+   * Response:
+   * - pointsToUse: Points that would be used
+   * - pointsValue: USD value of points
+   * - usdcToPay: Remaining USDC to pay
+   * - originalPrice: Original service price
+   *
+   * @param {Context} c - Hono context
+   * @returns {Response} JSON response with points calculation
+   */
+  app.post("/api/points/calculate", verifyPrivyAuth, async (c) => {
+    try {
+      const userId = c.get("userId");
+      const body = await c.req.json();
+      const { service_price: servicePrice } = body;
+
+      if (!servicePrice || servicePrice <= 0) {
+        return c.json({ error: "Valid service price required" }, 400);
+      }
+
+      const userBalance = await pointsService.getBalance(userId);
+      const calculation = pointsService.calculatePointsUsage(
+        servicePrice,
+        userBalance
+      );
+
+      return c.json({
+        ...calculation,
+        currentBalance: userBalance,
+      });
+    } catch (error) {
+      console.error("Calculate points error:", error);
+      return c.json({ error: "Failed to calculate points" }, 500);
+    }
+  });
+
+  /**
+   * POST /api/points/record-funding
+   *
+   * Record a wallet funding event and award points based on fee amount.
+   * Called by frontend after successful funding completion.
+   *
+   * Request body:
+   * - usdc_amount: Amount of USDC funded
+   * - fee_amount: Fee charged by payment provider (e.g., 1-2% of amount)
+   * - transaction_hash: Optional blockchain transaction hash
+   * - funding_method: Method used (card, crypto, etc.)
+   *
+   * @param {Context} c - Hono context
+   * @returns {Response} JSON response with points awarded info
+   */
+  app.post("/api/points/record-funding", verifyPrivyAuth, async (c) => {
+    try {
+      const userId = c.get("userId");
+      const body = await c.req.json();
+      const {
+        usdc_amount: usdcAmount,
+        fee_amount: feeAmount,
+        transaction_hash: transactionHash,
+        funding_method: fundingMethod = 'card'
+      } = body;
+
+      if (!usdcAmount || usdcAmount <= 0) {
+        return c.json({ error: "Valid USDC amount required" }, 400);
+      }
+
+      if (!feeAmount || feeAmount < 0) {
+        return c.json({ error: "Valid fee amount required" }, 400);
+      }
+
+      // Award points based on fee amount
+      const result = await pointsService.awardPointsForFunding(
+        userId,
+        usdcAmount,
+        feeAmount,
+        transactionHash || `funding-${Date.now()}`,
+        fundingMethod
+      );
+
+      return c.json({
+        success: true,
+        pointsAwarded: result.pointsAwarded,
+        newBalance: result.newBalance,
+        message: result.pointsAwarded > 0
+          ? `You earned ${result.pointsAwarded} points ($${(result.pointsAwarded / 100).toFixed(2)}) for this funding!`
+          : 'Funding recorded successfully'
+      });
+    } catch (error) {
+      console.error("Record funding error:", error);
+      return c.json({ error: "Failed to record funding" }, 500);
+    }
+  });
 }

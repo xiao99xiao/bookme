@@ -392,4 +392,63 @@ export class BackendAPI {
   }> {
     return this.request(`/api/referrals/validate/${code}`);
   }
+
+  // Points APIs
+  async getPointsBalance(): Promise<{
+    balance: number
+    totalEarned: number
+    totalSpent: number
+    usdValue: number
+    updatedAt: string | null
+  }> {
+    return this.request('/api/points/balance');
+  }
+
+  async getPointsHistory(limit: number = 50, offset: number = 0): Promise<{
+    transactions: Array<{
+      id: string
+      type: string
+      amount: number
+      description: string
+      referenceId: string | null
+      createdAt: string
+    }>
+  }> {
+    return this.request(`/api/points/history?limit=${limit}&offset=${offset}`);
+  }
+
+  async calculatePointsForService(servicePrice: number): Promise<{
+    pointsToUse: number
+    pointsValue: number
+    usdcToPay: number
+    originalPrice: number
+    currentBalance: number
+  }> {
+    return this.request('/api/points/calculate', {
+      method: 'POST',
+      body: JSON.stringify({ service_price: servicePrice })
+    });
+  }
+
+  async recordFunding(params: {
+    usdcAmount: number
+    feeAmount: number
+    transactionHash?: string
+    fundingMethod?: string
+  }): Promise<{
+    success: boolean
+    pointsAwarded: number
+    newBalance: number
+    message: string
+  }> {
+    return this.request('/api/points/record-funding', {
+      method: 'POST',
+      body: JSON.stringify({
+        usdc_amount: params.usdcAmount,
+        fee_amount: params.feeAmount,
+        transaction_hash: params.transactionHash,
+        funding_method: params.fundingMethod || 'card'
+      })
+    });
+  }
 }

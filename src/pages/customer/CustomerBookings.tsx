@@ -693,9 +693,27 @@ export default function CustomerBookings() {
                           )}
                         </div>
 
-                        {/* Total Price */}
+                        {/* Total Price with Points Info */}
                         <div className="text-lg font-bold text-black font-body">
-                          Total: {booking.status === 'pending_payment' ? `${booking.total_price} USDC` : `$${booking.total_price}`}
+                          {booking.points_used && booking.points_used > 0 ? (
+                            <div className="flex flex-col gap-1">
+                              <span className="text-sm font-normal text-[#666666]">
+                                Original: ${booking.original_amount?.toFixed(2) || booking.total_price}
+                              </span>
+                              <span className="text-sm font-normal text-emerald-600">
+                                Points: -{booking.points_used} pts (-${booking.points_value?.toFixed(2)})
+                              </span>
+                              <span>
+                                {booking.status === 'pending_payment'
+                                  ? `Pay: ${booking.usdc_paid?.toFixed(2) || booking.total_price} USDC`
+                                  : `Paid: $${booking.usdc_paid?.toFixed(2) || booking.total_price}`}
+                              </span>
+                            </div>
+                          ) : (
+                            <span>
+                              Total: {booking.status === 'pending_payment' ? `${booking.total_price} USDC` : `$${booking.total_price}`}
+                            </span>
+                          )}
                         </div>
                       </div>
 
@@ -824,7 +842,7 @@ export default function CustomerBookings() {
                                 disabled={!isWalletConnected || payingBookingId === booking.id}
                                 icon={<CreditCard className="w-5 h-5" />}
                               >
-                                {payingBookingId === booking.id ? 'Processing...' : `Pay ${booking.total_price} USDC`}
+                                {payingBookingId === booking.id ? 'Processing...' : `Pay ${(booking.usdc_paid ?? booking.total_price).toFixed(2)} USDC`}
                               </DSButton>
                             </>
                           )}
@@ -1133,9 +1151,20 @@ export default function CustomerBookings() {
                           )}
                         </div>
 
-                        {/* Total Price */}
+                        {/* Total Price with Points Info */}
                         <div className="text-base sm:text-lg font-bold text-black font-body">
-                          Total: ${booking.total_price}
+                          {booking.points_used && booking.points_used > 0 ? (
+                            <div className="flex flex-col items-end gap-0.5">
+                              <span className="text-xs font-normal text-emerald-600">
+                                -{booking.points_used} pts
+                              </span>
+                              <span>
+                                ${booking.usdc_paid?.toFixed(2) || booking.total_price}
+                              </span>
+                            </div>
+                          ) : (
+                            <span>Total: ${booking.total_price}</span>
+                          )}
                         </div>
                       </div>
 

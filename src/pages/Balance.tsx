@@ -1,17 +1,19 @@
 import { useState, useEffect } from 'react';
-import { usePrivy, useWallets, useFundWallet } from '@privy-io/react-auth';
+import { usePrivy, useWallets } from '@privy-io/react-auth';
 import { useSmartWallets } from '@privy-io/react-auth/smart-wallets';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge as DSBadge } from '@/design-system';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { Copy, Wallet, RefreshCw, ExternalLink, Plus, CreditCard, TrendingUp, Calendar, User } from 'lucide-react';
+import { Copy, Wallet, RefreshCw, ExternalLink, Plus, CreditCard, TrendingUp, Calendar, User, Coins, History, ArrowUpRight, ArrowDownRight, Gift } from 'lucide-react';
 import { createPublicClient, http, formatUnits, type Address } from 'viem';
 import { base, baseSepolia } from 'viem/chains';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient, type IncomeTransaction } from '@/lib/api-migration';
-import { H1, H2 } from '@/design-system';
+import { H1 } from '@/design-system';
+import { usePoints } from '@/hooks/usePoints';
+import { useFunding } from '@/hooks/useFunding';
 
 // USDC contract addresses
 const USDC_ADDRESS_BASE = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913' as Address;
@@ -41,32 +43,51 @@ interface TokenBalance {
   formatted: string;
 }
 
+interface PointsTransaction {
+  id: string;
+  type: string;
+  amount: number;
+  description: string;
+  referenceId: string | null;
+  createdAt: string;
+}
+
 
 export default function Balance() {
   const { user, ready: privyReady } = usePrivy();
   const { wallets, ready: walletsReady } = useWallets();
   const { client: smartWalletClient } = useSmartWallets();
   const { authenticated, loading: authLoading, userId, profile } = useAuth();
-  const { fundWallet } = useFundWallet({
-    onUserExited: ({ balance, address }) => {
-      if (walletInfo?.address === address) {
-        fetchBalances();
-      }
-    }
-  });
-  
+
+  // Use global funding hook with points earning
+  const { fundWallet } = useFunding();
+
   const [walletInfo, setWalletInfo] = useState<WalletInfo | null>(null);
   const [usdcBalance, setUsdcBalance] = useState<TokenBalance | null>(null);
   const [nativeBalance, setNativeBalance] = useState<string>('0');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [fundingInProgress, setFundingInProgress] = useState(false);
-  
+
   // Income transactions state
   const [incomeTransactions, setIncomeTransactions] = useState<IncomeTransaction[]>([]);
   const [loadingIncome, setLoadingIncome] = useState(true);
   const [totalIncome, setTotalIncome] = useState(0);
-  
+
+  // Points history state
+  const [pointsHistory, setPointsHistory] = useState<PointsTransaction[]>([]);
+  const [loadingPointsHistory, setLoadingPointsHistory] = useState(false);
+
+  // Points system
+  const {
+    balance: pointsBalance,
+    usdValue: pointsUsdValue,
+    loading: pointsLoading,
+    refreshBalance: refreshPoints,
+    formatPoints,
+    fetchHistory: fetchPointsHistory
+  } = usePoints();
+
   const isProduction = import.meta.env.MODE === 'production';
   const chain = isProduction ? base : baseSepolia;
   const usdcAddress = isProduction ? USDC_ADDRESS_BASE : USDC_ADDRESS_BASE_SEPOLIA;
@@ -141,13 +162,13 @@ export default function Balance() {
   const loadIncomeTransactions = async () => {
     try {
       setLoadingIncome(true);
-      
+
       // Use real API call to get income transactions
       const response = await ApiClient.getIncomeTransactions(50, 0);
-      
+
       setIncomeTransactions(response.transactions);
       setTotalIncome(response.totalIncome);
-      
+
     } catch (error) {
       console.error('Failed to load income transactions:', error);
       toast.error('Failed to load income transactions');
@@ -158,6 +179,25 @@ export default function Balance() {
       setLoadingIncome(false);
     }
   };
+
+  const loadPointsHistory = async () => {
+    try {
+      setLoadingPointsHistory(true);
+      const transactions = await fetchPointsHistory(20, 0);
+      setPointsHistory(transactions);
+    } catch (error) {
+      console.error('Failed to load points history:', error);
+    } finally {
+      setLoadingPointsHistory(false);
+    }
+  };
+
+  // Load points history on mount
+  useEffect(() => {
+    if (userId) {
+      loadPointsHistory();
+    }
+  }, [userId]);
 
   const fetchBalances = async () => {
     if (!walletInfo?.address) return;
@@ -214,30 +254,20 @@ export default function Balance() {
       return;
     }
 
-    try {
-      setFundingInProgress(true);
-      await fundWallet({
-        address: walletInfo.address,
-        options: {
-          chain,
-          asset: 'USDC',
-          amount: '10',
-          defaultFundingMethod: 'card',
-          card: {
-            preferredProvider: 'moonpay'
-          },
-          uiConfig: {
-            receiveFundsTitle: 'Fund Your Wallet with USDC',
-            receiveFundsSubtitle: `Add USDC to your wallet on ${chain.name} to start using the platform.`
-          }
-        }
-      });
-    } catch (error) {
-      console.error('Funding error:', error);
-      toast.error('Failed to initiate funding');
-    } finally {
-      setFundingInProgress(false);
-    }
+    setFundingInProgress(true);
+    await fundWallet({
+      amount: '10',
+      onSuccess: (fundedAmount, pointsAwarded) => {
+        // Refresh balances and points after successful funding
+        fetchBalances();
+        refreshPoints();
+        loadPointsHistory();
+      },
+      onError: (error) => {
+        console.error('Funding error:', error);
+      }
+    });
+    setFundingInProgress(false);
   };
 
   const getWalletTypeBadge = (type: WalletInfo['type']) => {
@@ -429,6 +459,105 @@ export default function Balance() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Points Balance Card */}
+          <Card className="border-emerald-200 bg-emerald-50/30">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Coins className="w-5 h-5 text-emerald-600" />
+                  Points Balance
+                </CardTitle>
+                <Button size="sm" variant="ghost" onClick={refreshPoints} disabled={pointsLoading}>
+                  <RefreshCw className={`w-4 h-4 ${pointsLoading ? 'animate-spin' : ''}`} />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="text-2xl font-bold text-emerald-600">
+                  {pointsLoading ? (
+                    <Skeleton className="h-8 w-24" />
+                  ) : (
+                    <>
+                      {formatPoints(pointsBalance)}
+                      <span className="text-sm text-gray-500 ml-1">pts</span>
+                    </>
+                  )}
+                </div>
+                <p className="text-sm text-gray-600">
+                  ≈ ${pointsUsdValue.toFixed(2)} USD
+                </p>
+                <p className="text-xs text-gray-500 mt-2">
+                  Use points to get up to 5% off on service bookings. Earn points when you fund your wallet with a credit card.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Points History Card */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <History className="w-5 h-5 text-gray-600" />
+                  Points History
+                </CardTitle>
+                <Button size="sm" variant="ghost" onClick={loadPointsHistory} disabled={loadingPointsHistory}>
+                  <RefreshCw className={`w-4 h-4 ${loadingPointsHistory ? 'animate-spin' : ''}`} />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {loadingPointsHistory ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-12 w-full" />
+                  ))}
+                </div>
+              ) : pointsHistory.length === 0 ? (
+                <div className="text-center py-6">
+                  <Gift className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                  <p className="text-gray-500 text-sm">No points history yet</p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Earn points by funding with credit card
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-64 overflow-y-auto">
+                  {pointsHistory.map((tx) => (
+                    <div key={tx.id} className="flex items-center justify-between p-2 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-1.5 rounded-full ${tx.amount > 0 ? 'bg-emerald-100' : 'bg-orange-100'}`}>
+                          {tx.amount > 0 ? (
+                            <ArrowDownRight className="w-4 h-4 text-emerald-600" />
+                          ) : (
+                            <ArrowUpRight className="w-4 h-4 text-orange-600" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium capitalize">
+                            {tx.type.replace(/_/g, ' ')}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {new Date(tx.createdAt).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                      <div className={`text-sm font-semibold ${tx.amount > 0 ? 'text-emerald-600' : 'text-orange-600'}`}>
+                        {tx.amount > 0 ? '+' : ''}{formatPoints(tx.amount)} pts
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Quick Actions for empty balance */}
           {parseFloat(usdcBalance?.formatted || '0') === 0 && (

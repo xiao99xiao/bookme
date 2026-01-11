@@ -30,7 +30,8 @@ contract BookingEscrow is EIP712, Ownable, Pausable, ReentrancyGuard {
         address customer;        // Customer wallet address
         address provider;        // Provider wallet address
         address inviter;         // Inviter wallet (address(0) if no inviter)
-        uint256 amount;          // USDC amount in wei
+        uint256 amount;          // Actual USDC amount paid (may be less than original if points used)
+        uint256 originalAmount;  // Original service price (used for fee calculation)
         uint256 platformFeeRate; // Platform fee rate for this booking (basis points)
         uint256 inviterFeeRate;  // Inviter fee rate for this booking (basis points)
         BookingStatus status;    // Current booking state
@@ -42,7 +43,8 @@ contract BookingEscrow is EIP712, Ownable, Pausable, ReentrancyGuard {
         address customer;
         address provider;
         address inviter;
-        uint256 amount;
+        uint256 amount;          // Actual USDC to pay (may be less if points used)
+        uint256 originalAmount;  // Original service price (for fee calculation)
         uint256 platformFeeRate;
         uint256 inviterFeeRate;
         uint256 expiry;          // Signature expiry timestamp
@@ -83,7 +85,7 @@ contract BookingEscrow is EIP712, Ownable, Pausable, ReentrancyGuard {
 
     bytes32 private constant BOOKING_AUTHORIZATION_TYPEHASH =
         keccak256(
-            "BookingAuthorization(bytes32 bookingId,address customer,address provider,address inviter,uint256 amount,uint256 platformFeeRate,uint256 inviterFeeRate,uint256 expiry,uint256 nonce)"
+            "BookingAuthorization(bytes32 bookingId,address customer,address provider,address inviter,uint256 amount,uint256 originalAmount,uint256 platformFeeRate,uint256 inviterFeeRate,uint256 expiry,uint256 nonce)"
         );
 
     bytes32 private constant CANCELLATION_AUTHORIZATION_TYPEHASH =
@@ -169,11 +171,19 @@ contract BookingEscrow is EIP712, Ownable, Pausable, ReentrancyGuard {
         // Verify backend signature using EIP-712
         _verifyBookingAuthorization(auth, signature);
 
-        // Validate addresses
+        // Validate addresses and amounts
         require(auth.customer != address(0), "BookingEscrow: invalid customer");
         require(auth.provider != address(0), "BookingEscrow: invalid provider");
         require(auth.amount > 0, "BookingEscrow: amount must be positive");
+        require(auth.originalAmount >= auth.amount, "BookingEscrow: original amount must be >= amount");
         require(msg.sender == auth.customer, "BookingEscrow: only authorized customer");
+
+        // Validate that provider + inviter can be paid from amount
+        // Provider gets: originalAmount * (10000 - platformFeeRate - inviterFeeRate) / 10000
+        // Inviter gets: originalAmount * inviterFeeRate / 10000
+        uint256 providerAmount = (auth.originalAmount * (10000 - auth.platformFeeRate - auth.inviterFeeRate)) / 10000;
+        uint256 inviterAmount = (auth.originalAmount * auth.inviterFeeRate) / 10000;
+        require(auth.amount >= providerAmount + inviterAmount, "BookingEscrow: amount insufficient for provider + inviter");
 
         // Create booking
         Booking storage booking = bookings[auth.bookingId];
@@ -184,6 +194,7 @@ contract BookingEscrow is EIP712, Ownable, Pausable, ReentrancyGuard {
         booking.provider = auth.provider;
         booking.inviter = auth.inviter;
         booking.amount = auth.amount;
+        booking.originalAmount = auth.originalAmount;
         booking.platformFeeRate = auth.platformFeeRate;
         booking.inviterFeeRate = auth.inviterFeeRate;
         booking.status = BookingStatus.Paid;
@@ -227,18 +238,25 @@ contract BookingEscrow is EIP712, Ownable, Pausable, ReentrancyGuard {
         // Update status
         booking.status = BookingStatus.Completed;
 
-        // Calculate distribution
-        uint256 platformFee = (booking.amount * booking.platformFeeRate) / 10000;
+        // Calculate distribution based on ORIGINAL amount (not actual paid amount)
+        // This ensures provider gets their full share even when points are used
+        uint256 providerAmount = (booking.originalAmount * (10000 - booking.platformFeeRate - booking.inviterFeeRate)) / 10000;
         uint256 inviterFee = 0;
         if (booking.inviter != address(0)) {
-            inviterFee = (booking.amount * booking.inviterFeeRate) / 10000;
+            inviterFee = (booking.originalAmount * booking.inviterFeeRate) / 10000;
         }
-        uint256 providerAmount = booking.amount - platformFee - inviterFee;
+
+        // Platform gets whatever is left after paying provider and inviter
+        // This may be less than expected if points were used (platform absorbs the cost)
+        uint256 platformFee = booking.amount - providerAmount - inviterFee;
 
         // Distribute funds
         require(USDC.transfer(booking.provider, providerAmount), "BookingEscrow: provider transfer failed");
-        require(USDC.transfer(platformFeeWallet, platformFee), "BookingEscrow: platform transfer failed");
-        
+
+        if (platformFee > 0) {
+            require(USDC.transfer(platformFeeWallet, platformFee), "BookingEscrow: platform transfer failed");
+        }
+
         if (inviterFee > 0 && booking.inviter != address(0)) {
             require(USDC.transfer(booking.inviter, inviterFee), "BookingEscrow: inviter transfer failed");
         }
@@ -410,6 +428,7 @@ contract BookingEscrow is EIP712, Ownable, Pausable, ReentrancyGuard {
                 auth.provider,
                 auth.inviter,
                 auth.amount,
+                auth.originalAmount,
                 auth.platformFeeRate,
                 auth.inviterFeeRate,
                 auth.expiry,

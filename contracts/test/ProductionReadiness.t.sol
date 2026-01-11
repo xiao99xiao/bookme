@@ -25,7 +25,7 @@ contract ProductionReadinessTest is Test {
     
     bytes32 private constant BOOKING_AUTHORIZATION_TYPEHASH =
         keccak256(
-            "BookingAuthorization(bytes32 bookingId,address customer,address provider,address inviter,uint256 amount,uint256 platformFeeRate,uint256 inviterFeeRate,uint256 expiry,uint256 nonce)"
+            "BookingAuthorization(bytes32 bookingId,address customer,address provider,address inviter,uint256 amount,uint256 originalAmount,uint256 platformFeeRate,uint256 inviterFeeRate,uint256 expiry,uint256 nonce)"
         );
 
     function setUp() public {
@@ -97,6 +97,7 @@ contract ProductionReadinessTest is Test {
             provider: provider,
             inviter: inviter,
             amount: amount,
+            originalAmount: amount,
             platformFeeRate: 1500, // 15%
             inviterFeeRate: 500,   // 5%
             expiry: block.timestamp + 1 hours,
@@ -116,6 +117,7 @@ contract ProductionReadinessTest is Test {
                 address bookingProvider,
                 address bookingInviter,
                 uint256 bookingAmount,
+                uint256 bookingOriginalAmount,
                 uint256 platformFeeRate,
                 uint256 inviterFeeRate,
                 BookingEscrow.BookingStatus status,
@@ -136,7 +138,7 @@ contract ProductionReadinessTest is Test {
         escrow.completeService(bookingId);
         
         // 4. Verify final state and distributions
-        (, , , , , , , BookingEscrow.BookingStatus finalStatus, ) = escrow.bookings(bookingId);
+        (, , , , , , , , BookingEscrow.BookingStatus finalStatus, ) = escrow.bookings(bookingId);
         assertEq(uint256(finalStatus), uint256(BookingEscrow.BookingStatus.Completed));
         
         uint256 expectedPlatformFee = amount * 1500 / 10000; // 150 USDC
@@ -163,6 +165,7 @@ contract ProductionReadinessTest is Test {
                 provider: provider,
                 inviter: address(0), // No inviter for simplicity
                 amount: 100e6 * i,   // Varying amounts
+                originalAmount: 100e6 * i,
                 platformFeeRate: 1000 + uint256(i * 100), // Varying fees
                 inviterFeeRate: 0,
                 expiry: block.timestamp + 1 hours,
@@ -175,7 +178,7 @@ contract ProductionReadinessTest is Test {
             escrow.createAndPayBooking(auth, signature);
             
             // Verify booking was created
-            (bytes32 id, , , , , , , , ) = escrow.bookings(bookingId);
+            (bytes32 id, , , , , , , , , ) = escrow.bookings(bookingId);
             assertEq(id, bookingId);
         }
         
@@ -223,6 +226,7 @@ contract ProductionReadinessTest is Test {
             provider: provider,
             inviter: address(0),
             amount: 1000e6,
+            originalAmount: 1000e6,
             platformFeeRate: 1500,
             inviterFeeRate: 0,
             expiry: block.timestamp + 1 hours,
@@ -258,6 +262,7 @@ contract ProductionReadinessTest is Test {
             provider: provider,
             inviter: address(0), // No inviter
             amount: 1000e6,
+            originalAmount: 1000e6,
             platformFeeRate: 1500,
             inviterFeeRate: 500, // Fee rate set but no inviter
             expiry: block.timestamp + 1 hours,
@@ -275,10 +280,12 @@ contract ProductionReadinessTest is Test {
         
         // Verify inviter fee is not distributed
         assertEq(usdc.balanceOf(address(0)), 0);
-        
-        // Provider should get inviter's portion
-        uint256 platformFee = 1000e6 * 1500 / 10000;
-        uint256 expectedProviderAmount = 1000e6 - platformFee; // No inviter fee deducted
+
+        // With the new originalAmount-based calculation:
+        // Provider gets: originalAmount * (10000 - platformFeeRate - inviterFeeRate) / 10000
+        // = 1000e6 * (10000 - 1500 - 500) / 10000 = 800e6
+        // Platform gets the remainder: 1000e6 - 800e6 = 200e6 (including unused inviter fee)
+        uint256 expectedProviderAmount = 1000e6 * (10000 - 1500 - 500) / 10000;
         assertEq(usdc.balanceOf(provider), expectedProviderAmount);
     }
     
@@ -295,6 +302,7 @@ contract ProductionReadinessTest is Test {
             provider: provider,
             inviter: inviter,
             amount: minAmount,
+            originalAmount: minAmount,
             platformFeeRate: 1500,
             inviterFeeRate: 500,
             expiry: block.timestamp + 1 hours,
@@ -333,6 +341,7 @@ contract ProductionReadinessTest is Test {
             provider: provider,
             inviter: inviter,
             amount: 1000e6,
+            originalAmount: 1000e6,
             platformFeeRate: 1500,
             inviterFeeRate: 500,
             expiry: block.timestamp + 1 hours,
@@ -388,6 +397,7 @@ contract ProductionReadinessTest is Test {
                 auth.provider,
                 auth.inviter,
                 auth.amount,
+                auth.originalAmount,
                 auth.platformFeeRate,
                 auth.inviterFeeRate,
                 auth.expiry,

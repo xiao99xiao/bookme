@@ -32,6 +32,7 @@ class EIP712Signer {
         { name: "provider", type: "address" },
         { name: "inviter", type: "address" },
         { name: "amount", type: "uint256" },
+        { name: "originalAmount", type: "uint256" },  // Original service price (for fee calculation)
         { name: "platformFeeRate", type: "uint256" },
         { name: "inviterFeeRate", type: "uint256" },
         { name: "expiry", type: "uint256" },
@@ -64,6 +65,17 @@ class EIP712Signer {
 
   /**
    * Generate booking authorization signature
+   *
+   * @param {Object} params
+   * @param {string} params.bookingId - The booking ID
+   * @param {string} params.customer - Customer wallet address
+   * @param {string} params.provider - Provider wallet address
+   * @param {string} params.inviter - Inviter wallet address (optional)
+   * @param {number} params.amount - Actual USDC amount to pay (after points deduction)
+   * @param {number} params.originalAmount - Original service price in USDC (for fee calculation)
+   * @param {number} params.platformFeeRate - Platform fee rate (basis points, default 1000 = 10%)
+   * @param {number} params.inviterFeeRate - Inviter fee rate (basis points, default 0)
+   * @param {number} params.expiryMinutes - Signature expiry in minutes (default 5)
    */
   async signBookingAuthorization({
     bookingId,
@@ -71,6 +83,7 @@ class EIP712Signer {
     provider,
     inviter = ethers.ZeroAddress,
     amount,
+    originalAmount = null,  // If not specified, uses amount (no points used)
     platformFeeRate = 1000, // 10% default
     inviterFeeRate = 0,     // 0% default (5% if inviter exists)
     expiryMinutes = 5       // 5 minutes default
@@ -78,44 +91,48 @@ class EIP712Signer {
     try {
       const expiry = Math.floor(Date.now() / 1000) + (expiryMinutes * 60)
       const nonce = this.generateNonce()
-      
+
       // Convert booking ID to bytes32
       const bookingIdBytes = ethers.keccak256(ethers.toUtf8Bytes(bookingId))
-      
-      // Convert amount to USDC wei (6 decimals)
+
+      // Convert amounts to USDC wei (6 decimals)
       const amountWei = ethers.parseUnits(amount.toString(), 6)
-      
+      // originalAmount defaults to amount if not specified (no points used)
+      const originalAmountWei = ethers.parseUnits((originalAmount ?? amount).toString(), 6)
+
       const authorizationData = {
         bookingId: bookingIdBytes,
         customer,
         provider,
         inviter: inviter || ethers.ZeroAddress,
         amount: amountWei,
+        originalAmount: originalAmountWei,
         platformFeeRate,
         inviterFeeRate,
         expiry,
         nonce
       }
-      
+
       // Sign the structured data
       const signature = await this.backendSigner.signTypedData(
         this.domain,
         { BookingAuthorization: this.types.BookingAuthorization },
         authorizationData
       )
-      
+
       console.log('✅ Generated booking authorization signature')
       console.log('Booking ID:', bookingId)
-      console.log('Amount:', amount, 'USDC')
+      console.log('Amount:', amount, 'USDC (paid)')
+      console.log('Original Amount:', originalAmount ?? amount, 'USDC (for fee calculation)')
       console.log('Expiry:', new Date(expiry * 1000).toISOString())
-      
+
       return {
         authorization: authorizationData,
         signature,
         expiry,
         nonce
       }
-      
+
     } catch (error) {
       console.error('❌ Error signing booking authorization:', error)
       throw error

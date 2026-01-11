@@ -154,6 +154,11 @@
         "internalType": "uint256"
       },
       {
+        "name": "originalAmount",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
         "name": "platformFeeRate",
         "type": "uint256",
         "internalType": "uint256"
@@ -368,6 +373,11 @@
           },
           {
             "name": "amount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "originalAmount",
             "type": "uint256",
             "internalType": "uint256"
           },

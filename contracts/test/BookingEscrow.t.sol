@@ -35,7 +35,7 @@ contract BookingEscrowTest is Test {
     // Type hashes
     bytes32 private constant BOOKING_AUTHORIZATION_TYPEHASH =
         keccak256(
-            "BookingAuthorization(bytes32 bookingId,address customer,address provider,address inviter,uint256 amount,uint256 platformFeeRate,uint256 inviterFeeRate,uint256 expiry,uint256 nonce)"
+            "BookingAuthorization(bytes32 bookingId,address customer,address provider,address inviter,uint256 amount,uint256 originalAmount,uint256 platformFeeRate,uint256 inviterFeeRate,uint256 expiry,uint256 nonce)"
         );
 
     bytes32 private constant CANCELLATION_AUTHORIZATION_TYPEHASH =
@@ -143,6 +143,7 @@ contract BookingEscrowTest is Test {
             provider: provider,
             inviter: inviter,
             amount: AMOUNT,
+            originalAmount: AMOUNT,
             platformFeeRate: PLATFORM_FEE_RATE,
             inviterFeeRate: INVITER_FEE_RATE,
             expiry: block.timestamp + 1 hours,
@@ -166,6 +167,7 @@ contract BookingEscrowTest is Test {
             address bookingProvider,
             address bookingInviter,
             uint256 amount,
+            uint256 originalAmount,
             uint256 platformFeeRate,
             uint256 inviterFeeRate,
             BookingEscrow.BookingStatus status,
@@ -199,6 +201,7 @@ contract BookingEscrowTest is Test {
             provider: provider,
             inviter: inviter,
             amount: AMOUNT,
+            originalAmount: AMOUNT,
             platformFeeRate: PLATFORM_FEE_RATE,
             inviterFeeRate: INVITER_FEE_RATE,
             expiry: block.timestamp - 1, // Expired
@@ -222,6 +225,7 @@ contract BookingEscrowTest is Test {
             provider: provider,
             inviter: inviter,
             amount: AMOUNT,
+            originalAmount: AMOUNT,
             platformFeeRate: PLATFORM_FEE_RATE,
             inviterFeeRate: INVITER_FEE_RATE,
             expiry: block.timestamp + 1 hours,
@@ -242,6 +246,7 @@ contract BookingEscrowTest is Test {
             provider: provider,
             inviter: inviter,
             amount: AMOUNT,
+            originalAmount: AMOUNT,
             platformFeeRate: PLATFORM_FEE_RATE,
             inviterFeeRate: INVITER_FEE_RATE,
             expiry: block.timestamp + 1 hours,
@@ -264,6 +269,7 @@ contract BookingEscrowTest is Test {
             provider: provider,
             inviter: inviter,
             amount: AMOUNT,
+            originalAmount: AMOUNT,
             platformFeeRate: 2500, // 25% > 20% max
             inviterFeeRate: INVITER_FEE_RATE,
             expiry: block.timestamp + 1 hours,
@@ -286,6 +292,7 @@ contract BookingEscrowTest is Test {
             provider: provider,
             inviter: inviter,
             amount: AMOUNT,
+            originalAmount: AMOUNT,
             platformFeeRate: PLATFORM_FEE_RATE,
             inviterFeeRate: 1500, // 15% > 10% max
             expiry: block.timestamp + 1 hours,
@@ -308,6 +315,7 @@ contract BookingEscrowTest is Test {
             provider: provider,
             inviter: inviter,
             amount: AMOUNT,
+            originalAmount: AMOUNT,
             platformFeeRate: 2000, // 20% (at max individual limit)
             inviterFeeRate: 1100, // 11% -> total 31% > 30% max
             expiry: block.timestamp + 1 hours,
@@ -330,6 +338,7 @@ contract BookingEscrowTest is Test {
             provider: provider,
             inviter: inviter,
             amount: AMOUNT,
+            originalAmount: AMOUNT,
             platformFeeRate: 2000, // 20% (at max individual limit)
             inviterFeeRate: 1000,  // 10% (at max individual limit)
             // Total: 30% (at max combined limit)
@@ -344,7 +353,7 @@ contract BookingEscrowTest is Test {
         escrow.createAndPayBooking(auth, signature);
 
         // Verify booking was created
-        (bytes32 id, , , , , , , BookingEscrow.BookingStatus status, ) = escrow.bookings(bookingId);
+        (bytes32 id, , , , , , , , BookingEscrow.BookingStatus status, ) = escrow.bookings(bookingId);
         assertEq(id, bookingId);
         assertEq(uint256(status), uint256(BookingEscrow.BookingStatus.Paid));
     }
@@ -358,6 +367,7 @@ contract BookingEscrowTest is Test {
             provider: provider,
             inviter: inviter,
             amount: AMOUNT,
+            originalAmount: AMOUNT,
             platformFeeRate: PLATFORM_FEE_RATE,
             inviterFeeRate: INVITER_FEE_RATE,
             expiry: block.timestamp + 1 hours,
@@ -390,7 +400,7 @@ contract BookingEscrowTest is Test {
         escrow.completeService(bookingId);
 
         // Verify booking status
-        (, , , , , , , BookingEscrow.BookingStatus status, ) = escrow.bookings(bookingId);
+        (, , , , , , , , BookingEscrow.BookingStatus status, ) = escrow.bookings(bookingId);
         assertEq(uint256(status), uint256(BookingEscrow.BookingStatus.Completed));
 
         // Verify fund distribution
@@ -455,6 +465,7 @@ contract BookingEscrowTest is Test {
                 auth.provider,
                 auth.inviter,
                 auth.amount,
+                auth.originalAmount,
                 auth.platformFeeRate,
                 auth.inviterFeeRate,
                 auth.expiry,
@@ -518,7 +529,7 @@ contract BookingEscrowTest is Test {
         escrow.cancelBookingAsCustomer(bookingId, auth, signature);
 
         // Verify booking status
-        (, , , , , , , BookingEscrow.BookingStatus status, ) = escrow.bookings(bookingId);
+        (, , , , , , , , BookingEscrow.BookingStatus status, ) = escrow.bookings(bookingId);
         assertEq(uint256(status), uint256(BookingEscrow.BookingStatus.Cancelled));
 
         // Verify fund distribution
@@ -751,6 +762,7 @@ contract BookingEscrowTest is Test {
             provider: provider,
             inviter: inviter,
             amount: AMOUNT,
+            originalAmount: AMOUNT,
             platformFeeRate: PLATFORM_FEE_RATE,
             inviterFeeRate: INVITER_FEE_RATE,
             expiry: block.timestamp + 1 hours,
@@ -789,6 +801,7 @@ contract BookingEscrowTest is Test {
             provider: provider,
             inviter: inviter,
             amount: AMOUNT,
+            originalAmount: AMOUNT,
             platformFeeRate: PLATFORM_FEE_RATE,
             inviterFeeRate: INVITER_FEE_RATE,
             expiry: block.timestamp + 1 hours,
@@ -812,6 +825,7 @@ contract BookingEscrowTest is Test {
             provider: provider,
             inviter: inviter,
             amount: AMOUNT,
+            originalAmount: AMOUNT,
             platformFeeRate: PLATFORM_FEE_RATE,
             inviterFeeRate: INVITER_FEE_RATE,
             expiry: block.timestamp + 1 hours,

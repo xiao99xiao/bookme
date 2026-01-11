@@ -3,6 +3,7 @@ import Redis from "ioredis";
 import dotenv from "dotenv";
 import contractABI from "./contract-abi.json" with { type: "json" };
 import { deleteMeetingForBooking } from "./meeting-generation.js";
+import pointsService from "./services/points-service.js";
 
 // Load environment variables
 dotenv.config();
@@ -585,6 +586,22 @@ class BlockchainEventMonitor {
     }
 
     console.log("💰 Updated booking payment status:", booking.id);
+
+    // Deduct reserved points after successful blockchain payment
+    if (booking.points_used > 0) {
+      try {
+        await pointsService.deductPoints(
+          booking.customer_id,
+          booking.id,
+          booking.points_used,
+          booking.points_value
+        );
+        console.log(`💎 Deducted ${booking.points_used} points for booking ${booking.id}`);
+      } catch (pointsError) {
+        // Log error but don't fail the booking - points can be reconciled later
+        console.error("⚠️ Failed to deduct points:", pointsError);
+      }
+    }
   }
 
   /**
@@ -831,6 +848,21 @@ class BlockchainEventMonitor {
             console.error("⚠️ Error updating provider earnings:", earningsError);
           }
         }
+      }
+    }
+
+    // Refund points if any were used for this booking
+    if (booking.points_used > 0) {
+      try {
+        await pointsService.refundPoints(
+          booking.customer_id,
+          booking.id,
+          booking.points_used
+        );
+        console.log(`💎 Refunded ${booking.points_used} points for cancelled booking ${booking.id}`);
+      } catch (pointsError) {
+        // Log error but don't fail the cancellation - points can be reconciled later
+        console.error("⚠️ Failed to refund points:", pointsError);
       }
     }
 

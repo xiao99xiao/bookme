@@ -509,6 +509,91 @@
 }
 
 /* =====================================================
+   Points Usage Section
+   ===================================================== */
+
+.pp-points-section {
+  margin-bottom: 8px;
+}
+
+.pp-points-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.pp-points-balance {
+  font-size: 12px;
+  color: var(--pp-text-secondary);
+}
+
+.pp-points-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  padding: 12px 16px;
+  background: var(--pp-card-background);
+  border: var(--pp-border-width) solid var(--pp-card-border);
+  border-radius: var(--pp-border-radius);
+  transition: border-color 0.2s ease;
+}
+
+.pp-points-toggle:hover {
+  border-color: var(--pp-accent);
+}
+
+.pp-points-toggle input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--pp-accent);
+}
+
+.pp-points-label {
+  font-size: 14px;
+  color: var(--pp-text-primary);
+  font-weight: 500;
+}
+
+.pp-points-note {
+  font-size: 12px;
+  color: var(--pp-text-muted);
+  margin: 8px 0 0;
+}
+
+/* Payment Summary */
+.pp-payment-summary {
+  background: var(--pp-card-background);
+  border: var(--pp-border-width) solid var(--pp-card-border);
+  border-radius: var(--pp-border-radius);
+  padding: 16px;
+  margin-top: 16px;
+}
+
+.pp-payment-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 14px;
+  color: var(--pp-text-secondary);
+}
+
+.pp-payment-row.pp-payment-discount {
+  color: #10b981; /* Green for discount */
+}
+
+.pp-payment-row.pp-payment-total {
+  border-top: 1px solid var(--pp-divider);
+  margin-top: 8px;
+  padding-top: 12px;
+  font-weight: 600;
+  color: var(--pp-text-primary);
+}
+
+/* =====================================================
    Responsive
    ===================================================== */
 
@@ -722,4 +807,63 @@
     opacity: 1;
     transform: none;
   }
+}
+
+/* =====================================================
+   Wallet Balance & Funding Styles
+   ===================================================== */
+
+.pp-container[data-theme-version="2025"] .pp-wallet-balance {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--pp-card-background, #f8f9fa);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--pp-text-secondary, #666);
+  margin-bottom: 12px;
+}
+
+.pp-container[data-theme-version="2025"] .pp-balance-amount {
+  font-weight: 600;
+  color: var(--pp-text-primary, #333);
+}
+
+.pp-container[data-theme-version="2025"] .pp-insufficient-funds {
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.pp-container[data-theme-version="2025"] .pp-insufficient-funds-message {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  color: #92400e;
+  margin-bottom: 12px;
+}
+
+.pp-container[data-theme-version="2025"] .pp-fund-button {
+  width: 100%;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pp-container[data-theme-version="2025"] .pp-fund-button:hover {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  transform: translateY(-1px);
+}
+
+.pp-container[data-theme-version="2025"] .pp-fund-button:active {
+  transform: translateY(0);
 }

@@ -56,7 +56,7 @@ export interface Booking {
   duration_minutes: number
   total_price: number
   service_fee: number
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed'
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'pending_payment' | 'paid'
   customer_notes?: string
   provider_notes?: string
   location?: string
@@ -72,6 +72,11 @@ export interface Booking {
   auto_complete_blocked_reason?: string
   created_at: string
   updated_at?: string
+  // Points system fields
+  points_used?: number        // Number of points used for this booking
+  points_value?: number       // USD value of points used
+  original_amount?: number    // Original service price before points discount
+  usdc_paid?: number          // Actual USDC paid on blockchain
   // Relations
   service?: Service
   customer?: User
@@ -855,6 +860,58 @@ export class ApiClient {
     }
 
     return response.json()
+  }
+
+  // Points methods
+  static async getPointsBalance(): Promise<{
+    balance: number
+    totalEarned: number
+    totalSpent: number
+    usdValue: number
+    updatedAt: string | null
+  }> {
+    await this.waitForInitialization()
+    return this.backendApi!.getPointsBalance()
+  }
+
+  static async getPointsHistory(limit: number = 50, offset: number = 0): Promise<{
+    transactions: Array<{
+      id: string
+      type: string
+      amount: number
+      description: string
+      referenceId: string | null
+      createdAt: string
+    }>
+  }> {
+    await this.waitForInitialization()
+    return this.backendApi!.getPointsHistory(limit, offset)
+  }
+
+  static async calculatePointsForService(servicePrice: number): Promise<{
+    pointsToUse: number
+    pointsValue: number
+    usdcToPay: number
+    originalPrice: number
+    currentBalance: number
+  }> {
+    await this.waitForInitialization()
+    return this.backendApi!.calculatePointsForService(servicePrice)
+  }
+
+  static async recordFunding(params: {
+    usdcAmount: number
+    feeAmount: number
+    transactionHash?: string
+    fundingMethod?: string
+  }): Promise<{
+    success: boolean
+    pointsAwarded: number
+    newBalance: number
+    message: string
+  }> {
+    await this.waitForInitialization()
+    return this.backendApi!.recordFunding(params)
   }
 }
 
