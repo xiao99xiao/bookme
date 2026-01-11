@@ -11,6 +11,16 @@ dotenv.config({ path: '.env' })
 
 const { Pool } = pg
 
+// Validate DATABASE_URL
+if (!process.env.DATABASE_URL) {
+  console.error('❌ FATAL: DATABASE_URL environment variable is not set!')
+  console.error('   Please set DATABASE_URL in Railway service variables.')
+  console.error('   Example: DATABASE_URL=${{Postgres.DATABASE_URL}}')
+  process.exit(1)
+}
+
+console.log('🔗 Connecting to database...')
+
 // Create connection pool
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
