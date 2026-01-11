@@ -5,7 +5,10 @@
  * Tasks run on intervals and are designed to be lightweight and non-blocking.
  */
 
-import { supabaseAdmin } from "./supabase.js";
+import { getSupabaseAdmin } from "./middleware/auth.js";
+
+// Get Supabase admin client
+const supabaseAdmin = getSupabaseAdmin();
 
 /**
  * Clean up expired reschedule requests
