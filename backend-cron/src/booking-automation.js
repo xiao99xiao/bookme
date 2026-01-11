@@ -273,14 +273,7 @@ async function sendUpcomingReminders(now) {
     
     const { data: upcomingBookings, error } = await dbClient
       .from('bookings')
-      .select(`
-        id, 
-        scheduled_at, 
-        customer_id,
-        provider_id,
-        services!inner(title),
-        reminder_1h_sent
-      `)
+      .select('id, scheduled_at, customer_id, provider_id, service_id, reminder_1h_sent')
       .eq('status', 'confirmed')
       .gte('scheduled_at', oneHour.toISOString())
       .lte('scheduled_at', twoHours.toISOString())
@@ -324,17 +317,30 @@ async function sendUpcomingReminders(now) {
  * TODO: Implement actual email/SMS/push notification
  */
 async function sendBookingReminder(booking) {
+  // Fetch service title separately
+  let serviceTitle = 'Unknown Service';
+  if (booking.service_id) {
+    const { data: service } = await dbClient
+      .from('services')
+      .select('title')
+      .eq('id', booking.service_id)
+      .single();
+    if (service) {
+      serviceTitle = service.title;
+    }
+  }
+
   console.log(`📧 [PLACEHOLDER] Sending reminder for booking ${booking.id.slice(0, 8)}...`);
-  console.log(`   Service: ${booking.services.title}`);
+  console.log(`   Service: ${serviceTitle}`);
   console.log(`   Scheduled: ${booking.scheduled_at}`);
   console.log(`   Customer: ${booking.customer_id}`);
   console.log(`   Provider: ${booking.provider_id}`);
-  
+
   // TODO: Implement actual notification sending
   // Examples:
   // - await emailService.sendBookingReminder(booking)
   // - await pushNotificationService.send(booking.customer_id, reminder)
   // - await smsService.sendReminder(booking.customer_phone, message)
-  
+
   return true;
 }
