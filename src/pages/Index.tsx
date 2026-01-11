@@ -88,7 +88,7 @@ const Hero = ({ onPrimaryClick }: { onPrimaryClick: () => void }) => (
           </p>
         </div>
         <div className="flex flex-col items-center gap-6 sm:flex-row">
-          <SecondaryCta to="/book-services">Looking for Services</SecondaryCta>
+          <SecondaryCta to="/book-services">Explore Nooks</SecondaryCta>
           <PrimaryCta onClick={onPrimaryClick}>Start Earning Today</PrimaryCta>
         </div>
       </div>
@@ -175,7 +175,7 @@ const YourOwnPageCard = () => (
         <div className="h-8 w-8 rounded-full bg-[#ebebeb]" />
       </div>
       <div className="mt-6">
-        <p className="text-[14px] font-medium text-[#666666]">Services</p>
+        <p className="text-[14px] font-medium text-[#666666]">Talks</p>
         <div className="mt-2 rounded-2xl bg-[#fbfbfb] p-4">
           <div className="flex items-center justify-between">
             <div>
@@ -187,7 +187,7 @@ const YourOwnPageCard = () => (
         </div>
       </div>
       <div className="mt-6">
-        <p className="text-[14px] font-medium text-[#666666]">Customer Review</p>
+        <p className="text-[14px] font-medium text-[#666666]">Notes</p>
         <div className="mt-2 rounded-2xl bg-[#fbfbfb] p-4">
           <div className="h-2 w-20 rounded-md bg-[#ebebeb]" />
           <div className="mt-2 h-2 w-14 rounded-md bg-[#ebebeb]" />
@@ -273,10 +273,10 @@ const GuaranteedByEscrowCard = () => (
 
       {/* Text Labels */}
       <p className="absolute whitespace-nowrap font-['Inter'] text-[14px] font-extrabold leading-[1.5] text-[#44beff]" style={{ left: '38px', top: '213px' }}>
-        customer
+        visitor
       </p>
       <p className="absolute whitespace-nowrap font-['Inter'] text-[14px] font-extrabold leading-[1.5] text-[#eeb737]" style={{ left: '234px', top: '209px' }}>
-        provider
+        host
       </p>
 
       {/* Title */}

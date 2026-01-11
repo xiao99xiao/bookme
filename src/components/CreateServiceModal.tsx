@@ -11,11 +11,12 @@ import { ApiClient } from '@/lib/api-migration';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { t } from '@/lib/i18n';
 
 // Updated schema for service with weekly schedule
 const serviceSchema = z.object({
-  title: z.string().min(5, 'Title must be at least 5 characters'),
-  description: z.string().min(20, 'Description must be at least 20 characters'),
+  title: z.string().min(5, t.validation.titleMinLength),
+  description: z.string().min(20, t.validation.descriptionMinLength),
   duration: z.number().min(15).max(480), // 15 minutes to 8 hours
   price: z.number().min(0).max(10000),
   location: z.enum(['online', 'phone', 'in-person']),
@@ -125,7 +126,7 @@ export default function CreateServiceModal({ isOpen, onClose, onSubmit, isLoadin
 
   const handleSubmit = async (data: ServiceFormData) => {
     if (Object.keys(timeSlots).length === 0) {
-      alert('Please select at least one time slot');
+      alert(t.validation.selectTimeSlot);
       return;
     }
 
@@ -159,7 +160,7 @@ export default function CreateServiceModal({ isOpen, onClose, onSubmit, isLoadin
         {/* Header - Fixed */}
         <div className="flex-shrink-0 px-10 py-8 pb-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold font-heading text-black">{editingService ? 'Edit Service' : 'Create New Services'}</h2>
+            <h2 className="text-xl font-bold font-heading text-black">{editingService ? 'Edit Talk' : 'Create New Talk'}</h2>
             <Button variant="ghost" size="icon" onClick={onClose}>
               <X className="w-6 h-6" />
             </Button>
@@ -177,10 +178,10 @@ export default function CreateServiceModal({ isOpen, onClose, onSubmit, isLoadin
               <div className="space-y-8">
               <h3 className="text-lg font-semibold font-body text-black">Details</h3>
               
-              {/* Service Title */}
+              {/* Talk Title */}
               <div className="space-y-2">
                 <label className="text-sm text-[#666666] font-body">
-                  Service Title
+                  Talk Title
                 </label>
                 <div className="bg-white box-border content-stretch flex gap-2 items-center justify-start p-[12px] relative rounded-[8px] shrink-0 w-full">
                   <div aria-hidden="true" className="absolute border border-[#eeeeee] border-solid inset-[-1px] pointer-events-none rounded-[9px]" />
@@ -287,8 +288,8 @@ export default function CreateServiceModal({ isOpen, onClose, onSubmit, isLoadin
                       <AlertCircle className="w-4 h-4 text-[#FFD43C] mt-0.5 mr-2 flex-shrink-0" />
                       <div className="text-sm text-[#666666] font-body">
                         <p className="font-medium">Integration Required</p>
-                        <p className="mt-1">You need to connect {meetingPlatforms.find(p => p.value === form.watch('meeting_platform'))?.label} in your Integrations before creating this service.</p>
-                        <a href="/provider/integrations" className="inline-block mt-2 text-[#3b9ef9] hover:text-[#2e7bc4] underline">
+                        <p className="mt-1">You need to connect {meetingPlatforms.find(p => p.value === form.watch('meeting_platform'))?.label} in your Integrations before creating this Talk.</p>
+                        <a href="/host/integrations" className="inline-block mt-2 text-[#3b9ef9] hover:text-[#2e7bc4] underline">
                           Go to Integrations →
                         </a>
                       </div>
@@ -385,8 +386,8 @@ export default function CreateServiceModal({ isOpen, onClose, onSubmit, isLoadin
               disabled={isLoading || !form.formState.isValid || getTotalSlots() === 0}
               className="px-6 py-3 text-base font-semibold font-body text-white bg-black border border-black rounded-full hover:bg-gray-900 disabled:bg-gray-300 disabled:border-gray-300 disabled:cursor-not-allowed transition-colors"
             >
-              {isLoading ? (editingService ? 'Updating...' : 'Creating...') : 
-               editingService ? `Update Service (${getTotalSlots()} slots)` : `Create Service (${getTotalSlots()} slots)`}
+              {isLoading ? (editingService ? 'Updating...' : 'Creating...') :
+               editingService ? `Update Talk (${getTotalSlots()} slots)` : `Create Talk (${getTotalSlots()} slots)`}
             </button>
           </div>
         </form>

@@ -10,6 +10,7 @@ import MessageThread from '@/components/MessageThread';
 import { toast } from 'sonner';
 import PageLayout from '@/components/PageLayout';
 import { H1, H2, H3, Text, Description, Loading } from '@/design-system';
+import { t } from '@/lib/i18n';
 
 export default function ProviderMessages() {
   const { userId } = useAuth();
@@ -93,7 +94,7 @@ export default function ProviderMessages() {
     
     if (isMobile) {
       // On mobile, navigate to the dedicated mobile chat page
-      navigate(`/provider/messages/${conversation.id}`);
+      navigate(`/host/messages/${conversation.id}`);
     } else {
       // On desktop, use the existing two-panel layout
       setSelectedConversation(conversation);
@@ -117,10 +118,10 @@ export default function ProviderMessages() {
         {/* Title Section */}
         <div className="flex flex-col gap-0.5 flex-shrink-0">
           <H1>
-            Messages
+            {t.pages.messages.title}
           </H1>
           <Description className="leading-[1.5]">
-            Chat with customers and service providers
+            {t.pages.messages.chatWithAll}
           </Description>
         </div>
 
@@ -180,8 +181,8 @@ export default function ProviderMessages() {
       <div className="px-4 py-6">
         {/* Title */}
         <div className="mb-6">
-          <H2 className="mb-1">Messages</H2>
-          <Text variant="small" color="secondary">Chat with customers</Text>
+          <H2 className="mb-1">{t.pages.messages.title}</H2>
+          <Text variant="small" color="secondary">{t.pages.messages.chatWithVisitors}</Text>
         </div>
 
         {/* Search */}

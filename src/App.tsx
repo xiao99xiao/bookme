@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { PrivyAuthProvider } from "./contexts/PrivyAuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Index from "./pages/Index";
@@ -16,12 +16,12 @@ import NotFound from "./pages/NotFound";
 import Navigation from "./components/Navigation";
 import { OnboardingNavigator } from "./components/OnboardingNavigator";
 
-// Customer pages
+// Visitor pages (formerly Customer)
 import CustomerBookings from "./pages/customer/CustomerBookings";
 import SettingsProfile from "./pages/settings/Profile";
 import CustomerMessages from "./pages/customer/CustomerMessages";
 
-// Public Profile page (with theme support)
+// Public Profile page (Nook - with theme support)
 import { PublicProfile } from "./pages/public-profile";
 import CustomerMobileChat from "./pages/customer/CustomerMobileChat";
 
@@ -29,7 +29,7 @@ import CustomerMobileChat from "./pages/customer/CustomerMobileChat";
 import Customize from "./pages/settings/Customize";
 import ProfileTheme from "./pages/settings/ProfileTheme";
 
-// Provider pages
+// Host pages (formerly Provider)
 import ProviderOrders from "./pages/provider/ProviderOrders";
 import ProviderServices from "./pages/provider/ProviderServices";
 import ProviderMessages from "./pages/provider/ProviderMessages";
@@ -63,21 +63,21 @@ function AppContent() {
             <Route path="/" element={<HomePage />} />
             <Route path="/discover" element={<Discover />} />
             <Route path="/design-system-demo" element={<DesignSystemDemo />} />
-            <Route 
-              path="/book-services" 
+            <Route
+              path="/book-services"
               element={
                 <ProtectedRoute>
                   <BookServices />
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/settings/profile" 
+            <Route
+              path="/settings/profile"
               element={
                 <ProtectedRoute>
                   <SettingsProfile />
                 </ProtectedRoute>
-              } 
+              }
             />
             <Route
               path="/settings/customize"
@@ -95,23 +95,23 @@ function AppContent() {
                 </ProtectedRoute>
               }
             />
-            {/* Username-based user page - must be last to avoid conflicts */}
-            <Route 
-              path="/auth" 
+            {/* Auth routes */}
+            <Route
+              path="/auth"
               element={
                 <ProtectedRoute requireAuth={false}>
                   <Auth />
                 </ProtectedRoute>
-              } 
+              }
             />
             <Route path="/auth/callback" element={<AuthCallback />} />
-            <Route 
-              path="/onboarding" 
+            <Route
+              path="/onboarding"
               element={
                 <ProtectedRoute>
                   <Onboarding />
                 </ProtectedRoute>
-              } 
+              }
             />
 
             {/* Balance Route */}
@@ -124,83 +124,88 @@ function AppContent() {
               }
             />
 
-            {/* Customer Routes */}
-            <Route 
-              path="/customer/bookings" 
+            {/* Visitor Routes (new paths) */}
+            <Route
+              path="/bookings"
               element={
                 <ProtectedRoute>
                   <CustomerBookings />
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/customer/messages" 
+            <Route
+              path="/messages"
               element={
                 <ProtectedRoute>
                   <CustomerMessages />
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/customer/messages/:conversationId" 
+            <Route
+              path="/messages/:conversationId"
               element={
                 <ProtectedRoute>
                   <CustomerMobileChat />
                 </ProtectedRoute>
-              } 
+              }
             />
-            
-            {/* Provider Routes */}
-            <Route 
-              path="/provider/orders" 
+
+            {/* Legacy Visitor Routes (redirect to new paths) */}
+            <Route path="/customer/bookings" element={<Navigate to="/bookings" replace />} />
+            <Route path="/customer/messages" element={<Navigate to="/messages" replace />} />
+            <Route path="/customer/messages/:conversationId" element={<Navigate to="/messages/:conversationId" replace />} />
+
+            {/* Host Routes (new paths - formerly Provider) */}
+            <Route
+              path="/host/bookings"
               element={
                 <ProtectedRoute>
                   <ProviderOrders />
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/provider/services" 
+            <Route
+              path="/host/talks"
               element={
                 <ProtectedRoute>
                   <ProviderServices />
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/provider/messages" 
+            <Route
+              path="/host/messages"
               element={
                 <ProtectedRoute>
                   <ProviderMessages />
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/provider/messages/:conversationId" 
+            <Route
+              path="/host/messages/:conversationId"
               element={
                 <ProtectedRoute>
                   <ProviderMobileChat />
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/provider/integrations" 
+            <Route
+              path="/host/integrations"
               element={
                 <ProtectedRoute>
                   <ProviderIntegrations />
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/provider/integrations/callback" 
+            <Route
+              path="/host/integrations/callback"
               element={
                 <ProtectedRoute>
                   <IntegrationsCallback />
                 </ProtectedRoute>
-              } 
+              }
             />
             <Route
-              path="/provider/income"
+              path="/host/earnings"
               element={
                 <ProtectedRoute>
                   <Income />
@@ -208,13 +213,23 @@ function AppContent() {
               }
             />
             <Route
-              path="/provider/referrals"
+              path="/host/referrals"
               element={
                 <ProtectedRoute>
                   <ProviderReferrals />
                 </ProtectedRoute>
               }
             />
+
+            {/* Legacy Host Routes (redirect to new paths) */}
+            <Route path="/provider/orders" element={<Navigate to="/host/bookings" replace />} />
+            <Route path="/provider/services" element={<Navigate to="/host/talks" replace />} />
+            <Route path="/provider/messages" element={<Navigate to="/host/messages" replace />} />
+            <Route path="/provider/messages/:conversationId" element={<Navigate to="/host/messages/:conversationId" replace />} />
+            <Route path="/provider/integrations" element={<Navigate to="/host/integrations" replace />} />
+            <Route path="/provider/integrations/callback" element={<Navigate to="/host/integrations/callback" replace />} />
+            <Route path="/provider/income" element={<Navigate to="/host/earnings" replace />} />
+            <Route path="/provider/referrals" element={<Navigate to="/host/referrals" replace />} />
 
             {/* Mobile Me Page - must be before username route to avoid conflicts */}
             <Route
@@ -245,7 +260,7 @@ function AppContent() {
             />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            {/* Username-based user page - must be at the bottom to avoid conflicts */}
+            {/* Username-based Nook page - must be at the bottom to avoid conflicts */}
             {/* Uses PublicProfile with theme support for complete style isolation */}
             <Route
               path="/:username"

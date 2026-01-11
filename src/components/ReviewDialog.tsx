@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/design-system/components/Input';
 import { toast } from 'sonner';
 import StarRating from './StarRating';
+import { t } from '@/lib/i18n';
 
 interface ReviewDialogProps {
   isOpen: boolean;
@@ -75,21 +76,21 @@ export default function ReviewDialog({
 
   const handleSubmit = async () => {
     if (rating < 1 || rating > 5) {
-      toast.error('Please select a rating');
+      toast.error(t.validation.selectRating);
       return;
     }
 
     setIsSubmitting(true);
     try {
       await onSubmit(rating, comment.trim());
-      toast.success(existingReview ? 'Review updated successfully!' : 'Thank you for your review!');
+      toast.success(existingReview ? t.toast.success.noteUpdated : t.toast.success.noteSubmitted);
       onClose();
       // Reset form
       setRating(5);
       setComment('');
     } catch (error) {
       console.error('Failed to submit review:', error);
-      toast.error(`Failed to ${existingReview ? 'update' : 'submit'} review. Please try again.`);
+      toast.error(existingReview ? t.toast.error.failedToUpdateNote : t.toast.error.failedToSubmitNote);
     } finally {
       setIsSubmitting(false);
     }
@@ -107,22 +108,22 @@ export default function ReviewDialog({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
-            {forceReadOnly 
-              ? 'Customer Review' 
-              : (isReadOnly 
-                  ? 'Your review' 
-                  : (existingReview ? 'Update your review' : 'How was your experience?')
+            {forceReadOnly
+              ? t.note.visitorNote
+              : (isReadOnly
+                  ? t.note.yourNote
+                  : (existingReview ? t.note.updateNote : 'How was your experience?')
                 )
             }
           </DialogTitle>
           <DialogDescription>
             {forceReadOnly
-              ? `Review from ${booking.customer?.display_name || 'customer'} for ${booking.services?.title || 'this service'}`
-              : (isReadOnly 
-                  ? `Your review for ${booking.provider?.display_name || 'the provider'} - ${booking.services?.title || 'this service'}`
-                  : (existingReview 
-                      ? `Update your review for ${booking.provider?.display_name || 'the provider'} - ${booking.services?.title || 'this service'}`
-                      : `Rate your experience with ${booking.provider?.display_name || 'the provider'} for ${booking.services?.title || 'this service'}`
+              ? `Note from ${booking.customer?.display_name || 'visitor'} for ${booking.services?.title || 'this Talk'}`
+              : (isReadOnly
+                  ? `Your note for ${booking.provider?.display_name || 'the host'} - ${booking.services?.title || 'this Talk'}`
+                  : (existingReview
+                      ? `Update your note for ${booking.provider?.display_name || 'the host'} - ${booking.services?.title || 'this Talk'}`
+                      : `Rate your experience with ${booking.provider?.display_name || 'the host'} for ${booking.services?.title || 'this Talk'}`
                     )
                 )
             }
@@ -130,7 +131,7 @@ export default function ReviewDialog({
           {isReadOnly && !forceReadOnly && (
             <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-md">
               <p className="text-sm text-amber-800">
-                ⏰ Reviews can only be edited within 7 days of the service completion. You can view your review below.
+                ⏰ {t.note.editWindow}
               </p>
             </div>
           )}
@@ -140,9 +141,9 @@ export default function ReviewDialog({
           {/* Star Rating */}
           <div className="flex flex-col items-center space-y-2">
             <p className="text-sm text-muted-foreground">
-              {forceReadOnly 
-                ? 'Customer rating' 
-                : (isReadOnly ? 'Your rating' : 'Rate your experience')
+              {forceReadOnly
+                ? t.note.visitorRating
+                : (isReadOnly ? t.note.yourRating : t.note.rateExperience)
               }
             </p>
             <StarRating 
@@ -152,27 +153,27 @@ export default function ReviewDialog({
               size="lg"
             />
             <p className="text-sm font-medium">
-              {rating === 1 && 'Poor'}
-              {rating === 2 && 'Fair'}
-              {rating === 3 && 'Good'}
-              {rating === 4 && 'Very Good'}
-              {rating === 5 && 'Excellent'}
+              {rating === 1 && t.note.ratingLabels.poor}
+              {rating === 2 && t.note.ratingLabels.fair}
+              {rating === 3 && t.note.ratingLabels.good}
+              {rating === 4 && t.note.ratingLabels.veryGood}
+              {rating === 5 && t.note.ratingLabels.excellent}
             </p>
           </div>
 
           {/* Comment */}
           <div className="space-y-2">
             <label htmlFor="comment" className="text-sm font-medium">
-              {forceReadOnly 
-                ? 'Customer comments' 
-                : (isReadOnly ? 'Your comments' : 'Share your experience (optional)')
+              {forceReadOnly
+                ? t.note.visitorComments
+                : (isReadOnly ? t.note.yourComments : t.note.shareExperience)
               }
             </label>
-            <Textarea 
-              fullWidth 
+            <Textarea
+              fullWidth
               rows={4}
               id="comment"
-              placeholder={isReadOnly ? 'No comments provided' : 'Tell us about your experience with this service...'}
+              placeholder={isReadOnly ? t.note.noComments : t.note.placeholder}
               value={comment}
               onChange={isReadOnly ? undefined : (e) => setComment(e.target.value)}
               maxLength={maxCommentLength}
@@ -191,7 +192,7 @@ export default function ReviewDialog({
         <div className="flex justify-end gap-3">
           {isReadOnly ? (
             <Button onClick={handleSkip}>
-              Close
+              {t.common.close}
             </Button>
           ) : (
             <>
@@ -200,15 +201,15 @@ export default function ReviewDialog({
                 onClick={handleSkip}
                 disabled={isSubmitting}
               >
-                Skip
+                {t.common.skip}
               </Button>
               <Button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
               >
-                {isSubmitting 
-                  ? (existingReview ? 'Updating...' : 'Submitting...') 
-                  : (existingReview ? 'Update Review' : 'Submit Review')
+                {isSubmitting
+                  ? (existingReview ? 'Updating...' : 'Submitting...')
+                  : (existingReview ? t.note.updateNote : t.note.submitNote)
                 }
               </Button>
             </>

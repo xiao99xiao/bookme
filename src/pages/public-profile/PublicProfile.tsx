@@ -489,7 +489,7 @@ const PublicProfile = () => {
                   )}
                   <span className={`${THEME_CLASS_PREFIX}-badge`}>
                     <Star className={`${THEME_CLASS_PREFIX}-badge-icon`} style={{ fill: "currentColor" }} />
-                    {profile.rating.toFixed(1)} ({profile.review_count} reviews)
+                    {profile.rating.toFixed(1)} ({profile.review_count} notes)
                   </span>
                 </div>
               </div>
@@ -528,7 +528,7 @@ const PublicProfile = () => {
             {/* Services */}
             {(profile.is_provider || visibleServices.length > 0) && (
               <>
-                <h2 className={`${THEME_CLASS_PREFIX}-section-title`}>Services</h2>
+                <h2 className={`${THEME_CLASS_PREFIX}-section-title`}>Talks</h2>
                 {visibleServices.length > 0 ? (
                   <div className={`${THEME_CLASS_PREFIX}-services`}>
                     {visibleServices.map((service) => {
@@ -559,7 +559,7 @@ const PublicProfile = () => {
                   </div>
                 ) : (
                   <p style={{ textAlign: "center", padding: "32px", color: "var(--pp-text-secondary)" }}>
-                    {isOwnProfile ? "You haven't created any services yet." : "No services available."}
+                    {isOwnProfile ? "You haven't created any Talks yet." : "No Talks available."}
                   </p>
                 )}
 
@@ -570,7 +570,7 @@ const PublicProfile = () => {
             {/* Reviews */}
             {reviews.length > 0 && (
               <>
-                <h2 className={`${THEME_CLASS_PREFIX}-section-title`}>Customer Reviews</h2>
+                <h2 className={`${THEME_CLASS_PREFIX}-section-title`}>Visitor Notes</h2>
                 <div className={`${THEME_CLASS_PREFIX}-reviews`}>
                   {reviews.slice(0, reviewsDisplayCount).map((review) => (
                     <div key={review.id} className={`${THEME_CLASS_PREFIX}-review-item`}>
@@ -607,7 +607,7 @@ const PublicProfile = () => {
                     onClick={() => setReviewsDisplayCount((prev) => prev + 5)}
                   >
                     <ChevronDown style={{ width: 16, height: 16, marginRight: 8 }} />
-                    Load more reviews
+                    Load more notes
                   </button>
                 )}
               </>
@@ -696,7 +696,7 @@ const PublicProfile = () => {
                     className={`${THEME_CLASS_PREFIX}-booking-notes`}
                     value={customerNotes}
                     onChange={(e) => setCustomerNotes(e.target.value)}
-                    placeholder="Tell the provider anything specific about your booking..."
+                    placeholder="Tell the host anything specific about your booking..."
                     maxLength={500}
                   />
 

@@ -7,6 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Download, DollarSign, TrendingUp, Calendar, User } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
+import { t } from '@/lib/i18n'
 
 interface Transaction {
   id: string
@@ -83,8 +84,8 @@ export default function Income() {
       // Prepare CSV data
       const csvFormatted = transactions.map(t => ({
         'Date': format(new Date(t.created_at), 'yyyy-MM-dd HH:mm'),
-        'Service': t.service?.title || 'N/A',
-        'Customer': t.source_user?.display_name || 'Unknown',
+        'Talk': t.service?.title || 'N/A',
+        'Visitor': t.source_user?.display_name || 'Unknown',
         'Amount': `$${t.amount.toFixed(2)}`,
         'Type': t.type === 'booking_payment' ? 'Booking Payment' : t.type,
         'Description': t.description || '',
@@ -130,8 +131,8 @@ export default function Income() {
 
   const csvHeaders = [
     { label: 'Date', key: 'Date' },
-    { label: 'Service', key: 'Service' },
-    { label: 'Customer', key: 'Customer' },
+    { label: 'Talk', key: 'Talk' },
+    { label: 'Visitor', key: 'Visitor' },
     { label: 'Amount', key: 'Amount' },
     { label: 'Type', key: 'Type' },
     { label: 'Description', key: 'Description' },
@@ -141,7 +142,7 @@ export default function Income() {
   return (
     <div className="container mx-auto p-6 max-w-7xl">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Income</h1>
+        <h1 className="text-3xl font-bold">{t.pages.earnings.title}</h1>
         <CSVLink
           data={csvData}
           headers={csvHeaders}
@@ -224,8 +225,8 @@ export default function Income() {
                 <tr className="border-b bg-gray-50">
                   <th className="text-left p-4 font-medium">Date</th>
                   <th className="text-left p-4 font-medium">Type</th>
-                  <th className="text-left p-4 font-medium">Service</th>
-                  <th className="text-left p-4 font-medium">Customer</th>
+                  <th className="text-left p-4 font-medium">Talk</th>
+                  <th className="text-left p-4 font-medium">Visitor</th>
                   <th className="text-left p-4 font-medium">Location</th>
                   <th className="text-right p-4 font-medium">Amount</th>
                 </tr>
@@ -255,7 +256,7 @@ export default function Income() {
                               ? 'bg-purple-100 text-purple-800'
                               : 'bg-blue-100 text-blue-800'
                           }`}>
-                            {transaction.type === 'inviter_fee' ? 'Inviter Fee' : 'Service'}
+                            {transaction.type === 'inviter_fee' ? t.pages.earnings.referralFee : t.talk.singular}
                           </span>
                         </div>
                       </td>
@@ -293,7 +294,7 @@ export default function Income() {
                           +${transaction.amount.toFixed(2)}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {transaction.type === 'inviter_fee' ? 'Referral bonus' : 'Provider earnings'}
+                          {transaction.type === 'inviter_fee' ? t.pages.earnings.referralBonus : t.pages.earnings.hostEarnings}
                         </div>
                       </td>
                     </tr>

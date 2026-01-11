@@ -22,6 +22,7 @@ import { usePaymentTransaction } from '@/hooks/useTransaction';
 import { PaymentModal } from '@/components/TransactionModal';
 import { BlockchainErrorHandler } from '@/lib/blockchain-errors';
 import { APP_NAME } from '@/lib/constants';
+import { t } from '@/lib/i18n';
 
 export default function CustomerBookings() {
   const { userId, user } = useAuth();
@@ -60,12 +61,12 @@ export default function CustomerBookings() {
   const [payingBookingId, setPayingBookingId] = useState<string | null>(null);
   const paymentTransaction = usePaymentTransaction({
     onSuccess: (txHash) => {
-      toast.success('Payment successful! Booking confirmed.');
+      toast.success(t.toast.success.paymentSuccessful);
       setPayingBookingId(null);
       loadBookings(); // Refresh bookings to show updated status
     },
     onError: (error) => {
-      toast.error(`Payment failed: ${error}`);
+      toast.error(t.toast.error.paymentFailed.replace('{{error}}', error));
       setPayingBookingId(null);
     }
   });
@@ -73,7 +74,7 @@ export default function CustomerBookings() {
   // Completion transaction - separate from payment
   const completionTransaction = usePaymentTransaction({
     onSuccess: (txHash) => {
-      toast.success('Service completed successfully! Funds have been distributed.');
+      toast.success(t.toast.success.bookingCompleted);
       setPayingBookingId(null);
       setShowPaymentModal(false);
       
@@ -90,7 +91,7 @@ export default function CustomerBookings() {
       loadBookings(); // Refresh bookings to show updated status
     },
     onError: (error) => {
-      toast.error(`Service completion failed: ${error}`);
+      toast.error(t.toast.error.bookingCompletionFailed.replace('{{error}}', error));
       setPayingBookingId(null);
       setShowPaymentModal(false);
     }
@@ -131,7 +132,7 @@ export default function CustomerBookings() {
       loadSessionData(bookingsData);
     } catch (error) {
       console.error('Failed to load bookings:', error);
-      toast.error('Failed to load bookings');
+      toast.error(t.toast.error.failedToLoadBookings);
     } finally {
       setLoading(false);
     }
@@ -189,11 +190,11 @@ export default function CustomerBookings() {
     try {
       // Call the complete service API directly for manual completion
       await handleCompleteBooking(bookingId);
-      toast.success('Service completed manually! Funds will be distributed.');
+      toast.success(t.toast.success.bookingCompletedManually);
       loadBookings();
     } catch (error) {
       console.error('Failed to manually complete booking:', error);
-      toast.error('Failed to complete service');
+      toast.error(t.toast.error.failedToCompleteBooking);
     }
   };
 
@@ -205,23 +206,23 @@ export default function CustomerBookings() {
         undefined,
         userId
       );
-      toast.success('Booking cancelled successfully');
+      toast.success(t.toast.success.bookingCancelled);
       loadBookings();
     } catch (error) {
       console.error('Failed to cancel booking:', error);
-      toast.error('Failed to cancel booking');
+      toast.error(t.toast.error.failedToCancelBooking);
     }
   };
 
   const handleCompleteBooking = async (bookingId: string) => {
     if (!user || !isWalletConnected) {
-      toast.error('Please connect your wallet to complete service');
+      toast.error(t.toast.error.connectWallet);
       return;
     }
 
     const booking = bookings.find(b => b.id === bookingId);
     if (!booking) {
-      toast.error('Booking not found');
+      toast.error(t.toast.error.bookingNotFound);
       return;
     }
 
@@ -238,7 +239,7 @@ export default function CustomerBookings() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to validate service completion');
+        throw new Error(errorData.error || 'Failed to validate booking completion');
       }
 
       const completionData = await response.json();
@@ -247,7 +248,7 @@ export default function CustomerBookings() {
       // Check if booking has blockchain booking ID (from the response)
       const blockchainBookingId = completionData.booking?.blockchain_booking_id;
       if (!blockchainBookingId) {
-        toast.error('This booking was not paid via blockchain and cannot be completed this way');
+        toast.error(t.toast.error.bookingNotBlockchain);
         return;
       }
 
@@ -285,7 +286,7 @@ export default function CustomerBookings() {
 
     const booking = bookings.find(b => b.id === bookingId);
     if (!booking) {
-      toast.error('Booking not found');
+      toast.error(t.toast.error.bookingNotFound);
       return;
     }
 
@@ -377,18 +378,18 @@ export default function CustomerBookings() {
     console.log('🔗 Copy Link clicked:', link);
     if (!link) {
       console.error('❌ No meeting link provided');
-      toast.error('No meeting link available');
+      toast.error(t.toast.error.noMeetingLink);
       return;
     }
     navigator.clipboard.writeText(link);
-    toast.success('Meeting link copied to clipboard');
+    toast.success(t.toast.success.linkCopied);
   };
 
   const handleJoinMeeting = (link: string) => {
     console.log('🚀 Join Meeting clicked:', link);
     if (!link) {
       console.error('❌ No meeting link provided');
-      toast.error('No meeting link available');
+      toast.error(t.toast.error.noMeetingLink);
       return;
     }
     window.open(link, '_blank');
@@ -404,7 +405,7 @@ export default function CustomerBookings() {
 
     const params = new URLSearchParams({
       action: 'TEMPLATE',
-      text: `${booking.service?.title || 'Service'} with ${booking.provider?.display_name || 'Provider'}`,
+      text: `${booking.service?.title || 'Talk'} with ${booking.provider?.display_name || 'Host'}`,
       dates: `${formatDateForGoogle(startDate)}/${formatDateForGoogle(endDate)}`,
       details: `Booking for ${booking.service?.title}${booking.customer_notes ? `\n\nNotes: ${booking.customer_notes}` : ''}`,
       location: booking.is_online ? 'Online Meeting' : (booking.location || ''),
@@ -422,7 +423,7 @@ export default function CustomerBookings() {
       return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
     };
 
-    const title = `${booking.service?.title || 'Service'} with ${booking.provider?.display_name || 'Provider'}`;
+    const title = `${booking.service?.title || 'Talk'} with ${booking.provider?.display_name || 'Host'}`;
     const description = `Booking for ${booking.service?.title}${booking.customer_notes ? `\n\nNotes: ${booking.customer_notes}` : ''}`;
     
     const icsContent = [
@@ -459,7 +460,7 @@ export default function CustomerBookings() {
     const { navigateToUserProfile } = await import('@/lib/username');
     const success = await navigateToUserProfile(providerId, navigate);
     if (!success) {
-      toast.error('This provider does not have a public profile');
+      toast.error(t.toast.error.noPublicProfile);
     }
   };
 
@@ -512,9 +513,9 @@ export default function CustomerBookings() {
             <div className="fixed w-64">
               <div className="mb-6">
                 {/* Title - Raleway font */}
-                <H2 className="mb-2">My Bookings</H2>
+                <H2 className="mb-2">{t.booking.myBookings}</H2>
                 {/* Subtitle - Nunito font */}
-                <Text variant="small" color="secondary">Services you have booked from providers</Text>
+                <Text variant="small" color="secondary">{t.booking.withHost}</Text>
               </div>
 
               {/* Vertical Navigation - Nunito font */}
@@ -563,9 +564,9 @@ export default function CustomerBookings() {
                       {/* Top Section: Title and Icons */}
                       <div className="flex items-start justify-between mb-6">
                         <div className="flex-1">
-                          {/* Service Title */}
+                          {/* Talk Title */}
                           <H3 className="mb-1">
-                            {booking.service?.title || 'Service'}
+                            {booking.service?.title || 'Talk'}
                           </H3>
                           {/* Booked date */}
                           <Description>
@@ -645,7 +646,7 @@ export default function CustomerBookings() {
                             onClick={() => setChatModal({
                               isOpen: true,
                               otherUserId: booking.provider_id,
-                              otherUserName: booking.provider?.display_name || 'Provider',
+                              otherUserName: booking.provider?.display_name || 'Host',
                               otherUserAvatar: booking.provider?.avatar,
                               isReadOnly: booking.status === 'cancelled'
                             })}
@@ -653,13 +654,13 @@ export default function CustomerBookings() {
                         </div>
                       </div>
 
-                      {/* Provider Name and Date */}
+                      {/* Host Name and Date */}
                       <div className="flex items-center gap-2 text-sm font-medium font-body mb-4">
                         <button 
                           onClick={() => handleViewProviderProfile(booking.provider_id)}
                           className="text-black hover:text-blue-600 hover:underline"
                         >
-                          {booking.provider?.display_name || 'Provider'}
+                          {booking.provider?.display_name || 'Host'}
                         </button>
                         <span className="text-[#cccccc]">|</span>
                         <span className="text-black">{format(new Date(booking.scheduled_at), 'EEE, MMM d, yyyy')}</span>
@@ -742,8 +743,8 @@ export default function CustomerBookings() {
                               {booking.status === 'in_progress' && 'In Progress'}
                               {booking.status === 'pending' && 'Awaiting Confirmation'}
                               {booking.status === 'pending_payment' && 'Payment Required'}
-                              {booking.status === 'paid' && 'Pending Provider\'s Confirmation'}
-                              {booking.status === 'rejected' && 'Rejected by Provider'}
+                              {booking.status === 'paid' && 'Pending Host\'s Confirmation'}
+                              {booking.status === 'rejected' && 'Rejected by Host'}
                             </div>
 
                             {/* Action Buttons */}
@@ -866,11 +867,11 @@ export default function CustomerBookings() {
                                   Manual Completion Required
                                 </Text>
                                 <Text variant="small" className="text-blue-700 mb-2">
-                                  The provider's session time was shorter than expected. Please confirm if you received satisfactory service.
+                                  The host's session time was shorter than expected. Please confirm if you received satisfactory service.
                                 </Text>
                                 {sessionData[booking.id] && (
                                   <Text variant="small" className="text-blue-600 mb-3">
-                                    Provider time: {formatDuration(sessionData[booking.id].providerDuration)} /
+                                    Host time: {formatDuration(sessionData[booking.id].providerDuration)} /
                                     {formatDuration(sessionData[booking.id].serviceDuration || booking.duration_minutes * 60)} expected
                                   </Text>
                                 )}
@@ -887,18 +888,18 @@ export default function CustomerBookings() {
                         </>
                       )}
 
-                      {/* Review Section for Completed */}
+                      {/* Note Section for Completed */}
                       {booking.status === 'completed' && (
                         <>
                           {/* Separator Line */}
                           <div className="border-t border-[#eeeeee] my-6"></div>
                           
-                          {/* Review Content */}
+                          {/* Note Content */}
                           <div className="flex items-start justify-between gap-4">
-                            {/* Review Text */}
+                            {/* Note Text */}
                             <div className="flex-1">
                               <Text variant="small" weight="medium" className="text-black mb-0.5">
-                                {review ? 'Your Review' : 'Leave a Review'}
+                                {review ? 'Your Note' : 'Leave a Note'}
                               </Text>
                               {review ? (
                                 <Text variant="small" className="text-[#666666]">
@@ -906,14 +907,14 @@ export default function CustomerBookings() {
                                 </Text>
                               ) : (
                                 <Text variant="small" className="text-[#999999]">
-                                  Share your experience with this service
+                                  Share your experience with this booking
                                 </Text>
                               )}
                             </div>
                             
                             {/* Right side - Rating Badge and Edit Button */}
                             <div className="flex items-center gap-3">
-                              {/* Rating Badge - only show if review exists */}
+                              {/* Rating Badge - only show if note exists */}
                               {review && (
                                 <div className="bg-[#fcf9f4] px-2 py-[5px] rounded-xl flex items-center gap-1 h-8">
                                   {[...Array(5)].map((_, i) => (
@@ -932,7 +933,7 @@ export default function CustomerBookings() {
                                 </div>
                               )}
                               
-                              {/* Edit/Leave Review Button */}
+                              {/* Edit/Leave Note Button */}
                               <Button
                                 size="sm"
                                 onClick={() => setReviewDialog({ 
@@ -947,9 +948,9 @@ export default function CustomerBookings() {
                                     : 'bg-[#FFD43C] hover:bg-[#f5c830] text-black border-[#cccccc]'
                                 }`}
                               >
-                                {review 
-                                  ? (canEditReview(booking) ? 'Edit Review' : 'View Review')
-                                  : 'Leave Review'
+                                {review
+                                  ? (canEditReview(booking) ? 'Edit Note' : 'View Note')
+                                  : 'Leave Note'
                                 }
                               </Button>
                             </div>
@@ -972,8 +973,8 @@ export default function CustomerBookings() {
             <div className="mb-6">
               {/* Title Section */}
               <div className="mb-4">
-                <H2 className="mb-1">My Bookings</H2>
-                <Text variant="small" color="secondary">Services you have booked from providers</Text>
+                <H2 className="mb-1">{t.booking.myBookings}</H2>
+                <Text variant="small" color="secondary">{t.booking.withHost}</Text>
               </div>
             
             {/* Horizontal Tab Navigation */}
@@ -1021,9 +1022,9 @@ export default function CustomerBookings() {
                       {/* Top Section: Title and Icons */}
                       <div className="flex items-start justify-between mb-4 sm:mb-6">
                         <div className="flex-1 min-w-0">
-                          {/* Service Title */}
+                          {/* Talk Title */}
                           <H3 className="mb-1 truncate">
-                            {booking.service?.title || 'Service'}
+                            {booking.service?.title || 'Talk'}
                           </H3>
                           {/* Booked date */}
                           <Description>
@@ -1103,7 +1104,7 @@ export default function CustomerBookings() {
                             onClick={() => setChatModal({
                               isOpen: true,
                               otherUserId: booking.provider_id,
-                              otherUserName: booking.provider?.display_name || 'Provider',
+                              otherUserName: booking.provider?.display_name || 'Host',
                               otherUserAvatar: booking.provider?.avatar,
                               isReadOnly: booking.status === 'cancelled'
                             })}
@@ -1111,13 +1112,13 @@ export default function CustomerBookings() {
                         </div>
                       </div>
 
-                      {/* Provider Name and Date - Responsive text */}
+                      {/* Host Name and Date - Responsive text */}
                       <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm font-medium font-body mb-4">
                         <button 
                           onClick={() => handleViewProviderProfile(booking.provider_id)}
                           className="text-black hover:text-blue-600 hover:underline"
                         >
-                          {booking.provider?.display_name || 'Provider'}
+                          {booking.provider?.display_name || 'Host'}
                         </button>
                         <span className="text-[#cccccc]">|</span>
                         <span className="text-black">{format(new Date(booking.scheduled_at), 'EEE, MMM d, yyyy')}</span>
@@ -1232,11 +1233,11 @@ export default function CustomerBookings() {
                                   Manual Completion Required
                                 </Text>
                                 <Text variant="small" className="text-blue-700 mb-2">
-                                  The provider's session time was shorter than expected. Please confirm if you received satisfactory service.
+                                  The host's session time was shorter than expected. Please confirm if you received satisfactory service.
                                 </Text>
                                 {sessionData[booking.id] && (
                                   <Text variant="small" className="text-blue-600 mb-3">
-                                    Provider time: {formatDuration(sessionData[booking.id].providerDuration)} /
+                                    Host time: {formatDuration(sessionData[booking.id].providerDuration)} /
                                     {formatDuration(sessionData[booking.id].serviceDuration || booking.duration_minutes * 60)} expected
                                   </Text>
                                 )}
@@ -1253,18 +1254,18 @@ export default function CustomerBookings() {
                         </>
                       )}
 
-                      {/* Review Section for Completed - Same as desktop */}
+                      {/* Note Section for Completed - Same as desktop */}
                       {booking.status === 'completed' && (
                         <>
                           {/* Separator Line */}
                           <div className="border-t border-[#eeeeee] my-6"></div>
                           
-                          {/* Review Content */}
+                          {/* Note Content */}
                           <div className="flex items-start justify-between gap-4">
-                            {/* Review Text */}
+                            {/* Note Text */}
                             <div className="flex-1">
                               <Text variant="small" weight="medium" className="text-black mb-0.5">
-                                {review ? 'Your Review' : 'Leave a Review'}
+                                {review ? 'Your Note' : 'Leave a Note'}
                               </Text>
                               {review ? (
                                 <Text variant="small" className="text-[#666666]">
@@ -1272,14 +1273,14 @@ export default function CustomerBookings() {
                                 </Text>
                               ) : (
                                 <Text variant="small" className="text-[#999999]">
-                                  Share your experience with this service
+                                  Share your experience with this booking
                                 </Text>
                               )}
                             </div>
                             
                             {/* Right side - Rating Badge and Edit Button */}
                             <div className="flex items-center gap-3">
-                              {/* Rating Badge - only show if review exists */}
+                              {/* Rating Badge - only show if note exists */}
                               {review && (
                                 <div className="bg-[#fcf9f4] px-2 py-[5px] rounded-xl flex items-center gap-1 h-8">
                                   {[...Array(5)].map((_, i) => (
@@ -1298,7 +1299,7 @@ export default function CustomerBookings() {
                                 </div>
                               )}
                               
-                              {/* Edit/Leave Review Button */}
+                              {/* Edit/Leave Note Button */}
                               <Button
                                 size="sm"
                                 onClick={() => setReviewDialog({ 
@@ -1313,9 +1314,9 @@ export default function CustomerBookings() {
                                     : 'bg-[#FFD43C] hover:bg-[#f5c830] text-black border-[#cccccc]'
                                 }`}
                               >
-                                {review 
-                                  ? (canEditReview(booking) ? 'Edit Review' : 'View Review')
-                                  : 'Leave Review'
+                                {review
+                                  ? (canEditReview(booking) ? 'Edit Note' : 'View Note')
+                                  : 'Leave Note'
                                 }
                               </Button>
                             </div>
@@ -1347,7 +1348,7 @@ export default function CustomerBookings() {
         isReadOnly={chatModal.isReadOnly}
       />
       
-      {/* Review Dialog */}
+      {/* Note Dialog */}
       {reviewDialog.booking && (
         <ReviewDialog
           isOpen={reviewDialog.isOpen}

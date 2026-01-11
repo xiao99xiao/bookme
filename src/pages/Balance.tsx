@@ -489,7 +489,7 @@ export default function Balance() {
                   ≈ ${pointsUsdValue.toFixed(2)} USD
                 </p>
                 <p className="text-xs text-gray-500 mt-2">
-                  Use points to get up to 5% off on service bookings. Earn points when you fund your wallet with a credit card.
+                  Use points to get up to 5% off on Talks. Earn points when you fund your wallet with a credit card.
                 </p>
               </div>
             </CardContent>
@@ -570,7 +570,7 @@ export default function Balance() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-gray-600 mb-4">
-                  You'll need USDC to book services on the platform. Fund your wallet to get started!
+                  You'll need USDC to book Talks on the platform. Fund your wallet to get started!
                 </p>
                 <Button 
                   onClick={handleFundUSDC}
@@ -596,7 +596,7 @@ export default function Balance() {
                       <TrendingUp className="w-5 h-5 text-green-600" />
                       Your Income
                     </CardTitle>
-                    <CardDescription>Earnings from completed services</CardDescription>
+                    <CardDescription>Earnings from completed Talks</CardDescription>
                   </div>
                   <Button
                     size="sm"
@@ -623,7 +623,7 @@ export default function Balance() {
                         ${totalIncome.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </div>
                       <p className="text-sm text-gray-500 mt-1">
-                        From {incomeTransactions.length} completed services
+                        From {incomeTransactions.length} completed Talks
                       </p>
                     </div>
 
@@ -632,7 +632,7 @@ export default function Balance() {
                         <TrendingUp className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                         <p className="text-gray-500">No income yet</p>
                         <p className="text-sm text-gray-400 mt-1">
-                          Complete your first service to start earning
+                          Complete your first Talk to start earning
                         </p>
                       </div>
                     ) : (
@@ -648,7 +648,7 @@ export default function Balance() {
                                 <p className="font-medium text-sm truncate">{transaction.service_title}</p>
                                 <p className="text-xs text-gray-600 flex items-center gap-1">
                                   <User className="w-3 h-3" />
-                                  {transaction.customer_name}
+                                  Visitor: {transaction.customer_name}
                                 </p>
                                 <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
                                   <Calendar className="w-3 h-3" />
@@ -662,7 +662,7 @@ export default function Balance() {
                                 +${transaction.amount.toFixed(2)}
                               </p>
                               <p className="text-xs text-gray-500">
-                                Provider earnings (90% of service)
+                                Host earnings (90% of Talk)
                               </p>
                               {transaction.transaction_hash && (
                                 <Button

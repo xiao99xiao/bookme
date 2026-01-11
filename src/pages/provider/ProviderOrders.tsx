@@ -82,7 +82,7 @@ export default function ProviderOrders() {
       loadSessionData(bookingsData);
     } catch (error) {
       console.error('Failed to load bookings:', error);
-      toast.error('Failed to load incoming orders');
+      toast.error('Failed to load incoming bookings');
     } finally {
       setLoading(false);
     }
@@ -155,7 +155,7 @@ export default function ProviderOrders() {
   const handleRejectPaidBooking = async (bookingId: string) => {
     try {
       await ApiClient.rejectPaidBooking(bookingId, 'Booking declined by provider');
-      toast.success('Paid booking rejected and refund processed');
+      toast.success('Booking declined and refund processed');
       loadBookings();
     } catch (error) {
       console.error('Failed to reject paid booking:', error);
@@ -323,9 +323,9 @@ export default function ProviderOrders() {
 
     const params = new URLSearchParams({
       action: 'TEMPLATE',
-      text: `${booking.service?.title || 'Service'} with ${booking.customer?.display_name || 'Customer'}`,
+      text: `${booking.service?.title || 'Talk'} with ${booking.customer?.display_name || 'Visitor'}`,
       dates: `${formatDateForGoogle(startDate)}/${formatDateForGoogle(endDate)}`,
-      details: `Booking for ${booking.service?.title}${booking.customer_notes ? `\n\nCustomer notes: ${booking.customer_notes}` : ''}`,
+      details: `Booking for ${booking.service?.title}${booking.customer_notes ? `\n\nVisitor notes: ${booking.customer_notes}` : ''}`,
       location: booking.is_online ? 'Online Meeting' : (booking.location || ''),
     });
 
@@ -341,8 +341,8 @@ export default function ProviderOrders() {
       return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '') + 'Z';
     };
 
-    const title = `${booking.service?.title || 'Service'} with ${booking.customer?.display_name || 'Customer'}`;
-    const description = `Booking for ${booking.service?.title}${booking.customer_notes ? `\n\nCustomer notes: ${booking.customer_notes}` : ''}`;
+    const title = `${booking.service?.title || 'Talk'} with ${booking.customer?.display_name || 'Visitor'}`;
+    const description = `Booking for ${booking.service?.title}${booking.customer_notes ? `\n\nVisitor notes: ${booking.customer_notes}` : ''}`;
     
     const icsContent = [
       'BEGIN:VCALENDAR',
@@ -402,9 +402,9 @@ export default function ProviderOrders() {
             <div className="fixed w-64">
               <div className="mb-6">
                 {/* Title - Raleway font */}
-                <H2 className="mb-2">Orders</H2>
+                <H2 className="mb-2">Bookings</H2>
                 {/* Subtitle - Nunito font */}
-                <p className="text-sm text-gray-500 font-body">Manage orders from your customers</p>
+                <p className="text-sm text-gray-500 font-body">Manage bookings from your visitors</p>
               </div>
 
               {/* Vertical Navigation - Nunito font */}
@@ -429,12 +429,12 @@ export default function ProviderOrders() {
           {/* Main Content Area - Desktop */}
           <div className="flex-1 flex flex-col min-h-[600px]">
             {loading ? (
-              <Loading variant="spinner" size="md" text="Loading orders..." fullHeight={true} />
+              <Loading variant="spinner" size="md" text="Loading bookings..." fullHeight={true} />
             ) : filteredBookings.length === 0 ? (
               <EmptyState
                 icon={<Calendar className="w-full h-full" />}
-                title={`No ${activeTab === 'all' ? '' : activeTab} orders`}
-                description="Your incoming orders will appear here"
+                title={`No ${activeTab === 'all' ? '' : activeTab} bookings`}
+                description="Your incoming bookings will appear here"
                 size="md"
                 fullHeight={true}
               />
@@ -524,7 +524,7 @@ export default function ProviderOrders() {
                             onClick={() => setChatModal({
                               isOpen: true,
                               otherUserId: booking.customer_id,
-                              otherUserName: booking.customer?.display_name || 'Customer',
+                              otherUserName: booking.customer?.display_name || 'Visitor',
                               otherUserAvatar: booking.customer?.avatar,
                               isReadOnly: booking.status === 'cancelled'
                             })}
@@ -584,7 +584,7 @@ export default function ProviderOrders() {
                                   Cancel
                                 </DSButton>
                               )}
-                              {(booking.status === 'pending' || booking.status === 'paid') && 'New order'}
+                              {(booking.status === 'pending' || booking.status === 'paid') && 'New booking'}
                             </div>
 
                             {/* Action Buttons */}
@@ -664,7 +664,7 @@ export default function ProviderOrders() {
                                   Insufficient Session Duration
                                 </Text>
                                 <Text variant="small" className="text-amber-700 mb-2">
-                                  Your Google Meet session was shorter than required. Payment is on hold pending customer confirmation.
+                                  Your Google Meet session was shorter than required. Payment is on hold pending visitor confirmation.
                                 </Text>
                                 {sessionData[booking.id] && (
                                   <Text variant="small" className="text-amber-600">
@@ -678,7 +678,7 @@ export default function ProviderOrders() {
                         </>
                       )}
 
-                      {/* Customer Review Section for Completed */}
+                      {/* Visitor Note Section for Completed */}
                       {booking.status === 'completed' && (
                         <>
                           {/* Divider Line */}
@@ -688,7 +688,7 @@ export default function ProviderOrders() {
                             {review ? (
                               <>
                                 <div className="flex items-center justify-between mb-3">
-                                  <p className="text-sm font-medium text-black font-body">Customer Review</p>
+                                  <p className="text-sm font-medium text-black font-body">Visitor Note</p>
                                   <div className="bg-[#fcf9f4] px-2 py-[5px] rounded-xl flex items-center gap-1 h-8">
                                     {[...Array(5)].map((_, i) => (
                                       <Star
@@ -706,14 +706,14 @@ export default function ProviderOrders() {
                                   </div>
                                 </div>
                                 <p className="text-sm text-[#666666] font-body italic">
-                                  "{review.comment || 'No written review provided.'}"
+                                  "{review.comment || 'No written note provided.'}"
                                 </p>
                               </>
                             ) : (
                               <>
-                                <p className="text-sm font-medium text-black font-body mb-2">Customer Review</p>
+                                <p className="text-sm font-medium text-black font-body mb-2">Visitor Note</p>
                                 <p className="text-sm text-[#999999] font-body italic">
-                                  The customer has not provided a review yet. Once they leave a review, it will be displayed here.
+                                  The visitor has not provided a note yet. Once they leave a note, it will be displayed here.
                                 </p>
                               </>
                             )}
@@ -736,8 +736,8 @@ export default function ProviderOrders() {
             <div className="mb-6">
               {/* Title Section */}
               <div className="mb-4">
-                <H2 className="mb-1">Orders</H2>
-                <Text variant="small" color="secondary">Manage orders from your customers</Text>
+                <H2 className="mb-1">Bookings</H2>
+                <Text variant="small" color="secondary">Manage bookings from your visitors</Text>
               </div>
             
             {/* Horizontal Tab Navigation */}
@@ -761,12 +761,12 @@ export default function ProviderOrders() {
           {/* Mobile Content Area */}
           <div className="flex flex-col min-h-[500px]">
             {loading ? (
-              <Loading variant="spinner" size="md" text="Loading orders..." fullHeight={true} />
+              <Loading variant="spinner" size="md" text="Loading bookings..." fullHeight={true} />
             ) : filteredBookings.length === 0 ? (
               <EmptyState
                 icon={<Calendar className="w-full h-full" />}
-                title={`No ${activeTab === 'all' ? '' : activeTab} orders`}
-                description="Your incoming orders will appear here"
+                title={`No ${activeTab === 'all' ? '' : activeTab} bookings`}
+                description="Your incoming bookings will appear here"
                 size="md"
                 fullHeight={true}
               />
@@ -856,7 +856,7 @@ export default function ProviderOrders() {
                             onClick={() => setChatModal({
                               isOpen: true,
                               otherUserId: booking.customer_id,
-                              otherUserName: booking.customer?.display_name || 'Customer',
+                              otherUserName: booking.customer?.display_name || 'Visitor',
                               otherUserAvatar: booking.customer?.avatar,
                               isReadOnly: booking.status === 'cancelled'
                             })}
@@ -927,7 +927,7 @@ export default function ProviderOrders() {
                                   Cancel
                                 </DSButton>
                               )}
-                              {(booking.status === 'pending' || booking.status === 'paid') && 'New order'}
+                              {(booking.status === 'pending' || booking.status === 'paid') && 'New booking'}
                             </div>
 
                             {/* Action Buttons */}
@@ -1007,7 +1007,7 @@ export default function ProviderOrders() {
                                   Insufficient Session Duration
                                 </Text>
                                 <Text variant="small" className="text-amber-700 mb-2">
-                                  Your Google Meet session was shorter than required. Payment is on hold pending customer confirmation.
+                                  Your Google Meet session was shorter than required. Payment is on hold pending visitor confirmation.
                                 </Text>
                                 {sessionData[booking.id] && (
                                   <Text variant="small" className="text-amber-600">
@@ -1021,7 +1021,7 @@ export default function ProviderOrders() {
                         </>
                       )}
 
-                      {/* Customer Review Section for Completed */}
+                      {/* Visitor Note Section for Completed */}
                       {booking.status === 'completed' && (
                         <>
                           {/* Divider Line */}
@@ -1031,7 +1031,7 @@ export default function ProviderOrders() {
                             {review ? (
                               <>
                                 <div className="flex items-center justify-between mb-3">
-                                  <p className="text-sm font-medium text-black font-body">Customer Review</p>
+                                  <p className="text-sm font-medium text-black font-body">Visitor Note</p>
                                   <div className="bg-[#fcf9f4] px-2 py-[5px] rounded-xl flex items-center gap-1 h-8">
                                     {[...Array(5)].map((_, i) => (
                                       <Star
@@ -1049,14 +1049,14 @@ export default function ProviderOrders() {
                                   </div>
                                 </div>
                                 <p className="text-sm text-[#666666] font-body italic">
-                                  "{review.comment || 'No written review provided.'}"
+                                  "{review.comment || 'No written note provided.'}"
                                 </p>
                               </>
                             ) : (
                               <>
-                                <p className="text-sm font-medium text-black font-body mb-2">Customer Review</p>
+                                <p className="text-sm font-medium text-black font-body mb-2">Visitor Note</p>
                                 <p className="text-sm text-[#999999] font-body italic">
-                                  The customer has not provided a review yet. Once they leave a review, it will be displayed here.
+                                  The visitor has not provided a note yet. Once they leave a note, it will be displayed here.
                                 </p>
                               </>
                             )}

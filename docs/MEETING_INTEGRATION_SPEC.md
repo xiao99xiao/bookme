@@ -238,6 +238,7 @@ https://www.googleapis.com/auth/calendar.events
 ### Additional Platforms
 - Zoom integration
 - Microsoft Teams integration
+- **Jitsi Meet integration** (see detailed spec below)
 - Custom meeting room providers
 
 ### Advanced Features
@@ -245,5 +246,162 @@ https://www.googleapis.com/auth/calendar.events
 - Waiting room settings
 - Meeting templates and branding
 - Bulk meeting management
+
+---
+
+## Jitsi Meet Integration (Future Feature)
+
+### Why Jitsi?
+| Feature | Google Meet | Jitsi (JaaS) |
+|---------|-------------|--------------|
+| Privacy | Email visible to all participants | Fully anonymous (custom display names) |
+| OAuth Required | Yes (complex) | No (JWT-based, simpler) |
+| Account Required | Google account | None for participants |
+| White-labeling | No | Yes |
+| Webhooks | No | Yes (meeting events) |
+| Cost | Free (user's account) | $99-999/month based on MAU |
+
+### JaaS (8x8) Pricing Summary
+| Plan | MAU Limit | Monthly Cost |
+|------|-----------|--------------|
+| Developer | 25 | **Free** |
+| Basic | 300 | $99 |
+| Standard | 1,500 | $499 |
+| Business | 3,000 | $999 |
+| Enterprise | 5,000+ | Contact sales |
+
+**Overage:** $0.99 per additional MAU
+**Recording:** $0.01/minute (stored 24 hours)
+
+### Technical Implementation
+
+#### 1. Database Changes
+```sql
+-- Add 'jitsi' to platform enum
+ALTER TABLE user_meeting_integrations
+  DROP CONSTRAINT user_meeting_integrations_platform_check;
+ALTER TABLE user_meeting_integrations
+  ADD CONSTRAINT user_meeting_integrations_platform_check
+  CHECK (platform IN ('google_meet', 'zoom', 'teams', 'jitsi'));
+
+-- Add Jitsi-specific settings
+ALTER TABLE services ADD COLUMN jitsi_settings JSONB DEFAULT '{}';
+-- Example: {"moderatorOnly": true, "lobbyEnabled": false}
+```
+
+#### 2. Backend JWT Generation
+```javascript
+// backend/src/jitsi-jwt.js
+import jwt from 'jsonwebtoken';
+
+const JAAS_APP_ID = process.env.JAAS_APP_ID;  // vpaas-magic-cookie-xxx
+const JAAS_API_KEY = process.env.JAAS_API_KEY;
+const JAAS_PRIVATE_KEY = process.env.JAAS_PRIVATE_KEY;
+
+export function generateJitsiJWT(options) {
+  const { roomName, user, isModerator = false, expiresIn = '2h' } = options;
+
+  const payload = {
+    aud: 'jitsi',
+    iss: 'chat',
+    sub: JAAS_APP_ID,
+    room: roomName,
+    context: {
+      user: {
+        name: user.displayName,
+        // No email - privacy preserved!
+        moderator: isModerator ? 'true' : 'false'
+      },
+      features: {
+        livestreaming: 'false',
+        recording: 'false',
+        transcription: 'false',
+        'outbound-call': 'false'
+      }
+    }
+  };
+
+  return jwt.sign(payload, JAAS_PRIVATE_KEY, {
+    algorithm: 'RS256',
+    expiresIn,
+    header: { kid: JAAS_API_KEY, typ: 'JWT', alg: 'RS256' }
+  });
+}
+
+export function generateJitsiMeetingLink(bookingId, user, isModerator) {
+  const roomName = `nook-${bookingId}`;
+  const token = generateJitsiJWT({ roomName, user, isModerator });
+  return `https://8x8.vc/${JAAS_APP_ID}/${roomName}?jwt=${token}`;
+}
+```
+
+#### 3. Meeting Generation Changes
+```javascript
+// backend/src/meeting-generation.js - add Jitsi case
+async function generateMeetingLinkForBooking(bookingId) {
+  const booking = await getBookingWithDetails(bookingId);
+
+  switch (booking.services.meeting_platform) {
+    case 'google_meet':
+      return await generateGoogleMeetLink(booking);
+    case 'jitsi':
+      // No OAuth needed - just generate JWT links
+      return {
+        hostLink: generateJitsiMeetingLink(bookingId, booking.provider, true),
+        guestLink: generateJitsiMeetingLink(bookingId, booking.customer, false)
+      };
+    default:
+      return null;
+  }
+}
+```
+
+#### 4. Frontend Changes
+
+**Add Jitsi icon:**
+```tsx
+// src/components/icons/MeetingPlatformIcons.tsx
+export const JitsiIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-6 h-6">
+    {/* Jitsi logo SVG */}
+  </svg>
+);
+```
+
+**Update platform selector:**
+```tsx
+// src/components/CreateServiceModal.tsx
+const meetingPlatforms = [
+  { value: 'google_meet', label: 'Google Meet', icon: GoogleMeetIcon },
+  { value: 'jitsi', label: 'Jitsi Meet', icon: JitsiIcon, badge: 'Privacy-first' },
+  { value: 'zoom', label: 'Zoom', icon: ZoomIcon, disabled: true },
+  { value: 'teams', label: 'Microsoft Teams', icon: TeamsIcon, disabled: true },
+];
+```
+
+**No integration page needed for Jitsi** - it works without OAuth!
+
+#### 5. Environment Variables
+```bash
+# Backend .env
+JAAS_APP_ID=vpaas-magic-cookie-xxxxx
+JAAS_API_KEY=your-api-key-id
+JAAS_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n..."
+```
+
+### Implementation Priority
+1. **Phase 1 (MVP):** Free tier (25 MAU) for testing
+2. **Phase 2:** Add UI option in platform selector
+3. **Phase 3:** Webhook integration for meeting analytics
+4. **Phase 4:** Evaluate upgrade to Basic plan ($99/month) based on usage
+
+### Resources
+- [JaaS Developer Portal](https://developer.8x8.com/jaas/)
+- [JaaS JWT Documentation](https://developer.8x8.com/jaas/docs/api-keys-jwt/)
+- [JaaS Webhooks](https://developer.8x8.com/jaas/docs/webhooks-overview/)
+- [JaaS Pricing](https://cpaas.8x8.com/en/pricing/jitsi-as-a-service-pricing/)
+- [Jitsi React SDK](https://jitsi.github.io/handbook/docs/dev-guide/dev-guide-react-sdk/)
+
+---
 
 This specification provides a comprehensive foundation for implementing the online meeting integration feature while maintaining compatibility with the existing system architecture.

@@ -2,24 +2,24 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import { Briefcase, Clock, DollarSign, Users } from "lucide-react";
 
-interface BecomeProviderDialogProps {
+interface BecomeHostDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
   isLoading?: boolean;
 }
 
-const BecomeProviderDialog = ({ open, onOpenChange, onConfirm, isLoading }: BecomeProviderDialogProps) => {
+const BecomeHostDialog = ({ open, onOpenChange, onConfirm, isLoading }: BecomeHostDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Briefcase className="w-5 h-5" />
-            Become a Provider
+            Become a Host
           </DialogTitle>
           <DialogDescription>
-            Start earning by offering your services to others on Nook
+            Create your Nook and start offering Talks to others
           </DialogDescription>
         </DialogHeader>
 
@@ -56,7 +56,7 @@ const BecomeProviderDialog = ({ open, onOpenChange, onConfirm, isLoading }: Beco
               <div>
                 <h4 className="font-medium">Build Your Network</h4>
                 <p className="text-sm text-muted-foreground">
-                  Connect with customers and grow your professional reputation
+                  Connect with visitors and grow your professional reputation
                 </p>
               </div>
             </div>
@@ -64,8 +64,8 @@ const BecomeProviderDialog = ({ open, onOpenChange, onConfirm, isLoading }: Beco
 
           <div className="rounded-lg bg-muted/50 p-4">
             <p className="text-sm text-muted-foreground">
-              As a provider, you'll be able to create services, manage bookings, and receive payments.
-              You can switch between customer and provider modes anytime.
+              As a host, you'll be able to create Talks, manage bookings, and receive payments.
+              You can switch between visitor and host modes anytime.
             </p>
           </div>
         </div>
@@ -82,7 +82,7 @@ const BecomeProviderDialog = ({ open, onOpenChange, onConfirm, isLoading }: Beco
             onClick={onConfirm}
             disabled={isLoading}
           >
-            {isLoading ? "Setting up..." : "Yes, Become Provider"}
+            {isLoading ? "Setting up..." : "Yes, Become a Host"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -90,4 +90,4 @@ const BecomeProviderDialog = ({ open, onOpenChange, onConfirm, isLoading }: Beco
   );
 };
 
-export default BecomeProviderDialog;
+export default BecomeHostDialog;

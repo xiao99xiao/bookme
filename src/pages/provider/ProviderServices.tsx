@@ -90,10 +90,10 @@ export default function ProviderServices() {
       setServices(prev => 
         prev.map(s => s.id === service.id ? updatedService : s)
       );
-      toast.success(`Service ${updatedService.is_visible ? 'made visible' : 'hidden from public'}`);
+      toast.success(`Talk ${updatedService.is_visible ? 'published' : 'paused'}`);
     } catch (error) {
-      console.error('Failed to toggle service visibility:', error);
-      toast.error('Failed to update service visibility');
+      console.error('Failed to toggle Talk visibility:', error);
+      toast.error('Failed to update Talk visibility');
     }
   };
 
@@ -103,11 +103,11 @@ export default function ProviderServices() {
     try {
       await ApiClient.deleteService(deletingService.id);
       setServices(prev => prev.filter(s => s.id !== deletingService.id));
-      toast.success('Service deleted successfully');
+      toast.success('Talk deleted successfully');
       setDeletingService(null);
     } catch (error) {
-      console.error('Failed to delete service:', error);
-      toast.error('Failed to delete service');
+      console.error('Failed to delete Talk:', error);
+      toast.error('Failed to delete Talk');
     }
   };
 
@@ -132,11 +132,11 @@ export default function ProviderServices() {
         setServices(prev => 
           prev.map(s => s.id === editingService.id ? updatedService : s)
         );
-        toast.success('Service updated successfully');
+        toast.success('Talk updated successfully');
       } else {
         const newService = await ApiClient.createService(userId || '', serviceData);
         setServices(prev => [newService, ...prev]);
-        toast.success('Service created successfully');
+        toast.success('Talk created successfully');
       }
 
       setIsServiceModalOpen(false);
@@ -155,7 +155,7 @@ export default function ProviderServices() {
           toast.error('Calendar integration validation failed');
         }
       } else {
-        toast.error('Failed to save service');
+        toast.error('Failed to save Talk');
       }
     } finally {
       setIsSavingService(false);
@@ -186,8 +186,8 @@ export default function ProviderServices() {
       <div className="hidden lg:block max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {/* Desktop Title */}
         <div className="mb-8">
-          <H1 className="mb-2">Your Services</H1>
-          <Text className="text-lg">Create and manage the services you offer to customers</Text>
+          <H1 className="mb-2">Your Talks</H1>
+          <Text className="text-lg">Create and manage the Talks you offer to visitors</Text>
         </div>
 
         {/* Desktop Layout */}
@@ -196,26 +196,26 @@ export default function ProviderServices() {
           <div className="flex-1 p-6 space-y-6 bg-white rounded-lg">
           {/* Add Service Button */}
           <div className={`pb-8 mb-8 ${services.length === 0 ? "mt-12" : "mt-6"} border-b border-gray-200`}>
-            <DSButton 
+            <DSButton
               onClick={handleCreateService}
               fullWidth
               size="large"
               variant="primary"
               icon={<Plus className="h-5 w-5" />}
             >
-              Add New Service
+              Create a Talk
             </DSButton>
           </div>
 
-          {/* Services List */}
+          {/* Talks List */}
           {loading ? (
-            <Loading variant="spinner" size="md" text="Loading services..." fullHeight={true} />
+            <Loading variant="spinner" size="md" text="Loading Talks..." fullHeight={true} />
           ) : services.length === 0 ? (
             <div className="py-12 text-center">
               <Briefcase className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">No services yet</p>
+              <p className="text-gray-500">No Talks yet</p>
               <p className="text-sm text-gray-400 mt-1">
-                Create your first service to start accepting bookings
+                Create your first Talk to start accepting bookings
               </p>
             </div>
           ) : (
@@ -293,14 +293,14 @@ export default function ProviderServices() {
           )}
           </div>
 
-          {/* Right Column - Profile Preview - Desktop Only */}
+          {/* Right Column - Preview - Desktop Only */}
           <div className="w-[400px] flex-shrink-0">
             <div className="fixed w-[400px] h-screen">
               <div className="h-full bg-white border-l border-gray-200 rounded-lg overflow-y-auto">
                 <div className="py-8 px-6">
               <div className="mb-8">
-                <H2 className="mb-2">Services Preview</H2>
-                <p className="text-sm text-gray-600">This is how your services appear to customers</p>
+                <H2 className="mb-2">Talks Preview</H2>
+                <p className="text-sm text-gray-600">This is how your Talks appear to visitors</p>
               </div>
 
                   {services.filter(service => service.is_visible !== false).length > 0 ? (
@@ -339,18 +339,18 @@ export default function ProviderServices() {
                   ) : (
                     <div className="text-center py-12 text-muted-foreground">
                       <Briefcase className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-                      <p className="font-medium mb-1">No services to preview</p>
-                      <p className="text-xs">Create your first service to see how it will appear to customers</p>
+                      <p className="font-medium mb-1">No Talks to preview</p>
+                      <p className="text-xs">Create your first Talk to see how it will appear to visitors</p>
                     </div>
                   )}
 
-                  {/* Service Tips */}
+                  {/* Talk Tips */}
                   <div className="mt-8 pt-8 border-t border-gray-200">
-                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Tips for Great Services</h3>
+                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Tips for Great Talks</h3>
                     <div className="space-y-2">
                       <div className="flex items-start gap-2">
                         <div className="w-1 h-1 rounded-full bg-gray-400 mt-1.5 flex-shrink-0" />
-                        <p className="text-xs text-gray-600">Use clear, descriptive titles that customers can easily understand</p>
+                        <p className="text-xs text-gray-600">Use clear, descriptive titles that visitors can easily understand</p>
                       </div>
                       <div className="flex items-start gap-2">
                         <div className="w-1 h-1 rounded-full bg-gray-400 mt-1.5 flex-shrink-0" />
@@ -358,11 +358,11 @@ export default function ProviderServices() {
                       </div>
                       <div className="flex items-start gap-2">
                         <div className="w-1 h-1 rounded-full bg-gray-400 mt-1.5 flex-shrink-0" />
-                        <p className="text-xs text-gray-600">Include all important details in your service description</p>
+                        <p className="text-xs text-gray-600">Include all important details in your Talk description</p>
                       </div>
                       <div className="flex items-start gap-2">
                         <div className="w-1 h-1 rounded-full bg-gray-400 mt-1.5 flex-shrink-0" />
-                        <p className="text-xs text-gray-600">Keep services visible to appear in search results</p>
+                        <p className="text-xs text-gray-600">Keep Talks visible to appear in search results</p>
                       </div>
                     </div>
                   </div>
@@ -378,10 +378,10 @@ export default function ProviderServices() {
           <div className="px-4 py-6">
             {/* Mobile Title */}
             <div className="mb-6">
-              <H2 className="mb-1">Services</H2>
-              <Text variant="small" color="secondary">Create and manage the services you offer to customers</Text>
+              <H2 className="mb-1">Talks</H2>
+              <Text variant="small" color="secondary">Create and manage the Talks you offer to visitors</Text>
             </div>
-          {/* Add Service Button */}
+          {/* Add Talk Button */}
           <div className={`pb-8 mb-8 ${services.length === 0 ? "mt-12" : "mt-6"} border-b border-gray-200`}>
             <DSButton
               onClick={handleCreateService}
@@ -390,18 +390,18 @@ export default function ProviderServices() {
               variant="primary"
               icon={<Plus className="h-5 w-5" />}
             >
-              Add Service
+              Create a Talk
             </DSButton>
           </div>
 
-          {/* Services List */}
+          {/* Talks List */}
           {loading ? (
-            <Loading variant="spinner" size="md" text="Loading services..." fullHeight={true} />
+            <Loading variant="spinner" size="md" text="Loading Talks..." fullHeight={true} />
           ) : services.length === 0 ? (
             <div className="text-center py-12">
               <Briefcase className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-              <H3 className="mb-2">No services yet</H3>
-              <Text variant="small" color="secondary" className="mb-6">Create your first service to start accepting bookings</Text>
+              <H3 className="mb-2">No Talks yet</H3>
+              <Text variant="small" color="secondary" className="mb-6">Create your first Talk to start accepting bookings</Text>
             </div>
           ) : (
             <div className="space-y-4">
@@ -435,7 +435,7 @@ export default function ProviderServices() {
       <AlertDialog open={!!deletingService} onOpenChange={() => setDeletingService(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Service</AlertDialogTitle>
+            <AlertDialogTitle>Delete Talk</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete "{deletingService?.title}"? This action cannot be undone.
             </AlertDialogDescription>

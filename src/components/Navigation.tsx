@@ -20,12 +20,12 @@ import {
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/PrivyAuthContext";
 import { ApiClient } from "@/lib/api-migration";
-import BecomeProviderDialog from "./BecomeProviderDialog";
+import BecomeHostDialog from "./BecomeHostDialog";
 import { toast } from "sonner";
 
 const STORAGE_KEY = 'nook_user_mode';
 
-type UserMode = 'customer' | 'provider' | null;
+type UserMode = 'visitor' | 'host' | null;
 
 const Navigation = () => {
   const location = useLocation();
@@ -34,25 +34,32 @@ const Navigation = () => {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [userMode, setUserMode] = useState<UserMode>(null);
-  const [showBecomeProviderDialog, setShowBecomeProviderDialog] = useState(false);
-  const [isBecomingProvider, setIsBecomingProvider] = useState(false);
-  
+  const [showBecomeHostDialog, setShowBecomeHostDialog] = useState(false);
+  const [isBecomingHost, setIsBecomingHost] = useState(false);
+
   const isLoggedIn = authenticated;
   const isAuthPage = location.pathname === "/auth";
   const userName = profile?.display_name || "User";
-  
+
   // Initialize user mode on login/profile change
   useEffect(() => {
     if (isLoggedIn && profile && ready) {
       // Check localStorage for existing mode
       const storedMode = localStorage.getItem(STORAGE_KEY) as UserMode;
-      
-      if (storedMode === 'customer' || storedMode === 'provider') {
+
+      // Handle legacy values
+      if (storedMode === 'customer' as any) {
+        localStorage.setItem(STORAGE_KEY, 'visitor');
+        setUserMode('visitor');
+      } else if (storedMode === 'provider' as any) {
+        localStorage.setItem(STORAGE_KEY, 'host');
+        setUserMode('host');
+      } else if (storedMode === 'visitor' || storedMode === 'host') {
         // Use stored mode if valid
         setUserMode(storedMode);
       } else {
-        // Default to user's provider status
-        const defaultMode = profile.is_provider ? 'provider' : 'customer';
+        // Default to user's host status
+        const defaultMode = profile.is_provider ? 'host' : 'visitor';
         setUserMode(defaultMode);
         localStorage.setItem(STORAGE_KEY, defaultMode);
       }
@@ -68,7 +75,7 @@ const Navigation = () => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === STORAGE_KEY) {
         const newMode = e.newValue as UserMode;
-        if (newMode === 'customer' || newMode === 'provider') {
+        if (newMode === 'visitor' || newMode === 'host') {
           setUserMode(newMode);
         }
       }
@@ -80,7 +87,7 @@ const Navigation = () => {
     // Also listen for manual localStorage changes within the same window
     const handleManualStorageChange = () => {
       const storedMode = localStorage.getItem(STORAGE_KEY) as UserMode;
-      if (storedMode !== userMode && (storedMode === 'customer' || storedMode === 'provider')) {
+      if (storedMode !== userMode && (storedMode === 'visitor' || storedMode === 'host')) {
         setUserMode(storedMode);
       }
     };
@@ -127,10 +134,10 @@ const Navigation = () => {
   useEffect(() => {
     if (isLoggedIn && userMode && location.pathname === '/' && ready) {
       // Redirect based on user mode
-      if (userMode === 'provider') {
-        navigate('/provider/orders');
+      if (userMode === 'host') {
+        navigate('/host/bookings');
       } else {
-        navigate('/customer/bookings');
+        navigate('/bookings');
       }
     }
   }, [isLoggedIn, userMode, location.pathname, navigate, ready]);
@@ -139,7 +146,7 @@ const Navigation = () => {
   const handleModeSwitch = () => {
     if (!userMode) return;
 
-    const newMode: UserMode = userMode === 'customer' ? 'provider' : 'customer';
+    const newMode: UserMode = userMode === 'visitor' ? 'host' : 'visitor';
 
     // Update state
     setUserMode(newMode);
@@ -148,52 +155,52 @@ const Navigation = () => {
     localStorage.setItem(STORAGE_KEY, newMode);
 
     // Navigate to appropriate landing
-    if (newMode === 'provider') {
-      navigate('/provider/services');
+    if (newMode === 'host') {
+      navigate('/host/talks');
     } else {
-      navigate('/customer/bookings');
+      navigate('/bookings');
     }
   };
 
-  // Handle becoming a provider
-  const handleBecomeProvider = () => {
+  // Handle becoming a host
+  const handleBecomeHost = () => {
     if (profile?.is_provider) {
-      // Already a provider, just switch mode
+      // Already a host, just switch mode
       handleModeSwitch();
     } else {
-      // Show dialog to become provider
-      setShowBecomeProviderDialog(true);
+      // Show dialog to become host
+      setShowBecomeHostDialog(true);
     }
   };
 
-  // Confirm becoming a provider
-  const handleConfirmBecomeProvider = async () => {
+  // Confirm becoming a host
+  const handleConfirmBecomeHost = async () => {
     if (!userId || !profile) return;
 
-    setIsBecomingProvider(true);
+    setIsBecomingHost(true);
     try {
-      // Update user to be a provider
+      // Update user to be a host
       await ApiClient.updateProfile({ is_provider: true }, userId);
 
       // Refresh profile to get updated is_provider status
       await refreshProfile();
 
-      // Switch to provider mode
-      setUserMode('provider');
-      localStorage.setItem(STORAGE_KEY, 'provider');
+      // Switch to host mode
+      setUserMode('host');
+      localStorage.setItem(STORAGE_KEY, 'host');
 
       // Close dialog
-      setShowBecomeProviderDialog(false);
+      setShowBecomeHostDialog(false);
 
-      // Navigate to services page
-      navigate('/provider/services');
+      // Navigate to talks page
+      navigate('/host/talks');
 
-      toast.success('Welcome to provider mode! You can now create services.');
+      toast.success('Welcome to host mode! You can now create Talks.');
     } catch (error) {
-      console.error('Failed to become provider:', error);
-      toast.error('Failed to enable provider mode. Please try again.');
+      console.error('Failed to become host:', error);
+      toast.error('Failed to enable host mode. Please try again.');
     } finally {
-      setIsBecomingProvider(false);
+      setIsBecomingHost(false);
     }
   };
 
@@ -212,24 +219,24 @@ const Navigation = () => {
     }
 
     // Navigation items based on user mode
-    if (userMode === 'customer') {
+    if (userMode === 'visitor') {
       return (
         <div className="hidden md:flex items-center space-x-8">
-          <Link 
-            to="/customer/bookings" 
+          <Link
+            to="/bookings"
             className={`text-sm transition-colors ${
-              location.pathname === '/customer/bookings' 
-                ? 'font-bold text-gray-900' 
+              location.pathname === '/bookings'
+                ? 'font-bold text-gray-900'
                 : 'font-medium text-gray-600 hover:text-gray-900'
             }`}
           >
             Bookings
           </Link>
-          <Link 
-            to="/customer/messages" 
+          <Link
+            to="/messages"
             className={`text-sm transition-colors ${
-              location.pathname === '/customer/messages' 
-                ? 'font-bold text-gray-900' 
+              location.pathname === '/messages'
+                ? 'font-bold text-gray-900'
                 : 'font-medium text-gray-600 hover:text-gray-900'
             }`}
           >
@@ -239,34 +246,34 @@ const Navigation = () => {
       );
     }
 
-    // Provider navigation items
-    if (userMode === 'provider') {
+    // Host navigation items
+    if (userMode === 'host') {
       return (
         <div className="hidden md:flex items-center space-x-8">
-          <Link 
-            to="/provider/orders" 
+          <Link
+            to="/host/bookings"
             className={`text-sm transition-colors ${
-              location.pathname === '/provider/orders' 
-                ? 'font-bold text-gray-900' 
+              location.pathname === '/host/bookings'
+                ? 'font-bold text-gray-900'
                 : 'font-medium text-gray-600 hover:text-gray-900'
             }`}
           >
-            Orders
-          </Link>
-          <Link 
-            to="/provider/services" 
-            className={`text-sm transition-colors ${
-              location.pathname === '/provider/services' 
-                ? 'font-bold text-gray-900' 
-                : 'font-medium text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            Services
+            Bookings
           </Link>
           <Link
-            to="/provider/messages"
+            to="/host/talks"
             className={`text-sm transition-colors ${
-              location.pathname === '/provider/messages'
+              location.pathname === '/host/talks'
+                ? 'font-bold text-gray-900'
+                : 'font-medium text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Talks
+          </Link>
+          <Link
+            to="/host/messages"
+            className={`text-sm transition-colors ${
+              location.pathname === '/host/messages'
                 ? 'font-bold text-gray-900'
                 : 'font-medium text-gray-600 hover:text-gray-900'
             }`}
@@ -274,14 +281,14 @@ const Navigation = () => {
             Messages
           </Link>
           <Link
-            to="/provider/income"
+            to="/host/earnings"
             className={`text-sm transition-colors ${
-              location.pathname === '/provider/income'
+              location.pathname === '/host/earnings'
                 ? 'font-bold text-gray-900'
                 : 'font-medium text-gray-600 hover:text-gray-900'
             }`}
           >
-            Income
+            Earnings
           </Link>
         </div>
       );
@@ -301,20 +308,20 @@ const Navigation = () => {
       return null;
     }
 
-    const tabItems = userMode === 'customer' ? [
-      { to: '/customer/bookings', icon: Calendar, label: 'Bookings' },
-      { to: '/customer/messages', icon: MessageCircle, label: 'Messages' },
+    const tabItems = userMode === 'visitor' ? [
+      { to: '/bookings', icon: Calendar, label: 'Bookings' },
+      { to: '/messages', icon: MessageCircle, label: 'Messages' },
       { to: '/me', icon: User, label: 'Me' },
     ] : [
-      { to: '/provider/orders', icon: ClipboardList, label: 'Orders' },
-      { to: '/provider/services', icon: Settings, label: 'Services' },
-      { to: '/provider/messages', icon: MessageCircle, label: 'Messages' },
+      { to: '/host/bookings', icon: ClipboardList, label: 'Bookings' },
+      { to: '/host/talks', icon: Settings, label: 'Talks' },
+      { to: '/host/messages', icon: MessageCircle, label: 'Messages' },
       { to: '/me', icon: User, label: 'Me' },
     ];
 
     return (
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
-        <div className={`grid ${userMode === 'customer' ? 'grid-cols-3' : 'grid-cols-4'}`}>
+        <div className={`grid ${userMode === 'visitor' ? 'grid-cols-3' : 'grid-cols-4'}`}>
           {tabItems.map(({ to, icon: Icon, label }) => (
             <Link
               key={to}
@@ -333,7 +340,7 @@ const Navigation = () => {
       </div>
     );
   };
-  
+
   const renderRightContent = () => {
     if (isAuthPage) {
       return null;
@@ -344,29 +351,29 @@ const Navigation = () => {
         <div className="w-8 h-8 bg-muted rounded-full animate-pulse" />
       );
     }
-    
+
     if (isLoggedIn && userMode) {
       return (
         <div className="flex items-center gap-3">
-          {/* Become Provider / Provider Dashboard button - only show in customer mode */}
-          {userMode === 'customer' && (
+          {/* Become Host / My Nook button - only show in visitor mode */}
+          {userMode === 'visitor' && (
             !profile?.is_provider ? (
               <button
-                onClick={handleBecomeProvider}
+                onClick={handleBecomeHost}
                 className="hidden md:block text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
               >
-                Become Provider
+                Become a Host
               </button>
             ) : (
               <Link
-                to="/provider/services"
+                to="/host/talks"
                 className={`hidden md:block text-sm transition-colors ${
-                  location.pathname === '/provider/services'
+                  location.pathname === '/host/talks'
                     ? 'font-bold text-gray-900'
                     : 'font-medium text-gray-600 hover:text-gray-900'
                 }`}
               >
-                Provider Dashboard
+                My Nook
               </Link>
             )
           )}
@@ -400,16 +407,16 @@ const Navigation = () => {
                 Balance
               </Link>
             </DropdownMenuItem>
-            {userMode === 'provider' && (
+            {userMode === 'host' && (
               <>
                 <DropdownMenuItem asChild>
-                  <Link to="/provider/referrals" className="flex items-center gap-2">
+                  <Link to="/host/referrals" className="flex items-center gap-2">
                     <Users className="w-4 h-4" />
                     Referrals
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/provider/integrations" className="flex items-center gap-2">
+                  <Link to="/host/integrations" className="flex items-center gap-2">
                     <Plug className="w-4 h-4" />
                     Integrations
                   </Link>
@@ -417,18 +424,18 @@ const Navigation = () => {
               </>
             )}
             <DropdownMenuSeparator />
-            {userMode === 'customer' ? (
+            {userMode === 'visitor' ? (
               !profile?.is_provider ? (
                 <DropdownMenuItem
-                  onClick={handleBecomeProvider}
+                  onClick={handleBecomeHost}
                   className="flex flex-col items-start gap-1 cursor-pointer py-3"
                 >
                   <div className="flex items-center gap-2">
                     <Briefcase className="w-4 h-4" />
-                    Become Provider
+                    Become a Host
                   </div>
                   <span className="text-xs text-muted-foreground ml-6">
-                    Start earning by offering services
+                    Start earning by offering Talks
                   </span>
                 </DropdownMenuItem>
               ) : (
@@ -437,7 +444,7 @@ const Navigation = () => {
                   className="flex items-center gap-2 cursor-pointer"
                 >
                   <Briefcase className="w-4 h-4" />
-                  Provider Mode
+                  Switch to Host Mode
                 </DropdownMenuItem>
               )
             ) : (
@@ -446,11 +453,11 @@ const Navigation = () => {
                 className="flex items-center gap-2 cursor-pointer"
               >
                 <User className="w-4 h-4" />
-                Customer Mode
+                Switch to Visitor Mode
               </DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
-            <DropdownMenuItem 
+            <DropdownMenuItem
               className="flex items-center gap-2 text-destructive cursor-pointer"
               onClick={handleLogout}
             >
@@ -462,7 +469,7 @@ const Navigation = () => {
         </div>
       );
     }
-    
+
     return (
       <Button onClick={login} size="sm">
         Get Started
@@ -501,7 +508,7 @@ alt="Nook logo"
           </div>
         </div>
       </nav>
-      
+
       {/* Mobile Tab Bar */}
       {renderMobileTabBar()}
 
@@ -512,12 +519,12 @@ alt="Nook logo"
         <div className="md:hidden h-16" />
       )}
 
-      {/* Become Provider Dialog */}
-      <BecomeProviderDialog
-        open={showBecomeProviderDialog}
-        onOpenChange={setShowBecomeProviderDialog}
-        onConfirm={handleConfirmBecomeProvider}
-        isLoading={isBecomingProvider}
+      {/* Become Host Dialog */}
+      <BecomeHostDialog
+        open={showBecomeHostDialog}
+        onOpenChange={setShowBecomeHostDialog}
+        onConfirm={handleConfirmBecomeHost}
+        isLoading={isBecomingHost}
       />
     </>
   );

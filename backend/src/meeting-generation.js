@@ -47,6 +47,9 @@ class GoogleCalendar {
         timeZone: timeZone || 'UTC'
       },
       attendees: attendees?.map(email => ({ email })) || [],
+      // Privacy: Hide guest list from other guests in calendar invite
+      // Note: Participants will still see each other in the actual Google Meet call
+      guestsCanSeeOtherGuests: false,
       conferenceData: {
         createRequest: {
           requestId: `meet-${Date.now()}`,

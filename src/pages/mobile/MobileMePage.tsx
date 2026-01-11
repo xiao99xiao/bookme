@@ -10,14 +10,14 @@ import { useSmartWallets } from '@privy-io/react-auth/smart-wallets';
 import { ApiClient } from '@/lib/api-migration';
 import { toast } from 'sonner';
 import { H2, H3, Text, Description, Loading } from '@/design-system';
-import BecomeProviderDialog from '@/components/BecomeProviderDialog';
+import BecomeHostDialog from '@/components/BecomeHostDialog';
 import { useBlockchainService } from '@/lib/blockchain-service';
 import ReactMarkdown from 'react-markdown';
 import { useFunding } from '@/hooks/useFunding';
 
 const STORAGE_KEY = 'nook_user_mode';
 
-type UserMode = 'customer' | 'provider' | null;
+type UserMode = 'visitor' | 'host' | null;
 
 // iOS-style grouped list section component
 const GroupedSection = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
@@ -94,8 +94,8 @@ export default function MobileMePage() {
   const [userMode, setUserMode] = useState<UserMode>(null);
   const [balance, setBalance] = useState<string>('0.00');
   const [loadingBalance, setLoadingBalance] = useState(true);
-  const [showBecomeProviderDialog, setShowBecomeProviderDialog] = useState(false);
-  const [isBecomingProvider, setIsBecomingProvider] = useState(false);
+  const [showBecomeHostDialog, setShowBecomeHostDialog] = useState(false);
+  const [isBecomingHost, setIsBecomingHost] = useState(false);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [isBioExpanded, setIsBioExpanded] = useState(false);
 
@@ -109,10 +109,17 @@ export default function MobileMePage() {
   useEffect(() => {
     if (authenticated && profile && ready) {
       const storedMode = localStorage.getItem(STORAGE_KEY) as UserMode;
-      if (storedMode === 'customer' || storedMode === 'provider') {
+      // Handle legacy values
+      if (storedMode === 'customer' as any) {
+        localStorage.setItem(STORAGE_KEY, 'visitor');
+        setUserMode('visitor');
+      } else if (storedMode === 'provider' as any) {
+        localStorage.setItem(STORAGE_KEY, 'host');
+        setUserMode('host');
+      } else if (storedMode === 'visitor' || storedMode === 'host') {
         setUserMode(storedMode);
       } else {
-        const defaultMode = profile.is_provider ? 'provider' : 'customer';
+        const defaultMode = profile.is_provider ? 'host' : 'visitor';
         setUserMode(defaultMode);
         localStorage.setItem(STORAGE_KEY, defaultMode);
       }
@@ -170,42 +177,42 @@ export default function MobileMePage() {
   const handleModeSwitch = () => {
     if (!userMode) return;
 
-    const newMode: UserMode = userMode === 'customer' ? 'provider' : 'customer';
+    const newMode: UserMode = userMode === 'visitor' ? 'host' : 'visitor';
     setUserMode(newMode);
     localStorage.setItem(STORAGE_KEY, newMode);
 
     // Stay on Me page when toggling from the mobile Me page
     // Don't navigate away like other parts of the app do
-    toast.success(`Switched to ${newMode} mode`);
+    toast.success(`Switched to ${newMode === 'host' ? 'Host' : 'Visitor'} mode`);
   };
 
-  const handleBecomeProvider = () => {
+  const handleBecomeHost = () => {
     if (profile?.is_provider) {
       handleModeSwitch();
     } else {
-      setShowBecomeProviderDialog(true);
+      setShowBecomeHostDialog(true);
     }
   };
 
-  const handleConfirmBecomeProvider = async () => {
+  const handleConfirmBecomeHost = async () => {
     if (!userId || !profile) return;
 
-    setIsBecomingProvider(true);
+    setIsBecomingHost(true);
     try {
       await ApiClient.updateProfile({ is_provider: true }, userId);
       await refreshProfile();
 
-      setUserMode('provider');
-      localStorage.setItem(STORAGE_KEY, 'provider');
-      setShowBecomeProviderDialog(false);
+      setUserMode('host');
+      localStorage.setItem(STORAGE_KEY, 'host');
+      setShowBecomeHostDialog(false);
 
-      navigate('/provider/services');
-      toast.success('Welcome to provider mode! You can now create services.');
+      navigate('/host/talks');
+      toast.success('Welcome to host mode! You can now create Talks.');
     } catch (error) {
-      console.error('Failed to become provider:', error);
-      toast.error('Failed to enable provider mode. Please try again.');
+      console.error('Failed to become host:', error);
+      toast.error('Failed to enable host mode. Please try again.');
     } finally {
-      setIsBecomingProvider(false);
+      setIsBecomingHost(false);
     }
   };
 
@@ -348,28 +355,28 @@ export default function MobileMePage() {
         {profile?.is_provider && (
           <div className="px-4 pt-4">
             <div className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
-              userMode === 'provider'
+              userMode === 'host'
                 ? 'bg-blue-50 border border-blue-200'
                 : 'bg-green-50 border border-green-200'
             }`}>
               <div className="flex items-center gap-2">
                 <span className={`text-sm font-medium ${
-                  userMode === 'provider' ? 'text-blue-700' : 'text-green-700'
+                  userMode === 'host' ? 'text-blue-700' : 'text-green-700'
                 }`}>
-                  {userMode === 'provider' ? 'Provider' : 'Customer'} mode
+                  {userMode === 'host' ? 'Host' : 'Visitor'} mode
                 </span>
               </div>
               <button
                 onClick={handleModeSwitch}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                  userMode === 'provider'
+                  userMode === 'host'
                     ? 'bg-blue-600 focus:ring-blue-500'
                     : 'bg-green-600 focus:ring-green-500'
                 }`}
               >
                 <span
                   className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    userMode === 'provider' ? 'translate-x-6' : 'translate-x-1'
+                    userMode === 'host' ? 'translate-x-6' : 'translate-x-1'
                   }`}
                 />
               </button>
@@ -544,8 +551,8 @@ export default function MobileMePage() {
 
         <div className="px-4 space-y-4">
 
-        {/* Provider Tools Section */}
-        {userMode === 'provider' && (
+        {/* Host Tools Section */}
+        {userMode === 'host' && (
           <GroupedSection>
             <ListItem
               icon={Plug}
@@ -555,30 +562,30 @@ export default function MobileMePage() {
             <Divider />
             <ListItem
               icon={DollarSign}
-              label="Income"
-              onClick={() => navigate('/provider/income')}
+              label="Earnings"
+              onClick={() => navigate('/host/earnings')}
             />
             <Divider />
             <ListItem
               icon={Users}
               label="Referrals"
-              onClick={() => navigate('/provider/referrals')}
+              onClick={() => navigate('/host/referrals')}
             />
           </GroupedSection>
         )}
 
-        {/* Become Provider Section - Only show for non-providers */}
+        {/* Become Host Section - Only show for non-hosts */}
         {!profile?.is_provider && (
           <GroupedSection>
             <button
-              onClick={handleBecomeProvider}
+              onClick={handleBecomeHost}
               className="w-full px-4 py-3.5 text-center hover:bg-gray-50 active:bg-gray-100 transition-colors"
             >
               <Text className="font-semibold text-blue-600">
-                Become a Provider
+                Become a Host
               </Text>
               <Description className="text-[#666666] mt-0.5">
-                Start earning by offering services
+                Start earning by offering Talks
               </Description>
             </button>
           </GroupedSection>
@@ -629,12 +636,12 @@ export default function MobileMePage() {
         </div>
       </div>
 
-      {/* Become Provider Dialog */}
-      <BecomeProviderDialog
-        open={showBecomeProviderDialog}
-        onOpenChange={setShowBecomeProviderDialog}
-        onConfirm={handleConfirmBecomeProvider}
-        isLoading={isBecomingProvider}
+      {/* Become Host Dialog */}
+      <BecomeHostDialog
+        open={showBecomeHostDialog}
+        onOpenChange={setShowBecomeHostDialog}
+        onConfirm={handleConfirmBecomeHost}
+        isLoading={isBecomingHost}
       />
     </div>
   );

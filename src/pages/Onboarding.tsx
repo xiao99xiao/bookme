@@ -14,6 +14,7 @@ import { ApiClient } from "@/lib/api-migration";
 import { APP_NAME } from "@/lib/constants";
 import { H1, H3 } from "@/design-system";
 import { useReferralCode } from "@/hooks/useReferralCode";
+import { t, interpolate } from "@/lib/i18n";
 
 const Onboarding = () => {
   const navigate = useNavigate();
@@ -125,8 +126,8 @@ const Onboarding = () => {
           navigate('/discover'); // Fallback to discover page
         }
       } else if (formData.wantsToProvideService) {
-        // User wants to provide services, go to edit profile to create services
-        navigate('/provider/services');
+        // User wants to be a host, go to create Talks
+        navigate('/host/talks');
       } else {
         // User just wants to browse, go to discover page
         navigate('/discover');
@@ -273,9 +274,9 @@ const Onboarding = () => {
         return (
           <div className="space-y-8">
             <div className="space-y-4">
-              <H1 className="tracking-tight">Let's get to know you!</H1>
+              <H1 className="tracking-tight">{t.pages.onboarding.letsGetToKnow}</H1>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                Your name helps others identify you when booking services or viewing your profile.
+                {t.pages.onboarding.nameHelps}
               </p>
             </div>
             
@@ -339,9 +340,9 @@ const Onboarding = () => {
         return (
           <div className="space-y-8">
             <div className="space-y-4">
-              <H1 className="tracking-tight">Where are you located?</H1>
+              <H1 className="tracking-tight">{t.pages.onboarding.whereLocated}</H1>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                This helps match you with nearby services and lets others know your general area when you offer services.
+                {t.pages.onboarding.locationHelps}
               </p>
             </div>
             
@@ -370,9 +371,9 @@ const Onboarding = () => {
         return (
           <div className="space-y-8">
             <div className="space-y-4">
-              <H1 className="tracking-tight">Tell us about yourself</H1>
+              <H1 className="tracking-tight">{t.pages.onboarding.tellAboutYourself}</H1>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                A brief bio helps others understand who you are and what you're passionate about. This appears on your profile.
+                {t.pages.onboarding.bioHelps}
               </p>
             </div>
             
@@ -402,9 +403,9 @@ const Onboarding = () => {
         return (
           <div className="space-y-8">
             <div className="space-y-4">
-              <H1 className="tracking-tight">Ready to share your expertise?</H1>
+              <H1 className="tracking-tight">{t.pages.onboarding.readyToBecomeHost}</H1>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                {APP_NAME} lets you earn by offering your skills and knowledge to others. You can always change this later.
+                {interpolate(t.pages.onboarding.earnByOffering, { appName: APP_NAME })}
               </p>
             </div>
             
@@ -424,10 +425,10 @@ const Onboarding = () => {
                       <h3 className={`text-lg font-semibold mb-1 ${
                         formData.wantsToProvideService === true ? 'text-primary-foreground' : 'text-foreground'
                       }`}>
-                        Yes, I want to offer services
+                        {t.pages.onboarding.yesBecome}
                       </h3>
                       <p className={formData.wantsToProvideService === true ? 'text-primary-foreground/80' : 'text-muted-foreground'}>
-                        Start earning by sharing your skills and expertise with others
+                        {t.pages.onboarding.createNookStart}
                       </p>
                     </div>
                     {formData.wantsToProvideService === true && (
@@ -454,10 +455,10 @@ const Onboarding = () => {
                       <h3 className={`text-lg font-semibold mb-1 ${
                         formData.wantsToProvideService === false ? 'text-primary-foreground' : 'text-foreground'
                       }`}>
-                        Not right now
+                        {t.pages.onboarding.notRightNow}
                       </h3>
                       <p className={formData.wantsToProvideService === false ? 'text-primary-foreground/80' : 'text-muted-foreground'}>
-                        I just want to browse and book services from others
+                        {t.pages.onboarding.justBrowse}
                       </p>
                     </div>
                     {formData.wantsToProvideService === false && (
@@ -506,7 +507,9 @@ const Onboarding = () => {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-primary">Referral Code Applied!</p>
                   <p className="text-xs text-muted-foreground truncate">
-                    You've been referred by {referrerName || 'another provider'}
+                    {referrerName
+                      ? interpolate(t.pages.onboarding.referredBy, { name: referrerName })
+                      : t.pages.onboarding.referredByHost}
                   </p>
                 </div>
               </div>

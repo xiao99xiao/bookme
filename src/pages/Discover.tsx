@@ -109,7 +109,7 @@ const Discover = () => {
         setError(null);
       } catch (error) {
         console.error('Failed to load services:', error);
-        setError('Failed to load services. Please try again.');
+        setError('Failed to load Talks. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -128,7 +128,7 @@ const Discover = () => {
     const { navigateToUserProfile } = await import('@/lib/username');
     const success = await navigateToUserProfile(service.provider_id, (path) => navigate(`${path}?service=${service.id}`));
     if (!success) {
-      toast.error('This provider does not have a public profile');
+      toast.error('This host does not have a public profile');
     }
   };
 
@@ -140,10 +140,10 @@ const Discover = () => {
         <Container maxWidth="lg">
           <div className="text-center mb-12">
             <H1 className="mb-6">
-              Discover Expert Services
+              Discover Talks
             </H1>
             <Text variant="medium" color="secondary" className="max-w-3xl mx-auto mb-8">
-              Browse thousands of professionals offering their expertise. Find the perfect expert for your needs and book instantly with secure payment protection.
+              Browse hosts offering Talks on topics you care about. Find the perfect expert for your needs and book instantly with secure payment protection.
             </Text>
           </div>
 
@@ -153,7 +153,7 @@ const Discover = () => {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
                 <Input
-                  placeholder="Search services, providers, skills, or locations..."
+                  placeholder="Search Talks, hosts, topics..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 h-12 text-lg"
@@ -184,9 +184,9 @@ const Discover = () => {
           {/* Results Count */}
           <div className="text-center mb-6">
             <Text color="secondary">
-              {loading ? 'Loading services...' : (
+              {loading ? 'Loading Talks...' : (
                 <>
-                  Showing {services.length} service{services.length !== 1 ? 's' : ''}
+                  Showing {services.length} Talk{services.length !== 1 ? 's' : ''}
                   {selectedCategory && selectedCategory !== "all" && ` in ${selectedCategory}`}
                 </>
               )}
@@ -199,7 +199,7 @@ const Discover = () => {
       <section className="pb-8 px-4 flex-1 flex flex-col min-h-[400px]">
         <Container maxWidth="lg" className="flex-1 flex flex-col">
           {loading ? (
-            <Loading variant="spinner" size="md" text="Loading services..." fullHeight={true} />
+            <Loading variant="spinner" size="md" text="Loading Talks..." fullHeight={true} />
           ) : error ? (
             <div className="text-center py-12">
               <p className="text-red-500 text-lg mb-4">{error}</p>
@@ -226,7 +226,7 @@ const Discover = () => {
               {services.length === 0 && !loading && (
                 <div className="text-center py-12">
                   <p className="text-muted-foreground text-lg mb-4">
-                    No services found matching your criteria.
+                    No Talks found matching your criteria.
                   </p>
                   <DSButton 
                     variant="secondary" 
@@ -247,12 +247,12 @@ const Discover = () => {
       {/* CTA Section */}
       <section className="py-16 px-4 bg-primary/5">
         <Container maxWidth="md" className="text-center">
-          <H2 className="mb-4">Want to Offer Your Services?</H2>
+          <H2 className="mb-4">Want to Offer Talks?</H2>
           <p className="text-lg text-muted-foreground mb-6">
-            Join thousands of professionals earning by sharing their expertise. Start building your income stream today.
+            Join hosts earning by sharing Talks on topics they love. Start building your income stream today.
           </p>
           <DSButton onClick={login} size="large" className="text-lg px-8">
-            Become a Service Provider
+            Become a Host
           </DSButton>
         </Container>
       </section>
