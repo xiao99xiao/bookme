@@ -213,6 +213,6 @@ export class GoogleCalendar {
    * Generate a unique request ID for conference creation
    */
   private generateRequestId(): string {
-    return `timee-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return `nook-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 }

@@ -165,7 +165,7 @@ const BookServices = () => {
       <section className="py-20 px-4 bg-muted/30">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <H2 className="mb-4">Why Book Through Timee?</H2>
+            <H2 className="mb-4">Why Book Through Nook?</H2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               The most convenient way to access expert knowledge and services
             </p>

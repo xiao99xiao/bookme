@@ -31,8 +31,8 @@ export const corsConfig = {
     /https:\/\/.*\.up\.railway\.app$/, // Allow all Railway domains
     
     // Production domains
-    "https://staging.timee.app", // Staging frontend domain
-    /https:\/\/.*\.timee\.app$/, // Allow all timee.app subdomains
+    "https://staging.nook.to", // Staging frontend domain
+    /https:\/\/.*\.nook\.to$/, // Allow all nook.to subdomains
   ],
   credentials: true,
   // Safari-specific headers

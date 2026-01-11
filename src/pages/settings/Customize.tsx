@@ -378,7 +378,7 @@ export default function Customize() {
                     <div className="text-xs text-muted-foreground space-y-2">
                       <p className="font-medium">Why set a username?</p>
                       <ul className="list-disc list-inside space-y-1 ml-2">
-                        <li>Get a memorable profile URL like timee.com/yourname</li>
+                        <li>Get a memorable profile URL like nook.to/yourname</li>
                         <li>Make it easy for others to find and book your services</li>
                         <li>Build your personal brand on the platform</li>
                       </ul>

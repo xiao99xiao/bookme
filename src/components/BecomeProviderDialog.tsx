@@ -19,7 +19,7 @@ const BecomeProviderDialog = ({ open, onOpenChange, onConfirm, isLoading }: Beco
             Become a Provider
           </DialogTitle>
           <DialogDescription>
-            Start earning by offering your services to others on Timee
+            Start earning by offering your services to others on Nook
           </DialogDescription>
         </DialogHeader>
 

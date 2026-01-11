@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => ({
     },
     allowedHosts: [
       '.trycloudflare.com', // Allow all Cloudflare tunnel domains
-      '.timee.app', // Allow all timee.app subdomains
+      '.nook.to', // Allow all nook.to subdomains
       'localhost',
       '.localhost',
     ],
@@ -35,7 +35,7 @@ export default defineConfig(({ mode }) => ({
     allowedHosts: [
       '.up.railway.app', // Allow all Railway domains
       '.trycloudflare.com', // Allow all Cloudflare tunnel domains
-      '.timee.app', // Allow all timee.app subdomains
+      '.nook.to', // Allow all nook.to subdomains
       'localhost',
       '.localhost',
     ],

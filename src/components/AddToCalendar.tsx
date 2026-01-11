@@ -56,10 +56,10 @@ export default function AddToCalendar({
     const icsContent = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
-      'PRODID:-//Timee//Booking Calendar//EN',
+      'PRODID:-//Nook//Booking Calendar//EN',
       'METHOD:REQUEST',
       'BEGIN:VEVENT',
-      `UID:${Date.now()}@timee.com`,
+      `UID:${Date.now()}@nook.to`,
       `DTSTAMP:${formatDateForICS(new Date())}`,
       `DTSTART:${formatDateForICS(startDate)}`,
       `DTEND:${formatDateForICS(endDate)}`,

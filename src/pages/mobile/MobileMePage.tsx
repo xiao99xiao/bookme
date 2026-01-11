@@ -316,7 +316,7 @@ export default function MobileMePage() {
       <div className="lg:hidden min-h-screen bg-gray-50 flex items-center justify-center px-4">
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
-            <H2 className="mb-2">Welcome to Timee</H2>
+            <H2 className="mb-2">Welcome to Nook</H2>
             <Text variant="small" color="secondary">
               Sign in to manage your account
             </Text>
