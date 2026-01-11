@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { format, isPast } from 'date-fns';
-import { Calendar, Clock, MapPin, User, DollarSign, CheckCircle, XCircle, AlertCircle, MessageSquare, Star, Copy, Video, CreditCard, AlertTriangle } from 'lucide-react';
+import { format, isPast, addHours, isBefore } from 'date-fns';
+import { Calendar, Clock, MapPin, User, DollarSign, CheckCircle, XCircle, AlertCircle, MessageSquare, Star, Copy, Video, CreditCard, AlertTriangle, RefreshCw } from 'lucide-react';
 import { GoogleMeetIcon, ZoomIcon, TeamsIcon } from '@/components/icons/MeetingPlatformIcons';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -14,8 +14,11 @@ import {
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { usePrivy } from '@privy-io/react-auth';
 import { ApiClient, Booking } from '@/lib/api-migration';
+import { RescheduleRequest } from '@/lib/backend-api';
 import ChatModal from '@/components/ChatModal';
 import ReviewDialog from '@/components/ReviewDialog';
+import RescheduleRequestModal from '@/components/RescheduleRequestModal';
+import PendingRescheduleCard from '@/components/PendingRescheduleCard';
 import { H2, H3, Text, Description, Label, Button as DSButton, BookingEmptyState, Loading, StatusBadge, OnlineBadge, DurationBadge } from '@/design-system';
 import { useBlockchainService } from '@/lib/blockchain-service';
 import { usePaymentTransaction } from '@/hooks/useTransaction';
@@ -55,6 +58,25 @@ export default function CustomerBookings() {
   });
   const [bookingReviews, setBookingReviews] = useState<Record<string, { rating: number; comment: string }>>({});
   const [sessionData, setSessionData] = useState<Record<string, any>>({});
+
+  // Reschedule state
+  const [rescheduleModal, setRescheduleModal] = useState<{
+    isOpen: boolean;
+    booking: Booking | null;
+    userRole: 'host' | 'visitor';
+    visitorRescheduleRemaining: number | null;
+  }>({
+    isOpen: false,
+    booking: null,
+    userRole: 'visitor',
+    visitorRescheduleRemaining: null
+  });
+  const [rescheduleRequests, setRescheduleRequests] = useState<Record<string, {
+    requests: RescheduleRequest[];
+    can_create_request: boolean;
+    visitor_reschedule_remaining: number | null;
+    user_role: 'host' | 'visitor';
+  }>>({});
 
   // Blockchain integration
   const { blockchainService, initializeService, isWalletConnected } = useBlockchainService();
@@ -130,11 +152,92 @@ export default function CustomerBookings() {
 
       // Load session data for auto-completion blocked bookings
       loadSessionData(bookingsData);
+
+      // Load reschedule requests for confirmed/paid bookings
+      loadRescheduleRequests(bookingsData);
     } catch (error) {
       console.error('Failed to load bookings:', error);
       toast.error(t.toast.error.failedToLoadBookings);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadRescheduleRequests = async (bookingsData: Booking[]) => {
+    try {
+      // Get reschedule requests for confirmed and paid bookings
+      const relevantBookings = bookingsData.filter(
+        booking => ['confirmed', 'paid'].includes(booking.status)
+      );
+
+      if (relevantBookings.length === 0) return;
+
+      // Use batch API to fetch all reschedule requests in a single call
+      const bookingIds = relevantBookings.map(b => b.id);
+      const response = await ApiClient.getBatchRescheduleRequests(bookingIds);
+      setRescheduleRequests(response.results);
+    } catch (error) {
+      console.error('Failed to load reschedule requests:', error);
+    }
+  };
+
+  const canRequestReschedule = (booking: Booking): boolean => {
+    // Only confirmed or paid bookings can be rescheduled
+    if (!['confirmed', 'paid'].includes(booking.status)) return false;
+
+    // Check if booking has started
+    const now = new Date();
+    const bookingTime = new Date(booking.scheduled_at);
+
+    // For visitors: must be at least 1 hour before booking start
+    const oneHourBefore = addHours(bookingTime, -1);
+    if (!isBefore(now, oneHourBefore)) return false;
+
+    // Check if there's already a pending request
+    const requests = rescheduleRequests[booking.id];
+    if (requests) {
+      const hasPendingRequest = requests.requests.some(r => r.status === 'pending');
+      if (hasPendingRequest) return false;
+
+      // Check if visitor has used their reschedule
+      if (requests.visitor_reschedule_remaining !== null && requests.visitor_reschedule_remaining <= 0) {
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+  const handleOpenRescheduleModal = async (booking: Booking) => {
+    try {
+      // Get reschedule requests to check eligibility
+      const data = await ApiClient.getRescheduleRequests(booking.id);
+
+      // Update cache
+      setRescheduleRequests(prev => ({
+        ...prev,
+        [booking.id]: data
+      }));
+
+      // Check if can create request
+      if (!data.can_create_request) {
+        if (data.visitor_reschedule_remaining === 0) {
+          toast.error(t.reschedule.usedReschedule);
+        } else {
+          toast.error('Cannot reschedule this booking');
+        }
+        return;
+      }
+
+      setRescheduleModal({
+        isOpen: true,
+        booking,
+        userRole: data.user_role,
+        visitorRescheduleRemaining: data.visitor_reschedule_remaining
+      });
+    } catch (error) {
+      console.error('Failed to check reschedule eligibility:', error);
+      toast.error('Failed to open reschedule modal');
     }
   };
 
@@ -730,6 +833,20 @@ export default function CustomerBookings() {
                         </>
                       )}
 
+                      {/* Pending Reschedule Request Card */}
+                      {rescheduleRequests[booking.id]?.requests?.find(r => r.status === 'pending') && (
+                        <>
+                          <div className="border-t border-[#eeeeee] my-4"></div>
+                          <PendingRescheduleCard
+                            request={rescheduleRequests[booking.id].requests.find(r => r.status === 'pending')!}
+                            userRole={rescheduleRequests[booking.id].user_role}
+                            isRequester={rescheduleRequests[booking.id].requests.find(r => r.status === 'pending')?.requester_id === userId}
+                            currentUserId={userId || ''}
+                            onUpdated={loadBookings}
+                          />
+                        </>
+                      )}
+
                       {/* Action Section - only for bookings that have actions */}
                       {(booking.status === 'confirmed' || booking.status === 'in_progress' || booking.status === 'pending' || booking.status === 'pending_payment' || booking.status === 'paid' || booking.status === 'rejected') && (
                         <>
@@ -749,30 +866,45 @@ export default function CustomerBookings() {
 
                             {/* Action Buttons */}
                             <div className="flex items-center gap-3">
-                          {booking.status === 'confirmed' && booking.is_online && booking.meeting_link && (
+                          {booking.status === 'confirmed' && (
                             <>
-                              <DSButton
-                                variant="outline"
-                                size="small"
-                                onClick={() => {
-                                  console.log('🔗 Copy button clicked (confirmed):', booking.id, 'meeting_link:', booking.meeting_link);
-                                  handleCopyMeetingLink(booking.meeting_link!);
-                                }}
-                                icon={<Copy className="w-5 h-5" />}
-                              >
-                                Copy Link
-                              </DSButton>
-                              <DSButton
-                                variant="primary"
-                                size="small"
-                                onClick={() => {
-                                  console.log('🚀 Join button clicked (confirmed):', booking.id, 'meeting_link:', booking.meeting_link);
-                                  handleJoinMeeting(booking.meeting_link!);
-                                }}
-                                icon={getMeetingIcon(booking.meeting_platform)}
-                              >
-                                Join
-                              </DSButton>
+                              {/* Reschedule Button - show when no pending request */}
+                              {canRequestReschedule(booking) && (
+                                <DSButton
+                                  variant="outline"
+                                  size="small"
+                                  onClick={() => handleOpenRescheduleModal(booking)}
+                                  icon={<RefreshCw className="w-4 h-4" />}
+                                >
+                                  {t.booking.reschedule}
+                                </DSButton>
+                              )}
+                              {booking.is_online && booking.meeting_link && (
+                                <>
+                                  <DSButton
+                                    variant="outline"
+                                    size="small"
+                                    onClick={() => {
+                                      console.log('🔗 Copy button clicked (confirmed):', booking.id, 'meeting_link:', booking.meeting_link);
+                                      handleCopyMeetingLink(booking.meeting_link!);
+                                    }}
+                                    icon={<Copy className="w-5 h-5" />}
+                                  >
+                                    Copy Link
+                                  </DSButton>
+                                  <DSButton
+                                    variant="primary"
+                                    size="small"
+                                    onClick={() => {
+                                      console.log('🚀 Join button clicked (confirmed):', booking.id, 'meeting_link:', booking.meeting_link);
+                                      handleJoinMeeting(booking.meeting_link!);
+                                    }}
+                                    icon={getMeetingIcon(booking.meeting_platform)}
+                                  >
+                                    Join
+                                  </DSButton>
+                                </>
+                              )}
                             </>
                           )}
 
@@ -1178,29 +1310,56 @@ export default function CustomerBookings() {
                         </div>
                       )}
 
+                      {/* Pending Reschedule Request Card - Mobile */}
+                      {rescheduleRequests[booking.id]?.requests?.find(r => r.status === 'pending') && (
+                        <div className="mb-4">
+                          <PendingRescheduleCard
+                            request={rescheduleRequests[booking.id].requests.find(r => r.status === 'pending')!}
+                            userRole={rescheduleRequests[booking.id].user_role}
+                            isRequester={rescheduleRequests[booking.id].requests.find(r => r.status === 'pending')?.requester_id === userId}
+                            currentUserId={userId || ''}
+                            onUpdated={loadBookings}
+                          />
+                        </div>
+                      )}
 
                       {/* Action Buttons - Only for bookings that have actions */}
                       {(booking.status === 'confirmed' || booking.status === 'pending') && (
                         <div className="pt-4 sm:pt-6 border-t border-[#eeeeee]">
                           <div className="flex items-center justify-end gap-2 flex-wrap">
-                            {booking.status === 'confirmed' && booking.is_online && booking.meeting_link && (
+                            {booking.status === 'confirmed' && (
                               <>
-                                <DSButton
-                                  variant="outline"
-                                  size="small"
-                                  onClick={() => handleCopyMeetingLink(booking.meeting_link!)}
-                                  icon={<Copy className="w-5 h-5" />}
-                                >
-                                  Copy Link
-                                </DSButton>
-                                <DSButton
-                                  variant="primary"
-                                  size="small"
-                                  onClick={() => handleJoinMeeting(booking.meeting_link!)}
-                                  icon={getMeetingIcon(booking.meeting_platform)}
-                                >
-                                  Join
-                                </DSButton>
+                                {/* Reschedule Button - Mobile */}
+                                {canRequestReschedule(booking) && (
+                                  <DSButton
+                                    variant="outline"
+                                    size="small"
+                                    onClick={() => handleOpenRescheduleModal(booking)}
+                                    icon={<RefreshCw className="w-4 h-4" />}
+                                  >
+                                    {t.booking.reschedule}
+                                  </DSButton>
+                                )}
+                                {booking.is_online && booking.meeting_link && (
+                                  <>
+                                    <DSButton
+                                      variant="outline"
+                                      size="small"
+                                      onClick={() => handleCopyMeetingLink(booking.meeting_link!)}
+                                      icon={<Copy className="w-5 h-5" />}
+                                    >
+                                      Copy Link
+                                    </DSButton>
+                                    <DSButton
+                                      variant="primary"
+                                      size="small"
+                                      onClick={() => handleJoinMeeting(booking.meeting_link!)}
+                                      icon={getMeetingIcon(booking.meeting_platform)}
+                                    >
+                                      Join
+                                    </DSButton>
+                                  </>
+                                )}
                               </>
                             )}
 
@@ -1380,6 +1539,23 @@ export default function CustomerBookings() {
               handlePayNow(payingBookingId);
             }
           }}
+        />
+      )}
+
+      {/* Reschedule Request Modal */}
+      {rescheduleModal.booking && (
+        <RescheduleRequestModal
+          isOpen={rescheduleModal.isOpen}
+          onClose={() => setRescheduleModal({
+            isOpen: false,
+            booking: null,
+            userRole: 'visitor',
+            visitorRescheduleRemaining: null
+          })}
+          booking={rescheduleModal.booking}
+          userRole={rescheduleModal.userRole}
+          visitorRescheduleRemaining={rescheduleModal.visitorRescheduleRemaining}
+          onSuccess={loadBookings}
         />
       )}
     </div>

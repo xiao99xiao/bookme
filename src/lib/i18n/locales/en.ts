@@ -44,6 +44,7 @@ export const en = {
     and: 'and',
     optional: 'Optional',
     required: 'Required',
+    sending: 'Sending...',
   },
 
   // ===========================================
@@ -192,6 +193,86 @@ export const en = {
   },
 
   // ===========================================
+  // Reschedule
+  // ===========================================
+  reschedule: {
+    // Titles
+    requestTitle: 'Request Time Change',
+    pendingRequest: 'Reschedule Pending',
+    proposeNewTime: 'Propose New Time',
+    proposeTimeChange: 'Propose Time Change',
+
+    // Form labels
+    reason: 'Reason (optional)',
+    reasonPlaceholder: 'Why do you need to reschedule?',
+    currentTime: 'Current Time',
+    proposedTime: 'Proposed Time',
+    selectNewDate: 'Select new date',
+    selectNewTime: 'Select new time',
+    availableTimes: 'Available times',
+
+    // Status display
+    expiresIn: 'Expires in {{time}}',
+    waitingForResponse: 'Waiting for response...',
+    requestedBy: '{{name}} requested to change time',
+    youRequested: 'You requested to change time',
+
+    // Actions
+    accept: 'Accept New Time',
+    reject: 'Decline',
+    withdraw: 'Withdraw Request',
+    sendRequest: 'Send Request',
+    sendProposal: 'Send Proposal',
+    requestChange: 'Request Change',
+    proposeChange: 'Propose Change',
+
+    // Visitor limits
+    remainingReschedules: '{{count}} reschedule remaining',
+    noReschedulesLeft: 'No reschedules remaining',
+    oneRescheduleWarning: 'You can only reschedule once per booking.',
+    usedReschedule: "You've used your reschedule for this booking",
+
+    // Host messages
+    hostUnlimitedReschedules: 'Hosts can request reschedules at any time',
+    makeAvailable: 'Make sure you\'re available at this time!',
+    visitorWillBeNotified: '{{name}} will be notified and can accept or decline.',
+    // Better named alternative for the notification message
+    otherPartyWillBeNotified: '{{name}} will be notified and can accept or decline.',
+
+    // Time comparison
+    changeTo: 'Change to',
+    newTime: 'New Time',
+
+    // Status messages
+    requestSent: 'Reschedule request sent',
+    requestApproved: 'Reschedule approved! Time updated.',
+    requestRejected: 'Reschedule request declined',
+    requestExpired: 'Reschedule request expired',
+    requestWithdrawn: 'Reschedule request withdrawn',
+    timeUpdated: 'Booking time updated!',
+
+    // History
+    rescheduledFrom: 'Rescheduled from {{time}}',
+    originalTime: 'Original time',
+
+    // Errors
+    cannotReschedule: 'Cannot reschedule this booking',
+    tooCloseToStart: 'Too close to booking start time',
+    timeNotAvailable: 'Selected time is not available',
+    pendingRequestExists: 'A reschedule request is already pending',
+    alreadyEnded: 'Cannot reschedule after booking has ended',
+    requestExpiredError: 'This request has expired',
+
+    // Confirmation dialogs
+    acceptConfirmTitle: 'Accept Time Change?',
+    acceptConfirmDescription: 'The booking will be moved to the new time.',
+    rejectConfirmTitle: 'Decline Request?',
+    rejectConfirmDescription: 'The booking will remain at the original time.',
+    rejectReason: 'Reason (optional)',
+    rejectReasonPlaceholder: 'Let them know why you\'re declining...',
+  },
+
+  // ===========================================
   // Pages
   // ===========================================
   pages: {
@@ -280,6 +361,11 @@ export const en = {
       welcomeHost: 'Welcome to host mode! You can now create Talks.',
       switchedToHost: 'Switched to Host mode',
       switchedToVisitor: 'Switched to Visitor mode',
+      // Reschedule
+      rescheduleRequestSent: 'Reschedule request sent!',
+      rescheduleApproved: 'Time change approved! Booking updated.',
+      rescheduleRejected: 'Reschedule request declined',
+      rescheduleWithdrawn: 'Reschedule request withdrawn',
     },
     error: {
       bookingCompletionFailed: 'Booking completion failed: {{error}}',
@@ -300,6 +386,12 @@ export const en = {
       noPublicProfile: 'This host does not have a public profile',
       failedToBecomeHost: 'Failed to enable host mode. Please try again.',
       integrationRequired: 'You need to connect {{platform}} in your Integrations before creating this Talk.',
+      // Reschedule
+      failedToCreateRescheduleRequest: 'Failed to send reschedule request',
+      failedToRespondReschedule: 'Failed to respond to reschedule request',
+      failedToWithdrawReschedule: 'Failed to withdraw reschedule request',
+      rescheduleNotAllowed: 'You cannot reschedule this booking',
+      rescheduleTimeConflict: 'The proposed time is no longer available',
     },
   },
 

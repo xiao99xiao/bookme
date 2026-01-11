@@ -451,4 +451,92 @@ export class BackendAPI {
       })
     });
   }
+
+  // Reschedule APIs
+  async createRescheduleRequest(bookingId: string, params: {
+    proposed_scheduled_at: string
+    proposed_duration_minutes?: number
+    reason?: string
+  }): Promise<{
+    success: boolean
+    request: RescheduleRequest
+  }> {
+    return this.request(`/api/bookings/${bookingId}/reschedule-request`, {
+      method: 'POST',
+      body: JSON.stringify(params)
+    });
+  }
+
+  async getRescheduleRequests(bookingId: string): Promise<{
+    requests: RescheduleRequest[]
+    can_create_request: boolean
+    visitor_reschedule_remaining: number | null
+    user_role: 'host' | 'visitor'
+  }> {
+    return this.request(`/api/bookings/${bookingId}/reschedule-requests`);
+  }
+
+  /**
+   * Batch fetch reschedule requests for multiple bookings
+   * More efficient than fetching one at a time
+   */
+  async getBatchRescheduleRequests(bookingIds: string[]): Promise<{
+    results: Record<string, {
+      requests: RescheduleRequest[]
+      can_create_request: boolean
+      visitor_reschedule_remaining: number | null
+      user_role: 'host' | 'visitor'
+    }>
+  }> {
+    return this.request('/api/bookings/batch-reschedule-requests', {
+      method: 'POST',
+      body: JSON.stringify({ booking_ids: bookingIds })
+    });
+  }
+
+  async respondToRescheduleRequest(requestId: string, params: {
+    action: 'approve' | 'reject'
+    response_notes?: string
+  }): Promise<{
+    success: boolean
+    request: RescheduleRequest
+    booking: any
+  }> {
+    return this.request(`/api/reschedule-requests/${requestId}/respond`, {
+      method: 'POST',
+      body: JSON.stringify(params)
+    });
+  }
+
+  async withdrawRescheduleRequest(requestId: string): Promise<{
+    success: boolean
+    request: RescheduleRequest
+  }> {
+    return this.request(`/api/reschedule-requests/${requestId}/withdraw`, {
+      method: 'POST'
+    });
+  }
+}
+
+// Type definitions for Reschedule feature
+export interface RescheduleRequest {
+  id: string
+  booking_id: string
+  requester_id: string
+  requester_role: 'host' | 'visitor'
+  proposed_scheduled_at: string
+  proposed_duration_minutes: number | null
+  reason: string | null
+  status: 'pending' | 'approved' | 'rejected' | 'expired' | 'withdrawn'
+  response_notes: string | null
+  responded_at: string | null
+  responder_id: string | null
+  created_at: string
+  updated_at: string
+  expires_at: string
+  requester?: {
+    id: string
+    display_name: string
+    avatar: string | null
+  }
 }

@@ -2193,4 +2193,586 @@ export default function bookingRoutes(app) {
       return c.json({ error: "Failed to record funding" }, 500);
     }
   });
+
+  // ============ RESCHEDULE ENDPOINTS ============
+
+  /**
+   * POST /api/bookings/:bookingId/reschedule-request
+   *
+   * Create a reschedule request for a booking.
+   * Both host and visitor can initiate reschedule requests with different rules:
+   * - Host: Can request until booking ends, unlimited reschedules
+   * - Visitor: Can request until 1 hour before start, max 1 reschedule per booking
+   *
+   * Headers:
+   * - Authorization: Bearer {privyToken}
+   *
+   * Parameters:
+   * - bookingId: UUID of the booking
+   *
+   * Body:
+   * - proposed_scheduled_at: ISO timestamp for the proposed new time
+   * - proposed_duration_minutes: Optional new duration (default: keep original)
+   * - reason: Optional explanation for the reschedule request
+   *
+   * Response:
+   * - Reschedule request object with status 'pending'
+   *
+   * @param {Context} c - Hono context
+   * @returns {Response} JSON response with reschedule request or error
+   */
+  app.post("/api/bookings/:bookingId/reschedule-request", verifyPrivyAuth, async (c) => {
+    try {
+      const userId = c.get("userId");
+      const bookingId = c.req.param("bookingId");
+      const body = await c.req.json();
+      const {
+        proposed_scheduled_at: proposedScheduledAt,
+        proposed_duration_minutes: proposedDurationMinutes,
+        reason
+      } = body;
+
+      if (!proposedScheduledAt) {
+        return c.json({ error: "Proposed time is required" }, 400);
+      }
+
+      // Validate proposed time is in the future
+      const proposedTime = new Date(proposedScheduledAt);
+      const now = new Date();
+      if (proposedTime <= now) {
+        return c.json({ error: "Proposed time must be in the future" }, 400);
+      }
+
+      // Get booking details with service info
+      const { data: booking, error: bookingError } = await supabaseAdmin
+        .from("bookings")
+        .select(`
+          *,
+          service:services(*)
+        `)
+        .eq("id", bookingId)
+        .single();
+
+      if (bookingError || !booking) {
+        console.error("Booking fetch error:", bookingError);
+        return c.json({ error: "Booking not found" }, 404);
+      }
+
+      // Check if user is participant
+      const isHost = booking.provider_id === userId;
+      const isVisitor = booking.customer_id === userId;
+
+      if (!isHost && !isVisitor) {
+        return c.json({ error: "Only booking participants can request reschedule" }, 403);
+      }
+
+      // Check booking status - only paid or confirmed bookings can be rescheduled
+      if (!['paid', 'confirmed'].includes(booking.status)) {
+        return c.json({ error: "Booking cannot be rescheduled in current status" }, 400);
+      }
+
+      const requesterRole = isHost ? 'host' : 'visitor';
+      const bookingStart = new Date(booking.scheduled_at);
+      const bookingEnd = new Date(bookingStart.getTime() + booking.duration_minutes * 60000);
+      const oneHourBefore = new Date(bookingStart.getTime() - 60 * 60000);
+
+      // Validate time limits based on role
+      if (isHost) {
+        // Host can request until booking ends
+        if (now >= bookingEnd) {
+          return c.json({ error: "Cannot reschedule after booking has ended" }, 400);
+        }
+      } else {
+        // Visitor can request until 1 hour before start
+        if (now >= oneHourBefore) {
+          return c.json({ error: "Cannot reschedule within 1 hour of booking start" }, 400);
+        }
+
+        // Check visitor reschedule limit (max 1 per booking)
+        if (booking.visitor_reschedule_count >= 1) {
+          return c.json({ error: "You have already used your reschedule for this booking" }, 400);
+        }
+      }
+
+      // Check for existing pending request
+      const { data: existingRequest, error: existingError } = await supabaseAdmin
+        .from("reschedule_requests")
+        .select("id")
+        .eq("booking_id", bookingId)
+        .eq("status", "pending")
+        .single();
+
+      if (existingRequest) {
+        return c.json({ error: "A reschedule request is already pending for this booking" }, 400);
+      }
+
+      // TODO: Validate proposed time slot is available (reuse availability API)
+      // For now, we'll allow the request and validate on approval
+
+      // Create reschedule request
+      const { data: rescheduleRequest, error: createError } = await supabaseAdmin
+        .from("reschedule_requests")
+        .insert({
+          booking_id: bookingId,
+          requester_id: userId,
+          requester_role: requesterRole,
+          proposed_scheduled_at: proposedScheduledAt,
+          proposed_duration_minutes: proposedDurationMinutes || null,
+          reason: reason || null,
+          status: 'pending',
+          expires_at: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString() // 3 days
+        })
+        .select()
+        .single();
+
+      if (createError) {
+        console.error("Reschedule request creation error:", createError);
+        return c.json({ error: "Failed to create reschedule request" }, 500);
+      }
+
+      console.log(`✅ Reschedule request created for booking ${bookingId} by ${requesterRole}`);
+
+      // TODO: Send notification to the other party
+
+      return c.json({
+        success: true,
+        request: rescheduleRequest
+      });
+    } catch (error) {
+      console.error("Reschedule request error:", error);
+      return c.json({ error: "Internal server error" }, 500);
+    }
+  });
+
+  /**
+   * POST /api/bookings/batch-reschedule-requests
+   *
+   * Get reschedule requests for multiple bookings in a single request.
+   * This optimizes the N+1 problem when loading booking lists.
+   *
+   * Headers:
+   * - Authorization: Bearer {privyToken}
+   *
+   * Body:
+   * - booking_ids: Array of booking UUIDs (max 50)
+   *
+   * Response:
+   * - Object mapping booking_id to reschedule request data
+   *
+   * @param {Context} c - Hono context
+   * @returns {Response} JSON response with reschedule requests by booking
+   */
+  app.post("/api/bookings/batch-reschedule-requests", verifyPrivyAuth, async (c) => {
+    try {
+      const userId = c.get("userId");
+      const body = await c.req.json();
+      const { booking_ids: bookingIds } = body;
+
+      if (!Array.isArray(bookingIds) || bookingIds.length === 0) {
+        return c.json({ error: "booking_ids array is required" }, 400);
+      }
+
+      if (bookingIds.length > 50) {
+        return c.json({ error: "Maximum 50 booking IDs allowed" }, 400);
+      }
+
+      // Get all bookings the user has access to
+      const { data: bookings, error: bookingsError } = await supabaseAdmin
+        .from("bookings")
+        .select("id, provider_id, customer_id, scheduled_at, duration_minutes, status, visitor_reschedule_count")
+        .in("id", bookingIds)
+        .or(`provider_id.eq.${userId},customer_id.eq.${userId}`);
+
+      if (bookingsError) {
+        console.error("Batch bookings fetch error:", bookingsError);
+        return c.json({ error: "Failed to fetch bookings" }, 500);
+      }
+
+      if (!bookings || bookings.length === 0) {
+        return c.json({ results: {} });
+      }
+
+      // Get all reschedule requests for these bookings
+      const accessibleBookingIds = bookings.map(b => b.id);
+      const { data: allRequests, error: requestsError } = await supabaseAdmin
+        .from("reschedule_requests")
+        .select(`
+          *,
+          requester:users!requester_id(id, display_name, avatar)
+        `)
+        .in("booking_id", accessibleBookingIds)
+        .order("created_at", { ascending: false });
+
+      if (requestsError) {
+        console.error("Batch reschedule requests fetch error:", requestsError);
+        return c.json({ error: "Failed to fetch reschedule requests" }, 500);
+      }
+
+      // Group requests by booking_id and calculate permissions
+      const now = new Date();
+      const results = {};
+
+      for (const booking of bookings) {
+        const isHost = booking.provider_id === userId;
+        const isVisitor = booking.customer_id === userId;
+        const requests = (allRequests || []).filter(r => r.booking_id === booking.id);
+        const hasPendingRequest = requests.some(r => r.status === 'pending');
+
+        const bookingStart = new Date(booking.scheduled_at);
+        const bookingEnd = new Date(bookingStart.getTime() + booking.duration_minutes * 60000);
+        const oneHourBefore = new Date(bookingStart.getTime() - 60 * 60000);
+
+        let canCreateRequest = false;
+        if (!hasPendingRequest && ['paid', 'confirmed'].includes(booking.status)) {
+          if (isHost) {
+            canCreateRequest = now < bookingEnd;
+          } else {
+            canCreateRequest = now < oneHourBefore && (booking.visitor_reschedule_count || 0) < 1;
+          }
+        }
+
+        results[booking.id] = {
+          requests,
+          can_create_request: canCreateRequest,
+          visitor_reschedule_remaining: isVisitor ? Math.max(0, 1 - (booking.visitor_reschedule_count || 0)) : null,
+          user_role: isHost ? 'host' : 'visitor'
+        };
+      }
+
+      return c.json({ results });
+    } catch (error) {
+      console.error("Batch reschedule requests error:", error);
+      return c.json({ error: "Internal server error" }, 500);
+    }
+  });
+
+  /**
+   * GET /api/bookings/:bookingId/reschedule-requests
+   *
+   * Get all reschedule requests for a booking.
+   *
+   * Headers:
+   * - Authorization: Bearer {privyToken}
+   *
+   * Parameters:
+   * - bookingId: UUID of the booking
+   *
+   * Response:
+   * - Array of reschedule requests with requester info
+   * - can_create_request: Whether user can create new request
+   * - visitor_reschedule_remaining: Remaining reschedules for visitor
+   *
+   * @param {Context} c - Hono context
+   * @returns {Response} JSON response with reschedule requests
+   */
+  app.get("/api/bookings/:bookingId/reschedule-requests", verifyPrivyAuth, async (c) => {
+    try {
+      const userId = c.get("userId");
+      const bookingId = c.req.param("bookingId");
+
+      // Get booking to verify access
+      const { data: booking, error: bookingError } = await supabaseAdmin
+        .from("bookings")
+        .select("*")
+        .eq("id", bookingId)
+        .single();
+
+      if (bookingError || !booking) {
+        return c.json({ error: "Booking not found" }, 404);
+      }
+
+      // Only participants can view reschedule requests
+      const isHost = booking.provider_id === userId;
+      const isVisitor = booking.customer_id === userId;
+
+      if (!isHost && !isVisitor) {
+        return c.json({ error: "Access denied" }, 403);
+      }
+
+      // Get all reschedule requests for this booking
+      const { data: requests, error: requestsError } = await supabaseAdmin
+        .from("reschedule_requests")
+        .select(`
+          *,
+          requester:users!requester_id(id, display_name, avatar)
+        `)
+        .eq("booking_id", bookingId)
+        .order("created_at", { ascending: false });
+
+      if (requestsError) {
+        console.error("Reschedule requests fetch error:", requestsError);
+        return c.json({ error: "Failed to fetch reschedule requests" }, 500);
+      }
+
+      // Calculate if user can create new request
+      const hasPendingRequest = requests?.some(r => r.status === 'pending');
+      const bookingStart = new Date(booking.scheduled_at);
+      const bookingEnd = new Date(bookingStart.getTime() + booking.duration_minutes * 60000);
+      const oneHourBefore = new Date(bookingStart.getTime() - 60 * 60000);
+      const now = new Date();
+
+      let canCreateRequest = false;
+      if (!hasPendingRequest && ['paid', 'confirmed'].includes(booking.status)) {
+        if (isHost) {
+          canCreateRequest = now < bookingEnd;
+        } else {
+          canCreateRequest = now < oneHourBefore && booking.visitor_reschedule_count < 1;
+        }
+      }
+
+      return c.json({
+        requests: requests || [],
+        can_create_request: canCreateRequest,
+        visitor_reschedule_remaining: isVisitor ? Math.max(0, 1 - (booking.visitor_reschedule_count || 0)) : null,
+        user_role: isHost ? 'host' : 'visitor'
+      });
+    } catch (error) {
+      console.error("Get reschedule requests error:", error);
+      return c.json({ error: "Internal server error" }, 500);
+    }
+  });
+
+  /**
+   * POST /api/reschedule-requests/:requestId/respond
+   *
+   * Respond to a reschedule request (approve or reject).
+   * Only the non-requesting party can respond.
+   *
+   * Headers:
+   * - Authorization: Bearer {privyToken}
+   *
+   * Parameters:
+   * - requestId: UUID of the reschedule request
+   *
+   * Body:
+   * - action: 'approve' or 'reject'
+   * - response_notes: Optional notes explaining the decision
+   *
+   * Response:
+   * - Updated reschedule request and booking (if approved)
+   *
+   * @param {Context} c - Hono context
+   * @returns {Response} JSON response with updated request
+   */
+  app.post("/api/reschedule-requests/:requestId/respond", verifyPrivyAuth, async (c) => {
+    try {
+      const userId = c.get("userId");
+      const requestId = c.req.param("requestId");
+      const body = await c.req.json();
+      const { action, response_notes: responseNotes } = body;
+
+      if (!['approve', 'reject'].includes(action)) {
+        return c.json({ error: "Action must be 'approve' or 'reject'" }, 400);
+      }
+
+      // Get reschedule request with booking details
+      const { data: rescheduleRequest, error: requestError } = await supabaseAdmin
+        .from("reschedule_requests")
+        .select(`
+          *,
+          booking:bookings(
+            *,
+            service:services(*)
+          )
+        `)
+        .eq("id", requestId)
+        .single();
+
+      if (requestError || !rescheduleRequest) {
+        return c.json({ error: "Reschedule request not found" }, 404);
+      }
+
+      if (rescheduleRequest.status !== 'pending') {
+        return c.json({ error: "Request has already been processed" }, 400);
+      }
+
+      // Check if request has expired
+      if (new Date(rescheduleRequest.expires_at) < new Date()) {
+        // Auto-expire the request
+        await supabaseAdmin
+          .from("reschedule_requests")
+          .update({ status: 'expired', updated_at: new Date().toISOString() })
+          .eq("id", requestId);
+        return c.json({ error: "Request has expired" }, 400);
+      }
+
+      const booking = rescheduleRequest.booking;
+
+      // Verify user is the non-requesting party
+      const isHost = booking.provider_id === userId;
+      const isVisitor = booking.customer_id === userId;
+
+      if (!isHost && !isVisitor) {
+        return c.json({ error: "Access denied" }, 403);
+      }
+
+      // The responder must be the OTHER party
+      if ((rescheduleRequest.requester_role === 'host' && isHost) ||
+          (rescheduleRequest.requester_role === 'visitor' && isVisitor)) {
+        return c.json({ error: "You cannot respond to your own request" }, 403);
+      }
+
+      const newStatus = action === 'approve' ? 'approved' : 'rejected';
+      const respondedAt = new Date().toISOString();
+
+      // Update the reschedule request
+      const { data: updatedRequest, error: updateRequestError } = await supabaseAdmin
+        .from("reschedule_requests")
+        .update({
+          status: newStatus,
+          response_notes: responseNotes || null,
+          responded_at: respondedAt,
+          responder_id: userId,
+          updated_at: respondedAt
+        })
+        .eq("id", requestId)
+        .select()
+        .single();
+
+      if (updateRequestError) {
+        console.error("Update request error:", updateRequestError);
+        return c.json({ error: "Failed to update request" }, 500);
+      }
+
+      let updatedBooking = booking;
+
+      // If approved, update the booking
+      if (action === 'approve') {
+        const bookingUpdates = {
+          scheduled_at: rescheduleRequest.proposed_scheduled_at,
+          last_rescheduled_at: respondedAt,
+          rescheduled_by: rescheduleRequest.requester_id,
+          updated_at: respondedAt
+        };
+
+        // Store original time if first reschedule
+        if (!booking.original_scheduled_at) {
+          bookingUpdates.original_scheduled_at = booking.scheduled_at;
+        }
+
+        // Update duration if proposed
+        if (rescheduleRequest.proposed_duration_minutes) {
+          bookingUpdates.duration_minutes = rescheduleRequest.proposed_duration_minutes;
+        }
+
+        // Increment visitor reschedule count if visitor initiated
+        if (rescheduleRequest.requester_role === 'visitor') {
+          bookingUpdates.visitor_reschedule_count = (booking.visitor_reschedule_count || 0) + 1;
+        }
+
+        const { data: bookingResult, error: updateBookingError } = await supabaseAdmin
+          .from("bookings")
+          .update(bookingUpdates)
+          .eq("id", booking.id)
+          .select()
+          .single();
+
+        if (updateBookingError) {
+          console.error("Update booking error:", updateBookingError);
+          return c.json({ error: "Failed to update booking time" }, 500);
+        }
+
+        updatedBooking = bookingResult;
+
+        // TODO: Update Google Calendar event if booking has meeting link
+        if (booking.meeting_link && booking.meeting_link.includes('meet.google.com')) {
+          try {
+            // Import and call meeting update function
+            const { updateMeetingTimeForBooking } = await import("../meeting-generation.js");
+            await updateMeetingTimeForBooking(booking.id, rescheduleRequest.proposed_scheduled_at);
+            console.log("✅ Updated Google Calendar event for rescheduled booking");
+          } catch (meetingError) {
+            console.error("⚠️ Failed to update meeting time:", meetingError);
+            // Don't fail the reschedule - just log the error
+          }
+        }
+
+        console.log(`✅ Booking ${booking.id} rescheduled to ${rescheduleRequest.proposed_scheduled_at}`);
+      } else {
+        console.log(`❌ Reschedule request ${requestId} rejected`);
+      }
+
+      // TODO: Send notification to requester
+
+      return c.json({
+        success: true,
+        request: updatedRequest,
+        booking: updatedBooking
+      });
+    } catch (error) {
+      console.error("Respond to reschedule error:", error);
+      return c.json({ error: "Internal server error" }, 500);
+    }
+  });
+
+  /**
+   * POST /api/reschedule-requests/:requestId/withdraw
+   *
+   * Withdraw a pending reschedule request.
+   * Only the requester can withdraw their own request.
+   *
+   * Headers:
+   * - Authorization: Bearer {privyToken}
+   *
+   * Parameters:
+   * - requestId: UUID of the reschedule request
+   *
+   * Response:
+   * - Updated reschedule request with status 'withdrawn'
+   *
+   * @param {Context} c - Hono context
+   * @returns {Response} JSON response with updated request
+   */
+  app.post("/api/reschedule-requests/:requestId/withdraw", verifyPrivyAuth, async (c) => {
+    try {
+      const userId = c.get("userId");
+      const requestId = c.req.param("requestId");
+
+      // Get reschedule request
+      const { data: rescheduleRequest, error: requestError } = await supabaseAdmin
+        .from("reschedule_requests")
+        .select("*")
+        .eq("id", requestId)
+        .single();
+
+      if (requestError || !rescheduleRequest) {
+        return c.json({ error: "Reschedule request not found" }, 404);
+      }
+
+      // Only requester can withdraw
+      if (rescheduleRequest.requester_id !== userId) {
+        return c.json({ error: "Only the requester can withdraw this request" }, 403);
+      }
+
+      if (rescheduleRequest.status !== 'pending') {
+        return c.json({ error: "Only pending requests can be withdrawn" }, 400);
+      }
+
+      // Update request to withdrawn
+      const { data: updatedRequest, error: updateError } = await supabaseAdmin
+        .from("reschedule_requests")
+        .update({
+          status: 'withdrawn',
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", requestId)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error("Withdraw request error:", updateError);
+        return c.json({ error: "Failed to withdraw request" }, 500);
+      }
+
+      console.log(`✅ Reschedule request ${requestId} withdrawn`);
+
+      return c.json({
+        success: true,
+        request: updatedRequest
+      });
+    } catch (error) {
+      console.error("Withdraw reschedule error:", error);
+      return c.json({ error: "Internal server error" }, 500);
+    }
+  });
 }

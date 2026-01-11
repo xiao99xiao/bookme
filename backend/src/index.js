@@ -18,6 +18,7 @@ import { setupWebSocket, getIO } from "./websocket.js";
 import { configureCors } from "./config/cors.js";
 import { setupBlockchain } from "./config/blockchain.js";
 import { setupServer, setupHeartbeatMonitoring } from "./config/server.js";
+import { setupScheduledTasks } from "./scheduled-tasks.js";
 // Setup server configuration (environment, error handlers, graceful shutdown)
 setupServer();
 
@@ -81,4 +82,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
   // Setup heartbeat monitoring using extracted configuration
   setupHeartbeatMonitoring();
+
+  // Setup scheduled background tasks (cleanup expired data, etc.)
+  setupScheduledTasks();
 }

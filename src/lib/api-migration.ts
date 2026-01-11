@@ -913,6 +913,79 @@ export class ApiClient {
     await this.waitForInitialization()
     return this.backendApi!.recordFunding(params)
   }
+
+  // =====================================================
+  // Reschedule APIs
+  // =====================================================
+
+  /**
+   * Create a reschedule request for a booking
+   */
+  static async createRescheduleRequest(bookingId: string, params: {
+    proposed_scheduled_at: string
+    proposed_duration_minutes?: number
+    reason?: string
+  }): Promise<{
+    success: boolean
+    request: import('./backend-api').RescheduleRequest
+  }> {
+    await this.waitForInitialization()
+    return this.backendApi!.createRescheduleRequest(bookingId, params)
+  }
+
+  /**
+   * Get all reschedule requests for a booking
+   */
+  static async getRescheduleRequests(bookingId: string): Promise<{
+    requests: import('./backend-api').RescheduleRequest[]
+    can_create_request: boolean
+    visitor_reschedule_remaining: number | null
+    user_role: 'host' | 'visitor'
+  }> {
+    await this.waitForInitialization()
+    return this.backendApi!.getRescheduleRequests(bookingId)
+  }
+
+  /**
+   * Batch fetch reschedule requests for multiple bookings (optimized)
+   */
+  static async getBatchRescheduleRequests(bookingIds: string[]): Promise<{
+    results: Record<string, {
+      requests: import('./backend-api').RescheduleRequest[]
+      can_create_request: boolean
+      visitor_reschedule_remaining: number | null
+      user_role: 'host' | 'visitor'
+    }>
+  }> {
+    await this.waitForInitialization()
+    return this.backendApi!.getBatchRescheduleRequests(bookingIds)
+  }
+
+  /**
+   * Respond to a reschedule request (approve or reject)
+   */
+  static async respondToRescheduleRequest(requestId: string, params: {
+    action: 'approve' | 'reject'
+    response_notes?: string
+  }): Promise<{
+    success: boolean
+    request: import('./backend-api').RescheduleRequest
+    booking: any
+  }> {
+    await this.waitForInitialization()
+    return this.backendApi!.respondToRescheduleRequest(requestId, params)
+  }
+
+  /**
+   * Withdraw a pending reschedule request
+   */
+  static async withdrawRescheduleRequest(requestId: string): Promise<{
+    success: boolean
+    request: import('./backend-api').RescheduleRequest
+  }> {
+    await this.waitForInitialization()
+    return this.backendApi!.withdrawRescheduleRequest(requestId)
+  }
 }
 
 // Export for backwards compatibility
