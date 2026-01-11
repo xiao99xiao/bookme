@@ -8,9 +8,9 @@
  * - Graceful error handling when calendar is unavailable
  */
 
-import { getSupabaseAdmin } from '../middleware/auth.js';
+import { getDb } from '../middleware/auth.js';
 
-const supabaseAdmin = getSupabaseAdmin();
+const db = getDb();
 
 export class CalendarService {
   constructor() {
@@ -63,7 +63,7 @@ export class CalendarService {
    * Get active calendar integrations for a provider
    */
   async getActiveCalendarIntegrations(providerId) {
-    const { data: integrations, error } = await supabaseAdmin
+    const { data: integrations, error } = await db
       .from('user_meeting_integrations')
       .select('*')
       .eq('user_id', providerId)
@@ -256,7 +256,7 @@ export class CalendarService {
       // Update integration with new token
       const expiresAt = new Date(Date.now() + tokenData.expires_in * 1000);
       
-      const { error } = await supabaseAdmin
+      const { error } = await db
         .from('user_meeting_integrations')
         .update({
           access_token: tokenData.access_token,
@@ -285,7 +285,7 @@ export class CalendarService {
    */
   async deactivateIntegration(integrationId) {
     try {
-      const { error } = await supabaseAdmin
+      const { error } = await db
         .from('user_meeting_integrations')
         .update({
           is_active: false,

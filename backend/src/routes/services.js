@@ -13,12 +13,12 @@
  */
 
 import { Hono } from 'hono';
-import { verifyPrivyAuth, getSupabaseAdmin } from '../middleware/auth.js';
+import { verifyPrivyAuth, getDb } from '../middleware/auth.js';
 import availabilityService from '../services/availability-service.js';
 import calendarService from '../services/calendar-service.js';
 
-// Get Supabase admin client
-const supabaseAdmin = getSupabaseAdmin();
+// Get database client (Railway PostgreSQL)
+const db = getDb();
 
 /**
  * Create service routes
@@ -52,7 +52,7 @@ export default function serviceRoutes(app) {
       const userId = c.get('userId');
       const { provider_id, category, is_visible } = c.req.query();
       
-      let query = supabaseAdmin.from('services').select('*');
+      let query = db.from('services').select('*');
       
       if (provider_id) query = query.eq('provider_id', provider_id);
       if (category) query = query.eq('category_id', category);
@@ -95,7 +95,7 @@ export default function serviceRoutes(app) {
       const userId = c.get('userId');
       const targetUserId = c.req.param('userId');
       
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await db
         .from('services')
         .select('*')
         .eq('provider_id', targetUserId)
@@ -172,7 +172,7 @@ export default function serviceRoutes(app) {
       
       if (body.id) {
         // Update existing service
-        const { data, error } = await supabaseAdmin
+        const { data, error } = await db
           .from('services')
           .update(serviceData)
           .eq('id', body.id)
@@ -188,7 +188,7 @@ export default function serviceRoutes(app) {
         return c.json(data);
       } else {
         // Create new service
-        const { data, error } = await supabaseAdmin
+        const { data, error } = await db
           .from('services')
           .insert(serviceData)
           .select()
@@ -230,7 +230,7 @@ export default function serviceRoutes(app) {
       const userId = c.get('userId');
       const serviceId = c.req.param('serviceId');
       
-      const { error } = await supabaseAdmin
+      const { error } = await db
         .from('services')
         .delete()
         .eq('id', serviceId)
@@ -280,7 +280,7 @@ export default function serviceRoutes(app) {
         return c.json({ error: 'is_visible must be a boolean' }, 400);
       }
       
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await db
         .from('services')
         .update({ is_visible })
         .eq('id', serviceId)
@@ -323,7 +323,7 @@ export default function serviceRoutes(app) {
     try {
       const userId = c.req.param('userId');
       
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await db
         .from('services')
         .select(`
           *,
@@ -368,7 +368,7 @@ export default function serviceRoutes(app) {
     try {
       const { search, category, minPrice, maxPrice, location } = c.req.query();
       
-      let query = supabaseAdmin
+      let query = db
         .from('services')
         .select(`
           *,
@@ -432,7 +432,7 @@ export default function serviceRoutes(app) {
       
       console.log('Getting public services for provider:', providerId);
       
-      let query = supabaseAdmin
+      let query = db
         .from('services')
         .select(`
           *,
@@ -479,7 +479,7 @@ export default function serviceRoutes(app) {
     try {
       const serviceId = c.req.param('id');
       
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await db
         .from('services')
         .select(`
           *,
@@ -526,7 +526,7 @@ export default function serviceRoutes(app) {
     try {
       const { query, category, minPrice, maxPrice, location } = c.req.query();
       
-      let dbQuery = supabaseAdmin
+      let dbQuery = db
         .from('services')
         .select(`
           *,

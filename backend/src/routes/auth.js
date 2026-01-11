@@ -14,7 +14,7 @@
 import { Hono } from 'hono';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-import { privyDidToUuid, getPrivyClient, getSupabaseAdmin } from '../middleware/auth.js';
+import { privyDidToUuid, getPrivyClient, getDb } from '../middleware/auth.js';
 
 // Load environment variables
 dotenv.config({ path: '.env' });
@@ -26,7 +26,7 @@ dotenv.config({ path: '.env' });
  */
 export default function authRoutes(app) {
   const privyClient = getPrivyClient();
-  const supabaseAdmin = getSupabaseAdmin();
+  const db = getDb();
 
   /**
    * POST /api/auth/token
@@ -64,7 +64,7 @@ export default function authRoutes(app) {
       const userId = privyDidToUuid(privyUser.userId);
       
       // Get or create user profile
-      const { data: user } = await supabaseAdmin
+      const { data: user } = await db
         .from('users')
         .select('*')
         .eq('id', userId)
@@ -75,7 +75,7 @@ export default function authRoutes(app) {
         const emailAccount = privyUser.linkedAccounts?.find(acc => acc.type === 'email');
         const email = emailAccount?.address || `${privyUser.userId}@privy.user`;
         
-        await supabaseAdmin
+        await db
           .from('users')
           .insert({
             id: userId,
@@ -205,7 +205,7 @@ export default function authRoutes(app) {
       // Handle PKCE flow (authorization code)
       if (code) {
         console.log('Processing PKCE flow with authorization code');
-        const { data, error } = await supabaseAdmin.auth.exchangeCodeForSession(code);
+        const { data, error } = await db.auth.exchangeCodeForSession(code);
 
         if (error) {
           console.error('Code exchange failed:', error);
@@ -228,7 +228,7 @@ export default function authRoutes(app) {
       // Handle implicit flow (direct tokens)
       if (access_token) {
         console.log('Processing implicit flow with access token');
-        const { data, error } = await supabaseAdmin.auth.setSession({
+        const { data, error } = await db.auth.setSession({
           access_token,
           refresh_token: refresh_token || ''
         });

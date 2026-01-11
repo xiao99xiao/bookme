@@ -13,7 +13,7 @@
  */
 
 import { Hono } from "hono";
-import { verifyPrivyAuth, getSupabaseAdmin } from "../middleware/auth.js";
+import { verifyPrivyAuth, getDb } from "../middleware/auth.js";
 import { getEventMonitor } from "../config/blockchain.js";
 import {
   getApplicableCancellationPolicies,
@@ -25,8 +25,8 @@ import { withTransaction } from "../db.js";
 import pointsService from "../services/points-service.js";
 // BlockchainService removed - not needed since methods are commented out
 
-// Get Supabase admin client
-const supabaseAdmin = getSupabaseAdmin();
+// Get database client (Railway PostgreSQL)
+const db = getDb();
 
 /**
  * Atomically create a booking with conflict detection using database transaction.
@@ -140,7 +140,7 @@ export default function bookingRoutes(app) {
       }
 
       // Get service details
-      const { data: service, error: serviceError } = await supabaseAdmin
+      const { data: service, error: serviceError } = await db
         .from("services")
         .select("*")
         .eq("id", service_id)
@@ -158,7 +158,7 @@ export default function bookingRoutes(app) {
       }
 
       // Get customer details
-      const { data: customer, error: customerError } = await supabaseAdmin
+      const { data: customer, error: customerError } = await db
         .from("users")
         .select("*")
         .eq("id", userId)
@@ -170,7 +170,7 @@ export default function bookingRoutes(app) {
       }
 
       // Get provider details
-      const { data: provider, error: providerError } = await supabaseAdmin
+      const { data: provider, error: providerError } = await db
         .from("users")
         .select("*")
         .eq("id", service.provider_id)
@@ -240,7 +240,7 @@ export default function bookingRoutes(app) {
       };
 
       // Create conversation between customer and provider (corrected for actual schema)
-      const { error: conversationError } = await supabaseAdmin
+      const { error: conversationError } = await db
         .from("conversations")
         .insert(conversationResult);
 
@@ -274,7 +274,7 @@ export default function bookingRoutes(app) {
         const eip712Signer = new EIP712Signer();
 
         // Check if customer was referred
-        const { data: customerData } = await supabaseAdmin
+        const { data: customerData } = await db
           .from('users')
           .select('referred_by')
           .eq('id', userId)
@@ -284,7 +284,7 @@ export default function bookingRoutes(app) {
         let inviterAddress = "0x0000000000000000000000000000000000000000";
 
         if (hasInviter) {
-          const { data: referrerData } = await supabaseAdmin
+          const { data: referrerData } = await db
             .from('users')
             .select('wallet_address')
             .eq('id', customerData.referred_by)
@@ -345,7 +345,7 @@ export default function bookingRoutes(app) {
         );
 
         // Update booking with blockchain ID and points info
-        const { error: updateError } = await supabaseAdmin
+        const { error: updateError } = await db
           .from("bookings")
           .update({
             blockchain_booking_id: blockchainBookingId,
@@ -378,7 +378,7 @@ export default function bookingRoutes(app) {
         );
 
         // Store nonce to prevent replay attacks (from old code)
-        await supabaseAdmin.from("signature_nonces").insert({
+        await db.from("signature_nonces").insert({
           nonce: authResult.nonce,
           booking_id: booking.id,
           signature_type: "booking_authorization",
@@ -482,7 +482,7 @@ export default function bookingRoutes(app) {
         );
 
         // Get booking details (following old code query pattern)
-        const { data: booking, error: bookingError } = await supabaseAdmin
+        const { data: booking, error: bookingError } = await db
           .from("bookings")
           .select(
             `
@@ -530,7 +530,7 @@ export default function bookingRoutes(app) {
         const eip712Signer = new EIP712Signer();
 
         // Check if customer was referred
-        const { data: customerData } = await supabaseAdmin
+        const { data: customerData } = await db
           .from('users')
           .select('referred_by')
           .eq('id', booking.customer_id)
@@ -540,7 +540,7 @@ export default function bookingRoutes(app) {
         let inviterAddress = "0x0000000000000000000000000000000000000000";
 
         if (hasInviter) {
-          const { data: referrerData } = await supabaseAdmin
+          const { data: referrerData } = await db
             .from('users')
             .select('wallet_address')
             .eq('id', customerData.referred_by)
@@ -576,7 +576,7 @@ export default function bookingRoutes(app) {
         const blockchainBookingId = authResult.authorization.bookingId;
 
         // Store the SAME blockchain booking ID that will be emitted in database
-        const { error: updateError } = await supabaseAdmin
+        const { error: updateError } = await db
           .from("bookings")
           .update({
             blockchain_booking_id: blockchainBookingId,
@@ -596,7 +596,7 @@ export default function bookingRoutes(app) {
         }
 
         // Store nonce to prevent replay attacks
-        const { error: nonceError } = await supabaseAdmin
+        const { error: nonceError } = await db
           .from("signature_nonces")
           .insert({
             nonce: authResult.nonce,
@@ -674,7 +674,7 @@ export default function bookingRoutes(app) {
       const bookingId = c.req.param("id");
 
       // Get booking details
-      const { data: booking, error: bookingError } = await supabaseAdmin
+      const { data: booking, error: bookingError } = await db
         .from("bookings")
         .select(
           `
@@ -770,7 +770,7 @@ export default function bookingRoutes(app) {
       console.log("🤖 Backend completion triggered for booking:", bookingId);
 
       // Get booking details
-      const { data: booking, error: bookingError } = await supabaseAdmin
+      const { data: booking, error: bookingError } = await db
         .from("bookings")
         .select(
           `
@@ -832,7 +832,7 @@ export default function bookingRoutes(app) {
             console.log("⚠️ Provider session duration insufficient, blocking auto-completion");
 
             // Block auto-completion
-            const { error: blockError } = await supabaseAdmin
+            const { error: blockError } = await db
               .from("bookings")
               .update({
                 auto_complete_blocked: true,
@@ -882,7 +882,7 @@ export default function bookingRoutes(app) {
         console.log("⚠️ Booking was not paid via blockchain, updating database directly");
         
         // For non-blockchain bookings, update database directly
-        const { error: updateError } = await supabaseAdmin
+        const { error: updateError } = await db
           .from("bookings")
           .update({
             status: "completed",
@@ -923,7 +923,7 @@ export default function bookingRoutes(app) {
         
         // The database will be updated by the event monitor when it catches the ServiceCompleted event
         // We just need to store the auto-completion metadata
-        await supabaseAdmin
+        await db
           .from("bookings")
           .update({
             backend_completed: true,
@@ -983,7 +983,7 @@ export default function bookingRoutes(app) {
       const bookingId = c.req.param("id");
 
       // Get booking details
-      const { data: booking, error: bookingError } = await supabaseAdmin
+      const { data: booking, error: bookingError } = await db
         .from("bookings")
         .select("*, customer_id, provider_id, payment_hash")
         .eq("id", bookingId)
@@ -1007,7 +1007,7 @@ export default function bookingRoutes(app) {
       }
 
       // Get blockchain events for this booking
-      const { data: events, error: eventsError } = await supabaseAdmin
+      const { data: events, error: eventsError } = await db
         .from("blockchain_events")
         .select("*")
         .eq("booking_id", bookingId)
@@ -1084,7 +1084,7 @@ export default function bookingRoutes(app) {
         return c.json({ error: "Access denied" }, 403);
       }
 
-      let query = supabaseAdmin.from("bookings").select(`
+      let query = db.from("bookings").select(`
           *,
           service:services(*),
           customer:users!customer_id(*),
@@ -1170,7 +1170,7 @@ export default function bookingRoutes(app) {
       const updates = await c.req.json();
 
       // Get current booking
-      const { data: booking, error: bookingError } = await supabaseAdmin
+      const { data: booking, error: bookingError } = await db
         .from("bookings")
         .select(
           `
@@ -1318,7 +1318,7 @@ export default function bookingRoutes(app) {
       updates.updated_at = new Date().toISOString();
 
       // Update booking
-      const { data: updatedBooking, error: updateError } = await supabaseAdmin
+      const { data: updatedBooking, error: updateError } = await db
         .from("bookings")
         .update(updates)
         .eq("id", bookingId)
@@ -1392,7 +1392,7 @@ export default function bookingRoutes(app) {
       const { rejection_reason, provider_notes } = body;
 
       // Get booking details
-      const { data: booking, error: bookingError } = await supabaseAdmin
+      const { data: booking, error: bookingError } = await db
         .from("bookings")
         .select(
           `
@@ -1424,7 +1424,7 @@ export default function bookingRoutes(app) {
       }
 
       // Update booking to rejected status
-      const { data: rejectedBooking, error: updateError } = await supabaseAdmin
+      const { data: rejectedBooking, error: updateError } = await db
         .from("bookings")
         .update({
           status: "rejected",
@@ -1468,7 +1468,7 @@ export default function bookingRoutes(app) {
             );
 
             // Log blockchain event
-            await supabaseAdmin.from("blockchain_events").insert({
+            await db.from("blockchain_events").insert({
               booking_id: bookingId,
               event_type: "refund_processed",
               transaction_hash: null, // Will be updated when transaction completes
@@ -1537,7 +1537,7 @@ export default function bookingRoutes(app) {
       const { reason } = await c.req.json();
 
       // Verify user is part of the booking
-      const { data: booking, error: fetchError } = await supabaseAdmin
+      const { data: booking, error: fetchError } = await db
         .from("bookings")
         .select("*")
         .eq("id", bookingId)
@@ -1552,7 +1552,7 @@ export default function bookingRoutes(app) {
       }
 
       // Update booking status
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await db
         .from("bookings")
         .update({
           status: "cancelled",
@@ -1769,7 +1769,7 @@ export default function bookingRoutes(app) {
       const bookingId = c.req.param("id");
 
       // Get booking details
-      const { data: booking, error: bookingError } = await supabaseAdmin
+      const { data: booking, error: bookingError } = await db
         .from("bookings")
         .select("customer_id, provider_id, is_online, meeting_link")
         .eq("id", bookingId)
@@ -1794,7 +1794,7 @@ export default function bookingRoutes(app) {
       }
 
       // Get session data from database
-      const { data: sessionData, error: sessionError } = await supabaseAdmin
+      const { data: sessionData, error: sessionError } = await db
         .from("booking_session_data")
         .select("*")
         .eq("booking_id", bookingId)
@@ -1884,7 +1884,7 @@ export default function bookingRoutes(app) {
         // Get booking first to debug
         console.log("🔍 Looking for booking:", bookingId);
 
-        const { data: booking, error: bookingError } = await supabaseAdmin
+        const { data: booking, error: bookingError } = await db
           .from("bookings")
           .select("*")
           .eq("id", bookingId)
@@ -1902,7 +1902,7 @@ export default function bookingRoutes(app) {
         }
 
         // Get service data
-        const { data: service } = await supabaseAdmin
+        const { data: service } = await db
           .from("services")
           .select("*")
           .eq("id", booking.service_id)
@@ -1911,7 +1911,7 @@ export default function bookingRoutes(app) {
         booking.service = service;
 
         // Get customer wallet address from database
-        const { data: customerUser } = await supabaseAdmin
+        const { data: customerUser } = await db
           .from("users")
           .select("wallet_address")
           .eq("id", booking.customer_id)
@@ -1921,7 +1921,7 @@ export default function bookingRoutes(app) {
         console.log("💰 Customer wallet address:", customerWallet);
 
         // Get provider wallet address from database
-        const { data: providerUser } = await supabaseAdmin
+        const { data: providerUser } = await db
           .from("users")
           .select("wallet_address")
           .eq("id", booking.provider_id)
@@ -2244,7 +2244,7 @@ export default function bookingRoutes(app) {
       }
 
       // Get booking details with service info
-      const { data: booking, error: bookingError } = await supabaseAdmin
+      const { data: booking, error: bookingError } = await db
         .from("bookings")
         .select(`
           *,
@@ -2295,7 +2295,7 @@ export default function bookingRoutes(app) {
       }
 
       // Check for existing pending request
-      const { data: existingRequest, error: existingError } = await supabaseAdmin
+      const { data: existingRequest, error: existingError } = await db
         .from("reschedule_requests")
         .select("id")
         .eq("booking_id", bookingId)
@@ -2310,7 +2310,7 @@ export default function bookingRoutes(app) {
       // For now, we'll allow the request and validate on approval
 
       // Create reschedule request
-      const { data: rescheduleRequest, error: createError } = await supabaseAdmin
+      const { data: rescheduleRequest, error: createError } = await db
         .from("reschedule_requests")
         .insert({
           booking_id: bookingId,
@@ -2377,7 +2377,7 @@ export default function bookingRoutes(app) {
       }
 
       // Get all bookings the user has access to
-      const { data: bookings, error: bookingsError } = await supabaseAdmin
+      const { data: bookings, error: bookingsError } = await db
         .from("bookings")
         .select("id, provider_id, customer_id, scheduled_at, duration_minutes, status, visitor_reschedule_count")
         .in("id", bookingIds)
@@ -2394,7 +2394,7 @@ export default function bookingRoutes(app) {
 
       // Get all reschedule requests for these bookings
       const accessibleBookingIds = bookings.map(b => b.id);
-      const { data: allRequests, error: requestsError } = await supabaseAdmin
+      const { data: allRequests, error: requestsError } = await db
         .from("reschedule_requests")
         .select(`
           *,
@@ -2471,7 +2471,7 @@ export default function bookingRoutes(app) {
       const bookingId = c.req.param("bookingId");
 
       // Get booking to verify access
-      const { data: booking, error: bookingError } = await supabaseAdmin
+      const { data: booking, error: bookingError } = await db
         .from("bookings")
         .select("*")
         .eq("id", bookingId)
@@ -2490,7 +2490,7 @@ export default function bookingRoutes(app) {
       }
 
       // Get all reschedule requests for this booking
-      const { data: requests, error: requestsError } = await supabaseAdmin
+      const { data: requests, error: requestsError } = await db
         .from("reschedule_requests")
         .select(`
           *,
@@ -2566,7 +2566,7 @@ export default function bookingRoutes(app) {
       }
 
       // Get reschedule request with booking details
-      const { data: rescheduleRequest, error: requestError } = await supabaseAdmin
+      const { data: rescheduleRequest, error: requestError } = await db
         .from("reschedule_requests")
         .select(`
           *,
@@ -2589,7 +2589,7 @@ export default function bookingRoutes(app) {
       // Check if request has expired
       if (new Date(rescheduleRequest.expires_at) < new Date()) {
         // Auto-expire the request
-        await supabaseAdmin
+        await db
           .from("reschedule_requests")
           .update({ status: 'expired', updated_at: new Date().toISOString() })
           .eq("id", requestId);
@@ -2616,7 +2616,7 @@ export default function bookingRoutes(app) {
       const respondedAt = new Date().toISOString();
 
       // Update the reschedule request
-      const { data: updatedRequest, error: updateRequestError } = await supabaseAdmin
+      const { data: updatedRequest, error: updateRequestError } = await db
         .from("reschedule_requests")
         .update({
           status: newStatus,
@@ -2660,7 +2660,7 @@ export default function bookingRoutes(app) {
           bookingUpdates.visitor_reschedule_count = (booking.visitor_reschedule_count || 0) + 1;
         }
 
-        const { data: bookingResult, error: updateBookingError } = await supabaseAdmin
+        const { data: bookingResult, error: updateBookingError } = await db
           .from("bookings")
           .update(bookingUpdates)
           .eq("id", booking.id)
@@ -2729,7 +2729,7 @@ export default function bookingRoutes(app) {
       const requestId = c.req.param("requestId");
 
       // Get reschedule request
-      const { data: rescheduleRequest, error: requestError } = await supabaseAdmin
+      const { data: rescheduleRequest, error: requestError } = await db
         .from("reschedule_requests")
         .select("*")
         .eq("id", requestId)
@@ -2749,7 +2749,7 @@ export default function bookingRoutes(app) {
       }
 
       // Update request to withdrawn
-      const { data: updatedRequest, error: updateError } = await supabaseAdmin
+      const { data: updatedRequest, error: updateError } = await db
         .from("reschedule_requests")
         .update({
           status: 'withdrawn',

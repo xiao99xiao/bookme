@@ -12,10 +12,10 @@
  */
 
 import { Hono } from 'hono';
-import { verifyPrivyAuth, getSupabaseAdmin } from '../middleware/auth.js';
+import { verifyPrivyAuth, getDb } from '../middleware/auth.js';
 
-// Get Supabase admin client
-const supabaseAdmin = getSupabaseAdmin();
+// Get database client (Railway PostgreSQL)
+const db = getDb();
 
 /**
  * Create user/profile routes
@@ -51,7 +51,7 @@ export default function userRoutes(app) {
       const clientTimezone = c.req.header('X-Client-Timezone') || 'UTC';
 
       // Check if user exists
-      const { data: existingUser, error: fetchError } = await supabaseAdmin
+      const { data: existingUser, error: fetchError } = await db
         .from('users')
         .select('*')
         .eq('id', userId)
@@ -62,7 +62,7 @@ export default function userRoutes(app) {
         if (existingUser.timezone !== clientTimezone) {
           console.log(`Auto-updating timezone for user ${userId}: ${existingUser.timezone} -> ${clientTimezone}`);
 
-          const { data: updatedUser, error: updateError } = await supabaseAdmin
+          const { data: updatedUser, error: updateError } = await db
             .from('users')
             .update({
               timezone: clientTimezone,
@@ -98,7 +98,7 @@ export default function userRoutes(app) {
         displayName = privyUser.userId?.substring(0, 8) || 'User';
       }
 
-      const { data: newUser, error: createError } = await supabaseAdmin
+      const { data: newUser, error: createError } = await db
         .from('users')
         .insert({
           id: userId,
@@ -160,7 +160,7 @@ export default function userRoutes(app) {
       delete updates.email;
       delete updates.created_at;
 
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await db
         .from('users')
         .update({
           ...updates,
@@ -207,7 +207,7 @@ export default function userRoutes(app) {
     try {
       const userId = c.req.param('userId');
       
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await db
         .from('users')
         .select('*')
         .eq('id', userId)
@@ -272,7 +272,7 @@ export default function userRoutes(app) {
       }
       
       // Check if username exists
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await db
         .from('users')
         .select('username')
         .eq('username', username)
@@ -338,7 +338,7 @@ export default function userRoutes(app) {
         return c.json({ error: 'Invalid username' }, 400);
       }
       
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await db
         .from('users')
         .update({ username: normalizedUsername })
         .eq('id', userId)
@@ -380,7 +380,7 @@ export default function userRoutes(app) {
     try {
       const username = c.req.param('username').toLowerCase();
       
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await db
         .from('users')
         .select('*')
         .eq('username', username)
@@ -421,7 +421,7 @@ export default function userRoutes(app) {
     try {
       const userId = c.req.param('userId');
       
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await db
         .from('users')
         .select('*')
         .eq('id', userId)
@@ -461,7 +461,7 @@ export default function userRoutes(app) {
     try {
       const userId = c.get('userId');
 
-      const { error } = await supabaseAdmin
+      const { error } = await db
         .from('users')
         .update({ onboarding_completed: true })
         .eq('id', userId);
@@ -503,7 +503,7 @@ export default function userRoutes(app) {
     try {
       const userId = c.req.param('userId');
 
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await db
         .from('users')
         .select('page_theme, page_custom_css, page_theme_settings')
         .eq('id', userId)
@@ -580,7 +580,7 @@ export default function userRoutes(app) {
         updateData.page_theme_settings = settings;
       }
 
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await db
         .from('users')
         .update(updateData)
         .eq('id', userId)
@@ -627,7 +627,7 @@ export default function userRoutes(app) {
     try {
       const userId = c.req.param('userId');
 
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await db
         .from('users')
         .select('profile_buttons')
         .eq('id', userId)
@@ -716,7 +716,7 @@ export default function userRoutes(app) {
       // Sort buttons by order
       const sortedButtons = [...buttons].sort((a, b) => a.order - b.order);
 
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await db
         .from('users')
         .update({
           profile_buttons: sortedButtons,

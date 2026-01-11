@@ -13,10 +13,10 @@
  */
 
 import { Hono } from 'hono';
-import { verifyPrivyAuth, getSupabaseAdmin } from '../middleware/auth.js';
+import { verifyPrivyAuth, getDb } from '../middleware/auth.js';
 
-// Get Supabase admin client
-const supabaseAdmin = getSupabaseAdmin();
+// Get database client (Railway PostgreSQL)
+const db = getDb();
 
 /**
  * Create conversation routes
@@ -54,7 +54,7 @@ export default function conversationRoutes(app) {
       const offsetNum = Math.max(parseInt(offset) || 0, 0);
 
       // Get conversations where user is a participant (matching original schema)
-      const { data: conversations, error } = await supabaseAdmin
+      const { data: conversations, error } = await db
         .from('conversations')
         .select('*')
         .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
@@ -100,7 +100,7 @@ export default function conversationRoutes(app) {
       });
 
       // 2. Batch fetch all users in a single query
-      const { data: allUsers } = await supabaseAdmin
+      const { data: allUsers } = await db
         .from('users')
         .select('id, display_name, avatar')
         .in('id', Array.from(userIds));
@@ -113,7 +113,7 @@ export default function conversationRoutes(app) {
 
       // 3. Batch fetch last message for each conversation using a lateral join approach
       // We use a raw query-like approach with window functions
-      const { data: allLastMessages } = await supabaseAdmin
+      const { data: allLastMessages } = await db
         .from('messages')
         .select('id, content, created_at, sender_id, conversation_id')
         .in('conversation_id', conversationIds)
@@ -134,7 +134,7 @@ export default function conversationRoutes(app) {
         `(customer_id.eq.${conv.user2_id}.and.provider_id.eq.${conv.user1_id})`
       );
 
-      const { data: allBookings } = await supabaseAdmin
+      const { data: allBookings } = await db
         .from('bookings')
         .select(`
           id,
@@ -160,7 +160,7 @@ export default function conversationRoutes(app) {
 
       // 5. Batch fetch unread message counts for current user
       // Count messages where: conversation matches, sender is NOT current user, is_read is false
-      const { data: unreadCounts } = await supabaseAdmin
+      const { data: unreadCounts } = await db
         .from('messages')
         .select('conversation_id')
         .in('conversation_id', conversationIds)
@@ -268,7 +268,7 @@ export default function conversationRoutes(app) {
       const conversationId = c.req.param('id');
 
       // Get conversation (matching original schema)
-      const { data: conversation, error } = await supabaseAdmin
+      const { data: conversation, error } = await db
         .from('conversations')
         .select('*')
         .eq('id', conversationId)
@@ -284,13 +284,13 @@ export default function conversationRoutes(app) {
       }
 
       // Get user data
-      const { data: user1Data } = await supabaseAdmin
+      const { data: user1Data } = await db
         .from('users')
         .select('id, display_name, avatar')
         .eq('id', conversation.user1_id)
         .single();
 
-      const { data: user2Data } = await supabaseAdmin
+      const { data: user2Data } = await db
         .from('users')
         .select('id, display_name, avatar')
         .eq('id', conversation.user2_id)
@@ -355,7 +355,7 @@ export default function conversationRoutes(app) {
       }
 
       // Check if conversation already exists (matching original implementation)
-      const { data: existing1 } = await supabaseAdmin
+      const { data: existing1 } = await db
         .from('conversations')
         .select('*')
         .eq('user1_id', userId)
@@ -366,7 +366,7 @@ export default function conversationRoutes(app) {
         return c.json(existing1);
       }
 
-      const { data: existing2 } = await supabaseAdmin
+      const { data: existing2 } = await db
         .from('conversations')
         .select('*')
         .eq('user1_id', participant_id)
@@ -378,7 +378,7 @@ export default function conversationRoutes(app) {
       }
 
       // Verify the other participant exists
-      const { data: otherUser, error: userError } = await supabaseAdmin
+      const { data: otherUser, error: userError } = await db
         .from('users')
         .select('id, display_name, avatar')
         .eq('id', participant_id)
@@ -390,7 +390,7 @@ export default function conversationRoutes(app) {
       }
 
       // Create new conversation (matching original implementation)
-      const { data: newConversation, error: createError } = await supabaseAdmin
+      const { data: newConversation, error: createError } = await db
         .from('conversations')
         .insert({
           user1_id: userId,
@@ -437,7 +437,7 @@ export default function conversationRoutes(app) {
       const conversationId = c.req.param('conversationId');
 
       // Verify user has access to this conversation
-      const { data: conversation, error: conversationError } = await supabaseAdmin
+      const { data: conversation, error: conversationError } = await db
         .from('conversations')
         .select('user1_id, user2_id')
         .eq('id', conversationId)
@@ -453,7 +453,7 @@ export default function conversationRoutes(app) {
       }
 
       // Mark all unread messages from other participants as read
-      const { data: updatedMessages, error: updateError } = await supabaseAdmin
+      const { data: updatedMessages, error: updateError } = await db
         .from('messages')
         .update({ 
           is_read: true
@@ -530,7 +530,7 @@ export default function conversationRoutes(app) {
       }
 
       // Verify user has access to this conversation
-      const { data: conversation, error: conversationError } = await supabaseAdmin
+      const { data: conversation, error: conversationError } = await db
         .from('conversations')
         .select('user1_id, user2_id')
         .eq('id', conversation_id)
@@ -553,7 +553,7 @@ export default function conversationRoutes(app) {
         is_read: false
       };
 
-      const { data: message, error: messageError } = await supabaseAdmin
+      const { data: message, error: messageError } = await db
         .from('messages')
         .insert(messageData)
         .select(`
@@ -568,7 +568,7 @@ export default function conversationRoutes(app) {
       }
 
       // Update conversation with latest message
-      const { error: updateConversationError } = await supabaseAdmin
+      const { error: updateConversationError } = await db
         .from('conversations')
         .update({
           latest_message_id: message.id,
@@ -651,7 +651,7 @@ export default function conversationRoutes(app) {
       const offsetNum = Math.max(parseInt(offset) || 0, 0);
 
       // Verify user has access to this conversation
-      const { data: conversation, error: conversationError } = await supabaseAdmin
+      const { data: conversation, error: conversationError } = await db
         .from('conversations')
         .select('user1_id, user2_id')
         .eq('id', conversationId)
@@ -667,7 +667,7 @@ export default function conversationRoutes(app) {
       }
 
       // Build messages query
-      let query = supabaseAdmin
+      let query = db
         .from('messages')
         .select(`
           *,
@@ -678,7 +678,7 @@ export default function conversationRoutes(app) {
 
       // Apply cursor-based pagination if specified
       if (before) {
-        const { data: beforeMessage } = await supabaseAdmin
+        const { data: beforeMessage } = await db
           .from('messages')
           .select('created_at')
           .eq('id', before)
@@ -690,7 +690,7 @@ export default function conversationRoutes(app) {
       }
 
       if (after) {
-        const { data: afterMessage } = await supabaseAdmin
+        const { data: afterMessage } = await db
           .from('messages')
           .select('created_at')
           .eq('id', after)
@@ -726,7 +726,7 @@ export default function conversationRoutes(app) {
             .map(msg => msg.id);
 
           if (unreadMessageIds.length > 0) {
-            await supabaseAdmin
+            await db
               .from('messages')
               .update({ 
                 is_read: true

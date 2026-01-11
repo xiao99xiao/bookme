@@ -9,8 +9,8 @@ import pointsService from "./services/points-service.js";
 dotenv.config();
 
 class BlockchainEventMonitor {
-  constructor(supabaseAdmin) {
-    this.supabaseAdmin = supabaseAdmin;
+  constructor(db) {
+    this.db = db;
     this.CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS;
     this.RPC_URL = process.env.BLOCKCHAIN_RPC_URL;
     this.WEBSOCKET_URL = process.env.BLOCKCHAIN_WEBSOCKET_URL;
@@ -514,7 +514,7 @@ class BlockchainEventMonitor {
     // Ensure we have a transaction hash or use a placeholder
     const txHash = eventData.transactionHash || "unknown";
 
-    const { error } = await this.supabaseAdmin
+    const { error } = await this.db
       .from("blockchain_events")
       .upsert({
         event_type: eventData.type,
@@ -534,7 +534,7 @@ class BlockchainEventMonitor {
    * Store failed event for manual review
    */
   async storeFailedEvent(eventData, errorMessage) {
-    await this.supabaseAdmin.from("blockchain_events").upsert({
+    await this.db.from("blockchain_events").upsert({
       event_type: eventData.type,
       transaction_hash: eventData.transactionHash,
       booking_id: eventData.bookingId,
@@ -549,7 +549,7 @@ class BlockchainEventMonitor {
    */
   async handleBookingPaid(eventData) {
     // Find booking by blockchain_booking_id
-    const { data: booking, error } = await this.supabaseAdmin
+    const { data: booking, error } = await this.db
       .from("bookings")
       .select()
       .eq("blockchain_booking_id", eventData.bookingId)
@@ -564,7 +564,7 @@ class BlockchainEventMonitor {
     }
 
     // Update booking with payment information
-    const { error: updateError } = await this.supabaseAdmin
+    const { error: updateError } = await this.db
       .from("bookings")
       .update({
         status: "paid",
@@ -609,7 +609,7 @@ class BlockchainEventMonitor {
    */
   async handleServiceCompleted(eventData) {
     // Find booking by blockchain_booking_id with related data
-    const { data: booking, error } = await this.supabaseAdmin
+    const { data: booking, error } = await this.db
       .from("bookings")
       .select(`
         *,
@@ -628,7 +628,7 @@ class BlockchainEventMonitor {
     }
 
     // Update booking to completed
-    const { error: updateError } = await this.supabaseAdmin
+    const { error: updateError } = await this.db
       .from("bookings")
       .update({
         status: "completed",
@@ -650,7 +650,7 @@ class BlockchainEventMonitor {
     const description = `${serviceTitle}`;
 
     // Create transaction record using new schema
-    const { error: transactionError } = await this.supabaseAdmin
+    const { error: transactionError } = await this.db
       .from("transactions")
       .insert({
         provider_id: booking.provider_id,
@@ -670,7 +670,7 @@ class BlockchainEventMonitor {
     // Check if there's a referral commission to record
     if (eventData.inviterAmount && eventData.inviter && eventData.inviter !== "0x0000000000000000000000000000000000000000") {
       // Get the referrer's user ID from their wallet address
-      const { data: referrer } = await this.supabaseAdmin
+      const { data: referrer } = await this.db
         .from("users")
         .select("id")
         .eq("wallet_address", eventData.inviter.toLowerCase())
@@ -681,7 +681,7 @@ class BlockchainEventMonitor {
         const inviterAmount = parseFloat(ethers.formatUnits(eventData.inviterAmount, 6));
 
         // Create inviter fee transaction record
-        const { error: inviterTransactionError } = await this.supabaseAdmin
+        const { error: inviterTransactionError } = await this.db
           .from("transactions")
           .insert({
             provider_id: referrer.id, // Referrer receives the commission
@@ -700,10 +700,10 @@ class BlockchainEventMonitor {
           console.log("💰 Referral commission recorded for:", referrer.id, "Amount:", inviterAmount);
 
           // Update referrer's total earnings
-          const { error: referrerEarningsError } = await this.supabaseAdmin
+          const { error: referrerEarningsError } = await this.db
             .from("users")
             .update({
-              referral_earnings: this.supabaseAdmin.raw(
+              referral_earnings: this.db.raw(
                 `COALESCE(referral_earnings, 0) + ${inviterAmount}`
               ),
             })
@@ -717,10 +717,10 @@ class BlockchainEventMonitor {
     }
 
     // Update provider total_earnings by calculating from all transaction records
-    const { error: earningsError } = await this.supabaseAdmin
+    const { error: earningsError } = await this.db
       .from("users")
       .update({
-        total_earnings: this.supabaseAdmin.raw(
+        total_earnings: this.db.raw(
           `(SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE provider_id = '${booking.provider_id}')`
         ),
       })
@@ -738,7 +738,7 @@ class BlockchainEventMonitor {
    */
   async handleBookingCancelled(eventData) {
     // Find booking by blockchain_booking_id
-    const { data: booking, error } = await this.supabaseAdmin
+    const { data: booking, error } = await this.db
       .from("bookings")
       .select()
       .eq("blockchain_booking_id", eventData.bookingId)
@@ -753,7 +753,7 @@ class BlockchainEventMonitor {
     }
 
     // Update booking to cancelled
-    const { error: updateError } = await this.supabaseAdmin
+    const { error: updateError } = await this.db
       .from("bookings")
       .update({
         status: "cancelled",
@@ -790,7 +790,7 @@ class BlockchainEventMonitor {
 
       if (customerRefundAmount > 0) {
         // Create refund transaction record for customer
-        const { error: refundError } = await this.supabaseAdmin
+        const { error: refundError } = await this.db
           .from("transactions")
           .insert({
             provider_id: booking.customer_id, // Customer receives the refund
@@ -816,7 +816,7 @@ class BlockchainEventMonitor {
       const providerPartialAmount = parseFloat(ethers.formatUnits(eventData.providerAmount, 6));
 
       if (providerPartialAmount > 0) {
-        const { error: providerPaymentError } = await this.supabaseAdmin
+        const { error: providerPaymentError } = await this.db
           .from("transactions")
           .insert({
             provider_id: booking.provider_id,
@@ -835,10 +835,10 @@ class BlockchainEventMonitor {
           console.log("💰 Partial payment recorded for provider:", booking.provider_id, "Amount:", providerPartialAmount);
 
           // Update provider total_earnings
-          const { error: earningsError } = await this.supabaseAdmin
+          const { error: earningsError } = await this.db
             .from("users")
             .update({
-              total_earnings: this.supabaseAdmin.raw(
+              total_earnings: this.db.raw(
                 `(SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE provider_id = '${booking.provider_id}')`
               ),
             })
@@ -931,7 +931,7 @@ class BlockchainEventMonitor {
 
       try {
         // Check if booking status has already been updated
-        const { data: booking, error: bookingError } = await this.supabaseAdmin
+        const { data: booking, error: bookingError } = await this.db
           .from("bookings")
           .select("status, completion_tx_hash, blockchain_booking_id")
           .eq("id", bookingId)
@@ -1029,7 +1029,7 @@ class BlockchainEventMonitor {
 
     try {
       // Get all active bookings that might have missed events
-      const { data: activeBookings, error } = await this.supabaseAdmin
+      const { data: activeBookings, error } = await this.db
         .from("bookings")
         .select("id, blockchain_booking_id, blockchain_tx_hash, status, scheduled_at")
         .in("status", ["pending_payment", "paid", "confirmed", "in_progress"])

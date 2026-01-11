@@ -5,10 +5,10 @@
  * Tasks run on intervals and are designed to be lightweight and non-blocking.
  */
 
-import { getSupabaseAdmin } from "./middleware/auth.js";
+import { getDb } from "./middleware/auth.js";
 
-// Get Supabase admin client
-const supabaseAdmin = getSupabaseAdmin();
+// Get database client (Railway PostgreSQL)
+const db = getDb();
 
 /**
  * Clean up expired reschedule requests
@@ -21,7 +21,7 @@ async function cleanupExpiredRescheduleRequests() {
     const now = new Date().toISOString();
 
     // Find and update expired pending requests
-    const { data: expiredRequests, error } = await supabaseAdmin
+    const { data: expiredRequests, error } = await db
       .from("reschedule_requests")
       .update({
         status: 'expired',

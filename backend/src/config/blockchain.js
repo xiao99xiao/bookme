@@ -8,7 +8,7 @@
  * @extracted 2025-09-13
  */
 
-import { getSupabaseAdmin } from "../middleware/auth.js";
+import { getDb } from "../middleware/auth.js";
 import BlockchainService from "../blockchain-service.js";
 import EIP712Signer from "../eip712-signer.js";
 import BlockchainEventMonitor from "../event-monitor.js";
@@ -17,7 +17,6 @@ import BlockchainEventMonitor from "../event-monitor.js";
 let blockchainService;
 let eip712Signer;
 let eventMonitor;
-let supabaseAdmin;
 
 /**
  * Initialize blockchain services
@@ -39,11 +38,11 @@ export function initializeBlockchainServices() {
     }
   });
 
-  // Initialize Supabase admin for event monitoring
-  supabaseAdmin = getSupabaseAdmin();
-  
+  // Initialize database client for event monitoring
+  const db = getDb();
+
   // Initialize blockchain event monitor
-  eventMonitor = new BlockchainEventMonitor(supabaseAdmin);
+  eventMonitor = new BlockchainEventMonitor(db);
   
   console.log("✅ Blockchain services initialized");
 }

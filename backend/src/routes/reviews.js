@@ -13,10 +13,10 @@
  */
 
 import { Hono } from 'hono';
-import { verifyPrivyAuth, getSupabaseAdmin } from '../middleware/auth.js';
+import { verifyPrivyAuth, getDb } from '../middleware/auth.js';
 
-// Get Supabase admin client
-const supabaseAdmin = getSupabaseAdmin();
+// Get database client (Railway PostgreSQL)
+const db = getDb();
 
 /**
  * Create review routes
@@ -74,7 +74,7 @@ export default function reviewRoutes(app) {
       }
 
       // Get booking details to verify eligibility
-      const { data: booking, error: bookingError } = await supabaseAdmin
+      const { data: booking, error: bookingError } = await db
         .from('bookings')
         .select(`
           *,
@@ -101,7 +101,7 @@ export default function reviewRoutes(app) {
       }
 
       // Check if review already exists for this booking
-      const { data: existingReview, error: reviewCheckError } = await supabaseAdmin
+      const { data: existingReview, error: reviewCheckError } = await db
         .from('reviews')
         .select('id')
         .eq('booking_id', booking_id)
@@ -133,7 +133,7 @@ export default function reviewRoutes(app) {
         is_public: true
       };
 
-      const { data: review, error: createError } = await supabaseAdmin
+      const { data: review, error: createError } = await db
         .from('reviews')
         .insert(reviewData)
         .select(`
@@ -154,7 +154,7 @@ export default function reviewRoutes(app) {
       setImmediate(async () => {
         try {
           // Get all reviews for this provider to calculate new average
-          const { data: allReviews, error: statsError } = await supabaseAdmin
+          const { data: allReviews, error: statsError } = await db
             .from('reviews')
             .select('rating')
             .eq('reviewee_id', booking.provider_id);
@@ -164,7 +164,7 @@ export default function reviewRoutes(app) {
             const averageRating = allReviews.reduce((sum, rev) => sum + rev.rating, 0) / totalReviews;
 
             // Update provider's rating statistics
-            await supabaseAdmin
+            await db
               .from('users')
               .update({
                 rating: Math.round(averageRating * 10) / 10, // Round to 1 decimal place
@@ -224,7 +224,7 @@ export default function reviewRoutes(app) {
       const bookingId = c.req.param('bookingId');
 
       // First verify user has access to this booking
-      const { data: booking, error: bookingError } = await supabaseAdmin
+      const { data: booking, error: bookingError } = await db
         .from('bookings')
         .select('customer_id, provider_id, status')
         .eq('id', bookingId)
@@ -241,7 +241,7 @@ export default function reviewRoutes(app) {
       }
 
       // Get review for this booking
-      const { data: review, error: reviewError } = await supabaseAdmin
+      const { data: review, error: reviewError } = await db
         .from('reviews')
         .select(`
           *,
@@ -306,7 +306,7 @@ export default function reviewRoutes(app) {
       const offsetNum = Math.max(parseInt(offset) || 0, 0);
 
       // Verify provider exists
-      const { data: provider, error: providerError } = await supabaseAdmin
+      const { data: provider, error: providerError } = await db
         .from('users')
         .select('id, display_name, rating, review_count')
         .eq('id', providerId)
@@ -318,7 +318,7 @@ export default function reviewRoutes(app) {
       }
 
       // Build query for reviews
-      let query = supabaseAdmin
+      let query = db
         .from('reviews')
         .select(`
           id,
@@ -364,13 +364,13 @@ export default function reviewRoutes(app) {
       }
 
       // Get total count for pagination metadata
-      const { count: totalReviews, error: countError } = await supabaseAdmin
+      const { count: totalReviews, error: countError } = await db
         .from('reviews')
         .select('*', { count: 'exact', head: true })
         .eq('reviewee_id', providerId)
         .then(result => {
           if (rating && ['1', '2', '3', '4', '5'].includes(rating)) {
-            return supabaseAdmin
+            return db
               .from('reviews')
               .select('*', { count: 'exact', head: true })
               .eq('reviewee_id', providerId)
@@ -385,7 +385,7 @@ export default function reviewRoutes(app) {
       }
 
       // Calculate rating distribution
-      const { data: ratingDistribution, error: distributionError } = await supabaseAdmin
+      const { data: ratingDistribution, error: distributionError } = await db
         .from('reviews')
         .select('rating')
         .eq('reviewee_id', providerId);

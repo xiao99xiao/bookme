@@ -9,9 +9,9 @@
  * - Smart month-view availability calculation
  */
 
-import { getSupabaseAdmin } from '../middleware/auth.js';
+import { getDb } from '../middleware/auth.js';
 
-const supabaseAdmin = getSupabaseAdmin();
+const db = getDb();
 
 class AvailabilityService {
   constructor() {
@@ -410,7 +410,7 @@ class AvailabilityService {
    * Get service with availability schedule
    */
   async getServiceWithSchedule(serviceId) {
-    const { data: service, error } = await supabaseAdmin
+    const { data: service, error } = await db
       .from('services')
       .select('id, provider_id, duration_minutes, availability_schedule, service_timezone')
       .eq('id', serviceId)
@@ -429,7 +429,7 @@ class AvailabilityService {
    * Get bookings for a date range (optimized for month queries)
    */
   async getBookingsForDateRange(providerId, startDate, endDate) {
-    const { data: bookings, error } = await supabaseAdmin
+    const { data: bookings, error } = await db
       .from('bookings')
       .select('id, scheduled_at, duration_minutes, status')
       .eq('provider_id', providerId)

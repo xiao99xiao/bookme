@@ -13,10 +13,10 @@
  */
 
 import { Hono } from 'hono';
-import { verifyPrivyAuth, getSupabaseAdmin } from '../middleware/auth.js';
+import { verifyPrivyAuth, getDb } from '../middleware/auth.js';
 
-// Get Supabase admin client
-const supabaseAdmin = getSupabaseAdmin();
+// Get database client (Railway PostgreSQL)
+const db = getDb();
 
 /**
  * Create upload routes
@@ -123,7 +123,7 @@ export default function uploadRoutes(app) {
         const fileBytes = new Uint8Array(fileBuffer);
 
         // Upload to Supabase Storage
-        const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
+        const { data: uploadData, error: uploadError } = await db.storage
           .from('uploads') // Your storage bucket name
           .upload(storagePath, fileBytes, {
             contentType: file.type,
@@ -136,7 +136,7 @@ export default function uploadRoutes(app) {
         }
 
         // Get public URL
-        const { data: { publicUrl } } = supabaseAdmin.storage
+        const { data: { publicUrl } } = db.storage
           .from('uploads')
           .getPublicUrl(storagePath);
 
@@ -160,7 +160,7 @@ export default function uploadRoutes(app) {
           created_at: new Date().toISOString()
         };
 
-        const { data: dbRecord, error: dbError } = await supabaseAdmin
+        const { data: dbRecord, error: dbError } = await db
           .from('file_uploads')
           .insert(uploadRecord)
           .select()
@@ -174,7 +174,7 @@ export default function uploadRoutes(app) {
         // Update user avatar if this is an avatar upload
         if (uploadType === 'avatar') {
           try {
-            await supabaseAdmin
+            await db
               .from('users')
               .update({ 
                 avatar: publicUrl,
@@ -249,7 +249,7 @@ export default function uploadRoutes(app) {
       const limitNum = Math.min(parseInt(limit) || 20, 100);
       const offsetNum = Math.max(parseInt(offset) || 0, 0);
 
-      let query = supabaseAdmin
+      let query = db
         .from('file_uploads')
         .select('*')
         .eq('user_id', userId)
@@ -310,7 +310,7 @@ export default function uploadRoutes(app) {
       const uploadId = c.req.param('uploadId');
 
       // Get upload record to verify ownership
-      const { data: upload, error: uploadError } = await supabaseAdmin
+      const { data: upload, error: uploadError } = await db
         .from('file_uploads')
         .select('*')
         .eq('id', uploadId)
@@ -325,7 +325,7 @@ export default function uploadRoutes(app) {
       // Delete from storage
       if (upload.storage_path) {
         try {
-          const { error: storageDeleteError } = await supabaseAdmin.storage
+          const { error: storageDeleteError } = await db.storage
             .from('uploads')
             .remove([upload.storage_path]);
 
@@ -339,7 +339,7 @@ export default function uploadRoutes(app) {
       }
 
       // Delete database record
-      const { error: dbDeleteError } = await supabaseAdmin
+      const { error: dbDeleteError } = await db
         .from('file_uploads')
         .delete()
         .eq('id', uploadId)

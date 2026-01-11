@@ -13,10 +13,10 @@
  */
 
 import { Hono } from 'hono';
-import { verifyPrivyAuth, getSupabaseAdmin } from '../middleware/auth.js';
+import { verifyPrivyAuth, getDb } from '../middleware/auth.js';
 
-// Get Supabase admin client
-const supabaseAdmin = getSupabaseAdmin();
+// Get database client (Railway PostgreSQL)
+const db = getDb();
 
 /**
  * Create system routes
@@ -81,7 +81,7 @@ export default function systemRoutes(app) {
    */
   app.get('/api/categories', async (c) => {
     try {
-      const { data: categories, error: categoriesError } = await supabaseAdmin
+      const { data: categories, error: categoriesError } = await db
         .from('categories')
         .select('*')
         .order('name', { ascending: true });
@@ -95,7 +95,7 @@ export default function systemRoutes(app) {
       const categoriesWithCounts = await Promise.all(
         (categories || []).map(async (category) => {
           try {
-            const { count } = await supabaseAdmin
+            const { count } = await db
               .from('services')
               .select('*', { count: 'exact', head: true })
               .eq('category_id', category.id)
@@ -150,7 +150,7 @@ export default function systemRoutes(app) {
       if (isMonitoringEnabled) {
         try {
           // Get recent blockchain events to show activity
-          const { data: recentEvents, error: eventsError } = await supabaseAdmin
+          const { data: recentEvents, error: eventsError } = await db
             .from('blockchain_events')
             .select('*')
             .order('created_at', { ascending: false })
@@ -162,14 +162,14 @@ export default function systemRoutes(app) {
           }
 
           // Get event statistics
-          const { count: totalEvents } = await supabaseAdmin
+          const { count: totalEvents } = await db
             .from('blockchain_events')
             .select('*', { count: 'exact', head: true });
 
           monitorStatus.total_events_processed = totalEvents || 0;
 
           // Check for any recent errors or issues
-          const { data: recentErrors } = await supabaseAdmin
+          const { data: recentErrors } = await db
             .from('blockchain_events')
             .select('*')
             .eq('event_type', 'error')
@@ -236,7 +236,7 @@ export default function systemRoutes(app) {
         console.log('Starting blockchain monitoring...');
         
         // Log the monitoring start event
-        await supabaseAdmin
+        await db
           .from('blockchain_events')
           .insert({
             event_type: 'monitoring_started',
@@ -306,7 +306,7 @@ export default function systemRoutes(app) {
         console.log('Stopping blockchain monitoring...');
         
         // Log the monitoring stop event
-        await supabaseAdmin
+        await db
           .from('blockchain_events')
           .insert({
             event_type: 'monitoring_stopped',
@@ -364,15 +364,15 @@ export default function systemRoutes(app) {
         { count: totalReviews },
         { count: activeIntegrations }
       ] = await Promise.all([
-        supabaseAdmin.from('users').select('*', { count: 'exact', head: true }),
-        supabaseAdmin.from('services').select('*', { count: 'exact', head: true }).eq('is_visible', true),
-        supabaseAdmin.from('bookings').select('*', { count: 'exact', head: true }),
-        supabaseAdmin.from('reviews').select('*', { count: 'exact', head: true }),
-        supabaseAdmin.from('user_meeting_integrations').select('*', { count: 'exact', head: true }).eq('is_active', true)
+        db.from('users').select('*', { count: 'exact', head: true }),
+        db.from('services').select('*', { count: 'exact', head: true }).eq('is_visible', true),
+        db.from('bookings').select('*', { count: 'exact', head: true }),
+        db.from('reviews').select('*', { count: 'exact', head: true }),
+        db.from('user_meeting_integrations').select('*', { count: 'exact', head: true }).eq('is_active', true)
       ]);
 
       // Get booking stats by status
-      const { data: bookingsByStatus } = await supabaseAdmin
+      const { data: bookingsByStatus } = await db
         .from('bookings')
         .select('status')
         .then(async (result) => {

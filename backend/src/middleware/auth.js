@@ -139,9 +139,12 @@ export function getPrivyClient() {
 
 /**
  * Get database client instance (for use in other modules)
- * Returns Supabase-compatible API backed by PostgreSQL
- * @returns {Object} The database client with Supabase-compatible API
+ * Returns query builder API backed by Railway PostgreSQL
+ * @returns {Object} The database client with query builder API
  */
-export function getSupabaseAdmin() {
+export function getDb() {
   return db;
 }
+
+// Legacy alias - deprecated, use getDb() instead
+export const getSupabaseAdmin = getDb;

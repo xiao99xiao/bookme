@@ -6,10 +6,10 @@
  */
 
 import { Hono } from 'hono';
-import { verifyPrivyAuth, getSupabaseAdmin } from '../middleware/auth.js';
+import { verifyPrivyAuth, getDb } from '../middleware/auth.js';
 
-// Get Supabase admin client
-const supabaseAdmin = getSupabaseAdmin();
+// Get database client (Railway PostgreSQL)
+const db = getDb();
 
 /**
  * Create transaction routes
@@ -48,7 +48,7 @@ export default function transactionRoutes(app) {
       console.log(`📊 Fetching income transactions for provider ${userId}`);
 
       // Fetch income transactions for this provider with related data
-      const { data: transactions, error } = await supabaseAdmin
+      const { data: transactions, error } = await db
         .from('transactions')
         .select(`
           *,
@@ -86,7 +86,7 @@ export default function transactionRoutes(app) {
       }
 
       // Calculate total income for this provider
-      const { data: totalData, error: totalError } = await supabaseAdmin
+      const { data: totalData, error: totalError } = await db
         .from('transactions')
         .select('amount')
         .eq('provider_id', userId);
@@ -138,7 +138,7 @@ export default function transactionRoutes(app) {
       console.log(`📊 Fetching income summary for provider ${userId}`);
 
       // Get all transactions for statistics
-      const { data: transactions, error } = await supabaseAdmin
+      const { data: transactions, error } = await db
         .from('transactions')
         .select('amount, type, created_at')
         .eq('provider_id', userId)

@@ -14,10 +14,10 @@
  */
 
 import { Hono } from 'hono';
-import { verifyPrivyAuth, getSupabaseAdmin } from '../middleware/auth.js';
+import { verifyPrivyAuth, getDb } from '../middleware/auth.js';
 
-// Get Supabase admin client
-const supabaseAdmin = getSupabaseAdmin();
+// Get database client (Railway PostgreSQL)
+const db = getDb();
 
 /**
  * Create referral routes
@@ -44,7 +44,7 @@ export default function referralRoutes(app) {
       const userId = c.get('userId');
 
       // Check for existing referral code
-      let { data: existingCode, error: fetchError } = await supabaseAdmin
+      let { data: existingCode, error: fetchError } = await db
         .from('referral_codes')
         .select('*')
         .eq('user_id', userId)
@@ -58,7 +58,7 @@ export default function referralRoutes(app) {
       if (!existingCode) {
         const code = generateReferralCode(userId);
 
-        const { data: newCode, error: insertError } = await supabaseAdmin
+        const { data: newCode, error: insertError } = await db
           .from('referral_codes')
           .insert({
             code,
@@ -75,7 +75,7 @@ export default function referralRoutes(app) {
       }
 
       // Get referral statistics
-      const { data: stats } = await supabaseAdmin
+      const { data: stats } = await db
         .from('referrals')
         .select('id')
         .eq('referrer_id', userId);
@@ -111,7 +111,7 @@ export default function referralRoutes(app) {
       const userId = c.get('userId');
 
       // Get user referral data
-      const { data: user, error: userError } = await supabaseAdmin
+      const { data: user, error: userError } = await db
         .from('users')
         .select('referral_count, referral_earnings')
         .eq('id', userId)
@@ -122,7 +122,7 @@ export default function referralRoutes(app) {
       }
 
       // Get recent earnings transactions
-      const { data: recentEarnings } = await supabaseAdmin
+      const { data: recentEarnings } = await db
         .from('transactions')
         .select('amount, created_at, booking_id')
         .eq('provider_id', userId)
@@ -131,7 +131,7 @@ export default function referralRoutes(app) {
         .limit(10);
 
       // Calculate pending earnings from active bookings
-      const { data: pendingBookings } = await supabaseAdmin
+      const { data: pendingBookings } = await db
         .from('bookings')
         .select(`
           total_price,
@@ -180,7 +180,7 @@ export default function referralRoutes(app) {
       }
 
       // Validate referral code exists
-      const { data: codeData, error: codeError } = await supabaseAdmin
+      const { data: codeData, error: codeError } = await db
         .from('referral_codes')
         .select('user_id, usage_count')
         .eq('code', referralCode)
@@ -196,7 +196,7 @@ export default function referralRoutes(app) {
       }
 
       // Check if user already has a referrer
-      const { data: existingUser } = await supabaseAdmin
+      const { data: existingUser } = await db
         .from('users')
         .select('referred_by')
         .eq('id', userId)
@@ -207,7 +207,7 @@ export default function referralRoutes(app) {
       }
 
       // Apply referral code using database function
-      const { error: applyError } = await supabaseAdmin.rpc('apply_referral_code', {
+      const { error: applyError } = await db.rpc('apply_referral_code', {
         referee_user_id: userId,
         referrer_user_id: codeData.user_id,
         referral_code: referralCode
@@ -241,7 +241,7 @@ export default function referralRoutes(app) {
     try {
       const code = c.req.param('code');
 
-      const { data: codeData, error } = await supabaseAdmin
+      const { data: codeData, error } = await db
         .from('referral_codes')
         .select(`
           code,
@@ -287,7 +287,7 @@ export default function referralRoutes(app) {
       const userId = c.get('userId');
       const { limit = '20', offset = '0' } = c.req.query();
 
-      const { data: earnings, error } = await supabaseAdmin
+      const { data: earnings, error } = await db
         .from('transactions')
         .select(`
           *,

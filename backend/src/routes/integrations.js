@@ -13,10 +13,10 @@
  */
 
 import { Hono } from 'hono';
-import { verifyPrivyAuth, getSupabaseAdmin } from '../middleware/auth.js';
+import { verifyPrivyAuth, getDb } from '../middleware/auth.js';
 
-// Get Supabase admin client
-const supabaseAdmin = getSupabaseAdmin();
+// Get database client (Railway PostgreSQL)
+const db = getDb();
 
 /**
  * Create integration routes
@@ -49,7 +49,7 @@ export default function integrationRoutes(app) {
       const bookingId = c.req.param('bookingId');
 
       // Get booking details
-      const { data: booking, error: bookingError } = await supabaseAdmin
+      const { data: booking, error: bookingError } = await db
         .from('bookings')
         .select('provider_id, meeting_id, meeting_platform, meeting_link')
         .eq('id', bookingId)
@@ -72,7 +72,7 @@ export default function integrationRoutes(app) {
       // Cancel meeting in external service if possible
       if (booking.meeting_platform && booking.meeting_id) {
         try {
-          const { data: integration } = await supabaseAdmin
+          const { data: integration } = await db
             .from('user_meeting_integrations')
             .select('*')
             .eq('user_id', userId)
@@ -93,7 +93,7 @@ export default function integrationRoutes(app) {
       }
 
       // Remove meeting information from booking
-      const { error: updateError } = await supabaseAdmin
+      const { error: updateError } = await db
         .from('bookings')
         .update({
           meeting_link: null,
@@ -141,7 +141,7 @@ export default function integrationRoutes(app) {
       const userId = c.get('userId');
       const { active_only, platform } = c.req.query();
 
-      let query = supabaseAdmin
+      let query = db
         .from('user_meeting_integrations')
         .select('*')
         .eq('user_id', userId)
@@ -213,7 +213,7 @@ export default function integrationRoutes(app) {
       }
 
       // Check if integration already exists
-      const { data: existingIntegration, error: existingError } = await supabaseAdmin
+      const { data: existingIntegration, error: existingError } = await db
         .from('user_meeting_integrations')
         .select('*')
         .eq('user_id', userId)
@@ -236,7 +236,7 @@ export default function integrationRoutes(app) {
       let integration;
       if (existingIntegration) {
         // Update existing integration
-        const { data, error } = await supabaseAdmin
+        const { data, error } = await db
           .from('user_meeting_integrations')
           .update(integrationData)
           .eq('id', existingIntegration.id)
@@ -251,7 +251,7 @@ export default function integrationRoutes(app) {
       } else {
         // Create new integration
         integrationData.created_at = new Date().toISOString();
-        const { data, error } = await supabaseAdmin
+        const { data, error } = await db
           .from('user_meeting_integrations')
           .insert(integrationData)
           .select()
@@ -297,7 +297,7 @@ export default function integrationRoutes(app) {
       const integrationId = c.req.param('id');
 
       // Get integration to verify ownership and gather token info for revocation
-      const { data: integration, error: integrationError } = await supabaseAdmin
+      const { data: integration, error: integrationError } = await db
         .from('user_meeting_integrations')
         .select('*')
         .eq('id', integrationId)
@@ -324,7 +324,7 @@ export default function integrationRoutes(app) {
       }
 
       // Delete integration from database
-      const { error: deleteError } = await supabaseAdmin
+      const { error: deleteError } = await db
         .from('user_meeting_integrations')
         .delete()
         .eq('id', integrationId)
@@ -422,7 +422,7 @@ export default function integrationRoutes(app) {
       };
 
       // Check for existing integration
-      const { data: existingIntegration } = await supabaseAdmin
+      const { data: existingIntegration } = await db
         .from('user_meeting_integrations')
         .select('id')
         .eq('user_id', userId)
@@ -433,7 +433,7 @@ export default function integrationRoutes(app) {
       if (existingIntegration) {
         // Update existing integration
         integrationData.updated_at = new Date().toISOString();
-        const { data, error } = await supabaseAdmin
+        const { data, error } = await db
           .from('user_meeting_integrations')
           .update(integrationData)
           .eq('id', existingIntegration.id)
@@ -450,7 +450,7 @@ export default function integrationRoutes(app) {
         integrationData.created_at = new Date().toISOString();
         integrationData.updated_at = new Date().toISOString();
         
-        const { data, error } = await supabaseAdmin
+        const { data, error } = await db
           .from('user_meeting_integrations')
           .insert(integrationData)
           .select()
@@ -504,7 +504,7 @@ export default function integrationRoutes(app) {
       const { generateMeetingLinkForBooking } = await import('../meeting-generation.js');
       
       // Verify user is the provider
-      const { data: booking, error } = await supabaseAdmin
+      const { data: booking, error } = await db
         .from('bookings')
         .select('provider_id')
         .eq('id', bookingId)
@@ -529,7 +529,7 @@ export default function integrationRoutes(app) {
       }
       
       // Get updated booking
-      const { data: updatedBooking } = await supabaseAdmin
+      const { data: updatedBooking } = await db
         .from('bookings')
         .select(`
           *,
