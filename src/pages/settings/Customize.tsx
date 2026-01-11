@@ -212,12 +212,12 @@ export default function Customize() {
                     <p className="leading-[1.5]">Customize</p>
                   </div>
                 </div>
-                <Link to="/settings/profile-theme" className="box-border content-stretch flex gap-2 items-center justify-start px-2 py-3 relative rounded-[12px] shrink-0 w-full hover:bg-[#f3f3f3] transition-colors">
+                <Link to="/host/page" className="box-border content-stretch flex gap-2 items-center justify-start px-2 py-3 relative rounded-[12px] shrink-0 w-full hover:bg-[#f3f3f3] transition-colors">
                   <div className="overflow-clip relative shrink-0 size-5">
                     <LinkIcon className="w-5 h-5 text-[#666666]" />
                   </div>
                   <div className="basis-0 font-body font-normal grow leading-[0] min-h-px min-w-px relative shrink-0 text-[#666666] text-[16px] hover:text-black transition-colors">
-                    <p className="leading-[1.5]">Theme & Buttons</p>
+                    <p className="leading-[1.5]">Edit My Page</p>
                   </div>
                 </Link>
               </div>
@@ -413,10 +413,10 @@ export default function Customize() {
                 Customize
               </div>
               <Link
-                to="/settings/profile-theme"
+                to="/host/page"
                 className="flex-1 min-w-fit px-3 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap font-body text-gray-600 hover:text-black"
               >
-                Theme
+                Edit Page
               </Link>
             </div>
           </div>

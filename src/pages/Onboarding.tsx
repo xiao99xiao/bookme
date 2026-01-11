@@ -126,8 +126,8 @@ const Onboarding = () => {
           navigate('/discover'); // Fallback to discover page
         }
       } else if (formData.wantsToProvideService) {
-        // User wants to be a host, go to create Talks
-        navigate('/host/talks');
+        // User wants to be a host, go to host onboarding flow
+        navigate('/host/onboarding');
       } else {
         // User just wants to browse, go to discover page
         navigate('/discover');

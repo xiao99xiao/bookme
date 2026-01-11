@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Camera, Users, Settings, MapPin, Link as LinkIcon, User, Globe } from 'lucide-react';
+import { Loader2, Camera, Users, Settings, MapPin, Link as LinkIcon, User, Globe, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient } from '@/lib/api-migration';
 import { getBrowserTimezone, getTimezoneOffset } from '@/lib/timezone';
@@ -44,7 +44,8 @@ const TIMEZONE_BASE_DATA = [
 
 export default function Profile() {
   const { user, profile, userId, getUserDisplayName } = useAuth();
-  
+  const navigate = useNavigate();
+
   // Form state - using simple controlled components (timezone excluded as it's auto-updated)
   const [formData, setFormData] = useState({
     display_name: '',
@@ -234,12 +235,12 @@ export default function Profile() {
                     <p className="leading-[1.5]">Customize</p>
                   </div>
                 </Link>
-                <Link to="/settings/profile-theme" className="box-border content-stretch flex gap-2 items-center justify-start px-2 py-3 relative rounded-[12px] shrink-0 w-full hover:bg-[#f3f3f3] transition-colors">
+                <Link to="/host/page" className="box-border content-stretch flex gap-2 items-center justify-start px-2 py-3 relative rounded-[12px] shrink-0 w-full hover:bg-[#f3f3f3] transition-colors">
                   <div className="overflow-clip relative shrink-0 size-5">
                     <LinkIcon className="w-5 h-5 text-[#666666]" />
                   </div>
                   <div className="basis-0 font-body font-normal grow leading-[0] min-h-px min-w-px relative shrink-0 text-[#666666] text-[16px] hover:text-black transition-colors">
-                    <p className="leading-[1.5]">Theme & Buttons</p>
+                    <p className="leading-[1.5]">Edit My Page</p>
                   </div>
                 </Link>
               </div>
@@ -436,12 +437,20 @@ export default function Profile() {
 
         {/* Mobile Layout */}
         <div className="lg:hidden pb-20">
-          {/* Top Header with Title and Tabs */}
+          {/* Top Header with Back Button and Title */}
           <div className="mb-6">
-            {/* Title Section */}
-            <div className="mb-4">
-              <H2 className="mb-1">Settings</H2>
-              <p className="text-sm text-gray-500 font-body">Update your profile</p>
+            {/* Back Button and Title */}
+            <div className="flex items-center gap-3 mb-4">
+              <button
+                onClick={() => navigate('/me')}
+                className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-200 transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <div>
+                <H2 className="mb-0">Edit Profile</H2>
+                <p className="text-sm text-gray-500 font-body">Update your profile information</p>
+              </div>
             </div>
 
             {/* Horizontal Tab Navigation */}
@@ -456,10 +465,10 @@ export default function Profile() {
                 Customize
               </Link>
               <Link
-                to="/settings/profile-theme"
+                to="/host/page"
                 className="flex-1 min-w-fit px-3 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap font-body text-gray-600 hover:text-black"
               >
-                Theme
+                Edit Page
               </Link>
             </div>
           </div>

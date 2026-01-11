@@ -8,8 +8,8 @@
  */
 
 import { useState, useEffect, useMemo } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, MapPin, Star, Video, Users, Phone, ChevronDown, ExternalLink, Twitter, Instagram, Youtube, Github, Linkedin, Globe, Mail, MessageCircle } from "lucide-react";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
+import { ArrowLeft, MapPin, Star, Video, Users, Phone, ChevronDown, ExternalLink, Twitter, Instagram, Youtube, Github, Linkedin, Globe, Mail, MessageCircle, Pencil } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { useAuth } from "@/contexts/PrivyAuthContext";
 import { usePrivy } from "@privy-io/react-auth";
@@ -160,8 +160,9 @@ const getButtonIcon = (iconName?: string) => {
 const PublicProfile = () => {
   const { username } = useParams<{ username: string }>();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { loading: authLoading, userId: currentUserId } = useAuth();
-  const { getAccessToken } = usePrivy();
+  const { getAccessToken, authenticated } = usePrivy();
 
   // Profile state
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -459,6 +460,24 @@ const PublicProfile = () => {
       {/* Inject custom CSS if any */}
       {sanitizedCustomCSS && (
         <style dangerouslySetInnerHTML={{ __html: sanitizedCustomCSS }} />
+      )}
+
+      {/* Edit Banner - shown when viewing own profile */}
+      {isOwnProfile && (
+        <div className={`${THEME_CLASS_PREFIX}-edit-banner`}>
+          <div className={`${THEME_CLASS_PREFIX}-edit-banner-content`}>
+            <span className={`${THEME_CLASS_PREFIX}-edit-banner-text`}>
+              You're viewing your public page
+            </span>
+            <button
+              onClick={() => navigate("/host/page")}
+              className={`${THEME_CLASS_PREFIX}-edit-banner-button`}
+            >
+              <Pencil style={{ width: 14, height: 14 }} />
+              Edit Page
+            </button>
+          </div>
+        </div>
       )}
 
       <div className={`${THEME_CLASS_PREFIX}-layout`}>

@@ -12,39 +12,41 @@ import BookServices from "./pages/BookServices";
 import Auth from "./pages/Auth";
 import AuthCallback from "./pages/AuthCallback";
 import Onboarding from "./pages/Onboarding";
+import HostOnboarding from "./pages/HostOnboarding";
+import PageEditor from "./pages/PageEditor";
 import NotFound from "./pages/NotFound";
 import Navigation from "./components/Navigation";
 import { OnboardingNavigator } from "./components/OnboardingNavigator";
 
-// Visitor pages (formerly Customer)
-import CustomerBookings from "./pages/customer/CustomerBookings";
+// Visitor pages
+import VisitorBookings from "./pages/visitor/CustomerBookings";
 import SettingsProfile from "./pages/settings/Profile";
-import CustomerMessages from "./pages/customer/CustomerMessages";
+import VisitorMessages from "./pages/visitor/CustomerMessages";
 
 // Public Profile page (Nook - with theme support)
 import { PublicProfile } from "./pages/public-profile";
-import CustomerMobileChat from "./pages/customer/CustomerMobileChat";
+import VisitorMobileChat from "./pages/visitor/CustomerMobileChat";
 
 // Settings pages
 import Customize from "./pages/settings/Customize";
 import ProfileTheme from "./pages/settings/ProfileTheme";
 
-// Host pages (formerly Provider)
-import ProviderOrders from "./pages/provider/ProviderOrders";
-import ProviderServices from "./pages/provider/ProviderServices";
-import ProviderMessages from "./pages/provider/ProviderMessages";
-import ProviderMobileChat from "./pages/provider/ProviderMobileChat";
-import ProviderIntegrations from "./pages/provider/ProviderIntegrations";
-import IntegrationsCallback from "./pages/provider/IntegrationsCallback";
-import Income from "./pages/provider/Income";
-import ProviderReferrals from "./pages/provider/ProviderReferrals";
+// Host pages
+import HostBookings from "./pages/host/ProviderOrders";
+import HostServices from "./pages/host/ProviderServices";
+import HostMessages from "./pages/host/ProviderMessages";
+import HostMobileChat from "./pages/host/ProviderMobileChat";
+import HostIntegrations from "./pages/host/ProviderIntegrations";
+import IntegrationsCallback from "./pages/host/IntegrationsCallback";
+import HostEarnings from "./pages/host/Income";
+import HostReferrals from "./pages/host/ProviderReferrals";
 
 // Balance page
 import Balance from "./pages/Balance";
 
 // Mobile pages
 import MobileMePage from "./pages/mobile/MobileMePage";
-import MobileProfileSettings from "./pages/mobile/MobileProfileSettings";
+// Note: MobileProfileSettings removed - /settings/profile is now responsive
 import MobileIntegrationsSettings from "./pages/mobile/MobileIntegrationsSettings";
 
 // Demo page
@@ -113,6 +115,22 @@ function AppContent() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/host/onboarding"
+              element={
+                <ProtectedRoute>
+                  <HostOnboarding />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/host/page"
+              element={
+                <ProtectedRoute>
+                  <PageEditor mode="editor" />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Balance Route */}
             <Route
@@ -124,12 +142,12 @@ function AppContent() {
               }
             />
 
-            {/* Visitor Routes (new paths) */}
+            {/* Visitor Routes */}
             <Route
               path="/bookings"
               element={
                 <ProtectedRoute>
-                  <CustomerBookings />
+                  <VisitorBookings />
                 </ProtectedRoute>
               }
             />
@@ -137,7 +155,7 @@ function AppContent() {
               path="/messages"
               element={
                 <ProtectedRoute>
-                  <CustomerMessages />
+                  <VisitorMessages />
                 </ProtectedRoute>
               }
             />
@@ -145,7 +163,7 @@ function AppContent() {
               path="/messages/:conversationId"
               element={
                 <ProtectedRoute>
-                  <CustomerMobileChat />
+                  <VisitorMobileChat />
                 </ProtectedRoute>
               }
             />
@@ -155,12 +173,12 @@ function AppContent() {
             <Route path="/customer/messages" element={<Navigate to="/messages" replace />} />
             <Route path="/customer/messages/:conversationId" element={<Navigate to="/messages/:conversationId" replace />} />
 
-            {/* Host Routes (new paths - formerly Provider) */}
+            {/* Host Routes */}
             <Route
               path="/host/bookings"
               element={
                 <ProtectedRoute>
-                  <ProviderOrders />
+                  <HostBookings />
                 </ProtectedRoute>
               }
             />
@@ -168,7 +186,7 @@ function AppContent() {
               path="/host/talks"
               element={
                 <ProtectedRoute>
-                  <ProviderServices />
+                  <HostServices />
                 </ProtectedRoute>
               }
             />
@@ -176,7 +194,7 @@ function AppContent() {
               path="/host/messages"
               element={
                 <ProtectedRoute>
-                  <ProviderMessages />
+                  <HostMessages />
                 </ProtectedRoute>
               }
             />
@@ -184,7 +202,7 @@ function AppContent() {
               path="/host/messages/:conversationId"
               element={
                 <ProtectedRoute>
-                  <ProviderMobileChat />
+                  <HostMobileChat />
                 </ProtectedRoute>
               }
             />
@@ -192,7 +210,7 @@ function AppContent() {
               path="/host/integrations"
               element={
                 <ProtectedRoute>
-                  <ProviderIntegrations />
+                  <HostIntegrations />
                 </ProtectedRoute>
               }
             />
@@ -208,7 +226,7 @@ function AppContent() {
               path="/host/earnings"
               element={
                 <ProtectedRoute>
-                  <Income />
+                  <HostEarnings />
                 </ProtectedRoute>
               }
             />
@@ -216,7 +234,7 @@ function AppContent() {
               path="/host/referrals"
               element={
                 <ProtectedRoute>
-                  <ProviderReferrals />
+                  <HostReferrals />
                 </ProtectedRoute>
               }
             />
@@ -242,14 +260,7 @@ function AppContent() {
             />
 
             {/* Mobile Settings Pages */}
-            <Route
-              path="/mobile/profile"
-              element={
-                <ProtectedRoute>
-                  <MobileProfileSettings />
-                </ProtectedRoute>
-              }
-            />
+            {/* Note: /mobile/profile removed - use /settings/profile which is responsive */}
             <Route
               path="/mobile/integrations"
               element={

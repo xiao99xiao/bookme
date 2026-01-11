@@ -59,6 +59,67 @@
 }
 
 /* =====================================================
+   Edit Banner (shown when viewing own profile)
+   ===================================================== */
+
+.pp-edit-banner {
+  position: fixed;
+  top: 64px; /* Below nav */
+  left: 0;
+  right: 0;
+  z-index: 40;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.95) 0%, rgba(139, 92, 246, 0.95) 100%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pp-edit-banner-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.pp-edit-banner-text {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.pp-edit-banner-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pp-edit-banner-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.pp-edit-banner-button:active {
+  transform: translateY(0);
+}
+
+/* Adjust main content when banner is shown */
+.pp-container:has(.pp-edit-banner) .pp-main {
+  padding-top: 128px; /* Nav (64px) + Banner (~48px) + buffer */
+}
+
+/* =====================================================
    Profile Header
    ===================================================== */
 
