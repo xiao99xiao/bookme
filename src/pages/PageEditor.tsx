@@ -390,10 +390,12 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
 
   useEffect(() => {
     if (profile && !profileSynced) {
+      // Don't sync display_name if it looks like a Privy DID
+      const profileDisplayName = profile.display_name?.startsWith("did:") ? "" : (profile.display_name || "");
       setState((prev) => ({
         ...prev,
         // Only sync if current value is empty (first load)
-        displayName: prev.displayName || profile.display_name || "",
+        displayName: prev.displayName || profileDisplayName,
         avatar: prev.avatar || profile.avatar || "",
         bio: prev.bio || profile.bio || "",
       }));
@@ -1246,35 +1248,40 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
     const themeVars = themeToCSSVars(currentTheme);
     const themeVersion = getThemeVersionAttribute(currentTheme);
 
+    // Check if displayName looks like a Privy DID (e.g., "did:privy:...")
+    const isPrivyDid = state.displayName.startsWith("did:");
+    const previewDisplayName = isPrivyDid ? "" : state.displayName;
+
     return (
       <div
         className="pp-container h-full overflow-auto"
         style={themeVars}
         data-theme-version={themeVersion}
       >
-        <div className="pp-main-content p-6">
-          <div className="pp-profile-header">
-            <div className="pp-avatar-wrapper">
+        <div className="pp-content">
+          <div className="pp-header">
+            <div className="pp-avatar">
               {state.avatar ? (
                 <img
                   src={state.avatar}
-                  alt={state.displayName}
-                  className="pp-avatar"
+                  alt={previewDisplayName || "Your Name"}
                 />
               ) : (
-                <div className="pp-avatar pp-avatar-fallback">
-                  {state.displayName.charAt(0) || "?"}
+                <div className="pp-avatar-fallback">
+                  {previewDisplayName.charAt(0) || "?"}
                 </div>
               )}
             </div>
-            <h1 className="pp-display-name">
-              {state.displayName || "Your Name"}
-            </h1>
+            <div className="pp-header-info">
+              <h1 className="pp-name">
+                {previewDisplayName || "Your Name"}
+              </h1>
+            </div>
           </div>
 
           {state.bio && (
-            <div className="pp-bio-section">
-              <p className="pp-bio-text">{state.bio}</p>
+            <div className="pp-bio">
+              <p>{state.bio}</p>
             </div>
           )}
 
@@ -1304,9 +1311,7 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
           {/* Show services in editor mode, new talk in onboarding */}
           {(state.services.length > 0 || state.newTalk.title) && (
             <>
-              <div className="pp-divider">
-                <span className="pp-divider-text">Talks</span>
-              </div>
+              <h2 className="pp-section-title">Talks</h2>
 
               <div className="pp-services">
                 {isOnboarding && state.newTalk.title && (
@@ -1326,7 +1331,7 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
                         <Clock className="w-4 h-4" />
                         {state.newTalk.duration} min
                       </span>
-                      <span className="pp-service-location">
+                      <span className="pp-service-location-badge">
                         <Video className="w-4 h-4" />
                         Online
                       </span>
@@ -1348,7 +1353,7 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
                           <Clock className="w-4 h-4" />
                           {service.duration_minutes} min
                         </span>
-                        <span className="pp-service-location">
+                        <span className="pp-service-location-badge">
                           <Video className="w-4 h-4" />
                           Online
                         </span>
