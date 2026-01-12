@@ -157,7 +157,7 @@ interface EditorState {
   timeSlots: { [key: string]: boolean };
 }
 
-type SectionId = "profile" | "username" | "style" | "links" | "talks";
+type SectionId = "profile" | "handle" | "style" | "links" | "talks";
 
 interface Section {
   id: SectionId;
@@ -176,6 +176,12 @@ const SECTIONS: Section[] = [
     title: "Profile",
     icon: User,
     description: "Name, photo & bio",
+  },
+  {
+    id: "handle",
+    title: "Page Link",
+    icon: AtSign,
+    description: "Your page URL",
   },
   {
     id: "style",
@@ -197,8 +203,8 @@ const SECTIONS: Section[] = [
   },
 ];
 
-// Onboarding steps (includes template selection)
-type OnboardingStepId = "template" | SectionId | "availability";
+// Onboarding steps (includes template selection and username)
+type OnboardingStepId = "template" | "profile" | "username" | "style" | "links" | "talks" | "availability";
 
 // Username validation states
 type UsernameStatus = "idle" | "checking" | "available" | "taken" | "invalid";
@@ -315,7 +321,7 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
   // Track changes for editor mode
   const [hasChanges, setHasChanges] = useState<Record<SectionId, boolean>>({
     profile: false,
-    username: false,
+    handle: false,
     style: false,
     links: false,
     talks: false,
@@ -450,6 +456,7 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
         state.displayName !== originalState.displayName ||
         state.avatar !== originalState.avatar ||
         state.bio !== originalState.bio,
+      handle: state.username !== originalState.username,
       style: state.themeId !== originalState.themeId,
       links:
         JSON.stringify(state.buttons) !== JSON.stringify(originalState.buttons),
@@ -501,6 +508,13 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
           await refreshProfile();
           break;
 
+        case "handle":
+          if (state.username && state.username !== originalState?.username) {
+            await ApiClient.updateUsername(state.username);
+            await refreshProfile();
+          }
+          break;
+
         case "style":
           await ApiClient.updateUserTheme({ theme: state.themeId });
           break;
@@ -533,6 +547,7 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
             avatar: state.avatar,
             bio: state.bio,
           }),
+          ...(sectionId === "handle" && { username: state.username }),
           ...(sectionId === "style" && { themeId: state.themeId }),
           ...(sectionId === "links" && { buttons: [...state.buttons] }),
         };
@@ -851,6 +866,107 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
       </div>
     </div>
   );
+
+  // Handle/Page Link section for editor mode
+  const renderHandleSection = (showHeader: boolean = true) => {
+    const baseUrl = window.location.origin;
+
+    return (
+      <div className="space-y-6">
+        {showHeader && (
+          <div>
+            <H2 className="mb-2">Page Link</H2>
+            <p className="text-muted-foreground">
+              Customize your page URL to make it easy to share.
+            </p>
+          </div>
+        )}
+
+        <div className="space-y-4">
+          {/* URL Preview */}
+          <div className="p-4 rounded-xl bg-muted/50 border">
+            <Label className="text-sm text-muted-foreground mb-2 block">
+              Your page is available at:
+            </Label>
+            <div className="flex items-center gap-1 text-lg font-medium">
+              <span className="text-muted-foreground">{baseUrl}/</span>
+              <span className="text-foreground">
+                {state.username || "your-handle"}
+              </span>
+            </div>
+          </div>
+
+          {/* Handle Input */}
+          <div>
+            <Label htmlFor="handle" className="text-base font-medium">
+              Handle
+            </Label>
+            <div className="relative mt-2">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                <AtSign className="h-4 w-4" />
+              </div>
+              <Input
+                id="handle"
+                value={state.username}
+                onChange={(e) => {
+                  const value = e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "");
+                  setState((prev) => ({ ...prev, username: value }));
+                }}
+                placeholder="your-handle"
+                className={`pl-9 pr-10 ${
+                  usernameStatus === "available"
+                    ? "border-green-500 focus-visible:ring-green-500"
+                    : usernameStatus === "taken" || usernameStatus === "invalid"
+                    ? "border-red-500 focus-visible:ring-red-500"
+                    : ""
+                }`}
+                maxLength={30}
+              />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                {usernameStatus === "checking" && (
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                )}
+                {usernameStatus === "available" && (
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                )}
+                {(usernameStatus === "taken" || usernameStatus === "invalid") && (
+                  <AlertCircle className="h-4 w-4 text-red-500" />
+                )}
+              </div>
+            </div>
+
+            {/* Status Message */}
+            {usernameError && (
+              <p className="text-sm text-red-500 mt-1.5">{usernameError}</p>
+            )}
+            {usernameStatus === "available" && (
+              <p className="text-sm text-green-600 mt-1.5">
+                This handle is available!
+              </p>
+            )}
+
+            {/* Handle Rules */}
+            <p className="text-sm text-muted-foreground mt-2">
+              3-30 characters. Letters, numbers, underscores, and dashes only.
+            </p>
+          </div>
+
+          {/* Suggest Button */}
+          {!state.username && state.displayName && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleSuggestUsername}
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              Suggest from my name
+            </Button>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   const renderStyleSection = (showHeader: boolean = true) => {
     const themes = getAllThemes();
@@ -1824,6 +1940,8 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
                 switch (section.id) {
                   case "profile":
                     return state.displayName || "Not set";
+                  case "handle":
+                    return state.username ? `@${state.username}` : "Not set";
                   case "style":
                     const theme = getTheme(state.themeId);
                     return theme?.name || "Classic";
@@ -1880,6 +1998,7 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
                         <div className="pt-4">
                           {section.id === "profile" &&
                             renderProfileSection(false)}
+                          {section.id === "handle" && renderHandleSection(false)}
                           {section.id === "style" && renderStyleSection(false)}
                           {section.id === "links" && renderLinksSection(false)}
                           {section.id === "talks" && renderTalksSection(false)}
