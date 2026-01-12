@@ -21,6 +21,7 @@ interface UserProfile {
   total_spent: number;
   is_provider: boolean;
   provider_verified_at: string | null;
+  onboarding_completed: boolean;
   created_at: string;
   updated_at: string;
 }
