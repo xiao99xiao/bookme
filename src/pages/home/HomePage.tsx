@@ -47,16 +47,17 @@ const HomePage = () => {
   const handleProviderClick = () => {
     if (authenticated) {
       // If still loading profile, wait - don't navigate yet
-      if (loading || !profile) {
+      if (loading) {
         toast.info('Please wait while we load your profile...');
         return;
       }
-      if (needsOnboarding) {
-        // Needs to complete onboarding first
+      // If profile loaded and needs onboarding, go to onboarding
+      if (profile && needsOnboarding) {
         sessionStorage.setItem('signup_intent', 'provider');
         navigate('/onboarding');
       } else {
-        // Already logged in and onboarded - go to host dashboard
+        // Already logged in and onboarded (or profile failed to load) - go to host dashboard
+        // ProtectedRoute will handle any additional checks
         navigate('/host/bookings');
       }
     } else {
@@ -69,16 +70,17 @@ const HomePage = () => {
   const handleCustomerClick = () => {
     if (authenticated) {
       // If still loading profile, wait - don't navigate yet
-      if (loading || !profile) {
+      if (loading) {
         toast.info('Please wait while we load your profile...');
         return;
       }
-      if (needsOnboarding) {
-        // Needs to complete onboarding first
+      // If profile loaded and needs onboarding, go to onboarding
+      if (profile && needsOnboarding) {
         sessionStorage.setItem('signup_intent', 'customer');
         navigate('/onboarding');
       } else {
-        // Already logged in and onboarded - go to discover page
+        // Already logged in and onboarded (or profile failed to load) - go to discover page
+        // ProtectedRoute will handle any additional checks
         navigate('/discover');
       }
     } else {

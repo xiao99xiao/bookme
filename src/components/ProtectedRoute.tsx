@@ -43,6 +43,23 @@ const ProtectedRoute = ({ children, requireAuth = true, requireOnboarding = true
     );
   }
 
+  // If authenticated but profile failed to load (null after loading complete), show error
+  if (requireAuth && authenticated && !loading && !profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">Failed to load your profile. Please try again.</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Refresh Page
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // If onboarding is required and user needs it, redirect to onboarding
   // (unless they're already on an exempt page)
   if (requireAuth && requireOnboarding && authenticated && profile && needsOnboarding) {

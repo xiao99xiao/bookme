@@ -141,10 +141,42 @@ export const PrivyAuthProvider = ({ children }: PrivyAuthProviderProps) => {
     }
   }, [authenticated, profile, loading, needsOnboarding, privyUser]);
 
-  const fetchOrCreateProfile = async (privyId: string) => {
+  const fetchOrCreateProfile = async (privyId: string, retryCount: number = 0): Promise<boolean> => {
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY = 500; // ms
+
     try {
       console.log('=== FETCH/CREATE PROFILE START ===');
       console.log('Privy ID:', privyId);
+      console.log('Auth state - ready:', ready, 'authenticated:', authenticated);
+      console.log('Retry attempt:', retryCount + 1, 'of', MAX_RETRIES + 1);
+
+      // Use Privy's getAccessToken directly (it handles auth state internally)
+      // This bypasses our wrapper which might have stale closure values
+      let token: string | null = null;
+      try {
+        token = await getAccessToken();
+      } catch (tokenError) {
+        console.warn('getAccessToken threw error:', tokenError);
+      }
+
+      console.log('Token available:', token ? 'YES (length: ' + token.length + ')' : 'NO');
+
+      if (!token) {
+        console.warn('Cannot fetch profile: No auth token available');
+
+        // Retry if we haven't exceeded max retries
+        if (retryCount < MAX_RETRIES) {
+          console.log(`Retrying in ${RETRY_DELAY}ms... (attempt ${retryCount + 2})`);
+          await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+          return fetchOrCreateProfile(privyId, retryCount + 1);
+        }
+
+        console.error('Max retries exceeded. Token still not available.');
+        console.error('This usually means Privy auth is not fully initialized.');
+        setProfile(null);
+        return false;
+      }
 
       // Don't store token - let Privy handle it internally
       // Just fetch or create profile through backend
@@ -157,12 +189,32 @@ export const PrivyAuthProvider = ({ children }: PrivyAuthProviderProps) => {
 
         // Check for pending referral code after profile is loaded
         await checkAndApplyPendingReferralCode();
-        return;
+        return true;
       }
-    } catch (error) {
-      console.error('fetchOrCreateProfile failed:', error);
-      // Profile will be created by backend on first request
+
+      // Profile data is null/undefined - shouldn't happen
+      console.warn('Profile fetch returned no data');
       setProfile(null);
+      return false;
+    } catch (error: any) {
+      console.error('=== FETCH/CREATE PROFILE FAILED ===');
+      console.error('Error type:', error?.constructor?.name);
+      console.error('Error message:', error?.message);
+      console.error('Full error:', error);
+
+      // If it's an auth error, retry
+      if (error?.message?.includes('Not authenticated') || error?.message?.includes('401')) {
+        if (retryCount < MAX_RETRIES) {
+          console.log(`Auth error - retrying in ${RETRY_DELAY}ms... (attempt ${retryCount + 2})`);
+          await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+          return fetchOrCreateProfile(privyId, retryCount + 1);
+        }
+        console.error('Max retries exceeded after auth errors.');
+      }
+
+      // For other errors or after max retries, set profile to null
+      setProfile(null);
+      return false;
     }
   };
 
