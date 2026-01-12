@@ -58,7 +58,13 @@ const Onboarding = () => {
     try {
       setAvatarUploading(true);
       const uploadResult = await ApiClient.uploadFile(file, 'avatar', userId);
-      setFormData(prev => ({ ...prev, avatar: uploadResult.url }));
+      console.log('Upload result:', uploadResult);
+      console.log('Setting avatar URL to:', uploadResult.url);
+      setFormData(prev => {
+        console.log('Previous formData.avatar:', prev.avatar);
+        console.log('New formData.avatar:', uploadResult.url);
+        return { ...prev, avatar: uploadResult.url };
+      });
       toast.success('Avatar uploaded successfully');
     } catch (error) {
       console.error('Avatar upload error:', error);
