@@ -264,10 +264,10 @@ export class BackendAPI {
   }
 
   // File Upload
-  async uploadFile(file: File, bucket: string = 'avatars'): Promise<{ url: string; path: string }> {
+  async uploadFile(file: File, uploadType: string = 'avatar'): Promise<{ url: string; path: string }> {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('bucket', bucket);
+    formData.append('upload_type', uploadType);
 
     const token = await this.getAccessToken();
     if (!token) {
@@ -286,7 +286,13 @@ export class BackendAPI {
       throw new Error(`Upload failed: ${response.statusText}`);
     }
 
-    return response.json();
+    const result = await response.json();
+    // Backend returns { success: true, upload: { public_url, storage_path, ... } }
+    // Transform to expected format { url, path }
+    return {
+      url: result.upload?.public_url || '',
+      path: result.upload?.storage_path || ''
+    };
   }
 
   // Enhanced Cancellation

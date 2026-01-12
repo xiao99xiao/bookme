@@ -546,10 +546,10 @@ export class ApiClient {
   }
 
   // File upload
-  static async uploadFile(file: File, bucket: string = 'avatars', userId?: string): Promise<{ url: string; path: string }> {
+  static async uploadFile(file: File, uploadType: string = 'avatar', userId?: string): Promise<{ url: string; path: string }> {
     await this.waitForInitialization()
     // userId parameter was for path generation, backend handles this now
-    return this.backendApi!.uploadFile(file, bucket)
+    return this.backendApi!.uploadFile(file, uploadType)
   }
 
   // Public methods (no authentication required)
