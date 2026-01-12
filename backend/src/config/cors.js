@@ -30,9 +30,8 @@ export const corsConfig = {
     // Railway deployment
     /https:\/\/.*\.up\.railway\.app$/, // Allow all Railway domains
     
-    // Production domains
-    "https://staging.nook.to", // Staging frontend domain
-    /https:\/\/.*\.nook\.to$/, // Allow all nook.to subdomains
+    // Production domains (nook.talk)
+    /https:\/\/.*\.nook\.talk$/, // Allow all nook.talk subdomains
 
     // Timee domains (temporary staging)
     /https:\/\/.*\.timee\.app$/, // Allow all timee.app subdomains
