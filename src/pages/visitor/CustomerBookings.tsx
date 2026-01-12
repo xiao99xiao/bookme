@@ -612,20 +612,12 @@ export default function CustomerBookings() {
   return (
     <div>
       {/* Desktop Content Wrapper */}
-      <div className="hidden lg:block max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      <div className="hidden lg:block max-w-7xl mx-auto px-4 sm:px-6 py-6">
         {/* Desktop Layout */}
         <div className="flex gap-8">
-          {/* Left Sidebar - Desktop Only */}
-          <div className="w-64 flex-shrink-0">
-            <div className="fixed w-64">
-              <div className="mb-6">
-                {/* Title - Raleway font */}
-                <H2 className="mb-2">{t.booking.myBookings}</H2>
-                {/* Subtitle - Nunito font */}
-                <Text variant="small" color="secondary">{t.booking.withHost}</Text>
-              </div>
-
-              {/* Vertical Navigation - Nunito font */}
+          {/* Left Sidebar - Desktop Only (Tab Navigation) */}
+          <div className="w-48 flex-shrink-0">
+            <div className="sticky top-20">
               <nav className="space-y-1">
                 {Object.entries(tabLabels).map(([key, label]) => (
                   <button
