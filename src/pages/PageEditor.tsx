@@ -372,7 +372,7 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
       const [themeData, buttonsData, servicesData] = await Promise.all([
         ApiClient.getUserTheme(userId).catch(() => null),
         ApiClient.getUserButtons(userId).catch(() => ({ buttons: [] })),
-        ApiClient.getUserServices().catch(() => []),
+        ApiClient.getUserServices(userId).catch(() => []),
       ]);
 
       const newState: EditorState = {
