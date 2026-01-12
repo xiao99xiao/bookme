@@ -125,9 +125,12 @@ const Onboarding = () => {
         if (!success) {
           navigate('/discover'); // Fallback to discover page
         }
-      } else {
-        // All users go to customize page after onboarding
+      } else if (formData.wantsToProvideService) {
+        // User wants to be a host, go to customize page
         navigate('/settings/customize');
+      } else {
+        // User just wants to browse, go to discover page
+        navigate('/discover');
       }
     } catch (error) {
       console.error('Profile update error:', error);
