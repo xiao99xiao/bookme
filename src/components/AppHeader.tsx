@@ -176,12 +176,12 @@ export default function AppHeader({ showBackButton, onBack }: AppHeaderProps) {
             </Link>
           </div>
 
-          {/* Center Section - Page Title (Hidden on very small screens if too long) */}
+          {/* Center Section - Page Title (Desktop Only) */}
           {title && (
-            <div className="absolute left-1/2 transform -translate-x-1/2 text-center max-w-[200px] sm:max-w-none">
+            <div className="hidden md:block absolute left-1/2 transform -translate-x-1/2 text-center">
               <h1 className="text-base font-semibold text-gray-900 truncate">{title}</h1>
               {subtitle && (
-                <p className="text-xs text-gray-500 truncate hidden sm:block">{subtitle}</p>
+                <p className="text-xs text-gray-500 truncate">{subtitle}</p>
               )}
             </div>
           )}
