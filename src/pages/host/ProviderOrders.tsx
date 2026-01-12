@@ -727,9 +727,9 @@ export default function ProviderOrders() {
 
       {/* Mobile Layout */}
       <div className="lg:hidden min-h-screen bg-gray-50 pb-20">
-          <div className="px-4 py-6">
+          <div className="px-4 pt-4 pb-6">
             {/* Horizontal Tab Navigation */}
-            <div className="mb-6">
+            <div className="mb-4">
             <div className="flex gap-1 p-1 bg-gray-100 rounded-lg overflow-x-auto">
               {Object.entries(tabLabels).map(([key, label]) => (
                 <button

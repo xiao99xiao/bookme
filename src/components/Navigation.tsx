@@ -165,8 +165,6 @@ const Navigation = () => {
         </div>
       </div>
 
-      {/* Bottom padding for floating mobile tab bar */}
-      <div className="md:hidden h-24" />
     </>
   );
 };
