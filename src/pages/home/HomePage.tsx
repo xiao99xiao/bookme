@@ -5,7 +5,7 @@
  * Content focuses on platform features, registration CTAs, and contact info.
  */
 
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { usePrivy } from '@privy-io/react-auth';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import {
@@ -38,19 +38,30 @@ import './styles/home.css';
 const HomePage = () => {
   const { login } = usePrivy();
   const { authenticated } = useAuth();
+  const navigate = useNavigate();
 
   // Use default theme for landing page
   const theme = getTheme('default');
 
-  const handleProviderSignup = () => {
-    // Store intent to become provider, then login
-    sessionStorage.setItem('signup_intent', 'provider');
-    login();
+  const handleProviderClick = () => {
+    if (authenticated) {
+      // Already logged in - go to host dashboard
+      navigate('/host/bookings');
+    } else {
+      // Store intent to become provider, then login
+      sessionStorage.setItem('signup_intent', 'provider');
+      login();
+    }
   };
 
-  const handleCustomerSignup = () => {
-    sessionStorage.setItem('signup_intent', 'customer');
-    login();
+  const handleCustomerClick = () => {
+    if (authenticated) {
+      // Already logged in - go to discover page
+      navigate('/discover');
+    } else {
+      sessionStorage.setItem('signup_intent', 'customer');
+      login();
+    }
   };
 
   const handleLogin = () => {
@@ -141,8 +152,8 @@ const HomePage = () => {
               {/* Provider Registration */}
               <div
                 className={`${THEME_CLASS_PREFIX}-service-card home-cta-card`}
-                onClick={authenticated ? undefined : handleProviderSignup}
-                style={{ cursor: authenticated ? 'default' : 'pointer' }}
+                onClick={handleProviderClick}
+                style={{ cursor: 'pointer' }}
               >
                 <div className={`${THEME_CLASS_PREFIX}-service-header`}>
                   <div>
@@ -168,8 +179,8 @@ const HomePage = () => {
               {/* Customer Registration */}
               <div
                 className={`${THEME_CLASS_PREFIX}-service-card home-cta-card`}
-                onClick={authenticated ? undefined : handleCustomerSignup}
-                style={{ cursor: authenticated ? 'default' : 'pointer' }}
+                onClick={handleCustomerClick}
+                style={{ cursor: 'pointer' }}
               >
                 <div className={`${THEME_CLASS_PREFIX}-service-header`}>
                   <div>
