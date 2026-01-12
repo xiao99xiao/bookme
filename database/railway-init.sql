@@ -46,6 +46,7 @@ CREATE TABLE users (
   username TEXT UNIQUE,
   avatar TEXT,
   bio TEXT,
+  location TEXT,
 
   -- 钱包地址
   wallet_address TEXT,
