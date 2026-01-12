@@ -458,7 +458,13 @@ class QueryBuilder {
   async _executeInsert() {
     const row = this.insertData[0]
     const columns = Object.keys(row)
-    const values = Object.values(row)
+    // Serialize objects/arrays to JSON strings for JSONB columns
+    const values = Object.values(row).map(val => {
+      if (val !== null && typeof val === 'object') {
+        return JSON.stringify(val)
+      }
+      return val
+    })
     const placeholders = columns.map((_, i) => `$${i + 1}`).join(', ')
 
     const sql = `INSERT INTO ${this.tableName} (${columns.join(', ')}) VALUES (${placeholders}) RETURNING *`
@@ -474,7 +480,13 @@ class QueryBuilder {
    */
   async _executeUpdate() {
     const columns = Object.keys(this.updateData)
-    const values = Object.values(this.updateData)
+    // Serialize objects/arrays to JSON strings for JSONB columns
+    const values = Object.values(this.updateData).map(val => {
+      if (val !== null && typeof val === 'object') {
+        return JSON.stringify(val)
+      }
+      return val
+    })
 
     const setClause = columns.map((col, i) => `${col} = $${i + 1}`).join(', ')
 
@@ -517,7 +529,13 @@ class QueryBuilder {
   async _executeUpsert() {
     const row = this.insertData[0]
     const columns = Object.keys(row)
-    const values = Object.values(row)
+    // Serialize objects/arrays to JSON strings for JSONB columns
+    const values = Object.values(row).map(val => {
+      if (val !== null && typeof val === 'object') {
+        return JSON.stringify(val)
+      }
+      return val
+    })
     const placeholders = columns.map((_, i) => `$${i + 1}`).join(', ')
 
     // 构建 ON CONFLICT 更新子句
