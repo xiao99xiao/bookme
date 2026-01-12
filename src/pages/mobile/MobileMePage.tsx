@@ -581,6 +581,22 @@ export default function MobileMePage() {
         {/* Host Tools Section */}
         {userMode === 'host' && (
           <GroupedSection>
+            {profile?.username && (
+              <>
+                <ListItem
+                  icon={Globe}
+                  label="My Page"
+                  onClick={() => navigate(`/${profile.username}`)}
+                />
+                <Divider />
+                <ListItem
+                  icon={User}
+                  label="Customize Page"
+                  onClick={() => navigate('/host/page')}
+                />
+                <Divider />
+              </>
+            )}
             <ListItem
               icon={Plug}
               label="Integrations"
