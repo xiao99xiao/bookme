@@ -33,6 +33,9 @@ export const corsConfig = {
     // Production domains
     "https://staging.nook.to", // Staging frontend domain
     /https:\/\/.*\.nook\.to$/, // Allow all nook.to subdomains
+
+    // Timee domains (temporary staging)
+    /https:\/\/.*\.timee\.app$/, // Allow all timee.app subdomains
   ],
   credentials: true,
   // Safari-specific headers
@@ -44,6 +47,7 @@ export const corsConfig = {
     "X-Requested-With",
     "Accept",
     "Origin",
+    "X-Client-Timezone",
   ],
   exposedHeaders: ["Set-Cookie"],
 };
