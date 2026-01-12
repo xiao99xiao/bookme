@@ -55,7 +55,7 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
           <div className="bg-[#fcf9f4] flex gap-1 items-center px-4 py-3 rounded-[12px]">
             <Star className="h-5 w-5 text-[#666666] fill-current" />
             <Text className="font-body text-[16px] font-normal text-[#666666] leading-[1.5] whitespace-nowrap">
-              {profile.rating.toFixed(1)} ({profile.review_count} reviews)
+              {typeof profile.rating === 'number' ? profile.rating.toFixed(1) : '0.0'} ({profile.review_count || 0} reviews)
             </Text>
           </div>
         </div>

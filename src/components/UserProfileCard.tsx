@@ -52,7 +52,7 @@ export default function UserProfileCard({ profile, servicesCount = 0, isOwnProfi
             <h3 className={`font-semibold text-gray-900 truncate ${textSizes[size]}`}>
               {profile?.display_name || 'User'}
             </h3>
-            {profile && profile.review_count > 0 && (
+            {profile && profile.review_count > 0 && typeof profile.rating === 'number' && (
               <div className="flex items-center text-sm text-gray-500 flex-shrink-0 ml-2">
                 <Star className="w-3 h-3 text-yellow-400 mr-1" />
                 <span className="font-medium">{profile.rating.toFixed(1)}</span>

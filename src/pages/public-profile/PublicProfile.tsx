@@ -508,7 +508,7 @@ const PublicProfile = () => {
                   )}
                   <span className={`${THEME_CLASS_PREFIX}-badge`}>
                     <Star className={`${THEME_CLASS_PREFIX}-badge-icon`} style={{ fill: "currentColor" }} />
-                    {profile.rating.toFixed(1)} ({profile.review_count} notes)
+                    {typeof profile.rating === 'number' ? profile.rating.toFixed(1) : '0.0'} ({profile.review_count || 0} notes)
                   </span>
                 </div>
               </div>

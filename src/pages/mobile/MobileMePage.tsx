@@ -406,7 +406,7 @@ export default function MobileMePage() {
 
               {/* Rating and Location */}
               <div className="flex flex-wrap gap-2 mb-2">
-                {profile?.rating !== undefined && profile?.review_count !== undefined && (
+                {typeof profile?.rating === 'number' && profile?.review_count !== undefined && (
                   <div className="flex items-center gap-1">
                     <Star className="h-4 w-4 text-gray-600 fill-current" />
                     <Description className="text-gray-600">
