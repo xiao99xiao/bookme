@@ -140,6 +140,10 @@ All colors MUST be HSL.
     --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
     --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
     --shadow-modal: 0 20px 40px rgba(0, 0, 0, 0.15), 0 8px 16px rgba(0, 0, 0, 0.1);
+
+    /* Mobile Tab Bar Safe Area */
+    --tab-bar-height: 80px; /* Height of the floating tab bar + padding */
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   /* Dark mode not implemented in Figma design - keeping light theme for now */
@@ -202,6 +206,19 @@ All colors MUST be HSL.
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Mobile tab bar safe area - add bottom padding to prevent content from being hidden */
+  @media (max-width: 767px) {
+    body {
+      padding-bottom: calc(var(--tab-bar-height) + var(--safe-area-bottom));
+    }
+
+    /* Pages that don't have tab bar should not have bottom padding */
+    body.no-tab-bar,
+    body:has(.no-tab-bar-page) {
+      padding-bottom: 0;
+    }
   }
 
   h1 { @apply text-3xl font-bold text-primary font-heading; }

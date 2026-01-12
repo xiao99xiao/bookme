@@ -1609,7 +1609,7 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
     };
 
     return (
-      <div className="page-editor min-h-screen flex">
+      <div className="page-editor min-h-screen flex no-tab-bar-page">
         {/* Left Panel - Steps */}
         <div className="flex-1 flex flex-col max-w-2xl border-r border-black/5">
           {/* Header */}

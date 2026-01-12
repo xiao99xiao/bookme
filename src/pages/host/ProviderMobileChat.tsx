@@ -132,7 +132,7 @@ export default function ProviderMobileChat() {
   }
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-white">
+    <div className="h-[100dvh] flex flex-col bg-white no-tab-bar-page">
       {/* Mobile Header */}
       <div className="flex items-center gap-3 p-4 border-b bg-white">
         <DSButton
