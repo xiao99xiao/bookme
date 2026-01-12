@@ -11,9 +11,25 @@ import { ApiClient } from '@/lib/api-migration';
 import { toast } from 'sonner';
 import { H2, H3, Text, Description, Loading } from '@/design-system';
 import BecomeHostDialog from '@/components/BecomeHostDialog';
-import { useBlockchainService } from '@/lib/blockchain-service';
 import ReactMarkdown from 'react-markdown';
 import { useFunding } from '@/hooks/useFunding';
+import { createPublicClient, http, formatUnits, type Address } from 'viem';
+import { base, baseSepolia } from 'viem/chains';
+
+// USDC contract addresses
+const USDC_ADDRESS_BASE = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913' as Address;
+const USDC_ADDRESS_BASE_SEPOLIA = '0x036CbD53842c5426634e7929541eC2318f3dCF7e' as Address;
+
+// USDC ABI (minimal, just for balanceOf)
+const USDC_ABI = [
+  {
+    inputs: [{ name: 'owner', type: 'address' }],
+    name: 'balanceOf',
+    outputs: [{ name: '', type: 'uint256' }],
+    type: 'function',
+    stateMutability: 'view'
+  }
+] as const;
 
 const STORAGE_KEY = 'nook_user_mode';
 
@@ -88,8 +104,16 @@ export default function MobileMePage() {
   const { wallets } = useWallets();
   const { fundWallet } = useFunding();
   const { client: smartWallet } = useSmartWallets();
-  const { blockchainService, initializeService } = useBlockchainService();
   const navigate = useNavigate();
+
+  // Set up viem client for balance checking
+  const isProduction = import.meta.env.MODE === 'production';
+  const chain = isProduction ? base : baseSepolia;
+  const usdcAddress = isProduction ? USDC_ADDRESS_BASE : USDC_ADDRESS_BASE_SEPOLIA;
+  const publicClient = createPublicClient({
+    chain,
+    transport: http()
+  });
 
   const [userMode, setUserMode] = useState<UserMode>(null);
   const [balance, setBalance] = useState<string>('0.00');
@@ -151,21 +175,24 @@ export default function MobileMePage() {
   }, [authenticated, walletAddress]);
 
   const loadBalance = async () => {
+    if (!walletAddress) {
+      setBalance('0.00');
+      setLoadingBalance(false);
+      return;
+    }
+
     try {
       setLoadingBalance(true);
 
-      // Initialize blockchain service if needed
-      if (!blockchainService) {
-        await initializeService();
-      }
+      // Get USDC balance using viem publicClient
+      const usdcBalanceRaw = await publicClient.readContract({
+        address: usdcAddress,
+        abi: USDC_ABI,
+        functionName: 'balanceOf',
+        args: [walletAddress as Address]
+      });
 
-      // Get USDC balance from blockchain
-      if (walletAddress && blockchainService) {
-        const usdcBalance = await blockchainService.getUSDCBalance(walletAddress);
-        setBalance(usdcBalance);
-      } else {
-        setBalance('0.00');
-      }
+      setBalance(formatUnits(usdcBalanceRaw, 6));
     } catch (error) {
       console.error('Failed to load balance:', error);
       setBalance('0.00');
