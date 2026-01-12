@@ -7,7 +7,8 @@
     "dev:ssl": "node src/check-env.js && PORT=4443 node src/https-server.js",
     "start": "node --expose-gc src/index.js",
     "start:ssl": "node src/check-env.js && PORT=4443 node --expose-gc src/https-server.js",
-    "migrate": "node src/migrate.js"
+    "migrate": "node src/migrate.js",
+    "pre-deploy": "node scripts/pre-deploy-check.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.966.0",
@@ -25,7 +26,7 @@
     "uuid": "^9.0.1"
   },
   "description": "",
-  "main": "index.js",
+  "main": "src/index.js",
   "keywords": [],
   "author": "",
   "license": "ISC",
