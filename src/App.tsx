@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { PrivyAuthProvider } from "./contexts/PrivyAuthContext";
+import { PageTitleProvider } from "./contexts/PageTitleContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Index from "./pages/Index";
 import { HomePage } from "./pages/home";
@@ -13,6 +14,7 @@ import Auth from "./pages/Auth";
 import AuthCallback from "./pages/AuthCallback";
 import PageEditor from "./pages/PageEditor";
 import NotFound from "./pages/NotFound";
+import AppHeader from "./components/AppHeader";
 import Navigation from "./components/Navigation";
 import { OnboardingNavigator } from "./components/OnboardingNavigator";
 
@@ -58,6 +60,7 @@ function AppContent() {
   return (
     <>
       <OnboardingNavigator />
+      <AppHeader />
       <Navigation />
       <Routes>
             <Route path="/" element={<HomePage />} />
@@ -279,11 +282,13 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <PrivyAuthProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AppContent />
-        </BrowserRouter>
+        <PageTitleProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AppContent />
+          </BrowserRouter>
+        </PageTitleProvider>
       </PrivyAuthProvider>
     </TooltipProvider>
   </QueryClientProvider>

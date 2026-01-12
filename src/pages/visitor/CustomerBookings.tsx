@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/PrivyAuthContext';
+import { useSetPageTitle } from '@/contexts/PageTitleContext';
 import { usePrivy } from '@privy-io/react-auth';
 import { ApiClient, Booking } from '@/lib/api-migration';
 import { RescheduleRequest } from '@/lib/backend-api';
@@ -28,6 +29,9 @@ import { APP_NAME } from '@/lib/constants';
 import { t } from '@/lib/i18n';
 
 export default function CustomerBookings() {
+  // Set page title in header
+  useSetPageTitle(t.booking.myBookings, t.booking.withHost);
+
   const { userId, user } = useAuth();
   const { getAccessToken } = usePrivy();
   const navigate = useNavigate();
@@ -1100,24 +1104,16 @@ export default function CustomerBookings() {
 
       {/* Mobile Layout */}
       <div className="lg:hidden min-h-screen bg-gray-50 pb-20">
-          <div className="px-4 py-6">
-            {/* Top Header with Title and Tabs */}
-            <div className="mb-6">
-              {/* Title Section */}
-              <div className="mb-4">
-                <H2 className="mb-1">{t.booking.myBookings}</H2>
-                <Text variant="small" color="secondary">{t.booking.withHost}</Text>
-              </div>
-            
-            {/* Horizontal Tab Navigation */}
+          <div className="px-4 py-4">
+            {/* Horizontal Tab Navigation - Title is now in AppHeader */}
             <div className="flex gap-1 p-1 bg-gray-100 rounded-lg overflow-x-auto">
               {Object.entries(tabLabels).map(([key, label]) => (
                 <button
                   key={key}
                   onClick={() => setActiveTab(key)}
                   className={`flex-1 min-w-fit px-3 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap font-body ${
-                    activeTab === key 
-                      ? 'bg-white text-black shadow-sm' 
+                    activeTab === key
+                      ? 'bg-white text-black shadow-sm'
                       : 'text-gray-600 hover:text-black'
                   }`}
                 >
@@ -1125,7 +1121,6 @@ export default function CustomerBookings() {
                 </button>
               ))}
             </div>
-          </div>
 
           {/* Mobile Content Area */}
           <div className="flex flex-col min-h-[500px]">
