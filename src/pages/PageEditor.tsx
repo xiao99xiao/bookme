@@ -385,17 +385,21 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
     }
   };
 
-  // Sync profile data when it becomes available
+  // Sync profile data when it becomes available (only for initial load)
+  const [profileSynced, setProfileSynced] = useState(false);
+
   useEffect(() => {
-    if (profile) {
+    if (profile && !profileSynced) {
       setState((prev) => ({
         ...prev,
+        // Only sync if current value is empty (first load)
         displayName: prev.displayName || profile.display_name || "",
         avatar: prev.avatar || profile.avatar || "",
         bio: prev.bio || profile.bio || "",
       }));
+      setProfileSynced(true);
     }
-  }, [profile]);
+  }, [profile, profileSynced]);
 
   // Load integrations
   useEffect(() => {
@@ -598,6 +602,7 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
   // =====================================================
 
   const handleNext = () => {
+    console.log('[PageEditor] handleNext called, currentStepIndex:', currentStepIndex, 'canProceed:', canProceed());
     if (currentStepIndex < ONBOARDING_STEPS.length - 1) {
       setCurrentStepIndex(currentStepIndex + 1);
     }
@@ -612,25 +617,41 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
   const canProceed = (): boolean => {
     if (!currentStep) return false;
 
+    let result = false;
     switch (currentStep.id) {
       case "template":
-        return state.templateId !== null;
+        result = state.templateId !== null;
+        break;
       case "profile":
-        return state.displayName.trim().length > 0;
+        result = state.displayName.trim().length > 0;
+        break;
       case "style":
-        return true;
+        result = true;
+        break;
       case "links":
-        return state.buttons.every((btn) => btn.label.trim() && btn.url.trim());
+        // Allow proceeding if no buttons, or all buttons are complete
+        result = state.buttons.length === 0 || state.buttons.every((btn) => btn.label.trim() && btn.url.trim());
+        break;
       case "talks":
-        return (
+        result = (
           state.newTalk.title.trim().length >= 5 &&
           state.newTalk.description.trim().length >= 20
         );
+        break;
       case "availability":
-        return Object.keys(state.timeSlots).length > 0;
+        result = Object.keys(state.timeSlots).length > 0;
+        break;
       default:
-        return false;
+        result = false;
     }
+
+    console.log(`[PageEditor] canProceed for step "${currentStep.id}":`, result, {
+      displayName: state.displayName,
+      templateId: state.templateId,
+      buttonsCount: state.buttons.length
+    });
+
+    return result;
   };
 
   const handleFinishOnboarding = async () => {
@@ -1400,7 +1421,7 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
           <div className="flex-1 overflow-auto p-6">{renderCurrentStep()}</div>
 
           {/* Navigation */}
-          <div className="p-6 border-t flex justify-between">
+          <div className="p-6 border-t flex items-center justify-between">
             <Button
               variant="ghost"
               onClick={handleBack}
@@ -1410,29 +1431,36 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
               Back
             </Button>
 
-            {currentStepIndex < ONBOARDING_STEPS.length - 1 ? (
-              <Button onClick={handleNext} disabled={!canProceed()}>
-                Next
-                <ChevronRight className="w-4 h-4 ml-2" />
-              </Button>
-            ) : (
-              <Button
-                onClick={handleFinishOnboarding}
-                disabled={!canProceed() || isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Setting up...
-                  </>
-                ) : (
-                  <>
-                    Finish Setup
-                    <Check className="w-4 h-4 ml-2" />
-                  </>
-                )}
-              </Button>
-            )}
+            <div className="flex items-center gap-3">
+              {!canProceed() && currentStep?.id === "profile" && (
+                <span className="text-sm text-muted-foreground">
+                  Enter your display name to continue
+                </span>
+              )}
+              {currentStepIndex < ONBOARDING_STEPS.length - 1 ? (
+                <Button onClick={handleNext} disabled={!canProceed()}>
+                  Next
+                  <ChevronRight className="w-4 h-4 ml-2" />
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleFinishOnboarding}
+                  disabled={!canProceed() || isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Setting up...
+                    </>
+                  ) : (
+                    <>
+                      Finish Setup
+                      <Check className="w-4 h-4 ml-2" />
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 
