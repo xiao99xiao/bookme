@@ -13,7 +13,7 @@
 
 import { Hono } from 'hono';
 import { verifyPrivyAuth, getDb } from '../middleware/auth.js';
-import { ALLOWED_THEMES } from '../../shared/constants.js';
+import { ALLOWED_THEMES } from '../constants.js';
 
 // Get database client (Railway PostgreSQL)
 const db = getDb();
