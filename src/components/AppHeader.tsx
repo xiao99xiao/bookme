@@ -23,6 +23,8 @@ import {
   ArrowLeftRight,
   Briefcase,
   Mic,
+  User,
+  ExternalLink,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { usePageTitle } from '@/contexts/PageTitleContext';
@@ -237,6 +239,26 @@ export default function AppHeader({ showBackButton, onBack }: AppHeaderProps) {
                       </DropdownMenuItem>
                     ))}
                     <DropdownMenuSeparator />
+
+                    {/* My Page - Host Only */}
+                    {userMode === 'host' && profile?.username && (
+                      <>
+                        <DropdownMenuItem asChild>
+                          <Link to={`/${profile.username}`} className="flex items-center gap-2 cursor-pointer">
+                            <User className="w-4 h-4" />
+                            My Page
+                            <ExternalLink className="w-3 h-3 ml-auto text-muted-foreground" />
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link to="/host/page" className="flex items-center gap-2 cursor-pointer">
+                            <Settings className="w-4 h-4" />
+                            Customize Page
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
 
                     {/* Utility Items */}
                     <DropdownMenuItem asChild>

@@ -85,9 +85,8 @@ CREATE TABLE users (
 ALTER TABLE users ADD CONSTRAINT username_format
   CHECK (username IS NULL OR username ~ '^[a-zA-Z0-9_-]{3,30}$');
 
--- 主题 ID 验证（只允许预定义的主题）
-ALTER TABLE users ADD CONSTRAINT users_page_theme_valid
-  CHECK (page_theme IS NULL OR page_theme IN ('default', 'minimal', 'dark', 'vibrant'));
+-- 主题 ID 不做数据库约束 - 前端负责 fallback 到 'default'
+-- 这样可以灵活添加新主题而无需更新数据库
 
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_username ON users(username);

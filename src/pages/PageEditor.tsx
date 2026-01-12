@@ -45,6 +45,9 @@ import {
   X,
   Edit3,
   User,
+  AlertCircle,
+  CheckCircle2,
+  AtSign,
 } from "lucide-react";
 
 // UI Components
@@ -67,6 +70,7 @@ import { H2, H3 } from "@/design-system";
 // Hooks & Context
 import { useAuth } from "@/contexts/PrivyAuthContext";
 import { ApiClient } from "@/lib/api-migration";
+import { validateUsername, generateUsernameFromName } from "@/lib/username";
 
 // Templates & Themes
 import {
@@ -113,6 +117,9 @@ interface EditorState {
   avatar: string;
   bio: string;
 
+  // Username (onboarding)
+  username: string;
+
   // Theme
   themeId: string;
 
@@ -150,7 +157,7 @@ interface EditorState {
   timeSlots: { [key: string]: boolean };
 }
 
-type SectionId = "profile" | "style" | "links" | "talks";
+type SectionId = "profile" | "username" | "style" | "links" | "talks";
 
 interface Section {
   id: SectionId;
@@ -193,6 +200,9 @@ const SECTIONS: Section[] = [
 // Onboarding steps (includes template selection)
 type OnboardingStepId = "template" | SectionId | "availability";
 
+// Username validation states
+type UsernameStatus = "idle" | "checking" | "available" | "taken" | "invalid";
+
 interface OnboardingStep {
   id: OnboardingStepId;
   title: string;
@@ -212,6 +222,12 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     title: "Your Profile",
     icon: User,
     description: "Name, photo & bio",
+  },
+  {
+    id: "username",
+    title: "Your Username",
+    icon: Globe,
+    description: "Choose your page URL",
   },
   {
     id: "style",
@@ -299,6 +315,7 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
   // Track changes for editor mode
   const [hasChanges, setHasChanges] = useState<Record<SectionId, boolean>>({
     profile: false,
+    username: false,
     style: false,
     links: false,
     talks: false,
@@ -310,6 +327,7 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
     displayName: "",
     avatar: "",
     bio: "",
+    username: "",
     themeId: "default",
     buttons: [],
     services: [],
@@ -323,6 +341,10 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
     },
     timeSlots: {},
   });
+
+  // Username validation state (for onboarding)
+  const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>("idle");
+  const [usernameError, setUsernameError] = useState<string>("");
 
   // Original state for change detection
   const [originalState, setOriginalState] = useState<EditorState | null>(null);
@@ -358,6 +380,7 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
         displayName: profile?.display_name || "",
         avatar: profile?.avatar || "",
         bio: profile?.bio || "",
+        username: profile?.username || "",
         themeId: themeData?.theme || "default",
         buttons: buttonsData.buttons.map((btn: any, idx: number) => ({
           id: btn.id,
@@ -630,6 +653,10 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
       case "profile":
         result = state.displayName.trim().length > 0;
         break;
+      case "username":
+        // Must have a valid, available username
+        result = state.username.length >= 3 && usernameStatus === "available";
+        break;
       case "style":
         result = true;
         break;
@@ -653,7 +680,9 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
     console.log(`[PageEditor] canProceed for step "${currentStep.id}":`, result, {
       displayName: state.displayName,
       templateId: state.templateId,
-      buttonsCount: state.buttons.length
+      buttonsCount: state.buttons.length,
+      username: state.username,
+      usernameStatus: usernameStatus
     });
 
     return result;
@@ -676,10 +705,15 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
         is_provider: true,
       });
 
-      // 2. Update theme
+      // 2. Save username
+      if (state.username) {
+        await ApiClient.updateUsername(state.username);
+      }
+
+      // 3. Update theme
       await ApiClient.updateUserTheme({ theme: state.themeId });
 
-      // 3. Update profile buttons
+      // 4. Update profile buttons
       const buttonsToCreate = state.buttons
         .filter((btn) => btn.label && btn.url)
         .map((btn, index) => ({
@@ -694,7 +728,7 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
         await ApiClient.updateUserButtons(buttonsToCreate);
       }
 
-      // 4. Create the Talk (service)
+      // 5. Create the Talk (service)
       await ApiClient.createService(userId, {
         title: state.newTalk.title,
         description: state.newTalk.description,
@@ -711,18 +745,14 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
         timeSlots: state.timeSlots,
       });
 
-      // 5. Mark onboarding as completed
+      // 6. Mark onboarding as completed
       await ApiClient.completeOnboarding();
 
       await refreshProfile();
       toast.success(`Welcome to ${APP_NAME}! Your page is ready.`);
 
-      // Navigate to the user's public profile
-      if (profile?.username) {
-        navigate(`/${profile.username}`);
-      } else {
-        navigate("/host/talks");
-      }
+      // Navigate to the user's public profile using the newly set username
+      navigate(`/${state.username}`);
     } catch (error) {
       console.error("Onboarding error:", error);
       toast.error("Failed to complete setup. Please try again.");
@@ -1199,6 +1229,159 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
     </div>
   );
 
+  // Username validation with debounce
+  const checkUsernameAvailability = useCallback(
+    async (username: string) => {
+      // First validate format locally
+      const formatValidation = validateUsername(username);
+      if (!formatValidation.isValid) {
+        setUsernameStatus("invalid");
+        setUsernameError(formatValidation.error || "Invalid username format");
+        return;
+      }
+
+      // Then check availability on server
+      setUsernameStatus("checking");
+      setUsernameError("");
+
+      try {
+        const result = await ApiClient.checkUsernameAvailability(username);
+        if (result.available) {
+          setUsernameStatus("available");
+          setUsernameError("");
+        } else {
+          setUsernameStatus("taken");
+          setUsernameError("This username is already taken");
+        }
+      } catch (error) {
+        console.error("Username check failed:", error);
+        setUsernameStatus("invalid");
+        setUsernameError("Failed to check username availability");
+      }
+    },
+    []
+  );
+
+  // Debounced username check
+  useEffect(() => {
+    if (!state.username || state.username.length < 3) {
+      setUsernameStatus("idle");
+      setUsernameError("");
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      checkUsernameAvailability(state.username);
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [state.username, checkUsernameAvailability]);
+
+  // Auto-suggest username from display name
+  const handleSuggestUsername = () => {
+    if (!state.displayName) return;
+    const suggested = generateUsernameFromName(state.displayName, userId);
+    setState((prev) => ({ ...prev, username: suggested }));
+  };
+
+  const renderUsernameSection = () => {
+    const baseUrl = window.location.origin;
+
+    return (
+      <div className="space-y-6">
+        <div>
+          <H2 className="mb-2">Choose your username</H2>
+          <p className="text-muted-foreground">
+            Your username creates your unique page URL. Choose something memorable and easy to share.
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          {/* URL Preview */}
+          <div className="p-4 rounded-xl bg-muted/50 border">
+            <Label className="text-sm text-muted-foreground mb-2 block">
+              Your page will be available at:
+            </Label>
+            <div className="flex items-center gap-1 text-lg font-medium">
+              <span className="text-muted-foreground">{baseUrl}/</span>
+              <span className="text-foreground">
+                {state.username || "your-username"}
+              </span>
+            </div>
+          </div>
+
+          {/* Username Input */}
+          <div>
+            <Label htmlFor="username" className="text-base font-medium">
+              Username *
+            </Label>
+            <div className="relative mt-2">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                <AtSign className="h-4 w-4" />
+              </div>
+              <Input
+                id="username"
+                value={state.username}
+                onChange={(e) => {
+                  const value = e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "");
+                  setState((prev) => ({ ...prev, username: value }));
+                }}
+                placeholder="your-username"
+                className={`pl-9 pr-10 ${
+                  usernameStatus === "available"
+                    ? "border-green-500 focus-visible:ring-green-500"
+                    : usernameStatus === "taken" || usernameStatus === "invalid"
+                    ? "border-red-500 focus-visible:ring-red-500"
+                    : ""
+                }`}
+                maxLength={30}
+              />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                {usernameStatus === "checking" && (
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                )}
+                {usernameStatus === "available" && (
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                )}
+                {(usernameStatus === "taken" || usernameStatus === "invalid") && (
+                  <AlertCircle className="h-4 w-4 text-red-500" />
+                )}
+              </div>
+            </div>
+
+            {/* Status Message */}
+            {usernameError && (
+              <p className="text-sm text-red-500 mt-1.5">{usernameError}</p>
+            )}
+            {usernameStatus === "available" && (
+              <p className="text-sm text-green-600 mt-1.5">
+                Username is available!
+              </p>
+            )}
+
+            {/* Username Rules */}
+            <p className="text-sm text-muted-foreground mt-2">
+              3-30 characters. Letters, numbers, underscores, and dashes only.
+            </p>
+          </div>
+
+          {/* Suggest Button */}
+          {!state.username && state.displayName && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleSuggestUsername}
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              Suggest from my name
+            </Button>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const renderTemplateSection = () => (
     <div className="space-y-8">
       <div className="page-editor-section-header">
@@ -1385,6 +1568,8 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
           return renderTemplateSection();
         case "profile":
           return renderProfileSection();
+        case "username":
+          return renderUsernameSection();
         case "style":
           return renderStyleSection();
         case "links":
@@ -1476,6 +1661,17 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
               {!canProceed() && currentStep?.id === "profile" && (
                 <span className="text-sm text-muted-foreground">
                   Enter your display name to continue
+                </span>
+              )}
+              {!canProceed() && currentStep?.id === "username" && (
+                <span className="text-sm text-muted-foreground">
+                  {usernameStatus === "checking"
+                    ? "Checking availability..."
+                    : usernameStatus === "taken"
+                    ? "Username is taken, try another"
+                    : usernameStatus === "invalid"
+                    ? "Enter a valid username"
+                    : "Choose a username to continue"}
                 </span>
               )}
               {currentStepIndex < ONBOARDING_STEPS.length - 1 ? (

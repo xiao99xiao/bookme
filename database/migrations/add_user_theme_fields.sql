@@ -21,18 +21,8 @@ ADD COLUMN IF NOT EXISTS page_custom_css TEXT;
 ALTER TABLE users
 ADD COLUMN IF NOT EXISTS page_theme_settings JSONB DEFAULT '{}'::jsonb;
 
--- 添加主题 ID 验证约束（可选）
--- 这个约束确保只能使用预定义的主题 ID
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'users_page_theme_valid'
-  ) THEN
-    ALTER TABLE users
-    ADD CONSTRAINT users_page_theme_valid
-    CHECK (page_theme IS NULL OR page_theme IN ('default', 'minimal', 'dark', 'vibrant'));
-  END IF;
-END $$;
+-- 主题 ID 不做数据库约束 - 前端负责 fallback 到 'default'
+-- 这样可以灵活添加新主题而无需更新数据库
 
 -- 验证字段已添加
 SELECT
