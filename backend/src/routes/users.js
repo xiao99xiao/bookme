@@ -556,7 +556,7 @@ export default function userRoutes(app) {
       const { theme, custom_css, settings } = body;
 
       // Validate theme ID (allowed values)
-      const allowedThemes = ['default', 'minimal', 'dark', 'vibrant'];
+      const allowedThemes = ['default', 'minimal', 'dark', 'vibrant', 'glass'];
       if (theme && !allowedThemes.includes(theme)) {
         return c.json({ error: 'Invalid theme ID' }, 400);
       }

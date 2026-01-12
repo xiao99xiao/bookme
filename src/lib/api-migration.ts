@@ -682,12 +682,13 @@ export class ApiClient {
 
   static async rejectPaidBooking(bookingId: string, reason?: string): Promise<any> {
     await this.waitForInitialization()
-    
+    const token = await this.backendApi!.getToken()
+
     const response = await fetch(`${this.backendApi!.baseUrl}/api/bookings/${bookingId}/reject`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.backendApi!.token}`
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({ reason })
     })
@@ -783,11 +784,12 @@ export class ApiClient {
     settings: Record<string, unknown>
   }> {
     await this.waitForInitialization()
+    const token = await this.backendApi!.getToken()
     const response = await fetch(`${this.backendApi!.baseUrl}/api/user/theme`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.backendApi!.token}`
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify(data)
     })
@@ -845,11 +847,12 @@ export class ApiClient {
     }>
   }> {
     await this.waitForInitialization()
+    const token = await this.backendApi!.getToken()
     const response = await fetch(`${this.backendApi!.baseUrl}/api/user/buttons`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.backendApi!.token}`
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({ buttons })
     })

@@ -4,10 +4,22 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://skating-destroy
 import { getBrowserTimezone } from './timezone';
 
 export class BackendAPI {
+  public baseUrl: string = BACKEND_URL;
+  public token: string | null = null;
+
   constructor(private getAccessToken: () => Promise<string | null>) {}
+
+  // Expose method to get fresh token
+  async getToken(): Promise<string | null> {
+    this.token = await this.getAccessToken();
+    return this.token;
+  }
 
   private async request(endpoint: string, options: RequestInit = {}) {
     const token = await this.getAccessToken();
+
+    // Cache the token for external access
+    this.token = token;
 
     // For public endpoints, don't require token
     const isPublicEndpoint = endpoint.includes('/public') || endpoint.includes('/categories');
