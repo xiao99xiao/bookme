@@ -13,6 +13,7 @@
 
 import { Hono } from 'hono';
 import { verifyPrivyAuth, getDb } from '../middleware/auth.js';
+import { ALLOWED_THEMES } from '../../shared/constants.js';
 
 // Get database client (Railway PostgreSQL)
 const db = getDb();
@@ -555,10 +556,9 @@ export default function userRoutes(app) {
 
       const { theme, custom_css, settings } = body;
 
-      // Validate theme ID (allowed values)
-      const allowedThemes = ['default', 'minimal', 'dark', 'vibrant', 'glass'];
-      if (theme && !allowedThemes.includes(theme)) {
-        return c.json({ error: 'Invalid theme ID' }, 400);
+      // Validate theme ID (allowed values from shared constants)
+      if (theme && !ALLOWED_THEMES.includes(theme)) {
+        return c.json({ error: `Invalid theme ID. Allowed: ${ALLOWED_THEMES.join(', ')}` }, 400);
       }
 
       // Build update object

@@ -2,6 +2,13 @@
  * Theme System
  *
  * Exports all themes and theme utilities for the public profile page.
+ *
+ * IMPORTANT: When adding new themes:
+ * 1. Create the theme file in ./presets/
+ * 2. Import it below
+ * 3. Add to PRESET_THEMES
+ * 4. Add the theme ID to shared/constants.js ALLOWED_THEMES array
+ *    (backend uses this for validation)
  */
 
 export * from './types';
@@ -18,6 +25,8 @@ import { ThemeConfig, ThemeSettings, THEME_CSS_PREFIX } from './types';
 
 /**
  * All available preset themes
+ *
+ * NOTE: Theme IDs must match ALLOWED_THEMES in shared/constants.js
  */
 export const PRESET_THEMES: Record<string, ThemeConfig> = {
   default: defaultTheme,
