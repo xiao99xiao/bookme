@@ -181,15 +181,14 @@ export class ApiClient {
 
   static async getUserProfileById(userId: string): Promise<User | null> {
     this.ensureInitialized()
-    // Use public endpoint for viewing user profiles (no auth required)
-    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://192.168.0.10:4443'}/api/profile/public/${userId}`)
-    if (!response.ok) {
-      if (response.status === 404) {
+    try {
+      return await this.backendApi!.getPublicProfile(userId)
+    } catch (error: any) {
+      if (error.message?.includes('404') || error.message?.includes('not found')) {
         return null
       }
-      throw new Error('Failed to fetch profile')
+      throw error
     }
-    return response.json()
   }
 
   static async getUserProfile(userId: string): Promise<User | null> {
@@ -224,23 +223,12 @@ export class ApiClient {
 
   static async getUserServicesById(userId: string, timezone?: string): Promise<Service[]> {
     this.ensureInitialized()
-    // Use public endpoint for viewing user services (no auth required)
-    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://192.168.0.10:4443'}/api/services/public/user/${userId}`)
-    if (!response.ok) {
-      throw new Error('Failed to fetch services')
-    }
-    return response.json()
+    return this.backendApi!.getPublicUserServices(userId)
   }
 
   static async getServices(filters?: any): Promise<any> {
     this.ensureInitialized()
-    // Use public endpoint for discovery
-    const params = new URLSearchParams(filters || {});
-    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://192.168.0.10:4443'}/api/services/public?${params}`);
-    if (!response.ok) {
-      throw new Error('Failed to fetch services');
-    }
-    return response.json();
+    return this.backendApi!.getPublicServices(filters)
   }
 
   static async getServiceById(serviceId: string): Promise<Service | null> {
@@ -452,13 +440,12 @@ export class ApiClient {
 
   static async getProviderReviews(providerId: string): Promise<any[]> {
     this.ensureInitialized()
-    // Use public endpoint for viewing provider reviews (no auth required)
-    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://192.168.0.10:4443'}/api/reviews/public/provider/${providerId}`)
-    if (!response.ok) {
+    try {
+      return await this.backendApi!.getPublicProviderReviews(providerId)
+    } catch (error) {
       console.warn('Failed to fetch reviews, returning empty array')
       return []
     }
-    return response.json()
   }
 
   // Meeting integration methods
@@ -559,14 +546,7 @@ export class ApiClient {
    */
   static async getPublicUserByUsername(username: string): Promise<User> {
     this.ensureInitialized()
-    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://192.168.0.10:4443'}/api/user/username/${encodeURIComponent(username)}`)
-    if (!response.ok) {
-      if (response.status === 404) {
-        throw new Error('User not found')
-      }
-      throw new Error('Failed to fetch user')
-    }
-    return response.json()
+    return this.backendApi!.getPublicProfileByUsername(username)
   }
 
   /**
@@ -574,14 +554,7 @@ export class ApiClient {
    */
   static async getPublicUserProfile(userId: string): Promise<User> {
     this.ensureInitialized()
-    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://192.168.0.10:4443'}/api/user/${encodeURIComponent(userId)}`)
-    if (!response.ok) {
-      if (response.status === 404) {
-        throw new Error('User not found')
-      }
-      throw new Error('Failed to fetch user profile')
-    }
-    return response.json()
+    return this.backendApi!.getPublicUser(userId)
   }
 
   /**
@@ -589,23 +562,18 @@ export class ApiClient {
    */
   static async getPublicUserServices(userId: string, timezone?: string): Promise<Service[]> {
     this.ensureInitialized()
-    const url = new URL(`${import.meta.env.VITE_BACKEND_URL || 'https://192.168.0.10:4443'}/api/services/public/${encodeURIComponent(userId)}`)
-    if (timezone) {
-      url.searchParams.set('timezone', timezone)
-    }
-    
-    const response = await fetch(url.toString())
-    if (!response.ok) {
+    try {
+      return await this.backendApi!.getPublicUserServices(userId)
+    } catch (error) {
       console.warn('Failed to fetch public services, returning empty array')
       return []
     }
-    return response.json()
   }
 
   // Availability methods
   static async getServiceCalendarAvailability(
-    serviceId: string, 
-    month: string, 
+    serviceId: string,
+    month: string,
     timezone = 'UTC'
   ): Promise<{
     availableDates: Array<{ date: string; availableSlots: number }>
@@ -613,24 +581,12 @@ export class ApiClient {
     nextAvailableDate: string | null
   }> {
     this.ensureInitialized()
-    const params = new URLSearchParams({ month, timezone })
-    const response = await fetch(
-      `${import.meta.env.VITE_BACKEND_URL || 'https://192.168.0.10:4443'}/api/services/${serviceId}/calendar-availability?${params}`
-    )
-    
-    if (!response.ok) {
-      if (response.status === 404) {
-        throw new Error('Service not found')
-      }
-      throw new Error('Failed to fetch calendar availability')
-    }
-    
-    return response.json()
+    return this.backendApi!.getServiceCalendarAvailability(serviceId, month, timezone)
   }
 
   static async getServiceDayAvailability(
-    serviceId: string, 
-    date: string, 
+    serviceId: string,
+    date: string,
     timezone = 'UTC'
   ): Promise<{
     availableSlots: string[]
@@ -638,25 +594,7 @@ export class ApiClient {
     serviceSchedule: { start: string; end: string } | null
   }> {
     this.ensureInitialized()
-    const response = await fetch(
-      `${import.meta.env.VITE_BACKEND_URL || 'https://192.168.0.10:4443'}/api/services/${serviceId}/availability`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ date, timezone }),
-      }
-    )
-    
-    if (!response.ok) {
-      if (response.status === 404) {
-        throw new Error('Service not found')
-      }
-      throw new Error('Failed to fetch day availability')
-    }
-    
-    return response.json()
+    return this.backendApi!.getServiceDayAvailability(serviceId, date, timezone)
   }
 
   // Enhanced cancellation methods
@@ -682,23 +620,7 @@ export class ApiClient {
 
   static async rejectPaidBooking(bookingId: string, reason?: string): Promise<any> {
     await this.waitForInitialization()
-    const token = await this.backendApi!.getToken()
-
-    const response = await fetch(`${this.backendApi!.baseUrl}/api/bookings/${bookingId}/reject`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ reason })
-    })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to reject booking')
-    }
-
-    return response.json()
+    return this.backendApi!.rejectPaidBooking(bookingId, reason)
   }
 
   // Income transaction methods
@@ -742,11 +664,8 @@ export class ApiClient {
   }
 
   static async validateReferralCode(code: string) {
-    // This is a public endpoint, no auth needed
-    const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://skating-destroyed-understanding-sas.trycloudflare.com'
-    const response = await fetch(`${BACKEND_URL}/api/referrals/validate/${code}`)
-    if (!response.ok) throw new Error('Failed to validate referral code')
-    return response.json()
+    this.ensureInitialized()
+    return this.backendApi!.validateReferralCodePublic(code)
   }
 
   // =====================================================
@@ -762,12 +681,11 @@ export class ApiClient {
     settings: Record<string, unknown>
   }> {
     this.ensureInitialized()
-    const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://192.168.0.10:4443'
-    const response = await fetch(`${BACKEND_URL}/api/user/${userId}/theme`)
-    if (!response.ok) {
+    try {
+      return await this.backendApi!.getUserTheme(userId)
+    } catch (error) {
       return { theme: 'default', custom_css: null, settings: {} }
     }
-    return response.json()
   }
 
   /**
@@ -784,22 +702,7 @@ export class ApiClient {
     settings: Record<string, unknown>
   }> {
     await this.waitForInitialization()
-    const token = await this.backendApi!.getToken()
-    const response = await fetch(`${this.backendApi!.baseUrl}/api/user/theme`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(data)
-    })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to update theme')
-    }
-
-    return response.json()
+    return this.backendApi!.updateUserTheme(data)
   }
 
   // =====================================================
@@ -819,12 +722,11 @@ export class ApiClient {
     }>
   }> {
     this.ensureInitialized()
-    const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://192.168.0.10:4443'
-    const response = await fetch(`${BACKEND_URL}/api/user/${userId}/buttons`)
-    if (!response.ok) {
+    try {
+      return await this.backendApi!.getUserButtons(userId)
+    } catch (error) {
       return { buttons: [] }
     }
-    return response.json()
   }
 
   /**
@@ -847,22 +749,7 @@ export class ApiClient {
     }>
   }> {
     await this.waitForInitialization()
-    const token = await this.backendApi!.getToken()
-    const response = await fetch(`${this.backendApi!.baseUrl}/api/user/buttons`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ buttons })
-    })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to update buttons')
-    }
-
-    return response.json()
+    return this.backendApi!.updateUserButtons(buttons)
   }
 
   // Points methods

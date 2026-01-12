@@ -275,6 +275,226 @@ export class BackendAPI {
     });
   }
 
+  // =====================================================
+  // Public APIs (no authentication required)
+  // =====================================================
+
+  /**
+   * Get public user profile by user ID (no auth required)
+   */
+  async getPublicProfile(userId: string): Promise<any> {
+    return this.requestPublic(`/api/profile/public/${userId}`);
+  }
+
+  /**
+   * Get public user profile by username (no auth required)
+   */
+  async getPublicProfileByUsername(username: string): Promise<any> {
+    return this.requestPublic(`/api/user/username/${encodeURIComponent(username)}`);
+  }
+
+  /**
+   * Get public user info by user ID (no auth required)
+   */
+  async getPublicUser(userId: string): Promise<any> {
+    return this.requestPublic(`/api/user/${encodeURIComponent(userId)}`);
+  }
+
+  /**
+   * Get public services for a user (no auth required)
+   */
+  async getPublicUserServices(userId: string): Promise<any[]> {
+    return this.requestPublic(`/api/services/public/user/${userId}`);
+  }
+
+  /**
+   * Search public services (no auth required)
+   */
+  async getPublicServices(params?: {
+    category?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    search?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<any[]> {
+    const queryParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          queryParams.append(key, String(value));
+        }
+      });
+    }
+    const queryString = queryParams.toString();
+    return this.requestPublic(`/api/services/public${queryString ? `?${queryString}` : ''}`);
+  }
+
+  /**
+   * Get public reviews for a provider (no auth required)
+   */
+  async getPublicProviderReviews(providerId: string): Promise<any[]> {
+    return this.requestPublic(`/api/reviews/public/provider/${providerId}`);
+  }
+
+  /**
+   * Get user's theme settings (no auth required)
+   */
+  async getUserTheme(userId: string): Promise<{
+    theme: string;
+    custom_css: string | null;
+    settings: Record<string, unknown>;
+  }> {
+    return this.requestPublic(`/api/user/${userId}/theme`);
+  }
+
+  /**
+   * Get user's profile buttons (no auth required)
+   */
+  async getUserButtons(userId: string): Promise<{
+    buttons: Array<{
+      id: string;
+      label: string;
+      url: string;
+      icon?: string;
+      order: number;
+    }>;
+  }> {
+    return this.requestPublic(`/api/user/${userId}/buttons`);
+  }
+
+  /**
+   * Validate a referral code (no auth required)
+   */
+  async validateReferralCodePublic(code: string): Promise<{
+    valid: boolean;
+    referrerName?: string;
+    error?: string;
+  }> {
+    return this.requestPublic(`/api/referrals/validate/${code}`);
+  }
+
+  /**
+   * Helper method for public API requests (no auth required)
+   */
+  private async requestPublic(endpoint: string, options?: RequestInit): Promise<any> {
+    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Client-Timezone': getBrowserTimezone(),
+        ...options?.headers,
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Request failed' }));
+      throw new Error(error.error || `Request failed with status ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  // =====================================================
+  // Availability APIs (public, no auth required)
+  // =====================================================
+
+  /**
+   * Get calendar availability for a service (no auth required)
+   */
+  async getServiceCalendarAvailability(
+    serviceId: string,
+    month: string,
+    timezone: string = 'UTC'
+  ): Promise<{
+    availableDates: Array<{ date: string; availableSlots: number }>;
+    unavailableDates: Array<{ date: string; reason: string }>;
+    nextAvailableDate: string | null;
+  }> {
+    const params = new URLSearchParams({ month, timezone });
+    return this.requestPublic(`/api/services/${serviceId}/calendar-availability?${params}`);
+  }
+
+  /**
+   * Get day availability for a service (no auth required)
+   */
+  async getServiceDayAvailability(
+    serviceId: string,
+    date: string,
+    timezone: string = 'UTC'
+  ): Promise<{
+    availableSlots: string[];
+    unavailableSlots: Array<{ time: string; reason: string; bookingId?: string; event?: string }>;
+    serviceSchedule: { start: string; end: string } | null;
+  }> {
+    return this.requestPublic(`/api/services/${serviceId}/availability`, {
+      method: 'POST',
+      body: JSON.stringify({ date, timezone }),
+    });
+  }
+
+  // =====================================================
+  // Authenticated APIs - Theme & Buttons
+  // =====================================================
+
+  /**
+   * Update current user's theme (auth required)
+   */
+  async updateUserTheme(data: {
+    theme?: string;
+    custom_css?: string | null;
+    settings?: Record<string, unknown>;
+  }): Promise<{
+    success: boolean;
+    theme: string;
+    custom_css: string | null;
+    settings: Record<string, unknown>;
+  }> {
+    return this.request('/api/user/theme', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  /**
+   * Update current user's profile buttons (auth required)
+   */
+  async updateUserButtons(buttons: Array<{
+    id: string;
+    label: string;
+    url: string;
+    icon?: string;
+    order: number;
+  }>): Promise<{
+    success: boolean;
+    buttons: Array<{
+      id: string;
+      label: string;
+      url: string;
+      icon?: string;
+      order: number;
+    }>;
+  }> {
+    return this.request('/api/user/buttons', {
+      method: 'PUT',
+      body: JSON.stringify({ buttons }),
+    });
+  }
+
+  /**
+   * Reject a paid booking (auth required)
+   */
+  async rejectPaidBooking(bookingId: string, reason?: string): Promise<any> {
+    return this.request(`/api/bookings/${bookingId}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
+  }
+
+  // =====================================================
+  // File Upload
+  // =====================================================
+
   // File Upload
   async uploadFile(file: File, uploadType: string = 'avatar'): Promise<{ url: string; path: string }> {
     const formData = new FormData();
