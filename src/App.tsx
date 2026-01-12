@@ -11,8 +11,6 @@ import Discover from "./pages/Discover";
 import BookServices from "./pages/BookServices";
 import Auth from "./pages/Auth";
 import AuthCallback from "./pages/AuthCallback";
-import Onboarding from "./pages/Onboarding";
-import HostOnboarding from "./pages/HostOnboarding";
 import PageEditor from "./pages/PageEditor";
 import NotFound from "./pages/NotFound";
 import Navigation from "./components/Navigation";
@@ -107,22 +105,16 @@ function AppContent() {
               }
             />
             <Route path="/auth/callback" element={<AuthCallback />} />
+            {/* Onboarding - uses PageEditor in onboarding mode */}
             <Route
               path="/onboarding"
               element={
                 <ProtectedRoute requireOnboarding={false}>
-                  <Onboarding />
+                  <PageEditor mode="onboarding" />
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/host/onboarding"
-              element={
-                <ProtectedRoute requireOnboarding={false}>
-                  <HostOnboarding />
-                </ProtectedRoute>
-              }
-            />
+            {/* Host page editor - uses PageEditor in editor mode */}
             <Route
               path="/host/page"
               element={

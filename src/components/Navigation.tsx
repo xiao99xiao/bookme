@@ -39,7 +39,7 @@ const Navigation = () => {
 
   const isLoggedIn = authenticated;
   const isAuthPage = location.pathname === "/auth";
-  const isOnboardingPage = location.pathname === "/onboarding" || location.pathname === "/host/onboarding";
+  const isOnboardingPage = location.pathname === "/onboarding";
   const userName = profile?.display_name || "User";
 
   // Initialize user mode on login/profile change

@@ -14,7 +14,7 @@ const ProtectedRoute = ({ children, requireAuth = true, requireOnboarding = true
   const location = useLocation();
 
   // Pages that should be accessible without completing onboarding
-  const onboardingExemptPaths = ['/onboarding', '/host/onboarding', '/settings/profile'];
+  const onboardingExemptPaths = ['/onboarding', '/settings/profile'];
 
   if (!ready) {
     return (
