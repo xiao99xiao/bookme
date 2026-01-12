@@ -94,18 +94,28 @@ export default function serviceRoutes(app) {
     try {
       const userId = c.get('userId');
       const targetUserId = c.req.param('userId');
-      
-      const { data, error } = await db
+
+      // Check if requesting own services or someone else's
+      const isOwner = userId === targetUserId;
+
+      let query = db
         .from('services')
         .select('*')
         .eq('provider_id', targetUserId)
         .order('created_at', { ascending: false });
-      
+
+      // If not owner, only return visible services
+      if (!isOwner) {
+        query = query.eq('is_visible', true);
+      }
+
+      const { data, error } = await query;
+
       if (error) {
         console.error('Services fetch error:', error);
         return c.json({ error: 'Failed to fetch services' }, 500);
       }
-      
+
       return c.json(data || []);
     } catch (error) {
       console.error('Services error:', error);
