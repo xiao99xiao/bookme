@@ -401,16 +401,9 @@ export default function ProviderOrders() {
         {/* Desktop Layout */}
         <div className="flex gap-8">
           {/* Left Sidebar - Desktop Only */}
-          <div className="w-64 flex-shrink-0">
-            <div className="fixed w-64">
-              <div className="mb-6">
-                {/* Title - Raleway font */}
-                <H2 className="mb-2">Bookings</H2>
-                {/* Subtitle - Nunito font */}
-                <p className="text-sm text-gray-500 font-body">Manage bookings from your visitors</p>
-              </div>
-
-              {/* Vertical Navigation - Nunito font */}
+          <div className="w-48 flex-shrink-0">
+            <div className="sticky top-20">
+              {/* Vertical Navigation */}
               <nav className="space-y-1">
                 {Object.entries(tabLabels).map(([key, label]) => (
                   <button
