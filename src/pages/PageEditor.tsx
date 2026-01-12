@@ -879,26 +879,51 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
                 setState((prev) => ({ ...prev, themeId: theme.id }))
               }
             >
-              {/* Color Swatches */}
-              <div className="theme-card__colors">
+              {/* Mini Preview */}
+              <div
+                className="theme-card__preview"
+                style={{
+                  backgroundColor: theme.colors.background,
+                  borderBottom: `1px solid ${theme.colors.border || 'rgba(0,0,0,0.1)'}`
+                }}
+              >
+                {/* Mini avatar */}
                 <div
-                  className="theme-card__color-swatch theme-card__color-swatch--primary"
+                  className="theme-card__preview-avatar"
                   style={{ backgroundColor: theme.colors.accent }}
                 />
-                <div
-                  className="theme-card__color-swatch"
-                  style={{ backgroundColor: theme.colors.textPrimary }}
-                />
+                {/* Mini text lines */}
+                <div className="theme-card__preview-lines">
+                  <div
+                    className="theme-card__preview-line theme-card__preview-line--title"
+                    style={{ backgroundColor: theme.colors.textPrimary }}
+                  />
+                  <div
+                    className="theme-card__preview-line theme-card__preview-line--subtitle"
+                    style={{ backgroundColor: theme.colors.textSecondary || 'rgba(0,0,0,0.3)' }}
+                  />
+                </div>
+                {/* Mini buttons */}
+                <div className="theme-card__preview-buttons">
+                  <div
+                    className="theme-card__preview-btn"
+                    style={{ backgroundColor: theme.colors.buttonBackground || theme.colors.accent }}
+                  />
+                  <div
+                    className="theme-card__preview-btn"
+                    style={{ backgroundColor: theme.colors.buttonBackground || theme.colors.accent }}
+                  />
+                </div>
               </div>
+
+              {/* 2025 Badge - positioned absolutely */}
+              {theme.version === "2025" && (
+                <span className="theme-card__badge">2025</span>
+              )}
 
               {/* Theme Info */}
               <div className="theme-card__header">
-                <div>
-                  <h3 className="theme-card__name">{theme.name}</h3>
-                  {theme.version === "2025" && (
-                    <span className="theme-card__badge">2025</span>
-                  )}
-                </div>
+                <h3 className="theme-card__name">{theme.name}</h3>
                 {state.themeId === theme.id && (
                   <div className="theme-card__check">
                     <Check className="w-3 h-3" />
@@ -1741,8 +1766,8 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
         {/* Left Panel - Accordion Sections */}
         <div className="flex-1 flex flex-col max-w-2xl border-r">
           {/* Header */}
-          <div className="p-6 border-b">
-            <div className="flex items-center justify-between">
+          <div className="p-6 border-b bg-gradient-to-b from-white to-gray-50/50">
+            <div className="flex items-center justify-between mb-4">
               <div>
                 <h1 className="text-xl font-semibold">Page Editor</h1>
                 <p className="text-sm text-muted-foreground mt-1">
@@ -1759,15 +1784,59 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
                 </Button>
               )}
             </div>
+            {/* Page URL Preview */}
+            {profile?.username && (
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-white border border-gray-200 shadow-sm">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center flex-shrink-0">
+                  <Globe className="w-4 h-4 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-muted-foreground font-medium">Your page is live at</p>
+                  <p className="text-sm font-medium text-foreground truncate">
+                    {window.location.host}/{profile.username}
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex-shrink-0"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/${profile.username}`);
+                    toast.success("Link copied!");
+                  }}
+                >
+                  <LinkIcon className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Sections */}
-          <div className="flex-1 overflow-auto">
+          <div className="flex-1 overflow-auto p-5 space-y-4">
             {SECTIONS.map((section) => {
               const isExpanded = expandedSections.has(section.id);
               const SectionIcon = section.icon;
               const sectionHasChanges = hasChanges[section.id];
               const isSaving = savingSection === section.id;
+
+              // Generate section summary
+              const getSectionSummary = () => {
+                switch (section.id) {
+                  case "profile":
+                    return state.displayName || "Not set";
+                  case "style":
+                    const theme = getTheme(state.themeId);
+                    return theme?.name || "Classic";
+                  case "links":
+                    const linkCount = state.buttons.filter(b => b.label && b.url).length;
+                    return linkCount > 0 ? `${linkCount} link${linkCount > 1 ? 's' : ''}` : "No links";
+                  case "talks":
+                    const serviceCount = state.services.length;
+                    return serviceCount > 0 ? `${serviceCount} talk${serviceCount > 1 ? 's' : ''}` : "No talks";
+                  default:
+                    return "";
+                }
+              };
 
               return (
                 <Collapsible
@@ -1775,60 +1844,68 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
                   open={isExpanded}
                   onOpenChange={() => toggleSection(section.id)}
                 >
-                  <div className="border-b">
-                    <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
+                  <div className={`rounded-2xl border bg-white overflow-hidden transition-all duration-200 ${isExpanded ? 'shadow-md border-gray-200' : 'border-gray-100 hover:border-gray-200 hover:shadow-sm'}`}>
+                    <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-gray-50/50 transition-colors">
                       <div className="flex items-center gap-3">
-                        <SectionIcon className="w-5 h-5 text-muted-foreground" />
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${isExpanded ? 'bg-indigo-50 text-indigo-600' : 'bg-gray-100 text-gray-500'}`}>
+                          <SectionIcon className="w-5 h-5" />
+                        </div>
                         <div className="text-left">
-                          <h3 className="font-medium">{section.title}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {section.description}
-                          </p>
+                          <h3 className="font-medium text-gray-900">{section.title}</h3>
+                          {!isExpanded && (
+                            <p className="text-sm text-gray-500 truncate max-w-[200px]">
+                              {getSectionSummary()}
+                            </p>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         {sectionHasChanges && (
-                          <span className="text-xs text-amber-600 font-medium">
+                          <span className="text-xs text-amber-600 font-medium px-2 py-0.5 bg-amber-50 rounded-full">
                             Unsaved
                           </span>
                         )}
-                        <ChevronDown
-                          className={`w-5 h-5 text-muted-foreground transition-transform ${
-                            isExpanded ? "rotate-180" : ""
-                          }`}
-                        />
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${isExpanded ? 'bg-gray-100' : 'bg-transparent'}`}>
+                          <ChevronDown
+                            className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
+                              isExpanded ? "rotate-180" : ""
+                            }`}
+                          />
+                        </div>
                       </div>
                     </CollapsibleTrigger>
 
                     <CollapsibleContent>
-                      <div className="p-6 pt-2 border-t bg-muted/20">
-                        {section.id === "profile" &&
-                          renderProfileSection(false)}
-                        {section.id === "style" && renderStyleSection(false)}
-                        {section.id === "links" && renderLinksSection(false)}
-                        {section.id === "talks" && renderTalksSection(false)}
+                      <div className="px-5 pb-5 pt-0 border-t border-gray-100 bg-gradient-to-b from-gray-50/50 to-white">
+                        <div className="pt-4">
+                          {section.id === "profile" &&
+                            renderProfileSection(false)}
+                          {section.id === "style" && renderStyleSection(false)}
+                          {section.id === "links" && renderLinksSection(false)}
+                          {section.id === "talks" && renderTalksSection(false)}
 
-                        {/* Save button for non-talks sections */}
-                        {section.id !== "talks" && (
-                          <div className="mt-6 flex justify-end">
-                            <Button
-                              onClick={() => handleSaveSection(section.id)}
-                              disabled={!sectionHasChanges || isSaving}
-                            >
-                              {isSaving ? (
-                                <>
-                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                  Saving...
-                                </>
-                              ) : (
-                                <>
-                                  <Save className="w-4 h-4 mr-2" />
-                                  Save Changes
-                                </>
-                              )}
-                            </Button>
-                          </div>
-                        )}
+                          {/* Save button for non-talks sections */}
+                          {section.id !== "talks" && (
+                            <div className="mt-6 flex justify-end">
+                              <Button
+                                onClick={() => handleSaveSection(section.id)}
+                                disabled={!sectionHasChanges || isSaving}
+                              >
+                                {isSaving ? (
+                                  <>
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    Saving...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Save className="w-4 h-4 mr-2" />
+                                    Save Changes
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </CollapsibleContent>
                   </div>

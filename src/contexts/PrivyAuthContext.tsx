@@ -8,6 +8,7 @@ import { getBrowserTimezone } from '@/lib/timezone';
 interface UserProfile {
   id: string;
   email: string;
+  username: string | null;
   display_name: string | null;
   bio: string | null;
   location: string | null;
