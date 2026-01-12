@@ -37,7 +37,7 @@ import './styles/home.css';
 
 const HomePage = () => {
   const { login } = usePrivy();
-  const { isAuthenticated } = useAuth();
+  const { authenticated } = useAuth();
 
   // Use default theme for landing page
   const theme = getTheme('default');
@@ -141,8 +141,8 @@ const HomePage = () => {
               {/* Provider Registration */}
               <div
                 className={`${THEME_CLASS_PREFIX}-service-card home-cta-card`}
-                onClick={isAuthenticated ? undefined : handleProviderSignup}
-                style={{ cursor: isAuthenticated ? 'default' : 'pointer' }}
+                onClick={authenticated ? undefined : handleProviderSignup}
+                style={{ cursor: authenticated ? 'default' : 'pointer' }}
               >
                 <div className={`${THEME_CLASS_PREFIX}-service-header`}>
                   <div>
@@ -160,7 +160,7 @@ const HomePage = () => {
                   </span>
                   <span className={`${THEME_CLASS_PREFIX}-service-location-badge home-cta-badge`}>
                     <ArrowRight style={{ width: 14, height: 14 }} />
-                    {isAuthenticated ? 'Go to Dashboard' : 'Sign Up Free'}
+                    {authenticated ? 'Go to Dashboard' : 'Sign Up Free'}
                   </span>
                 </div>
               </div>
@@ -168,8 +168,8 @@ const HomePage = () => {
               {/* Customer Registration */}
               <div
                 className={`${THEME_CLASS_PREFIX}-service-card home-cta-card`}
-                onClick={isAuthenticated ? undefined : handleCustomerSignup}
-                style={{ cursor: isAuthenticated ? 'default' : 'pointer' }}
+                onClick={authenticated ? undefined : handleCustomerSignup}
+                style={{ cursor: authenticated ? 'default' : 'pointer' }}
               >
                 <div className={`${THEME_CLASS_PREFIX}-service-header`}>
                   <div>
@@ -187,13 +187,13 @@ const HomePage = () => {
                   </span>
                   <span className={`${THEME_CLASS_PREFIX}-service-location-badge home-cta-badge`}>
                     <ArrowRight style={{ width: 14, height: 14 }} />
-                    {isAuthenticated ? 'Browse Services' : 'Sign Up Free'}
+                    {authenticated ? 'Browse Services' : 'Sign Up Free'}
                   </span>
                 </div>
               </div>
 
               {/* Login */}
-              {!isAuthenticated && (
+              {!authenticated && (
                 <div
                   className={`${THEME_CLASS_PREFIX}-service-card home-cta-card home-login-card`}
                   onClick={handleLogin}
