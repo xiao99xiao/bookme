@@ -325,22 +325,42 @@ const Navigation = () => {
     ];
 
     return (
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
-        <div className={`grid ${userMode === 'visitor' ? 'grid-cols-3' : 'grid-cols-4'}`}>
-          {tabItems.map(({ to, icon: Icon, label }) => (
-            <Link
-              key={to}
-              to={to}
-              className={`flex flex-col items-center justify-center py-3 px-2 text-xs font-medium transition-colors ${
-                location.pathname === to
-                  ? 'text-blue-600 bg-blue-50'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <Icon className="w-5 h-5 mb-1" />
-              <span>{label}</span>
-            </Link>
-          ))}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 pointer-events-none pb-[env(safe-area-inset-bottom)]">
+        <div className="flex justify-center px-4 pb-4">
+          {/* iOS 26 Floating Glass Tab Bar */}
+          <div
+            className="pointer-events-auto flex items-center gap-1 px-2 py-2 rounded-[22px] shadow-lg"
+            style={{
+              background: 'rgba(255, 255, 255, 0.72)',
+              backdropFilter: 'blur(20px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+              border: '1px solid rgba(255, 255, 255, 0.4)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)',
+            }}
+          >
+            {tabItems.map(({ to, icon: Icon, label }) => {
+              const isActive = location.pathname === to;
+              return (
+                <Link
+                  key={to}
+                  to={to}
+                  className={`
+                    flex flex-col items-center justify-center px-4 py-2 rounded-2xl
+                    transition-all duration-200 ease-out min-w-[64px]
+                    ${isActive
+                      ? 'bg-gray-900/90 text-white shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900 active:scale-95'
+                    }
+                  `}
+                >
+                  <Icon className={`w-5 h-5 ${isActive ? 'mb-0.5' : 'mb-0.5'}`} strokeWidth={isActive ? 2.5 : 2} />
+                  <span className={`text-[10px] font-medium ${isActive ? 'opacity-100' : 'opacity-80'}`}>
+                    {label}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
         </div>
       </div>
     );
@@ -524,9 +544,9 @@ alt="Nook logo"
 
       {/* Add top padding for fixed navigation on desktop only */}
       <div className="hidden md:block h-16" />
-      {/* Add bottom padding for mobile tab bar */}
+      {/* Add bottom padding for floating mobile tab bar */}
       {isLoggedIn && userMode && !location.pathname.includes('/messages/') && (
-        <div className="md:hidden h-16" />
+        <div className="md:hidden h-24" />
       )}
 
       {/* Become Host Dialog */}
