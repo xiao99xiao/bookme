@@ -14,9 +14,33 @@
 
 import { Hono } from 'hono';
 import { verifyPrivyAuth, getDb } from '../middleware/auth.js';
+import { File as NodeFile } from 'node:buffer';
 
 // Get database client (Railway PostgreSQL)
 const db = getDb();
+
+/**
+ * Check if a value is a File-like object
+ * Works with both Web API File and Node.js File
+ * @param {any} value - Value to check
+ * @returns {boolean} - Whether the value is a file-like object
+ */
+function isFileLike(value) {
+  if (!value) return false;
+
+  // Check for Web API File or Node.js File
+  if (typeof File !== 'undefined' && value instanceof File) return true;
+  if (value instanceof NodeFile) return true;
+
+  // Duck typing: check for essential file properties
+  return (
+    typeof value === 'object' &&
+    typeof value.name === 'string' &&
+    typeof value.size === 'number' &&
+    typeof value.type === 'string' &&
+    typeof value.arrayBuffer === 'function'
+  );
+}
 
 /**
  * Create upload routes
@@ -59,7 +83,7 @@ export default function uploadRoutes(app) {
       const folder = formData.get('folder') || '';
       const resizeOptionsStr = formData.get('resize_options');
 
-      if (!file || !(file instanceof File)) {
+      if (!file || !isFileLike(file)) {
         return c.json({ error: 'No file provided or invalid file format' }, 400);
       }
 
