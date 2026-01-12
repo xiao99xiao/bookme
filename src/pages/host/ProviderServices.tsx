@@ -20,7 +20,8 @@ import { ApiClient } from '@/lib/api-migration';
 import CreateServiceModal from '@/components/CreateServiceModal';
 import { RefactoredServiceModal } from '@/components/RefactoredServiceModal';
 import { ServiceCard } from '@/components/ServiceCard';
-import { H1, H2, H3, Text, Loading } from '@/design-system';
+import { H2, H3, Text, Loading } from '@/design-system';
+import { useSetPageTitle } from '@/contexts/PageTitleContext';
 
 interface Service {
   id: string;
@@ -40,6 +41,9 @@ interface Service {
 }
 
 export default function ProviderServices() {
+  // Set page title for AppHeader (desktop only)
+  useSetPageTitle('Talks', 'Create and manage your Talks');
+
   const { user, profile, userId } = useAuth();
   
   const [services, setServices] = useState<Service[]>([]);
@@ -184,12 +188,6 @@ export default function ProviderServices() {
     <div>
       {/* Desktop Content Wrapper */}
       <div className="hidden lg:block max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        {/* Desktop Title */}
-        <div className="mb-8">
-          <H1 className="mb-2">Your Talks</H1>
-          <Text className="text-lg">Create and manage the Talks you offer to visitors</Text>
-        </div>
-
         {/* Desktop Layout */}
         <div className="flex gap-8">
           {/* Main Content - Services List */}
@@ -375,12 +373,7 @@ export default function ProviderServices() {
 
       {/* Mobile Layout */}
       <div className="lg:hidden min-h-screen bg-gray-50 pb-20">
-          <div className="px-4 py-6">
-            {/* Mobile Title */}
-            <div className="mb-6">
-              <H2 className="mb-1">Talks</H2>
-              <Text variant="small" color="secondary">Create and manage the Talks you offer to visitors</Text>
-            </div>
+          <div className="px-4 pt-4 pb-6">
           {/* Add Talk Button */}
           <div className={`pb-8 mb-8 ${services.length === 0 ? "mt-12" : "mt-6"} border-b border-gray-200`}>
             <DSButton

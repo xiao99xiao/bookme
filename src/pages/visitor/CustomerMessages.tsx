@@ -11,8 +11,11 @@ import { toast } from 'sonner';
 import PageLayout from '@/components/PageLayout';
 import { H1, H2, H3, Text, Description, Loading } from '@/design-system';
 import { t } from '@/lib/i18n';
+import { useSetPageTitle } from '@/contexts/PageTitleContext';
 
 export default function CustomerMessages() {
+  // Set page title for AppHeader (desktop only)
+  useSetPageTitle(t.pages.messages.title, t.pages.messages.chatWithHosts);
   const { userId } = useAuth();
   const navigate = useNavigate();
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
@@ -178,13 +181,7 @@ export default function CustomerMessages() {
 
     {/* Mobile Layout - List only */}
     <div className="lg:hidden min-h-screen bg-gray-50 pb-20">
-      <div className="px-4 py-6">
-        {/* Title */}
-        <div className="mb-6">
-          <H2 className="mb-1">{t.pages.messages.title}</H2>
-          <Text variant="small" color="secondary">{t.pages.messages.chatWithHosts}</Text>
-        </div>
-
+      <div className="px-4 pt-4 pb-6">
         {/* Search */}
         <div className="mb-6">
           <div className="relative">
