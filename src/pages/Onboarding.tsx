@@ -380,14 +380,14 @@ const Onboarding = () => {
             <div className="space-y-6">
               <div>
                 <Label htmlFor="bio" className="text-base font-medium">Bio (Optional)</Label>
-                <div className="bg-white box-border content-stretch flex items-start justify-start p-[12px] relative rounded-[8px] shrink-0 w-full mt-3 min-h-[140px]">
+                <div className="bg-white box-border p-[12px] relative rounded-[8px] w-full mt-3">
                   <div aria-hidden="true" className="absolute border border-[#eeeeee] border-solid inset-[-1px] pointer-events-none rounded-[9px]" />
                   <Textarea
                     id="bio"
                     placeholder="e.g. I'm a passionate developer who loves helping others learn new technologies. In my free time, I enjoy hiking and photography."
                     value={formData.bio}
                     onChange={(e) => handleInputChange('bio', e.target.value)}
-                    className="basis-0 font-body font-normal grow leading-[1.5] min-h-full min-w-px relative shrink-0 text-[16px] text-black border-0 focus:ring-0 p-0 bg-transparent placeholder:text-[#666666] resize-none"
+                    className="w-full h-[120px] font-body font-normal leading-[1.5] text-[16px] text-black border-0 focus:ring-0 focus-visible:ring-0 p-0 bg-transparent placeholder:text-[#666666] resize-none"
                     maxLength={500}
                   />
                 </div>
