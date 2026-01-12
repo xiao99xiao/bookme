@@ -7,6 +7,7 @@
 
 import { Link, useNavigate } from 'react-router-dom';
 import { usePrivy } from '@privy-io/react-auth';
+import { toast } from 'sonner';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import {
   Star,
@@ -37,7 +38,7 @@ import './styles/home.css';
 
 const HomePage = () => {
   const { login } = usePrivy();
-  const { authenticated } = useAuth();
+  const { authenticated, needsOnboarding, loading, profile } = useAuth();
   const navigate = useNavigate();
 
   // Use default theme for landing page
@@ -45,8 +46,19 @@ const HomePage = () => {
 
   const handleProviderClick = () => {
     if (authenticated) {
-      // Already logged in - go to host dashboard
-      navigate('/host/bookings');
+      // If still loading profile, wait - don't navigate yet
+      if (loading || !profile) {
+        toast.info('Please wait while we load your profile...');
+        return;
+      }
+      if (needsOnboarding) {
+        // Needs to complete onboarding first
+        sessionStorage.setItem('signup_intent', 'provider');
+        navigate('/onboarding');
+      } else {
+        // Already logged in and onboarded - go to host dashboard
+        navigate('/host/bookings');
+      }
     } else {
       // Store intent to become provider, then login
       sessionStorage.setItem('signup_intent', 'provider');
@@ -56,8 +68,19 @@ const HomePage = () => {
 
   const handleCustomerClick = () => {
     if (authenticated) {
-      // Already logged in - go to discover page
-      navigate('/discover');
+      // If still loading profile, wait - don't navigate yet
+      if (loading || !profile) {
+        toast.info('Please wait while we load your profile...');
+        return;
+      }
+      if (needsOnboarding) {
+        // Needs to complete onboarding first
+        sessionStorage.setItem('signup_intent', 'customer');
+        navigate('/onboarding');
+      } else {
+        // Already logged in and onboarded - go to discover page
+        navigate('/discover');
+      }
     } else {
       sessionStorage.setItem('signup_intent', 'customer');
       login();

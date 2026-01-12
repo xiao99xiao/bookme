@@ -30,7 +30,7 @@ type UserMode = 'visitor' | 'host' | null;
 const Navigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, profile, ready, authenticated, logout, login, userId, refreshProfile } = useAuth();
+  const { user, profile, ready, authenticated, logout, login, userId, refreshProfile, loading, needsOnboarding } = useAuth();
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [userMode, setUserMode] = useState<UserMode>(null);
@@ -132,7 +132,11 @@ const Navigation = () => {
 
   // Handle default landing logic based on user mode
   useEffect(() => {
-    if (isLoggedIn && userMode && location.pathname === '/' && ready) {
+    // Don't redirect if still loading or needs onboarding
+    if (loading || needsOnboarding) {
+      return;
+    }
+    if (isLoggedIn && userMode && location.pathname === '/' && ready && profile) {
       // Redirect based on user mode
       if (userMode === 'host') {
         navigate('/host/bookings');
@@ -140,7 +144,7 @@ const Navigation = () => {
         navigate('/bookings');
       }
     }
-  }, [isLoggedIn, userMode, location.pathname, navigate, ready]);
+  }, [isLoggedIn, userMode, location.pathname, navigate, ready, loading, needsOnboarding, profile]);
 
   // Handle mode switching
   const handleModeSwitch = () => {

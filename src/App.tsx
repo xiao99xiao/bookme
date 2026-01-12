@@ -76,7 +76,7 @@ function AppContent() {
             <Route
               path="/settings/profile"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requireOnboarding={false}>
                   <SettingsProfile />
                 </ProtectedRoute>
               }
@@ -110,7 +110,7 @@ function AppContent() {
             <Route
               path="/onboarding"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requireOnboarding={false}>
                   <Onboarding />
                 </ProtectedRoute>
               }
@@ -118,7 +118,7 @@ function AppContent() {
             <Route
               path="/host/onboarding"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requireOnboarding={false}>
                   <HostOnboarding />
                 </ProtectedRoute>
               }
