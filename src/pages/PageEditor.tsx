@@ -1160,38 +1160,36 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {ONBOARDING_TEMPLATES.map((template) => (
-          <Card
+          <div
             key={template.id}
-            className={`cursor-pointer transition-all hover:shadow-md ${
+            className={`cursor-pointer transition-all hover:shadow-md rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden ${
               state.templateId === template.id
                 ? "ring-2 ring-primary shadow-md"
                 : "hover:border-muted-foreground/30"
             }`}
             onClick={() => handleTemplateSelect(template.id)}
           >
-            <CardContent className="p-0">
-              <div
-                className="h-24 rounded-t-lg flex items-center justify-center text-4xl"
-                style={{ background: template.previewGradient }}
-              >
-                {template.emoji}
-              </div>
+            <div
+              className="h-24 flex items-center justify-center text-4xl"
+              style={{ background: template.previewGradient }}
+            >
+              {template.emoji}
+            </div>
 
-              <div className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-semibold text-lg">{template.name}</h3>
-                  {state.templateId === template.id && (
-                    <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-                      <Check className="w-4 h-4 text-primary-foreground" />
-                    </div>
-                  )}
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {template.description}
-                </p>
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-semibold text-lg">{template.name}</h3>
+                {state.templateId === template.id && (
+                  <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                    <Check className="w-4 h-4 text-primary-foreground" />
+                  </div>
+                )}
               </div>
-            </CardContent>
-          </Card>
+              <p className="text-sm text-muted-foreground">
+                {template.description}
+              </p>
+            </div>
+          </div>
         ))}
       </div>
     </div>
