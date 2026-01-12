@@ -2,6 +2,9 @@
   "name": "nook-backend",
   "version": "1.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "dev": "node src/check-env.js && node src/index.js",
     "dev:ssl": "node src/check-env.js && PORT=4443 node src/https-server.js",
