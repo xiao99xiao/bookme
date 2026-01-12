@@ -482,8 +482,8 @@ const Onboarding = () => {
   };
 
   return (
-    <div>
-      <div className="grid lg:grid-cols-2">
+    <div className="min-h-screen">
+      <div className="grid lg:grid-cols-2 min-h-screen">
         {/* Left side - Content */}
         <div className="flex flex-col justify-center px-8 py-12 lg:px-12 xl:px-16">
           <div className="mx-auto w-full max-w-md space-y-8">
