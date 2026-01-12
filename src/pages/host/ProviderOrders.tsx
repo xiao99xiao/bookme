@@ -18,6 +18,7 @@ import { H3, Text, Loading, EmptyState, Button as DSButton, StatusBadge, OnlineB
 import { calculatePlatformFee } from '@/lib/config';
 import { APP_NAME } from '@/lib/constants';
 import { useSetPageTitle } from '@/contexts/PageTitleContext';
+import './styles/host-dashboard.css';
 
 export default function ProviderOrders() {
   // Set page title for AppHeader (desktop only)
@@ -395,24 +396,22 @@ export default function ProviderOrders() {
   };
 
   return (
-    <div>
+    <div className="host-dashboard">
       {/* Desktop Content Wrapper */}
       <div className="hidden lg:block max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {/* Desktop Layout */}
         <div className="flex gap-8">
           {/* Left Sidebar - Desktop Only */}
-          <div className="w-48 flex-shrink-0">
-            <div className="sticky top-20">
+          <div className="bookings-sidebar">
+            <div className="bookings-sidebar__nav">
               {/* Vertical Navigation */}
-              <nav className="space-y-1">
+              <nav className="bookings-nav">
                 {Object.entries(tabLabels).map(([key, label]) => (
                   <button
                     key={key}
                     onClick={() => setActiveTab(key)}
-                    className={`w-full text-left px-3 py-2.5 text-sm font-medium rounded-md transition-colors font-body ${
-                      activeTab === key
-                        ? 'bg-gray-100 text-black'
-                        : 'text-gray-600 hover:text-black hover:bg-gray-50'
+                    className={`bookings-nav__item ${
+                      activeTab === key ? 'bookings-nav__item--active' : ''
                     }`}
                   >
                     {label}
@@ -441,9 +440,9 @@ export default function ProviderOrders() {
                   const review = bookingReviews[booking.id];
                   const fee = booking.service_fee || calculatePlatformFee(booking.total_price);
                   const earnings = booking.total_price - fee;
-                  
+
                   return (
-                    <div key={booking.id} className="bg-white rounded-2xl border border-[#eeeeee] p-6">
+                    <div key={booking.id} className="booking-card">
                       {/* Top Section: Title and Icons */}
                       <div className="flex items-start justify-between mb-6">
                         <div className="flex-1">

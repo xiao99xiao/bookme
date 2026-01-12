@@ -22,6 +22,7 @@ import { RefactoredServiceModal } from '@/components/RefactoredServiceModal';
 import { ServiceCard } from '@/components/ServiceCard';
 import { H2, H3, Text, Loading } from '@/design-system';
 import { useSetPageTitle } from '@/contexts/PageTitleContext';
+import './styles/host-dashboard.css';
 
 interface Service {
   id: string;
@@ -185,104 +186,103 @@ export default function ProviderServices() {
   };
 
   return (
-    <div>
+    <div className="host-dashboard">
       {/* Desktop Content Wrapper */}
       <div className="hidden lg:block max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {/* Desktop Layout */}
         <div className="flex gap-8">
           {/* Main Content - Services List */}
-          <div className="flex-1 p-6 space-y-6 bg-white rounded-lg">
+          <div className="host-main flex-1 space-y-6">
           {/* Add Service Button */}
-          <div className={`pb-8 mb-8 ${services.length === 0 ? "mt-12" : "mt-6"} border-b border-gray-200`}>
-            <DSButton
+          <div className={`pb-8 mb-8 ${services.length === 0 ? "mt-12" : "mt-6"} border-b`} style={{ borderColor: 'var(--border-subtle)' }}>
+            <button
               onClick={handleCreateService}
-              fullWidth
-              size="large"
-              variant="primary"
-              icon={<Plus className="h-5 w-5" />}
+              className="host-action-btn"
             >
+              <Plus className="h-5 w-5" />
               Create a Talk
-            </DSButton>
+            </button>
           </div>
 
           {/* Talks List */}
           {loading ? (
             <Loading variant="spinner" size="md" text="Loading Talks..." fullHeight={true} />
           ) : services.length === 0 ? (
-            <div className="py-12 text-center">
-              <Briefcase className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">No Talks yet</p>
-              <p className="text-sm text-gray-400 mt-1">
+            <div className="host-empty-state">
+              <Briefcase className="host-empty-state__icon" />
+              <h3 className="host-empty-state__title">No Talks yet</h3>
+              <p className="host-empty-state__description">
                 Create your first Talk to start accepting bookings
               </p>
             </div>
           ) : (
-            <div className="space-y-8">
+            <div>
               {services.map((service, index) => (
-                <div key={service.id} className={`pb-8 ${index !== services.length - 1 ? 'border-b border-gray-200' : ''} ${service.is_visible === false ? 'opacity-60' : ''}`}>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <H3>{service.title}</H3>
+                <div
+                  key={service.id}
+                  className={`talk-item ${service.is_visible === false ? 'talk-item--hidden' : ''}`}
+                >
+                  <div className="talk-item__content">
+                    <div className="talk-item__info">
+                      <div className="talk-item__header">
+                        <h3 className="talk-item__title">{service.title}</h3>
                         {service.is_visible === false && (
-                          <DSBadge variant="outline">Hidden</DSBadge>
+                          <span className="talk-item__badge">Hidden</span>
                         )}
                       </div>
-                      
-                      <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+
+                      <p className="talk-item__description">
                         {service.description}
                       </p>
 
-                      <div className="flex flex-wrap gap-4 text-sm">
-                        <div className="flex items-center text-gray-500">
-                          <Clock className="w-4 h-4 mr-1" />
+                      <div className="talk-item__meta">
+                        <div className="talk-item__meta-item">
+                          <Clock />
                           {service.duration_minutes} min
                         </div>
-                        <div className="flex items-center text-gray-500">
-                          <DollarSign className="w-4 h-4 mr-1" />
+                        <div className="talk-item__meta-item">
+                          <DollarSign />
                           ${service.price}
                         </div>
-                        <div className="flex items-center text-gray-500">
-                          <MapPin className="w-4 h-4 mr-1" />
+                        <div className="talk-item__meta-item">
+                          <MapPin />
                           {getLocationDisplay(service)}
                         </div>
                         {service.timeSlots && (
-                          <div className="flex items-center text-gray-500">
-                            <Calendar className="w-4 h-4 mr-1" />
+                          <div className="talk-item__meta-item">
+                            <Calendar />
                             {Object.keys(service.timeSlots).length} slots
                           </div>
                         )}
                       </div>
                     </div>
 
-                    <div className="flex items-center space-x-2 ml-4">
-                      <DSButton
-                        variant="tertiary"
-                        size="small"
-                        iconPosition="only"
+                    <div className="talk-item__actions">
+                      <button
+                        className="talk-item__action-btn"
                         onClick={() => handleToggleVisibility(service)}
                         title={service.is_visible !== false ? 'Hide from public view' : 'Show in public view'}
-                        icon={service.is_visible !== false ? (
+                      >
+                        {service.is_visible !== false ? (
                           <Eye className="w-4 h-4" />
                         ) : (
                           <EyeOff className="w-4 h-4" />
                         )}
-                      />
-                      <DSButton
-                        variant="tertiary"
-                        size="small"
-                        iconPosition="only"
+                      </button>
+                      <button
+                        className="talk-item__action-btn"
                         onClick={() => handleEditService(service)}
-                        icon={<Edit2 className="w-4 h-4" />}
-                      />
-                      <DSButton
-                        variant="tertiary"
-                        size="small"
-                        iconPosition="only"
+                        title="Edit Talk"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        className="talk-item__action-btn talk-item__action-btn--delete"
                         onClick={() => setDeletingService(service)}
-                        className="text-red-600 hover:text-red-700"
-                        icon={<Trash2 className="w-4 h-4" />}
-                      />
+                        title="Delete Talk"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -294,73 +294,71 @@ export default function ProviderServices() {
           {/* Right Column - Preview - Desktop Only */}
           <div className="w-[400px] flex-shrink-0">
             <div className="fixed w-[400px] h-screen">
-              <div className="h-full bg-white border-l border-gray-200 rounded-lg overflow-y-auto">
-                <div className="py-8 px-6">
-              <div className="mb-8">
-                <H2 className="mb-2">Talks Preview</H2>
-                <p className="text-sm text-gray-600">This is how your Talks appear to visitors</p>
-              </div>
+              <div className="host-preview h-full overflow-y-auto">
+                <div className="host-preview__content">
+                  <div className="host-preview__header">
+                    <h2 className="host-preview__title">Talks Preview</h2>
+                    <p className="host-preview__subtitle">This is how your Talks appear to visitors</p>
+                  </div>
 
                   {services.filter(service => service.is_visible !== false).length > 0 ? (
                     <div className="space-y-4">
                       {services.filter(service => service.is_visible !== false).map((service) => (
                         <div
                           key={service.id}
-                          className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-all hover:shadow-sm cursor-pointer"
+                          className="preview-talk-card"
                         >
                           {/* Service Header */}
-                          <div className="flex items-start justify-between mb-3">
-                            <H3 className="text-base font-semibold text-gray-900 flex-1">
+                          <div className="preview-talk-card__header">
+                            <h3 className="preview-talk-card__title">
                               {service.title}
-                            </H3>
-                            <div className="text-right ml-4">
-                              <div className="text-lg font-semibold text-gray-900">${service.price}</div>
-                              <div className="text-xs text-gray-500">{service.duration_minutes} min</div>
+                            </h3>
+                            <div className="preview-talk-card__price-wrapper">
+                              <div className="preview-talk-card__price">${service.price}</div>
+                              <div className="preview-talk-card__duration">{service.duration_minutes} min</div>
                             </div>
                           </div>
 
                           {/* Service Description */}
-                          <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+                          <p className="preview-talk-card__description">
                             {service.description || service.short_description}
                           </p>
 
                           {/* Service Metadata */}
-                          <div className="flex items-center gap-3 text-xs">
-                            <div className="flex items-center gap-1 text-gray-500">
-                              {getLocationIcon(service.is_online, !!service.location)}
-                              <span>{getLocationText(service.is_online, !!service.location)}</span>
-                            </div>
+                          <div className="preview-talk-card__meta">
+                            {getLocationIcon(service.is_online, !!service.location)}
+                            <span>{getLocationText(service.is_online, !!service.location)}</span>
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <Briefcase className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-                      <p className="font-medium mb-1">No Talks to preview</p>
-                      <p className="text-xs">Create your first Talk to see how it will appear to visitors</p>
+                    <div className="host-empty-state">
+                      <Briefcase className="host-empty-state__icon" />
+                      <h3 className="host-empty-state__title">No Talks to preview</h3>
+                      <p className="host-empty-state__description">Create your first Talk to see how it will appear to visitors</p>
                     </div>
                   )}
 
                   {/* Talk Tips */}
-                  <div className="mt-8 pt-8 border-t border-gray-200">
-                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Tips for Great Talks</h3>
-                    <div className="space-y-2">
-                      <div className="flex items-start gap-2">
-                        <div className="w-1 h-1 rounded-full bg-gray-400 mt-1.5 flex-shrink-0" />
-                        <p className="text-xs text-gray-600">Use clear, descriptive titles that visitors can easily understand</p>
+                  <div className="host-tips">
+                    <h3 className="host-tips__title">Tips for Great Talks</h3>
+                    <div className="host-tips__list">
+                      <div className="host-tips__item">
+                        <div className="host-tips__bullet" />
+                        <p className="host-tips__text">Use clear, descriptive titles that visitors can easily understand</p>
                       </div>
-                      <div className="flex items-start gap-2">
-                        <div className="w-1 h-1 rounded-full bg-gray-400 mt-1.5 flex-shrink-0" />
-                        <p className="text-xs text-gray-600">Set competitive prices based on your expertise and market rates</p>
+                      <div className="host-tips__item">
+                        <div className="host-tips__bullet" />
+                        <p className="host-tips__text">Set competitive prices based on your expertise and market rates</p>
                       </div>
-                      <div className="flex items-start gap-2">
-                        <div className="w-1 h-1 rounded-full bg-gray-400 mt-1.5 flex-shrink-0" />
-                        <p className="text-xs text-gray-600">Include all important details in your Talk description</p>
+                      <div className="host-tips__item">
+                        <div className="host-tips__bullet" />
+                        <p className="host-tips__text">Include all important details in your Talk description</p>
                       </div>
-                      <div className="flex items-start gap-2">
-                        <div className="w-1 h-1 rounded-full bg-gray-400 mt-1.5 flex-shrink-0" />
-                        <p className="text-xs text-gray-600">Keep Talks visible to appear in search results</p>
+                      <div className="host-tips__item">
+                        <div className="host-tips__bullet" />
+                        <p className="host-tips__text">Keep Talks visible to appear in search results</p>
                       </div>
                     </div>
                   </div>

@@ -211,6 +211,7 @@
 
 .pp-bio p {
   margin: 0 0 1em;
+  color: inherit;
 }
 
 .pp-bio p:last-child {

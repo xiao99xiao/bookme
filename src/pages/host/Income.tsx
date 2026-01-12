@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { ApiClient } from '@/lib/api-migration'
 import { useAuth } from '@/contexts/PrivyAuthContext'
 import { CSVLink } from 'react-csv'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Download, DollarSign, TrendingUp, Calendar, User } from 'lucide-react'
 import { format } from 'date-fns'
-import { toast } from 'sonner'
 import { t } from '@/lib/i18n'
+import { useSetPageTitle } from '@/contexts/PageTitleContext'
+import { Button } from '@/design-system'
+import './styles/host-dashboard.css'
 
 interface Transaction {
   id: string
@@ -45,6 +46,9 @@ interface IncomeSummary {
 }
 
 export default function Income() {
+  // Set page title for AppHeader
+  useSetPageTitle(t.pages.earnings.title, 'Track your earnings and transactions')
+
   const navigate = useNavigate()
   const { user, loading: authLoading } = useAuth()
   const [transactions, setTransactions] = useState<Transaction[]>([])
@@ -102,29 +106,28 @@ export default function Income() {
 
   if (authLoading || loading) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-          <div className="space-y-4">
-            <div className="h-24 bg-gray-200 rounded"></div>
-            <div className="h-64 bg-gray-200 rounded"></div>
-          </div>
+      <div className="income-loading">
+        <div className="income-loading__header" />
+        <div className="income-loading__cards">
+          <div className="income-loading__card" />
+          <div className="income-loading__card" />
+          <div className="income-loading__card" />
+          <div className="income-loading__card" />
         </div>
+        <div className="income-loading__table" />
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="container mx-auto p-6">
-        <Card className="border-red-200">
-          <CardContent className="pt-6">
-            <p className="text-red-600">Error: {error}</p>
-            <Button onClick={loadIncomeData} className="mt-4">
-              Retry
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="income-container">
+        <div className="income-card" style={{ borderColor: 'rgba(239, 68, 68, 0.3)' }}>
+          <p style={{ color: '#dc2626', marginBottom: '16px' }}>Error: {error}</p>
+          <Button onClick={loadIncomeData} variant="secondary">
+            Retry
+          </Button>
+        </div>
       </div>
     )
   }
@@ -140,171 +143,150 @@ export default function Income() {
   ]
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">{t.pages.earnings.title}</h1>
+    <div className="income-container">
+      {/* Header */}
+      <div className="income-header">
+        <h1 className="income-header__title">{t.pages.earnings.title}</h1>
         <CSVLink
           data={csvData}
           headers={csvHeaders}
           filename={`income-${format(new Date(), 'yyyy-MM-dd')}.csv`}
-          className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+          className="income-header__export"
         >
-          <Download className="w-4 h-4 mr-2" />
+          <Download />
           Export CSV
         </CSVLink>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <Card>
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Earnings</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              ${summary?.totalIncome?.toFixed(2) || '0.00'}
-            </div>
-          </CardContent>
-        </Card>
+      <div className="income-summary">
+        <div className="income-card">
+          <div className="income-card__header">
+            <p className="income-card__label">Total Earnings</p>
+            <DollarSign className="income-card__icon" />
+          </div>
+          <p className="income-card__value income-card__value--highlight">
+            ${summary?.totalIncome?.toFixed(2) || '0.00'}
+          </p>
+        </div>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Transactions</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {summary?.transactionCount || 0}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="income-card">
+          <div className="income-card__header">
+            <p className="income-card__label">Total Transactions</p>
+            <TrendingUp className="income-card__icon" />
+          </div>
+          <p className="income-card__value">
+            {summary?.transactionCount || 0}
+          </p>
+        </div>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Average Transaction</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              ${summary?.averageTransactionValue?.toFixed(2) || '0.00'}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="income-card">
+          <div className="income-card__header">
+            <p className="income-card__label">Average Transaction</p>
+            <Calendar className="income-card__icon" />
+          </div>
+          <p className="income-card__value">
+            ${summary?.averageTransactionValue?.toFixed(2) || '0.00'}
+          </p>
+        </div>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-muted-foreground">This Month</CardTitle>
-              <User className="h-4 w-4 text-muted-foreground" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              ${summary?.thisMonthIncome?.toFixed(2) || '0.00'}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="income-card">
+          <div className="income-card__header">
+            <p className="income-card__label">This Month</p>
+            <User className="income-card__icon" />
+          </div>
+          <p className="income-card__value income-card__value--highlight">
+            ${summary?.thisMonthIncome?.toFixed(2) || '0.00'}
+          </p>
+        </div>
       </div>
 
       {/* Transactions Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Transaction History</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b bg-gray-50">
-                  <th className="text-left p-4 font-medium">Date</th>
-                  <th className="text-left p-4 font-medium">Type</th>
-                  <th className="text-left p-4 font-medium">Talk</th>
-                  <th className="text-left p-4 font-medium">Visitor</th>
-                  <th className="text-left p-4 font-medium">Location</th>
-                  <th className="text-right p-4 font-medium">Amount</th>
+      <div className="income-table-container">
+        <div className="income-table-header">
+          <h2 className="income-table-title">Transaction History</h2>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="income-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Talk</th>
+                <th>Visitor</th>
+                <th>Location</th>
+                <th>Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {transactions.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="income-table__empty">
+                    No transactions found
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {transactions.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="text-center p-8 text-gray-500">
-                      No transactions found
+              ) : (
+                transactions.map((transaction) => (
+                  <tr key={transaction.id}>
+                    <td>
+                      <div className="income-table__date">
+                        {format(new Date(transaction.created_at), 'MMM dd, yyyy')}
+                      </div>
+                      <div className="income-table__time">
+                        {format(new Date(transaction.created_at), 'HH:mm')}
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`income-table__type-badge ${
+                        transaction.type === 'inviter_fee'
+                          ? 'income-table__type-badge--referral'
+                          : 'income-table__type-badge--talk'
+                      }`}>
+                        {transaction.type === 'inviter_fee' ? t.pages.earnings.referralFee : t.talk.singular}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="income-table__talk-name">
+                        {transaction.service?.title || 'N/A'}
+                      </div>
+                      {transaction.booking && (
+                        <div className="income-table__talk-duration">
+                          {transaction.booking.duration_minutes} minutes
+                        </div>
+                      )}
+                    </td>
+                    <td>
+                      <div className="income-table__visitor">
+                        {transaction.source_user?.display_name || 'Unknown'}
+                      </div>
+                      {transaction.source_user?.username && (
+                        <div className="income-table__visitor-username">
+                          @{transaction.source_user.username}
+                        </div>
+                      )}
+                    </td>
+                    <td>
+                      {transaction.booking?.is_online ? (
+                        <span className="income-table__location--online">Online</span>
+                      ) : (
+                        <span>{transaction.booking?.location || 'N/A'}</span>
+                      )}
+                    </td>
+                    <td>
+                      <div className="income-table__amount">
+                        +${transaction.amount.toFixed(2)}
+                      </div>
+                      <div className="income-table__amount-label">
+                        {transaction.type === 'inviter_fee' ? t.pages.earnings.referralBonus : t.pages.earnings.hostEarnings}
+                      </div>
                     </td>
                   </tr>
-                ) : (
-                  transactions.map((transaction) => (
-                    <tr key={transaction.id} className="border-b hover:bg-gray-50">
-                      <td className="p-4">
-                        <div className="text-sm">
-                          {format(new Date(transaction.created_at), 'MMM dd, yyyy')}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {format(new Date(transaction.created_at), 'HH:mm')}
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <div className="flex items-center">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            transaction.type === 'inviter_fee'
-                              ? 'bg-purple-100 text-purple-800'
-                              : 'bg-blue-100 text-blue-800'
-                          }`}>
-                            {transaction.type === 'inviter_fee' ? t.pages.earnings.referralFee : t.talk.singular}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <div className="text-sm font-medium">
-                          {transaction.service?.title || 'N/A'}
-                        </div>
-                        {transaction.booking && (
-                          <div className="text-xs text-gray-500">
-                            {transaction.booking.duration_minutes} minutes
-                          </div>
-                        )}
-                      </td>
-                      <td className="p-4">
-                        <div className="text-sm">
-                          {transaction.source_user?.display_name || 'Unknown'}
-                        </div>
-                        {transaction.source_user?.username && (
-                          <div className="text-xs text-gray-500">
-                            @{transaction.source_user.username}
-                          </div>
-                        )}
-                      </td>
-                      <td className="p-4">
-                        <div className="text-sm">
-                          {transaction.booking?.is_online ? (
-                            <span className="text-blue-600">Online</span>
-                          ) : (
-                            <span>{transaction.booking?.location || 'N/A'}</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="p-4 text-right">
-                        <div className="text-sm font-semibold text-green-600">
-                          +${transaction.amount.toFixed(2)}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {transaction.type === 'inviter_fee' ? t.pages.earnings.referralBonus : t.pages.earnings.hostEarnings}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   )
 }

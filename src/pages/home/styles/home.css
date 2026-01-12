@@ -96,12 +96,19 @@
   background: var(--pp-card-background);
   border: var(--pp-border-width) solid var(--pp-card-border);
   border-radius: var(--pp-card-radius);
-  transition: all 0.2s ease;
+  transition:
+    transform var(--duration-normal) var(--timing-spring),
+    box-shadow var(--duration-normal) var(--timing-ease-out),
+    background var(--duration-fast) ease,
+    border-color var(--duration-fast) ease;
+  cursor: default;
 }
 
 .home-feature-card:hover {
   background: var(--pp-card-hover);
   border-color: var(--pp-accent-light);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .home-feature-icon {
@@ -204,12 +211,18 @@
   border: var(--pp-border-width) solid var(--pp-card-border);
   border-radius: var(--pp-card-radius);
   text-decoration: none;
-  transition: all 0.2s ease;
+  transition:
+    transform var(--duration-normal) var(--timing-spring),
+    box-shadow var(--duration-normal) var(--timing-ease-out),
+    background var(--duration-fast) ease,
+    border-color var(--duration-fast) ease;
 }
 
 .home-contact-link:hover {
   background: var(--pp-card-hover);
   border-color: var(--pp-accent);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .home-contact-icon {

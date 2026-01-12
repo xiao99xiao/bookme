@@ -1,17 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageSquare, Search, Users } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { MessageSquare, Search } from 'lucide-react';
 import { Input } from '@/design-system/components/Input';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient } from '@/lib/api-migration';
 import ConversationList, { ConversationItem } from '@/components/ConversationList';
 import MessageThread from '@/components/MessageThread';
 import { toast } from 'sonner';
-import PageLayout from '@/components/PageLayout';
-import { H1, H2, H3, Text, Description, Loading } from '@/design-system';
+import { H1, H3, Text, Description, Loading } from '@/design-system';
 import { t } from '@/lib/i18n';
 import { useSetPageTitle } from '@/contexts/PageTitleContext';
+import './styles/host-dashboard.css';
 
 export default function ProviderMessages() {
   // Set page title for AppHeader (desktop only)
@@ -114,98 +113,91 @@ export default function ProviderMessages() {
 
   return (
     <>
-      {/* Desktop Layout - unchanged */}
-      <div className="hidden lg:flex h-[calc(100vh-4rem)] bg-neutral-50 overflow-hidden">
+      {/* Desktop Layout */}
+      <div className="hidden lg:flex messages-container">
         {/* Left Panel - Sidebar */}
-        <div className="bg-neutral-50 flex flex-col gap-6 h-full px-8 py-10 w-64 flex-shrink-0">
-        {/* Title Section */}
-        <div className="flex flex-col gap-0.5 flex-shrink-0">
-          <H1>
-            {t.pages.messages.title}
-          </H1>
-          <Description className="leading-[1.5]">
-            {t.pages.messages.chatWithAll}
-          </Description>
-        </div>
-
-        {/* Search Box */}
-        <div className="relative flex-shrink-0">
-          <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-            <Search className="h-6 w-6 text-[#666666]" />
+        <div className="messages-sidebar">
+          {/* Title Section */}
+          <div className="messages-sidebar__header">
+            <h1 className="messages-sidebar__title">
+              {t.pages.messages.title}
+            </h1>
+            <p className="messages-sidebar__subtitle">
+              {t.pages.messages.chatWithAll}
+            </p>
           </div>
-          <Input
-            type="text"
-            placeholder="Search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-12"
-            fullWidth
-          />
-        </div>
 
-        {/* Conversation List */}
-        <div className="flex-1 overflow-y-auto min-h-0">
-          <ConversationList
-            conversations={conversations}
-            selectedConversationId={selectedConversation?.id}
-            onConversationSelect={handleConversationSelect}
-            loading={loading}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-          />
-        </div>
-      </div>
-
-      {/* Right Panel - Message Thread */}
-      <div className="flex-1 bg-neutral-50 p-10 min-h-0 min-w-0">
-        {selectedConversation ? (
-          <div className="h-full bg-white rounded-[24px] shadow-[0px_12px_16px_-4px_rgba(0,0,0,0.08),0px_4px_6px_-2px_rgba(0,0,0,0.03)] min-h-0">
-            <MessageThread 
-              conversation={selectedConversation}
-              onConversationUpdate={handleConversationUpdate}
-            />
-          </div>
-        ) : (
-          <div className="h-full bg-white rounded-[24px] shadow-[0px_12px_16px_-4px_rgba(0,0,0,0.08),0px_4px_6px_-2px_rgba(0,0,0,0.03)] flex items-center justify-center">
-            <div className="text-center">
-              <MessageSquare className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-              <H3 className="mb-2">Select a conversation</H3>
-              <Text color="secondary">
-                Choose a conversation from the left to start messaging
-              </Text>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-
-    {/* Mobile Layout - List only */}
-    <div className="lg:hidden min-h-screen bg-gray-50 pb-20">
-      <div className="px-4 pt-4 pb-6">
-        {/* Search */}
-        <div className="mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <Input
+          {/* Search Box */}
+          <div className="messages-search">
+            <Search className="messages-search__icon" />
+            <input
               type="text"
               placeholder="Search conversations..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-              fullWidth
+              className="messages-search__input"
+            />
+          </div>
+
+          {/* Conversation List */}
+          <div className="messages-list">
+            <ConversationList
+              conversations={conversations}
+              selectedConversationId={selectedConversation?.id}
+              onConversationSelect={handleConversationSelect}
+              loading={loading}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+            />
+          </div>
+        </div>
+
+        {/* Right Panel - Message Thread */}
+        <div className="messages-thread">
+          {selectedConversation ? (
+            <div className="messages-thread__container">
+              <MessageThread
+                conversation={selectedConversation}
+                onConversationUpdate={handleConversationUpdate}
+              />
+            </div>
+          ) : (
+            <div className="messages-empty">
+              <MessageSquare className="messages-empty__icon" />
+              <h3 className="messages-empty__title">Select a conversation</h3>
+              <p className="messages-empty__description">
+                Choose a conversation from the left to start messaging
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Mobile Layout - List only */}
+      <div className="lg:hidden messages-mobile">
+        {/* Search */}
+        <div className="messages-mobile__search">
+          <div className="messages-search">
+            <Search className="messages-search__icon" />
+            <input
+              type="text"
+              placeholder="Search conversations..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="messages-search__input"
             />
           </div>
         </div>
 
         {/* Conversation List */}
-        <div className="space-y-3">
+        <div className="messages-mobile__list">
           {loading ? (
             <Loading variant="spinner" size="md" text="Loading conversations..." />
           ) : conversations.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-lg">
-              <MessageSquare className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <H3 className="mb-2">No conversations yet</H3>
-              <Text variant="small" color="secondary">Your messages will appear here</Text>
+            <div className="messages-empty" style={{ height: 'auto', marginTop: '48px' }}>
+              <MessageSquare className="messages-empty__icon" />
+              <h3 className="messages-empty__title">No conversations yet</h3>
+              <p className="messages-empty__description">Your messages will appear here</p>
             </div>
           ) : (
             conversations
@@ -222,43 +214,43 @@ export default function ProviderMessages() {
                 <div
                   key={conversation.id}
                   onClick={() => handleConversationSelect(conversation)}
-                  className="bg-white rounded-lg p-4 flex items-center gap-3 cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                  className="conversation-item-mobile"
                 >
                   {/* Avatar */}
-                  <div className="relative flex-shrink-0">
-                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+                  <div className="conversation-item__avatar">
+                    <div className="conversation-item__avatar-img">
                       {conversation.otherUser.avatar ? (
-                        <img 
-                          src={conversation.otherUser.avatar} 
+                        <img
+                          src={conversation.otherUser.avatar}
                           alt={conversation.otherUser.display_name}
-                          className="h-12 w-12 rounded-full object-cover"
+                          className="w-12 h-12 rounded-full object-cover"
                         />
                       ) : (
-                        <span className="text-white font-semibold text-lg">
+                        <span className="conversation-item__avatar-initial">
                           {conversation.otherUser.display_name.charAt(0).toUpperCase()}
                         </span>
                       )}
                     </div>
                     {conversation.unreadCount > 0 && (
-                      <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                      <div className="conversation-item__unread-badge">
                         {conversation.unreadCount}
                       </div>
                     )}
                   </div>
 
                   {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <H3 className="truncate">
+                  <div className="conversation-item__content">
+                    <div className="conversation-item__header">
+                      <span className="conversation-item__name">
                         {conversation.otherUser.display_name}
-                      </H3>
+                      </span>
                       {conversation.lastMessage && (
-                        <span className="text-xs text-gray-500 flex-shrink-0">
+                        <span className="conversation-item__time">
                           {(() => {
                             const date = new Date(conversation.lastMessage.created_at);
                             const now = new Date();
                             const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
-                            
+
                             if (diffInHours < 24) {
                               return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
                             } else if (diffInHours < 48) {
@@ -271,14 +263,14 @@ export default function ProviderMessages() {
                       )}
                     </div>
                     {conversation.booking?.service?.title && (
-                      <Description className="mb-1">
+                      <div className="conversation-item__service">
                         {conversation.booking.service.title}
-                      </Description>
+                      </div>
                     )}
                     {conversation.lastMessage && (
-                      <Text variant="small" className="text-gray-600 line-clamp-1">
+                      <div className="conversation-item__message">
                         {conversation.lastMessage.content}
-                      </Text>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -286,7 +278,6 @@ export default function ProviderMessages() {
           )}
         </div>
       </div>
-    </div>
     </>
   );
 }

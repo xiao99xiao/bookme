@@ -97,6 +97,7 @@ const HomePage = () => {
     <div
       className={`${THEME_CLASS_PREFIX}-container home-page`}
       style={themeToCSSVars(theme)}
+      data-theme-version="2025"
     >
       <div className={`${THEME_CLASS_PREFIX}-layout`}>
         <div className={`${THEME_CLASS_PREFIX}-main`}>

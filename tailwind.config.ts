@@ -78,6 +78,17 @@ export default {
 			},
 			boxShadow: {
 				card: tokens.shadows.card,
+				// 2025 Design System shadows
+				'xs': '0 1px 2px rgba(0, 0, 0, 0.04)',
+				'sm-soft': '0 2px 4px rgba(0, 0, 0, 0.06)',
+				'md-soft': '0 4px 12px rgba(0, 0, 0, 0.08)',
+				'lg-soft': '0 8px 24px rgba(0, 0, 0, 0.12)',
+				'xl-soft': '0 16px 48px rgba(0, 0, 0, 0.16)',
+				'elevated': '0 12px 40px rgba(0, 0, 0, 0.12)',
+				'inset-soft': 'inset 0 2px 4px rgba(0, 0, 0, 0.04)',
+				// Accent glow
+				'accent-glow': '0 0 0 3px rgba(99, 102, 241, 0.15)',
+				'accent-glow-lg': '0 0 0 4px rgba(99, 102, 241, 0.2)',
 				// 2025 Glass shadows
 				'glass': '0 8px 32px rgba(31, 38, 135, 0.15)',
 				'glass-hover': '0 12px 40px rgba(31, 38, 135, 0.2)',
@@ -106,6 +117,11 @@ export default {
 				'spring': 'cubic-bezier(0.34, 1.56, 0.64, 1)',
 				'ease-out-expo': 'cubic-bezier(0.16, 1, 0.3, 1)',
 				'bounce': 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+			},
+			transitionDuration: {
+				'fast': '150ms',
+				'normal': '300ms',
+				'slow': '500ms',
 			},
 			keyframes: {
 				"accordion-down": {

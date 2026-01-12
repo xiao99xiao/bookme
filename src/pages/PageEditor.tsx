@@ -91,6 +91,9 @@ import { APP_NAME } from "@/lib/constants";
 // Import public profile styles for preview
 import "./public-profile/styles/public-profile.css";
 
+// Import page editor styles
+import "./page-editor.css";
+
 // =====================================================
 // Types
 // =====================================================
@@ -837,53 +840,42 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {themes.map((theme) => (
-            <Card
+            <div
               key={theme.id}
-              className={`cursor-pointer transition-all hover:shadow-md overflow-hidden ${
-                state.themeId === theme.id
-                  ? "ring-2 ring-primary shadow-md"
-                  : "hover:border-muted-foreground/30"
+              className={`theme-card ${
+                state.themeId === theme.id ? "theme-card--selected" : ""
               }`}
               onClick={() =>
                 setState((prev) => ({ ...prev, themeId: theme.id }))
               }
             >
-              <CardContent className="p-0">
+              {/* Color Swatches */}
+              <div className="theme-card__colors">
                 <div
-                  className="h-16 flex items-stretch"
-                  style={{ backgroundColor: theme.colors.background }}
-                >
-                  <div
-                    className="w-1/3"
-                    style={{ backgroundColor: theme.colors.accent }}
-                  />
-                  <div
-                    className="w-1/3"
-                    style={{ backgroundColor: theme.colors.cardBackground }}
-                  />
-                  <div
-                    className="w-1/3"
-                    style={{ backgroundColor: theme.colors.textPrimary }}
-                  />
-                </div>
+                  className="theme-card__color-swatch theme-card__color-swatch--primary"
+                  style={{ backgroundColor: theme.colors.accent }}
+                />
+                <div
+                  className="theme-card__color-swatch"
+                  style={{ backgroundColor: theme.colors.textPrimary }}
+                />
+              </div>
 
-                <div className="p-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium text-sm">{theme.name}</h3>
-                      {theme.version === "2025" && (
-                        <span className="text-xs text-primary">2025</span>
-                      )}
-                    </div>
-                    {state.themeId === theme.id && (
-                      <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                        <Check className="w-3 h-3 text-primary-foreground" />
-                      </div>
-                    )}
-                  </div>
+              {/* Theme Info */}
+              <div className="theme-card__header">
+                <div>
+                  <h3 className="theme-card__name">{theme.name}</h3>
+                  {theme.version === "2025" && (
+                    <span className="theme-card__badge">2025</span>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
+                {state.themeId === theme.id && (
+                  <div className="theme-card__check">
+                    <Check className="w-3 h-3" />
+                  </div>
+                )}
+              </div>
+            </div>
           ))}
         </div>
       </div>
@@ -902,38 +894,38 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
         </div>
       )}
 
-      <div className="space-y-4">
+      <div>
         {state.buttons.map((button, index) => {
           const IconComponent = getButtonIconComponent(button.icon);
+          const iconClass = `link-card__icon link-card__icon--${button.icon}`;
           return (
             <div
               key={index}
-              className="p-4 border rounded-lg bg-muted/30"
+              className="link-card"
             >
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-background border flex items-center justify-center">
-                  <IconComponent className="w-5 h-5 text-muted-foreground" />
+              <div className="link-card__header">
+                <div className="link-card__title">
+                  <div className={iconClass}>
+                    <IconComponent className="w-5 h-5" />
+                  </div>
+                  <span className="link-card__number">Link {index + 1}</span>
                 </div>
-                <div className="flex-1">
-                  <Label className="text-sm font-medium">Link {index + 1}</Label>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
+                <button
+                  type="button"
                   onClick={() => handleRemoveButton(index)}
-                  className="text-destructive hover:text-destructive"
+                  className="link-card__delete"
+                  aria-label="Delete link"
                 >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                  <Trash2 />
+                </button>
               </div>
 
-              <div className="space-y-3">
-                <div>
-                  <Label className="text-xs text-muted-foreground mb-1 block">Platform</Label>
+              <div className="link-card__fields">
+                <div className="link-card__field">
+                  <Label className="link-card__label">Platform</Label>
                   <select
                     value={button.icon}
                     onChange={(e) => handleUpdateButton(index, "icon", e.target.value)}
-                    className="w-full h-10 px-3 border rounded-md bg-background"
                   >
                     {AVAILABLE_ICONS.map((icon) => (
                       <option key={icon.value} value={icon.value}>
@@ -943,8 +935,8 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
                   </select>
                 </div>
 
-                <div>
-                  <Label className="text-xs text-muted-foreground mb-1 block">Button Text</Label>
+                <div className="link-card__field">
+                  <Label className="link-card__label">Button Text</Label>
                   <Input
                     value={button.label}
                     onChange={(e) =>
@@ -954,8 +946,8 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
                   />
                 </div>
 
-                <div>
-                  <Label className="text-xs text-muted-foreground mb-1 block">URL</Label>
+                <div className="link-card__field">
+                  <Label className="link-card__label">URL</Label>
                   <Input
                     value={button.url}
                     onChange={(e) =>
@@ -970,14 +962,14 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
         })}
 
         {state.buttons.length < 6 && (
-          <Button
-            variant="outline"
+          <button
+            type="button"
             onClick={handleAddButton}
-            className="w-full"
+            className="add-link-btn"
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus />
             Add Link
-          </Button>
+          </button>
         )}
 
         {state.buttons.length === 0 && (
@@ -1150,17 +1142,19 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
             </div>
           </div>
 
-          <div className="p-4 bg-muted/50 rounded-lg">
-            <div className="flex items-center gap-2 text-sm">
-              <Video className="h-4 w-4 text-muted-foreground" />
-              <span>
+          <div className="meeting-notice">
+            <div className="meeting-notice__icon">
+              <Video />
+            </div>
+            <div className="meeting-notice__text">
+              <span className="meeting-notice__title">
                 Sessions will be held via Google Meet
-                {!hasGoogleMeet && (
-                  <span className="text-amber-600 ml-1">
-                    (You'll need to connect Google Meet in Settings)
-                  </span>
-                )}
               </span>
+              {!hasGoogleMeet && (
+                <span className="meeting-notice__subtitle">
+                  You'll need to connect Google Meet in Settings
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -1178,59 +1172,69 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
         </p>
       </div>
 
-      <div className="border rounded-lg p-4 bg-muted/20">
-        <TimeSlotSelector
-          value={state.timeSlots}
-          onChange={(slots) =>
-            setState((prev) => ({ ...prev, timeSlots: slots }))
-          }
-        />
+      <div className="availability-container">
+        <div className="availability-header">
+          <span className="availability-header__title">
+            <Clock className="h-4 w-4" />
+            Weekly Schedule
+          </span>
+          <div className="availability-stats">
+            <span className="availability-stats__item">
+              <span className="availability-stats__count">
+                {Object.keys(state.timeSlots).length}
+              </span>
+              slots selected
+            </span>
+          </div>
+        </div>
+        <div className="availability-body">
+          <TimeSlotSelector
+            value={state.timeSlots}
+            onChange={(slots) =>
+              setState((prev) => ({ ...prev, timeSlots: slots }))
+            }
+          />
+        </div>
       </div>
-
-      <p className="text-sm text-muted-foreground">
-        {Object.keys(state.timeSlots).length} time slots selected
-      </p>
     </div>
   );
 
   const renderTemplateSection = () => (
-    <div className="space-y-6">
-      <div>
-        <H2 className="mb-2">Choose a template to get started</H2>
-        <p className="text-muted-foreground">
+    <div className="space-y-8">
+      <div className="page-editor-section-header">
+        <h2 className="page-editor-section-title">Choose a template to get started</h2>
+        <p className="page-editor-section-description">
           Pick a starting point that matches your style. You can customize
           everything later.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {ONBOARDING_TEMPLATES.map((template) => (
+      <div className="template-grid">
+        {ONBOARDING_TEMPLATES.map((template, index) => (
           <div
             key={template.id}
-            className={`cursor-pointer transition-all hover:shadow-md rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden ${
-              state.templateId === template.id
-                ? "ring-2 ring-primary shadow-md"
-                : "hover:border-muted-foreground/30"
+            className={`template-card fade-in stagger-${index + 1} ${
+              state.templateId === template.id ? "template-card--selected" : ""
             }`}
             onClick={() => handleTemplateSelect(template.id)}
           >
             <div
-              className="h-24 flex items-center justify-center text-4xl"
+              className="template-card__preview"
               style={{ background: template.previewGradient }}
             >
               {template.emoji}
             </div>
 
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-semibold text-lg">{template.name}</h3>
+            <div className="template-card__content">
+              <div className="template-card__header">
+                <h3 className="template-card__title">{template.name}</h3>
                 {state.templateId === template.id && (
-                  <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-                    <Check className="w-4 h-4 text-primary-foreground" />
+                  <div className="template-card__check">
+                    <Check className="w-3.5 h-3.5" />
                   </div>
                 )}
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="template-card__description">
                 {template.description}
               </p>
             </div>
@@ -1395,27 +1399,35 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
     };
 
     return (
-      <div className="min-h-screen flex">
+      <div className="page-editor min-h-screen flex">
         {/* Left Panel - Steps */}
-        <div className="flex-1 flex flex-col max-w-2xl border-r">
+        <div className="flex-1 flex flex-col max-w-2xl border-r border-black/5">
           {/* Header */}
-          <div className="p-6 border-b">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-sm text-muted-foreground">
+          <div className="page-editor-header">
+            <div className="page-editor-header-top">
+              <span className="page-editor-title">
                 Setting up your page
               </span>
-              <span className="text-sm text-muted-foreground">
+              <span className="page-editor-step">
                 Step {currentStepIndex + 1} of {ONBOARDING_STEPS.length}
               </span>
             </div>
-            <Progress value={progress} className="h-1.5" />
+
+            {/* Enhanced Progress Bar */}
+            <div className="page-editor-progress">
+              <div
+                className="page-editor-progress-bar"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
 
             {/* Step indicators */}
-            <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
+            <div className="page-editor-steps">
               {ONBOARDING_STEPS.map((step, index) => {
                 const StepIcon = step.icon;
                 const isCompleted = index < currentStepIndex;
                 const isCurrent = index === currentStepIndex;
+                const isDisabled = index > currentStepIndex;
 
                 return (
                   <button
@@ -1423,19 +1435,21 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
                     onClick={() =>
                       index <= currentStepIndex && setCurrentStepIndex(index)
                     }
-                    className={`flex items-center gap-2 px-3 py-2 rounded-full text-sm whitespace-nowrap transition-colors ${
+                    className={`page-editor-step-tab ${
                       isCurrent
-                        ? "bg-primary text-primary-foreground"
+                        ? "page-editor-step-tab--active"
                         : isCompleted
-                        ? "bg-primary/10 text-primary cursor-pointer hover:bg-primary/20"
-                        : "bg-muted text-muted-foreground"
+                        ? "page-editor-step-tab--completed"
+                        : "page-editor-step-tab--disabled"
                     }`}
-                    disabled={index > currentStepIndex}
+                    disabled={isDisabled}
                   >
                     {isCompleted ? (
-                      <Check className="w-4 h-4" />
+                      <div className="page-editor-step-tab__check">
+                        <Check className="w-3 h-3" />
+                      </div>
                     ) : (
-                      <StepIcon className="w-4 h-4" />
+                      <StepIcon className="page-editor-step-tab__icon" />
                     )}
                     <span className="hidden sm:inline">{step.title}</span>
                   </button>
@@ -1445,18 +1459,18 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-auto p-6">{renderCurrentStep()}</div>
+          <div className="page-editor-content">{renderCurrentStep()}</div>
 
           {/* Navigation */}
-          <div className="p-6 border-t flex items-center justify-between">
-            <Button
-              variant="ghost"
+          <div className="page-editor-footer">
+            <button
+              className="page-editor-footer__back"
               onClick={handleBack}
               disabled={currentStepIndex === 0}
             >
-              <ChevronLeft className="w-4 h-4 mr-2" />
+              <ChevronLeft className="w-4 h-4" />
               Back
-            </Button>
+            </button>
 
             <div className="flex items-center gap-3">
               {!canProceed() && currentStep?.id === "profile" && (
@@ -1465,41 +1479,46 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
                 </span>
               )}
               {currentStepIndex < ONBOARDING_STEPS.length - 1 ? (
-                <Button onClick={handleNext} disabled={!canProceed()}>
+                <button
+                  className="page-editor-footer__next"
+                  onClick={handleNext}
+                  disabled={!canProceed()}
+                >
                   Next
-                  <ChevronRight className="w-4 h-4 ml-2" />
-                </Button>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
               ) : (
-                <Button
+                <button
+                  className="page-editor-footer__next page-editor-footer__next--primary"
                   onClick={handleFinishOnboarding}
                   disabled={!canProceed() || isSubmitting}
                 >
                   {isSubmitting ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <Loader2 className="w-4 h-4 animate-spin" />
                       Setting up...
                     </>
                   ) : (
                     <>
                       Finish Setup
-                      <Check className="w-4 h-4 ml-2" />
+                      <Check className="w-4 h-4" />
                     </>
                   )}
-                </Button>
+                </button>
               )}
             </div>
           </div>
         </div>
 
         {/* Right Panel - Live Preview */}
-        <div className="hidden lg:flex flex-1 flex-col bg-muted/30">
-          <div className="p-4 border-b bg-background">
-            <h3 className="font-medium text-sm text-muted-foreground">
+        <div className="live-preview-panel hidden lg:flex flex-1 flex-col">
+          <div className="live-preview-header">
+            <h3 className="live-preview-title">
               Live Preview
             </h3>
           </div>
-          <div className="flex-1 p-4 overflow-hidden">
-            <div className="h-full rounded-lg border shadow-sm overflow-hidden bg-background">
+          <div className="live-preview-body">
+            <div className="live-preview-frame">
               {renderPreview()}
             </div>
           </div>

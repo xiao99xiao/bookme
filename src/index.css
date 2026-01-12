@@ -83,6 +83,63 @@ All colors MUST be HSL.
     --duration-fast: 0.15s;
     --duration-normal: 0.3s;
     --duration-slow: 0.5s;
+
+    /* 2025 Design System - Global Accent Colors */
+    --accent-primary: #6366f1;
+    --accent-secondary: #8b5cf6;
+    --accent-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    --accent-light: rgba(99, 102, 241, 0.1);
+    --accent-medium: rgba(99, 102, 241, 0.15);
+    --accent-glow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+
+    /* 2025 Design System - Shadows */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.16);
+    --shadow-elevated: 0 12px 40px rgba(0, 0, 0, 0.12);
+    --shadow-inset: inset 0 2px 4px rgba(0, 0, 0, 0.04);
+
+    /* 2025 Design System - Borders */
+    --border-subtle: rgba(0, 0, 0, 0.06);
+    --border-medium: rgba(0, 0, 0, 0.1);
+    --border-strong: rgba(0, 0, 0, 0.15);
+
+    /* 2025 Design System - Border Radius */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    --radius-2xl: 24px;
+    --radius-full: 9999px;
+
+    /* 2025 Design System - Background Colors */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f9fafb;
+    --bg-tertiary: #f3f4f6;
+    --bg-elevated: #ffffff;
+
+    /* 2025 Design System - Text Colors (hex for direct usage) */
+    --color-text-primary: #111827;
+    --color-text-secondary: #6b7280;
+    --color-text-tertiary: #9ca3af;
+    --color-text-muted: #d1d5db;
+
+    /* 2025 Design System - Status Colors */
+    --color-success: #10b981;
+    --color-success-light: rgba(16, 185, 129, 0.1);
+    --color-warning: #f59e0b;
+    --color-warning-light: rgba(245, 158, 11, 0.1);
+    --color-error: #ef4444;
+    --color-error-light: rgba(239, 68, 68, 0.1);
+    --color-info: #3b82f6;
+    --color-info-light: rgba(59, 130, 246, 0.1);
+
+    /* 2025 Design System - Card Shadows (elevated surfaces) */
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+    --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+    --shadow-modal: 0 20px 40px rgba(0, 0, 0, 0.15), 0 8px 16px rgba(0, 0, 0, 0.1);
   }
 
   /* Dark mode not implemented in Figma design - keeping light theme for now */
@@ -396,7 +453,12 @@ All colors MUST be HSL.
     .spring-hover,
     .lift-hover,
     .stagger-item,
-    .press-feedback {
+    .press-feedback,
+    .interactive-card,
+    .btn-primary,
+    .btn-secondary,
+    .progress-bar,
+    .nav-pill {
       animation: none;
       transition: none;
     }
@@ -406,4 +468,438 @@ All colors MUST be HSL.
       transform: none;
     }
   }
+}
+
+/* =====================================================
+   2025 Global Component Styles
+   ===================================================== */
+
+@layer components {
+  /* ===========================================
+     Interactive Card Component
+     - Use for clickable cards throughout the app
+     =========================================== */
+  .interactive-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-subtle);
+    box-shadow: var(--shadow-xs);
+    transition:
+      transform var(--duration-normal) var(--timing-spring),
+      box-shadow var(--duration-normal) var(--timing-ease-out),
+      border-color var(--duration-fast) ease;
+    cursor: pointer;
+    will-change: transform;
+  }
+
+  .interactive-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--border-medium);
+  }
+
+  .interactive-card:active {
+    transform: translateY(0) scale(0.99);
+    transition-duration: var(--duration-fast);
+  }
+
+  .interactive-card--selected {
+    border-color: var(--accent-primary);
+    box-shadow: var(--shadow-md), var(--accent-glow);
+  }
+
+  .interactive-card--selected:hover {
+    box-shadow: var(--shadow-lg), 0 0 0 3px rgba(99, 102, 241, 0.2);
+  }
+
+  /* ===========================================
+     Primary Button Component
+     =========================================== */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    color: white;
+    background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--duration-normal) var(--timing-spring);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .btn-primary:active:not(:disabled) {
+    transform: translateY(0);
+    transition-duration: var(--duration-fast);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-primary--accent {
+    background: var(--accent-gradient);
+  }
+
+  .btn-primary svg {
+    transition: transform 0.2s ease;
+  }
+
+  .btn-primary:hover:not(:disabled) svg {
+    transform: translateX(2px);
+  }
+
+  /* ===========================================
+     Secondary/Ghost Button Component
+     =========================================== */
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #6b7280;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--duration-fast) ease;
+  }
+
+  .btn-secondary:hover:not(:disabled) {
+    background: #f3f4f6;
+    color: #374151;
+  }
+
+  .btn-secondary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .btn-secondary svg {
+    transition: transform 0.2s ease;
+  }
+
+  .btn-secondary--back:hover:not(:disabled) svg {
+    transform: translateX(-2px);
+  }
+
+  /* ===========================================
+     Progress Bar Component
+     =========================================== */
+  .progress-bar {
+    height: 6px;
+    background: #e5e7eb;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .progress-bar__fill {
+    height: 100%;
+    background: var(--accent-gradient);
+    border-radius: 3px;
+    transition: width 0.4s var(--timing-spring);
+    position: relative;
+  }
+
+  .progress-bar__fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.3) 50%,
+      transparent 100%
+    );
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  /* ===========================================
+     Navigation Pills Component
+     =========================================== */
+  .nav-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: var(--radius-2xl);
+    transition: all var(--duration-normal) ease;
+    border: 1px solid transparent;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .nav-pill--inactive {
+    background: #f9fafb;
+    color: #9ca3af;
+    cursor: not-allowed;
+  }
+
+  .nav-pill--completed {
+    background: var(--accent-light);
+    color: var(--accent-primary);
+    border-color: rgba(99, 102, 241, 0.2);
+  }
+
+  .nav-pill--completed:hover {
+    background: var(--accent-medium);
+    transform: translateY(-1px);
+  }
+
+  .nav-pill--active {
+    background: var(--accent-primary);
+    color: white;
+    box-shadow: var(--shadow-md), var(--accent-glow);
+    transform: scale(1.02);
+  }
+
+  /* ===========================================
+     Section Header Component
+     =========================================== */
+  .section-header {
+    margin-bottom: 24px;
+  }
+
+  .section-header__title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 8px;
+    letter-spacing: -0.02em;
+  }
+
+  .section-header__description {
+    font-size: 15px;
+    color: #6b7280;
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  /* ===========================================
+     Status Indicator Component
+     =========================================== */
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  .status-dot--live {
+    background: #10b981;
+    animation: pulse-dot 2s infinite;
+  }
+
+  .status-dot--warning {
+    background: #f59e0b;
+    animation: pulse-dot 2s infinite;
+  }
+
+  .status-dot--error {
+    background: #ef4444;
+    animation: pulse-dot 2s infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.6;
+      transform: scale(0.9);
+    }
+  }
+
+  /* ===========================================
+     Badge Component
+     =========================================== */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 20px;
+  }
+
+  .badge--primary {
+    background: var(--accent-light);
+    color: var(--accent-primary);
+  }
+
+  .badge--secondary {
+    background: #f3f4f6;
+    color: #374151;
+  }
+
+  .badge--success {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+  }
+
+  .badge--warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+  }
+
+  .badge--error {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+  }
+
+  /* ===========================================
+     Form Input Focus States
+     =========================================== */
+  .input-focus {
+    transition: all var(--duration-fast) ease;
+  }
+
+  .input-focus:focus {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    outline: none;
+  }
+
+  /* ===========================================
+     Enhanced Focus Visible States (Accessibility)
+     =========================================== */
+  .focus-ring:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+  }
+
+  /* ===========================================
+     Panel/Card Background Variants
+     =========================================== */
+  .panel-gradient {
+    background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
+  }
+
+  .panel-gradient-reverse {
+    background: linear-gradient(180deg, #fafbfc 0%, #ffffff 100%);
+  }
+
+  .panel-subtle {
+    background: #f8fafc;
+  }
+
+  /* ===========================================
+     Custom Scrollbar Styling
+     =========================================== */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #d1d5db transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 3px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+  }
+
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hidden {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .scrollbar-hidden::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* =====================================================
+   Animation Utilities - Entrance Animations
+   ===================================================== */
+
+@layer utilities {
+  .animate-scale-in {
+    animation: scale-in-util 0.3s var(--timing-spring) forwards;
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.4s var(--timing-ease-out) forwards;
+  }
+
+  .animate-slide-down {
+    animation: slide-down 0.4s var(--timing-ease-out) forwards;
+  }
+
+  /* Animation keyframes */
+  @keyframes scale-in-util {
+    from {
+      transform: scale(0.95);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slide-up {
+    from {
+      transform: translateY(16px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slide-down {
+    from {
+      transform: translateY(-16px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  /* Stagger delay utilities for lists */
+  .delay-75 { animation-delay: 75ms; }
+  .delay-100 { animation-delay: 100ms; }
+  .delay-150 { animation-delay: 150ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-250 { animation-delay: 250ms; }
+  .delay-300 { animation-delay: 300ms; }
 }
