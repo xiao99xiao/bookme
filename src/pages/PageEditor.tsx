@@ -894,56 +894,78 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
         <div>
           <H2 className="mb-2">{isOnboarding ? "Add your links" : "Links"}</H2>
           <p className="text-muted-foreground">
-            Help visitors find you on social media and other platforms.
+            Add buttons to your profile page that link to your social media, website, or other platforms.
+            {isOnboarding && " You can skip this step and add links later."}
           </p>
         </div>
       )}
 
       <div className="space-y-4">
-        {state.buttons.map((button, index) => (
-          <div
-            key={index}
-            className="flex items-start gap-3 p-4 border rounded-lg bg-muted/30"
-          >
-            <select
-              value={button.icon}
-              onChange={(e) => handleUpdateButton(index, "icon", e.target.value)}
-              className="h-10 px-3 border rounded-md bg-background"
+        {state.buttons.map((button, index) => {
+          const IconComponent = getButtonIconComponent(button.icon);
+          return (
+            <div
+              key={index}
+              className="p-4 border rounded-lg bg-muted/30"
             >
-              {AVAILABLE_ICONS.map((icon) => (
-                <option key={icon.value} value={icon.value}>
-                  {icon.label}
-                </option>
-              ))}
-            </select>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-background border flex items-center justify-center">
+                  <IconComponent className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <div className="flex-1">
+                  <Label className="text-sm font-medium">Link {index + 1}</Label>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleRemoveButton(index)}
+                  className="text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
 
-            <div className="flex-1 space-y-2">
-              <Input
-                value={button.label}
-                onChange={(e) =>
-                  handleUpdateButton(index, "label", e.target.value)
-                }
-                placeholder="Button label"
-              />
-              <Input
-                value={button.url}
-                onChange={(e) =>
-                  handleUpdateButton(index, "url", e.target.value)
-                }
-                placeholder="https://..."
-              />
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1 block">Platform</Label>
+                  <select
+                    value={button.icon}
+                    onChange={(e) => handleUpdateButton(index, "icon", e.target.value)}
+                    className="w-full h-10 px-3 border rounded-md bg-background"
+                  >
+                    {AVAILABLE_ICONS.map((icon) => (
+                      <option key={icon.value} value={icon.value}>
+                        {icon.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1 block">Button Text</Label>
+                  <Input
+                    value={button.label}
+                    onChange={(e) =>
+                      handleUpdateButton(index, "label", e.target.value)
+                    }
+                    placeholder="e.g., Follow me on Twitter"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1 block">URL</Label>
+                  <Input
+                    value={button.url}
+                    onChange={(e) =>
+                      handleUpdateButton(index, "url", e.target.value)
+                    }
+                    placeholder="https://twitter.com/yourname"
+                  />
+                </div>
+              </div>
             </div>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleRemoveButton(index)}
-              className="text-destructive hover:text-destructive"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        ))}
+          );
+        })}
 
         {state.buttons.length < 6 && (
           <Button
