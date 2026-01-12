@@ -14,11 +14,14 @@ import { ApiClient, Booking } from '@/lib/api-migration';
 import { usePrivy } from '@privy-io/react-auth';
 import ChatModal from '@/components/ChatModal';
 import { EnhancedCancelBookingModal } from '@/components/EnhancedCancelBookingModal';
-import { H2, H3, Text, Loading, EmptyState, Button as DSButton, StatusBadge, OnlineBadge, DurationBadge } from '@/design-system';
+import { H3, Text, Loading, EmptyState, Button as DSButton, StatusBadge, OnlineBadge, DurationBadge } from '@/design-system';
 import { calculatePlatformFee } from '@/lib/config';
 import { APP_NAME } from '@/lib/constants';
+import { useSetPageTitle } from '@/contexts/PageTitleContext';
 
 export default function ProviderOrders() {
+  // Set page title for AppHeader (desktop only)
+  useSetPageTitle('Bookings', 'Manage bookings from your visitors');
   const { userId, user } = useAuth();
   const { getAccessToken } = usePrivy();
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -732,15 +735,8 @@ export default function ProviderOrders() {
       {/* Mobile Layout */}
       <div className="lg:hidden min-h-screen bg-gray-50 pb-20">
           <div className="px-4 py-6">
-            {/* Top Header with Title and Tabs */}
-            <div className="mb-6">
-              {/* Title Section */}
-              <div className="mb-4">
-                <H2 className="mb-1">Bookings</H2>
-                <Text variant="small" color="secondary">Manage bookings from your visitors</Text>
-              </div>
-            
             {/* Horizontal Tab Navigation */}
+            <div className="mb-6">
             <div className="flex gap-1 p-1 bg-gray-100 rounded-lg overflow-x-auto">
               {Object.entries(tabLabels).map(([key, label]) => (
                 <button
