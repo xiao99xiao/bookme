@@ -20,16 +20,12 @@ import { OnboardingNavigator } from "./components/OnboardingNavigator";
 
 // Visitor pages
 import VisitorBookings from "./pages/visitor/CustomerBookings";
-import SettingsProfile from "./pages/settings/Profile";
 import VisitorMessages from "./pages/visitor/CustomerMessages";
 
 // Public Profile page (Nook - with theme support)
 import { PublicProfile } from "./pages/public-profile";
 import VisitorMobileChat from "./pages/visitor/CustomerMobileChat";
 
-// Settings pages
-import Customize from "./pages/settings/Customize";
-import ProfileTheme from "./pages/settings/ProfileTheme";
 
 // Host pages
 import HostBookings from "./pages/host/ProviderOrders";
@@ -74,30 +70,10 @@ function AppContent() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/settings/profile"
-              element={
-                <ProtectedRoute requireOnboarding={false}>
-                  <SettingsProfile />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/settings/customize"
-              element={
-                <ProtectedRoute>
-                  <Customize />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/settings/profile-theme"
-              element={
-                <ProtectedRoute>
-                  <ProfileTheme />
-                </ProtectedRoute>
-              }
-            />
+            {/* Legacy settings routes - redirect to Page Editor */}
+            <Route path="/settings/profile" element={<Navigate to="/host/page" replace />} />
+            <Route path="/settings/customize" element={<Navigate to="/host/page" replace />} />
+            <Route path="/settings/profile-theme" element={<Navigate to="/host/page" replace />} />
             {/* Auth routes */}
             <Route
               path="/auth"

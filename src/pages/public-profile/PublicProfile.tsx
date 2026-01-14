@@ -9,14 +9,14 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, Star, Video, Users, Phone, ChevronDown, ExternalLink, Twitter, Instagram, Youtube, Github, Linkedin, Globe, Mail, MessageCircle, Pencil } from "lucide-react";
+import { ArrowLeft, MapPin, Star, Video, Users, Phone, ChevronDown, ExternalLink, Twitter, Instagram, Youtube, Github, Linkedin, Globe, Mail, MessageCircle, Pencil, Clock } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { useAuth } from "@/contexts/PrivyAuthContext";
 import { usePrivy } from "@privy-io/react-auth";
 import { ApiClient } from "@/lib/api-migration";
 import CustomDatePicker from "@/components/CustomDatePicker";
 import { toast } from "sonner";
-import { getBrowserTimezone } from "@/lib/timezone";
+import { getBrowserTimezone, getTimezoneOffset } from "@/lib/timezone";
 import { Loading } from '@/design-system';
 import ReviewCommentDialog from "@/components/ReviewCommentDialog";
 import { useBlockchainService } from "@/lib/blockchain-service";
@@ -78,6 +78,7 @@ interface UserProfile {
   location: string | null;
   avatar: string | null;
   phone: string | null;
+  timezone: string | null;
   is_verified: boolean;
   rating: number;
   review_count: number;
@@ -504,6 +505,12 @@ const PublicProfile = () => {
                     <span className={`${THEME_CLASS_PREFIX}-badge`}>
                       <MapPin className={`${THEME_CLASS_PREFIX}-badge-icon`} />
                       {profile.location}
+                    </span>
+                  )}
+                  {profile.timezone && (
+                    <span className={`${THEME_CLASS_PREFIX}-badge`}>
+                      <Clock className={`${THEME_CLASS_PREFIX}-badge-icon`} />
+                      {getTimezoneOffset(profile.timezone)}
                     </span>
                   )}
                   <span className={`${THEME_CLASS_PREFIX}-badge`}>

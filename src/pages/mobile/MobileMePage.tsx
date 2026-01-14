@@ -454,7 +454,7 @@ export default function MobileMePage() {
 
             {/* Edit Profile Button */}
             <Button
-              onClick={() => navigate('/settings/profile')}
+              onClick={() => navigate('/host/page')}
               variant="outline"
               size="xs"
             >

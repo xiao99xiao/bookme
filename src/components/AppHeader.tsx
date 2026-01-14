@@ -194,9 +194,9 @@ export default function AppHeader({ showBackButton, onBack }: AppHeaderProps) {
               <div className="w-8 h-8 bg-muted rounded-full animate-pulse" />
             ) : isLoggedIn && userMode ? (
               <>
-                {/* Settings Button */}
+                {/* Page Editor Button */}
                 <Link
-                  to="/settings/profile"
+                  to="/host/page"
                   className="p-2 rounded-full hover:bg-gray-100 transition-colors"
                 >
                   <Settings className="w-5 h-5 text-gray-600" />
@@ -250,21 +250,15 @@ export default function AppHeader({ showBackButton, onBack }: AppHeaderProps) {
                             <ExternalLink className="w-3 h-3 ml-auto text-muted-foreground" />
                           </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link to="/host/page" className="flex items-center gap-2 cursor-pointer">
-                            <Settings className="w-4 h-4" />
-                            Customize Page
-                          </Link>
-                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                       </>
                     )}
 
                     {/* Utility Items */}
                     <DropdownMenuItem asChild>
-                      <Link to="/settings/profile" className="flex items-center gap-2 cursor-pointer">
+                      <Link to="/host/page" className="flex items-center gap-2 cursor-pointer">
                         <Settings className="w-4 h-4" />
-                        Settings
+                        Edit Page
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
