@@ -1878,11 +1878,11 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
     }
 
     return (
-      <div className="h-screen flex overflow-hidden">
+      <div className="page-editor h-screen flex overflow-hidden bg-gray-50/80">
         {/* Left Panel - Accordion Sections */}
-        <div className="flex-1 flex flex-col max-w-2xl border-r overflow-hidden">
+        <div className="flex-1 flex flex-col max-w-2xl overflow-hidden bg-white">
           {/* Header */}
-          <div className="p-6 border-b bg-gradient-to-b from-white to-gray-50/50">
+          <div className="flex-shrink-0 p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h1 className="text-xl font-semibold">Page Editor</h1>
@@ -1902,7 +1902,7 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
             </div>
             {/* Page URL Preview */}
             {profile?.username && (
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-white border border-gray-200 shadow-sm">
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-indigo-50/80 to-purple-50/50">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center flex-shrink-0">
                   <Globe className="w-4 h-4 text-white" />
                 </div>
@@ -2035,8 +2035,8 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
         </div>
 
         {/* Right Panel - Live Preview */}
-        <div className="hidden lg:flex flex-1 flex-col bg-muted/30 overflow-hidden">
-          <div className="flex-shrink-0 p-4 border-b bg-background flex items-center justify-between">
+        <div className="hidden lg:flex flex-1 flex-col overflow-hidden">
+          <div className="flex-shrink-0 px-6 py-4 flex items-center justify-between">
             <h3 className="font-medium text-sm text-muted-foreground">
               Live Preview
             </h3>
@@ -2051,8 +2051,8 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
               </Button>
             )}
           </div>
-          <div className="flex-1 p-4 overflow-hidden">
-            <div className="h-full rounded-lg border shadow-sm overflow-auto bg-background">
+          <div className="flex-1 px-6 pb-6 overflow-hidden">
+            <div className="h-full rounded-2xl shadow-lg overflow-auto bg-white">
               {renderPreview()}
             </div>
           </div>
