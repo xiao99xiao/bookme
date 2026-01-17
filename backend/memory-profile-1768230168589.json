@@ -1,0 +1,641 @@
+{
+  "timestamp": "2026-01-12T15:02:48.589Z",
+  "profiling": {
+    "duration": 300,
+    "samples": 30,
+    "interval": "10s"
+  },
+  "statistics": {
+    "duration": "300s",
+    "sampleCount": 30,
+    "heap": {
+      "min": 40.57,
+      "max": 47.28,
+      "avg": 42.57,
+      "final": 40.84
+    },
+    "heapTotal": {
+      "min": 43.59,
+      "max": 108.69,
+      "avg": 67.36,
+      "final": 43.59
+    },
+    "rss": {
+      "min": 122.27,
+      "max": 164.05,
+      "avg": 131.62,
+      "final": 122.39
+    },
+    "heapPercent": {
+      "min": 39.77,
+      "max": 93.68,
+      "avg": 74.47,
+      "final": 93.68
+    }
+  },
+  "issues": [
+    "High heap usage detected: 93.68% max"
+  ],
+  "samples": [
+    {
+      "timestamp": 1768229868584,
+      "uptime": 0,
+      "memory": {
+        "rss": 164,
+        "heapTotal": 107.19,
+        "heapUsed": 42.62,
+        "external": 3.75,
+        "arrayBuffers": 0.27
+      },
+      "percentages": {
+        "heapUsed": 39.77,
+        "external": 3.5
+      },
+      "heapStats": {
+        "codeAndMetadataSize": 0,
+        "bytecodeAndMetadataSize": 0,
+        "externalScriptSourceSize": 0
+      }
+    },
+    {
+      "timestamp": 1768229878586,
+      "uptime": 10,
+      "memory": {
+        "rss": 164.05,
+        "heapTotal": 107.19,
+        "heapUsed": 42.65,
+        "external": 3.75,
+        "arrayBuffers": 0.27
+      },
+      "percentages": {
+        "heapUsed": 39.79,
+        "external": 3.5
+      },
+      "heapStats": {
+        "codeAndMetadataSize": 0,
+        "bytecodeAndMetadataSize": 0,
+        "externalScriptSourceSize": 0
+      }
+    },
+    {
+      "timestamp": 1768229888588,
+      "uptime": 20,
+      "memory": {
+        "rss": 164.05,
+        "heapTotal": 107.19,
+        "heapUsed": 42.66,
+        "external": 3.75,
+        "arrayBuffers": 0.27
+      },
+      "percentages": {
+        "heapUsed": 39.8,
+        "external": 3.5
+      },
+      "heapStats": {
+        "codeAndMetadataSize": 0,
+        "bytecodeAndMetadataSize": 0,
+        "externalScriptSourceSize": 0
+      }
+    },
+    {
+      "timestamp": 1768229898589,
+      "uptime": 30,
+      "memory": {
+        "rss": 134.27,
+        "heapTotal": 107.69,
+        "heapUsed": 45.16,
+        "external": 3.99,
+        "arrayBuffers": 0.35
+      },
+      "percentages": {
+        "heapUsed": 41.94,
+        "external": 3.71
+      },
+      "heapStats": {
+        "codeAndMetadataSize": 0,
+        "bytecodeAndMetadataSize": 0,
+        "externalScriptSourceSize": 0
+      }
+    },
+    {
+      "timestamp": 1768229908589,
+      "uptime": 40,
+      "memory": {
+        "rss": 138.17,
+        "heapTotal": 108.69,
+        "heapUsed": 47.16,
+        "external": 4.07,
+        "arrayBuffers": 0.44
+      },
+      "percentages": {
+        "heapUsed": 43.39,
+        "external": 3.75
+      },
+      "heapStats": {
+        "codeAndMetadataSize": 0,
+        "bytecodeAndMetadataSize": 0,
+        "externalScriptSourceSize": 0
+      }
+    },
+    {
+      "timestamp": 1768229918591,
+      "uptime": 50,
+      "memory": {
+        "rss": 138.22,
+        "heapTotal": 108.69,
+        "heapUsed": 47.19,
+        "external": 4.07,
+        "arrayBuffers": 0.44
+      },
+      "percentages": {
+        "heapUsed": 43.42,
+        "external": 3.75
+      },
+      "heapStats": {
+        "codeAndMetadataSize": 0,
+        "bytecodeAndMetadataSize": 0,
+        "externalScriptSourceSize": 0
+      }
+    },
+    {
+      "timestamp": 1768229928593,
+      "uptime": 60,
+      "memory": {
+        "rss": 138.33,
+        "heapTotal": 108.69,
+        "heapUsed": 47.22,
+        "external": 4.07,
+        "arrayBuffers": 0.44
+      },
+      "percentages": {
+        "heapUsed": 43.44,
+        "external": 3.75
+      },
+      "heapStats": {
+        "codeAndMetadataSize": 0,
+        "bytecodeAndMetadataSize": 0,
+        "externalScriptSourceSize": 0
+      }
+    },
+    {
+      "timestamp": 1768229938595,
+      "uptime": 70,
+      "memory": {
+        "rss": 138.36,
+        "heapTotal": 108.69,
+        "heapUsed": 47.24,
+        "external": 4.07,
+        "arrayBuffers": 0.44
+      },
+      "percentages": {
+        "heapUsed": 43.47,
+        "external": 3.75
+      },
+      "heapStats": {
+        "codeAndMetadataSize": 0,
+        "bytecodeAndMetadataSize": 0,
+        "externalScriptSourceSize": 0
+      }
+    },
+    {
+      "timestamp": 1768229948597,
+      "uptime": 80,
+      "memory": {
+        "rss": 138.41,
+        "heapTotal": 108.69,
+        "heapUsed": 47.25,
+        "external": 4.07,
+        "arrayBuffers": 0.44
+      },
+      "percentages": {
+        "heapUsed": 43.47,
+        "external": 3.75
+      },
+      "heapStats": {
+        "codeAndMetadataSize": 0,
+        "bytecodeAndMetadataSize": 0,
+        "externalScriptSourceSize": 0
+      }
+    },
+    {
+      "timestamp": 1768229958598,
+      "uptime": 90,
+      "memory": {
+        "rss": 138.44,
+        "heapTotal": 108.69,
+        "heapUsed": 47.27,
+        "external": 4.07,
+        "arrayBuffers": 0.44
+      },
+      "percentages": {
+        "heapUsed": 43.5,
+        "external": 3.75
+      },
+      "heapStats": {
+        "codeAndMetadataSize": 0,
+        "bytecodeAndMetadataSize": 0,
+        "externalScriptSourceSize": 0
+      }
+    },
+    {
+      "timestamp": 1768229968600,
+      "uptime": 100,
+      "memory": {
+        "rss": 138.45,
+        "heapTotal": 108.69,
+        "heapUsed": 47.28,
+        "external": 4.07,
+        "arrayBuffers": 0.44
+      },
+      "percentages": {
+        "heapUsed": 43.5,
+        "external": 3.75
+      },
+      "heapStats": {
+        "codeAndMetadataSize": 0,
+        "bytecodeAndMetadataSize": 0,
+        "externalScriptSourceSize": 0
+      }
+    },
+    {
+      "timestamp": 1768229978603,
+      "uptime": 110,
+      "memory": {
+        "rss": 131.89,
+        "heapTotal": 43.84,
+        "heapUsed": 40.57,
+        "external": 3.82,
+        "arrayBuffers": 0.19
+      },
+      "percentages": {
+        "heapUsed": 92.53,
+        "external": 8.71
+      },
+      "heapStats": {
+        "codeAndMetadataSize": 0,
+        "bytecodeAndMetadataSize": 0,
+        "externalScriptSourceSize": 0
+      }
+    },
+    {
+      "timestamp": 1768229988605,
+      "uptime": 120,
+      "memory": {
+        "rss": 131.91,
+        "heapTotal": 43.84,
+        "heapUsed": 40.59,
+        "external": 3.82,
+        "arrayBuffers": 0.19
+      },
+      "percentages": {
+        "heapUsed": 92.57,
+        "external": 8.71
+      },
+      "heapStats": {
+        "codeAndMetadataSize": 0,
+        "bytecodeAndMetadataSize": 0,
+        "externalScriptSourceSize": 0
+      }
+    },
+    {
+      "timestamp": 1768229998608,
+      "uptime": 130,
+      "memory": {
+        "rss": 131.92,
+        "heapTotal": 43.84,
+        "heapUsed": 40.6,
+        "external": 3.82,
+        "arrayBuffers": 0.19
+      },
+      "percentages": {
+        "heapUsed": 92.59,
+        "external": 8.71
+      },
+      "heapStats": {
+        "codeAndMetadataSize": 0,
+        "bytecodeAndMetadataSize": 0,
+        "externalScriptSourceSize": 0
+      }
+    },
+    {
+      "timestamp": 1768230008609,
+      "uptime": 140,
+      "memory": {
+        "rss": 122.42,
+        "heapTotal": 43.84,
+        "heapUsed": 40.61,
+        "external": 3.82,
+        "arrayBuffers": 0.19
+      },
+      "percentages": {
+        "heapUsed": 92.63,
+        "external": 8.71
+      },
+      "heapStats": {
+        "codeAndMetadataSize": 0,
+        "bytecodeAndMetadataSize": 0,
+        "externalScriptSourceSize": 0
+      }
+    },
+    {
+      "timestamp": 1768230018612,
+      "uptime": 150,
+      "memory": {
+        "rss": 122.42,
+        "heapTotal": 43.84,
+        "heapUsed": 40.63,
+        "external": 3.82,
+        "arrayBuffers": 0.19
+      },
+      "percentages": {
+        "heapUsed": 92.67,
+        "external": 8.71
+      },
+      "heapStats": {
+        "codeAndMetadataSize": 0,
+        "bytecodeAndMetadataSize": 0,
+        "externalScriptSourceSize": 0
+      }
+    },
+    {
+      "timestamp": 1768230028614,
+      "uptime": 160,
+      "memory": {
+        "rss": 122.44,
+        "heapTotal": 43.84,
+        "heapUsed": 40.65,
+        "external": 3.82,
+        "arrayBuffers": 0.19
+      },
+      "percentages": {
+        "heapUsed": 92.72,
+        "external": 8.71
+      },
+      "heapStats": {
+        "codeAndMetadataSize": 0,
+        "bytecodeAndMetadataSize": 0,
+        "externalScriptSourceSize": 0
+      }
+    },
+    {
+      "timestamp": 1768230038616,
+      "uptime": 170,
+      "memory": {
+        "rss": 122.45,
+        "heapTotal": 43.84,
+        "heapUsed": 40.66,
+        "external": 3.82,
+        "arrayBuffers": 0.19
+      },
+      "percentages": {
+        "heapUsed": 92.74,
+        "external": 8.71
+      },
+      "heapStats": {
+        "codeAndMetadataSize": 0,
+        "bytecodeAndMetadataSize": 0,
+        "externalScriptSourceSize": 0
+      }
+    },
+    {
+      "timestamp": 1768230048616,
+      "uptime": 180,
+      "memory": {
+        "rss": 122.47,
+        "heapTotal": 43.84,
+        "heapUsed": 40.67,
+        "external": 3.82,
+        "arrayBuffers": 0.19
+      },
+      "percentages": {
+        "heapUsed": 92.77,
+        "external": 8.71
+      },
+      "heapStats": {
+        "codeAndMetadataSize": 0,
+        "bytecodeAndMetadataSize": 0,
+        "externalScriptSourceSize": 0
+      }
+    },
+    {
+      "timestamp": 1768230058619,
+      "uptime": 190,
+      "memory": {
+        "rss": 122.47,
+        "heapTotal": 43.84,
+        "heapUsed": 40.69,
+        "external": 3.82,
+        "arrayBuffers": 0.19
+      },
+      "percentages": {
+        "heapUsed": 92.8,
+        "external": 8.71
+      },
+      "heapStats": {
+        "codeAndMetadataSize": 0,
+        "bytecodeAndMetadataSize": 0,
+        "externalScriptSourceSize": 0
+      }
+    },
+    {
+      "timestamp": 1768230068621,
+      "uptime": 200,
+      "memory": {
+        "rss": 122.48,
+        "heapTotal": 43.84,
+        "heapUsed": 40.7,
+        "external": 3.82,
+        "arrayBuffers": 0.19
+      },
+      "percentages": {
+        "heapUsed": 92.83,
+        "external": 8.71
+      },
+      "heapStats": {
+        "codeAndMetadataSize": 0,
+        "bytecodeAndMetadataSize": 0,
+        "externalScriptSourceSize": 0
+      }
+    },
+    {
+      "timestamp": 1768230078623,
+      "uptime": 210,
+      "memory": {
+        "rss": 122.27,
+        "heapTotal": 43.59,
+        "heapUsed": 40.69,
+        "external": 3.82,
+        "arrayBuffers": 0.19
+      },
+      "percentages": {
+        "heapUsed": 93.33,
+        "external": 8.76
+      },
+      "heapStats": {
+        "codeAndMetadataSize": 0,
+        "bytecodeAndMetadataSize": 0,
+        "externalScriptSourceSize": 0
+      }
+    },
+    {
+      "timestamp": 1768230088625,
+      "uptime": 220,
+      "memory": {
+        "rss": 122.28,
+        "heapTotal": 43.59,
+        "heapUsed": 40.7,
+        "external": 3.82,
+        "arrayBuffers": 0.19
+      },
+      "percentages": {
+        "heapUsed": 93.37,
+        "external": 8.76
+      },
+      "heapStats": {
+        "codeAndMetadataSize": 0,
+        "bytecodeAndMetadataSize": 0,
+        "externalScriptSourceSize": 0
+      }
+    },
+    {
+      "timestamp": 1768230098627,
+      "uptime": 230,
+      "memory": {
+        "rss": 122.3,
+        "heapTotal": 43.59,
+        "heapUsed": 40.71,
+        "external": 3.82,
+        "arrayBuffers": 0.19
+      },
+      "percentages": {
+        "heapUsed": 93.39,
+        "external": 8.76
+      },
+      "heapStats": {
+        "codeAndMetadataSize": 0,
+        "bytecodeAndMetadataSize": 0,
+        "externalScriptSourceSize": 0
+      }
+    },
+    {
+      "timestamp": 1768230108630,
+      "uptime": 240,
+      "memory": {
+        "rss": 122.31,
+        "heapTotal": 43.59,
+        "heapUsed": 40.76,
+        "external": 3.82,
+        "arrayBuffers": 0.19
+      },
+      "percentages": {
+        "heapUsed": 93.5,
+        "external": 8.76
+      },
+      "heapStats": {
+        "codeAndMetadataSize": 0,
+        "bytecodeAndMetadataSize": 0,
+        "externalScriptSourceSize": 0
+      }
+    },
+    {
+      "timestamp": 1768230118631,
+      "uptime": 250,
+      "memory": {
+        "rss": 122.33,
+        "heapTotal": 43.59,
+        "heapUsed": 40.77,
+        "external": 3.82,
+        "arrayBuffers": 0.19
+      },
+      "percentages": {
+        "heapUsed": 93.52,
+        "external": 8.76
+      },
+      "heapStats": {
+        "codeAndMetadataSize": 0,
+        "bytecodeAndMetadataSize": 0,
+        "externalScriptSourceSize": 0
+      }
+    },
+    {
+      "timestamp": 1768230128632,
+      "uptime": 260,
+      "memory": {
+        "rss": 122.36,
+        "heapTotal": 43.59,
+        "heapUsed": 40.79,
+        "external": 3.82,
+        "arrayBuffers": 0.19
+      },
+      "percentages": {
+        "heapUsed": 93.58,
+        "external": 8.76
+      },
+      "heapStats": {
+        "codeAndMetadataSize": 0,
+        "bytecodeAndMetadataSize": 0,
+        "externalScriptSourceSize": 0
+      }
+    },
+    {
+      "timestamp": 1768230138632,
+      "uptime": 270,
+      "memory": {
+        "rss": 122.38,
+        "heapTotal": 43.59,
+        "heapUsed": 40.81,
+        "external": 3.82,
+        "arrayBuffers": 0.19
+      },
+      "percentages": {
+        "heapUsed": 93.62,
+        "external": 8.76
+      },
+      "heapStats": {
+        "codeAndMetadataSize": 0,
+        "bytecodeAndMetadataSize": 0,
+        "externalScriptSourceSize": 0
+      }
+    },
+    {
+      "timestamp": 1768230148635,
+      "uptime": 280,
+      "memory": {
+        "rss": 122.38,
+        "heapTotal": 43.59,
+        "heapUsed": 40.82,
+        "external": 3.82,
+        "arrayBuffers": 0.19
+      },
+      "percentages": {
+        "heapUsed": 93.64,
+        "external": 8.76
+      },
+      "heapStats": {
+        "codeAndMetadataSize": 0,
+        "bytecodeAndMetadataSize": 0,
+        "externalScriptSourceSize": 0
+      }
+    },
+    {
+      "timestamp": 1768230158638,
+      "uptime": 290,
+      "memory": {
+        "rss": 122.39,
+        "heapTotal": 43.59,
+        "heapUsed": 40.84,
+        "external": 3.82,
+        "arrayBuffers": 0.19
+      },
+      "percentages": {
+        "heapUsed": 93.68,
+        "external": 8.76
+      },
+      "heapStats": {
+        "codeAndMetadataSize": 0,
+        "bytecodeAndMetadataSize": 0,
+        "externalScriptSourceSize": 0
+      }
+    }
+  ]
+}

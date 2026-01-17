@@ -1725,9 +1725,9 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
     };
 
     return (
-      <div className="page-editor min-h-screen flex no-tab-bar-page">
+      <div className="page-editor h-screen flex overflow-hidden no-tab-bar-page">
         {/* Left Panel - Steps */}
-        <div className="flex-1 flex flex-col max-w-2xl border-r border-black/5">
+        <div className="flex-1 flex flex-col max-w-2xl border-r border-black/5 overflow-hidden">
           {/* Header */}
           <div className="page-editor-header">
             <div className="page-editor-header-top">
@@ -1878,9 +1878,9 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
     }
 
     return (
-      <div className="min-h-screen flex">
+      <div className="h-screen flex overflow-hidden">
         {/* Left Panel - Accordion Sections */}
-        <div className="flex-1 flex flex-col max-w-2xl border-r">
+        <div className="flex-1 flex flex-col max-w-2xl border-r overflow-hidden">
           {/* Header */}
           <div className="p-6 border-b bg-gradient-to-b from-white to-gray-50/50">
             <div className="flex items-center justify-between mb-4">
@@ -2035,8 +2035,8 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
         </div>
 
         {/* Right Panel - Live Preview */}
-        <div className="hidden lg:flex flex-1 flex-col bg-muted/30">
-          <div className="p-4 border-b bg-background flex items-center justify-between">
+        <div className="hidden lg:flex flex-1 flex-col bg-muted/30 overflow-hidden">
+          <div className="flex-shrink-0 p-4 border-b bg-background flex items-center justify-between">
             <h3 className="font-medium text-sm text-muted-foreground">
               Live Preview
             </h3>
@@ -2052,7 +2052,7 @@ const PageEditor = ({ mode = "editor" }: PageEditorProps) => {
             )}
           </div>
           <div className="flex-1 p-4 overflow-hidden">
-            <div className="h-full rounded-lg border shadow-sm overflow-hidden bg-background">
+            <div className="h-full rounded-lg border shadow-sm overflow-auto bg-background">
               {renderPreview()}
             </div>
           </div>
