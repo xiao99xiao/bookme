@@ -41,7 +41,7 @@ interface ReferralEarning {
 
 export default function ProviderReferrals() {
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { authenticated, loading: authLoading, userId } = useAuth();
   const [referralData, setReferralData] = useState<ReferralData | null>(null);
   const [stats, setStats] = useState<ReferralStats | null>(null);
   const [earnings, setEarnings] = useState<ReferralEarning[]>([]);
@@ -49,16 +49,16 @@ export default function ProviderReferrals() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!authLoading && !authenticated) {
       navigate('/auth');
     }
-  }, [user, authLoading, navigate]);
+  }, [authenticated, authLoading, navigate]);
 
   useEffect(() => {
-    if (user?.id) {
+    if (userId) {
       loadReferralData();
     }
-  }, [user?.id]);
+  }, [userId]);
 
   const loadReferralData = async () => {
     try {
@@ -185,7 +185,7 @@ export default function ProviderReferrals() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${(stats?.totalEarnings || 0).toFixed(2)}
+              ${Number(stats?.totalEarnings || 0).toFixed(2)}
             </div>
           </CardContent>
         </Card>
@@ -199,7 +199,7 @@ export default function ProviderReferrals() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${(stats?.pendingEarnings || 0).toFixed(2)}
+              ${Number(stats?.pendingEarnings || 0).toFixed(2)}
             </div>
           </CardContent>
         </Card>
