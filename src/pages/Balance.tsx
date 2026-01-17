@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { usePrivy, useWallets } from '@privy-io/react-auth';
 import { useSmartWallets } from '@privy-io/react-auth/smart-wallets';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge as DSBadge } from '@/design-system';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { Copy, Wallet, RefreshCw, ExternalLink, Plus, CreditCard, TrendingUp, Calendar, User, Coins, History, ArrowUpRight, ArrowDownRight, Gift } from 'lucide-react';
@@ -11,9 +9,9 @@ import { createPublicClient, http, formatUnits, type Address } from 'viem';
 import { base, baseSepolia } from 'viem/chains';
 import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient, type IncomeTransaction } from '@/lib/api-migration';
-import { H1 } from '@/design-system';
 import { usePoints } from '@/hooks/usePoints';
 import { useFunding } from '@/hooks/useFunding';
+import './styles/balance.css';
 
 // USDC contract addresses
 const USDC_ADDRESS_BASE = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913' as Address;
@@ -126,7 +124,7 @@ export default function Balance() {
           }
         }
 
-        const embeddedWallet = user?.linkedAccounts?.find((account: any) => 
+        const embeddedWallet = user?.linkedAccounts?.find((account: any) =>
           account.type === 'wallet' && account.walletClientType === 'privy'
         );
         if (embeddedWallet) {
@@ -270,16 +268,29 @@ export default function Balance() {
     setFundingInProgress(false);
   };
 
-  const getWalletTypeBadge = (type: WalletInfo['type']) => {
+  const getWalletBadgeClass = (type: WalletInfo['type']) => {
     switch (type) {
       case 'smart_wallet':
-        return <DSBadge className="bg-purple-100 text-purple-800">Smart Wallet</DSBadge>;
+        return 'wallet-badge wallet-badge--smart';
       case 'external':
-        return <DSBadge className="bg-blue-100 text-blue-800">External Wallet</DSBadge>;
+        return 'wallet-badge wallet-badge--external';
       case 'embedded':
-        return <DSBadge className="bg-green-100 text-green-800">Embedded Wallet</DSBadge>;
+        return 'wallet-badge wallet-badge--embedded';
       default:
-        return null;
+        return 'wallet-badge';
+    }
+  };
+
+  const getWalletBadgeLabel = (type: WalletInfo['type']) => {
+    switch (type) {
+      case 'smart_wallet':
+        return 'Smart Wallet';
+      case 'external':
+        return 'External Wallet';
+      case 'embedded':
+        return 'Embedded Wallet';
+      default:
+        return 'Wallet';
     }
   };
 
@@ -296,14 +307,16 @@ export default function Balance() {
 
   if (loading || authLoading) {
     return (
-      <div className="max-w-6xl mx-auto p-6">
-        <Skeleton className="h-8 w-32 mb-6" />
-        <div className="grid gap-6 lg:grid-cols-2">
-          <div className="space-y-6">
-            <Skeleton className="h-40 w-full" />
-            <Skeleton className="h-32 w-full" />
+      <div className="balance-container">
+        <div className="balance-loading">
+          <div className="balance-loading__header" />
+          <div className="balance-loading__grid">
+            <div className="balance-column">
+              <div className="balance-loading__card" />
+              <div className="balance-loading__card" />
+            </div>
+            <div className="balance-loading__section" />
           </div>
-          <Skeleton className="h-80 w-full" />
         </div>
       </div>
     );
@@ -311,380 +324,353 @@ export default function Balance() {
 
   if (!walletInfo) {
     return (
-      <div className="max-w-6xl mx-auto p-6">
-        <H1 className="mb-6">Wallet & Balance</H1>
-        <Card>
-          <CardHeader>
-            <CardTitle>No Wallet Detected</CardTitle>
-            <CardDescription>Please ensure you're logged in and have a wallet connected</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-8">
-              <Wallet className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 mb-4">
-                No wallet found. Please ensure you're logged in and have a wallet connected.
-              </p>
-              <Button onClick={() => window.location.reload()}>
-                Refresh Page
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="balance-container">
+        <div className="balance-header">
+          <h1 className="balance-header__title">Wallet & Balance</h1>
+        </div>
+        <div className="balance-no-wallet">
+          <Wallet className="balance-no-wallet__icon" />
+          <h2 className="balance-no-wallet__title">No Wallet Detected</h2>
+          <p className="balance-no-wallet__description">
+            Please ensure you're logged in and have a wallet connected.
+          </p>
+          <button className="balance-no-wallet__button" onClick={() => window.location.reload()}>
+            Refresh Page
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <div className="mb-8">
-        <H1>Wallet & Balance</H1>
-        <p className="text-gray-600 mt-1">
+    <div className="balance-container">
+      <div className="balance-header">
+        <h1 className="balance-header__title">Wallet & Balance</h1>
+        <p className="balance-header__subtitle">
           View your {chain.name} wallet balance and manage your funds
         </p>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-2">
+      <div className="balance-grid">
         {/* Left Column - Wallet Overview */}
-        <div className="space-y-6">
-          {/* Wallet Info Card */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Wallet Details</CardTitle>
-                  <CardDescription>Your connected wallet information</CardDescription>
-                </div>
-                {getWalletTypeBadge(walletInfo.type)}
+        <div className="balance-column">
+          {/* Wallet Details */}
+          <div className="wallet-details">
+            <div className="wallet-details__header">
+              <div>
+                <h2 className="wallet-details__title">Wallet Details</h2>
+                <p className="wallet-details__subtitle">Your connected wallet information</p>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Address</label>
-                  <div className="flex items-center justify-between mt-1">
-                    <code className="text-sm bg-gray-100 px-2 py-1 rounded">
-                      {formatAddress(walletInfo.address)}
-                    </code>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline" onClick={copyAddress}>
-                        <Copy className="w-4 h-4 mr-1" />
-                        Copy
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => window.open(`${explorerUrl}/address/${walletInfo.address}`, '_blank')}
-                      >
-                        <ExternalLink className="w-4 h-4 mr-1" />
-                        Explorer
-                      </Button>
-                    </div>
+              <span className={getWalletBadgeClass(walletInfo.type)}>
+                {getWalletBadgeLabel(walletInfo.type)}
+              </span>
+            </div>
+            <div className="wallet-details__content">
+              <div className="wallet-details__row">
+                <span className="wallet-details__label">Address</span>
+                <div className="wallet-details__value">
+                  <code className="wallet-details__address">
+                    {formatAddress(walletInfo.address)}
+                  </code>
+                  <div className="wallet-details__actions">
+                    <button className="wallet-details__btn" onClick={copyAddress}>
+                      <Copy /> Copy
+                    </button>
+                    <button
+                      className="wallet-details__btn"
+                      onClick={() => window.open(`${explorerUrl}/address/${walletInfo.address}`, '_blank')}
+                    >
+                      <ExternalLink /> Explorer
+                    </button>
                   </div>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Network</label>
-                  <p className="mt-1">{chain.name}</p>
-                </div>
               </div>
-            </CardContent>
-          </Card>
+              <div className="wallet-details__row">
+                <span className="wallet-details__label">Network</span>
+                <span className="wallet-details__network">{chain.name}</span>
+              </div>
+            </div>
+          </div>
 
           {/* Balance Cards */}
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="balance-summary">
             {/* USDC Balance */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">USDC Balance</CardTitle>
-                  <Button size="sm" variant="ghost" onClick={fetchBalances} disabled={refreshing}>
-                    <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="text-2xl font-bold">
-                    {usdcBalance ? (
-                      <>
-                        {parseFloat(usdcBalance.formatted).toLocaleString('en-US', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 6
-                        })}
-                        <span className="text-sm text-gray-500 ml-1">USDC</span>
-                      </>
-                    ) : (
-                      <span className="text-gray-400">0.00 USDC</span>
-                    )}
-                  </div>
-                  
-                  <Button
-                    onClick={handleFundUSDC}
-                    disabled={fundingInProgress || !walletInfo}
-                    size="sm"
-                    className="w-full"
-                    variant={parseFloat(usdcBalance?.formatted || '0') === 0 ? 'default' : 'outline'}
-                  >
-                    {fundingInProgress ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add USDC
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="balance-card">
+              <div className="balance-card__header">
+                <h3 className="balance-card__title">USDC Balance</h3>
+                <button
+                  className={`balance-card__refresh ${refreshing ? 'balance-card__refresh--spinning' : ''}`}
+                  onClick={fetchBalances}
+                  disabled={refreshing}
+                >
+                  <RefreshCw />
+                </button>
+              </div>
+              <p className="balance-card__value">
+                {usdcBalance ? (
+                  <>
+                    {parseFloat(usdcBalance.formatted).toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 6
+                    })}
+                    <span className="balance-card__unit">USDC</span>
+                  </>
+                ) : (
+                  <>0.00<span className="balance-card__unit">USDC</span></>
+                )}
+              </p>
+              <div className="balance-card__action">
+                <Button
+                  onClick={handleFundUSDC}
+                  disabled={fundingInProgress || !walletInfo}
+                  size="sm"
+                  className="w-full"
+                  variant={parseFloat(usdcBalance?.formatted || '0') === 0 ? 'default' : 'outline'}
+                >
+                  {fundingInProgress ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add USDC
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
 
             {/* ETH Balance */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">ETH Balance</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {parseFloat(nativeBalance).toLocaleString('en-US', {
-                    minimumFractionDigits: 4,
-                    maximumFractionDigits: 6
-                  })}
-                  <span className="text-sm text-gray-500 ml-1">ETH</span>
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Used for transaction fees
-                </p>
-              </CardContent>
-            </Card>
+            <div className="balance-card">
+              <div className="balance-card__header">
+                <h3 className="balance-card__title">ETH Balance</h3>
+              </div>
+              <p className="balance-card__value">
+                {parseFloat(nativeBalance).toLocaleString('en-US', {
+                  minimumFractionDigits: 4,
+                  maximumFractionDigits: 6
+                })}
+                <span className="balance-card__unit">ETH</span>
+              </p>
+              <p className="balance-card__note">Used for transaction fees</p>
+            </div>
           </div>
 
           {/* Points Balance Card */}
-          <Card className="border-emerald-200 bg-emerald-50/30">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Coins className="w-5 h-5 text-emerald-600" />
-                  Points Balance
-                </CardTitle>
-                <Button size="sm" variant="ghost" onClick={refreshPoints} disabled={pointsLoading}>
-                  <RefreshCw className={`w-4 h-4 ${pointsLoading ? 'animate-spin' : ''}`} />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="text-2xl font-bold text-emerald-600">
-                  {pointsLoading ? (
-                    <Skeleton className="h-8 w-24" />
-                  ) : (
-                    <>
-                      {formatPoints(pointsBalance)}
-                      <span className="text-sm text-gray-500 ml-1">pts</span>
-                    </>
-                  )}
-                </div>
-                <p className="text-sm text-gray-600">
-                  ≈ ${pointsUsdValue.toFixed(2)} USD
-                </p>
-                <p className="text-xs text-gray-500 mt-2">
-                  Use points to get up to 5% off on Talks. Earn points when you fund your wallet with a credit card.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="balance-card balance-card--highlight">
+            <div className="balance-card__header">
+              <h3 className="balance-card__title">
+                <Coins className="text-emerald-600" />
+                Points Balance
+              </h3>
+              <button
+                className={`balance-card__refresh ${pointsLoading ? 'balance-card__refresh--spinning' : ''}`}
+                onClick={refreshPoints}
+                disabled={pointsLoading}
+              >
+                <RefreshCw />
+              </button>
+            </div>
+            {pointsLoading ? (
+              <Skeleton className="h-8 w-24" />
+            ) : (
+              <p className="balance-card__value balance-card__value--success">
+                {formatPoints(pointsBalance)}
+                <span className="balance-card__unit">pts</span>
+              </p>
+            )}
+            <p className="balance-card__secondary">
+              ≈ ${pointsUsdValue.toFixed(2)} USD
+            </p>
+            <p className="balance-card__note">
+              Use points to get up to 5% off on Talks. Earn points when you fund your wallet with a credit card.
+            </p>
+          </div>
 
-          {/* Points History Card */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <History className="w-5 h-5 text-gray-600" />
+          {/* Points History */}
+          <div className="balance-section">
+            <div className="balance-section__header">
+              <div>
+                <h2 className="balance-section__title">
+                  <History />
                   Points History
-                </CardTitle>
-                <Button size="sm" variant="ghost" onClick={loadPointsHistory} disabled={loadingPointsHistory}>
-                  <RefreshCw className={`w-4 h-4 ${loadingPointsHistory ? 'animate-spin' : ''}`} />
-                </Button>
+                </h2>
               </div>
-            </CardHeader>
-            <CardContent>
+              <button
+                className={`balance-card__refresh ${loadingPointsHistory ? 'balance-card__refresh--spinning' : ''}`}
+                onClick={loadPointsHistory}
+                disabled={loadingPointsHistory}
+              >
+                <RefreshCw />
+              </button>
+            </div>
+            <div className="balance-section__content">
               {loadingPointsHistory ? (
                 <div className="space-y-3">
                   {[1, 2, 3].map((i) => (
-                    <Skeleton key={i} className="h-12 w-full" />
+                    <Skeleton key={i} className="h-14 w-full rounded-lg" />
                   ))}
                 </div>
               ) : pointsHistory.length === 0 ? (
-                <div className="text-center py-6">
-                  <Gift className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-                  <p className="text-gray-500 text-sm">No points history yet</p>
-                  <p className="text-xs text-gray-400 mt-1">
+                <div className="balance-empty">
+                  <Gift className="balance-empty__icon" />
+                  <p className="balance-empty__title">No points history yet</p>
+                  <p className="balance-empty__description">
                     Earn points by funding with credit card
                   </p>
                 </div>
               ) : (
-                <div className="space-y-3 max-h-64 overflow-y-auto">
+                <div className="transaction-list">
                   {pointsHistory.map((tx) => (
-                    <div key={tx.id} className="flex items-center justify-between p-2 border rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className={`p-1.5 rounded-full ${tx.amount > 0 ? 'bg-emerald-100' : 'bg-orange-100'}`}>
-                          {tx.amount > 0 ? (
-                            <ArrowDownRight className="w-4 h-4 text-emerald-600" />
-                          ) : (
-                            <ArrowUpRight className="w-4 h-4 text-orange-600" />
-                          )}
+                    <div key={tx.id} className="transaction-item">
+                      <div className="transaction-item__left">
+                        <div className={`transaction-item__icon ${tx.amount > 0 ? 'transaction-item__icon--points' : 'transaction-item__icon--spend'}`}>
+                          {tx.amount > 0 ? <ArrowDownRight /> : <ArrowUpRight />}
                         </div>
-                        <div>
-                          <p className="text-sm font-medium capitalize">
+                        <div className="transaction-item__info">
+                          <p className="transaction-item__title" style={{ textTransform: 'capitalize' }}>
                             {tx.type.replace(/_/g, ' ')}
                           </p>
-                          <p className="text-xs text-gray-500">
+                          <div className="transaction-item__meta">
                             {new Date(tx.createdAt).toLocaleDateString('en-US', {
                               month: 'short',
                               day: 'numeric',
                               hour: '2-digit',
                               minute: '2-digit'
                             })}
-                          </p>
+                          </div>
                         </div>
                       </div>
-                      <div className={`text-sm font-semibold ${tx.amount > 0 ? 'text-emerald-600' : 'text-orange-600'}`}>
-                        {tx.amount > 0 ? '+' : ''}{formatPoints(tx.amount)} pts
+                      <div className="transaction-item__right">
+                        <span className={`transaction-item__amount ${tx.amount > 0 ? 'transaction-item__amount--positive' : 'transaction-item__amount--negative'}`}>
+                          {tx.amount > 0 ? '+' : ''}{formatPoints(tx.amount)} pts
+                        </span>
                       </div>
                     </div>
                   ))}
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Quick Actions for empty balance */}
           {parseFloat(usdcBalance?.formatted || '0') === 0 && (
-            <Card className="border-blue-200 bg-blue-50/50">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center">
-                  <CreditCard className="w-5 h-5 mr-2 text-blue-600" />
-                  Get Started with USDC
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-gray-600 mb-4">
-                  You'll need USDC to book Talks on the platform. Fund your wallet to get started!
-                </p>
-                <Button 
-                  onClick={handleFundUSDC}
-                  disabled={fundingInProgress}
-                  className="w-full"
-                  size="lg"
-                >
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  Buy USDC with Card
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="balance-cta">
+              <div className="balance-cta__header">
+                <CreditCard className="balance-cta__icon" />
+                <h3 className="balance-cta__title">Get Started with USDC</h3>
+              </div>
+              <p className="balance-cta__description">
+                You'll need USDC to book Talks on the platform. Fund your wallet to get started!
+              </p>
+              <button
+                className="balance-cta__button"
+                onClick={handleFundUSDC}
+                disabled={fundingInProgress}
+              >
+                <CreditCard />
+                Buy USDC with Card
+              </button>
+            </div>
           )}
         </div>
 
         {/* Right Column - Income Transactions */}
-        <div>
-          <Card className="h-fit">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <TrendingUp className="w-5 h-5 text-green-600" />
-                      Your Income
-                    </CardTitle>
-                    <CardDescription>Earnings from completed Talks</CardDescription>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={loadIncomeTransactions}
-                    disabled={loadingIncome}
-                  >
-                    <RefreshCw className={`w-4 h-4 ${loadingIncome ? 'animate-spin' : ''}`} />
-                  </Button>
+        <div className="balance-column">
+          <div className="balance-section">
+            <div className="balance-section__header">
+              <div>
+                <h2 className="balance-section__title balance-section__title--success">
+                  <TrendingUp />
+                  Your Income
+                </h2>
+                <p className="balance-section__subtitle">Earnings from completed Talks</p>
+              </div>
+              <button
+                className={`balance-card__refresh ${loadingIncome ? 'balance-card__refresh--spinning' : ''}`}
+                onClick={loadIncomeTransactions}
+                disabled={loadingIncome}
+              >
+                <RefreshCw />
+              </button>
+            </div>
+            <div className="balance-section__content">
+              {loadingIncome ? (
+                <div className="space-y-4">
+                  <Skeleton className="h-12 w-32" />
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-16 w-full rounded-lg" />
+                  ))}
                 </div>
-              </CardHeader>
-              <CardContent>
-                {loadingIncome ? (
-                  <div className="space-y-4">
-                    <Skeleton className="h-12 w-32" />
-                    {[1, 2, 3].map((i) => (
-                      <Skeleton key={i} className="h-16 w-full" />
-                    ))}
+              ) : (
+                <>
+                  <div className="income-summary-box">
+                    <p className="income-summary-box__value">
+                      ${totalIncome.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
+                    <p className="income-summary-box__label">
+                      From {incomeTransactions.length} completed Talks
+                    </p>
                   </div>
-                ) : (
-                  <>
-                    <div className="mb-6">
-                      <div className="text-3xl font-bold text-green-600">
-                        ${totalIncome.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </div>
-                      <p className="text-sm text-gray-500 mt-1">
-                        From {incomeTransactions.length} completed Talks
+
+                  {incomeTransactions.length === 0 ? (
+                    <div className="balance-empty">
+                      <TrendingUp className="balance-empty__icon" />
+                      <p className="balance-empty__title">No income yet</p>
+                      <p className="balance-empty__description">
+                        Complete your first Talk to start earning
                       </p>
                     </div>
-
-                    {incomeTransactions.length === 0 ? (
-                      <div className="text-center py-8">
-                        <TrendingUp className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                        <p className="text-gray-500">No income yet</p>
-                        <p className="text-sm text-gray-400 mt-1">
-                          Complete your first Talk to start earning
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="space-y-4 max-h-96 overflow-y-auto">
-                        {incomeTransactions.map((transaction) => (
-                          <div key={transaction.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors">
-                            <div className="flex items-start space-x-3 flex-1">
-                              <div className="p-2 bg-green-100 rounded-lg">
-                                <TrendingUp className="w-4 h-4 text-green-600" />
-                              </div>
-                              
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium text-sm truncate">{transaction.service_title}</p>
-                                <p className="text-xs text-gray-600 flex items-center gap-1">
-                                  <User className="w-3 h-3" />
-                                  Visitor: {transaction.customer_name}
-                                </p>
-                                <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
-                                  <Calendar className="w-3 h-3" />
-                                  {formatDate(transaction.created_at)}
-                                </p>
-                              </div>
+                  ) : (
+                    <div className="transaction-list">
+                      {incomeTransactions.map((transaction) => (
+                        <div key={transaction.id} className="transaction-item">
+                          <div className="transaction-item__left">
+                            <div className="transaction-item__icon transaction-item__icon--success">
+                              <TrendingUp />
                             </div>
-                            
-                            <div className="text-right">
-                              <p className="text-sm font-semibold text-green-600">
-                                +${transaction.amount.toFixed(2)}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                Host earnings (90% of Talk)
-                              </p>
-                              {transaction.transaction_hash && (
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="text-xs h-auto p-1 mt-1"
-                                  onClick={() => window.open(`${explorerUrl}/tx/${transaction.transaction_hash}`, '_blank')}
-                                >
-                                  <ExternalLink className="w-3 h-3 mr-1" />
-                                  View
-                                </Button>
-                              )}
+                            <div className="transaction-item__info">
+                              <p className="transaction-item__title">{transaction.service_title}</p>
+                              <div className="transaction-item__meta">
+                                <User />
+                                Visitor: {transaction.customer_name}
+                              </div>
+                              <div className="transaction-item__meta">
+                                <Calendar />
+                                {formatDate(transaction.created_at)}
+                              </div>
                             </div>
                           </div>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                )}
-              </CardContent>
-            </Card>
+                          <div className="transaction-item__right">
+                            <span className="transaction-item__amount transaction-item__amount--positive">
+                              +${transaction.amount.toFixed(2)}
+                            </span>
+                            <span className="transaction-item__label">
+                              Host earnings (90%)
+                            </span>
+                            {transaction.transaction_hash && (
+                              <a
+                                href={`${explorerUrl}/tx/${transaction.transaction_hash}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="transaction-item__link"
+                              >
+                                <ExternalLink />
+                                View tx
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </div>
+        </div>
       </div>
     </div>
   );
