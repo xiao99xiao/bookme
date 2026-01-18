@@ -8,7 +8,7 @@ import { format } from 'date-fns'
 import { t } from '@/lib/i18n'
 import { useSetPageTitle } from '@/contexts/PageTitleContext'
 import { Button } from '@/design-system'
-import './styles/host-dashboard.css'
+import '@/styles/design-system-2025.css'
 
 interface Transaction {
   id: string
@@ -106,27 +106,29 @@ export default function Income() {
 
   if (authLoading || loading) {
     return (
-      <div className="income-loading">
-        <div className="income-loading__header" />
-        <div className="income-loading__cards">
-          <div className="income-loading__card" />
-          <div className="income-loading__card" />
-          <div className="income-loading__card" />
-          <div className="income-loading__card" />
+      <div className="ds-page">
+        <div className="ds-loading">
+          <div className="ds-loading__header" />
+          <div className="ds-loading__grid-4">
+            <div className="ds-loading__card" />
+            <div className="ds-loading__card" />
+            <div className="ds-loading__card" />
+            <div className="ds-loading__card" />
+          </div>
+          <div className="ds-loading__table" />
         </div>
-        <div className="income-loading__table" />
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="income-container">
-        <div className="income-card" style={{ borderColor: 'rgba(239, 68, 68, 0.3)' }}>
-          <p style={{ color: '#dc2626', marginBottom: '16px' }}>Error: {error}</p>
-          <Button onClick={loadIncomeData} variant="secondary">
+      <div className="ds-page">
+        <div className="ds-error">
+          <p className="ds-error__message">Error: {error}</p>
+          <button className="ds-error__btn" onClick={loadIncomeData}>
             Retry
-          </Button>
+          </button>
         </div>
       </div>
     )
@@ -143,15 +145,15 @@ export default function Income() {
   ]
 
   return (
-    <div className="income-container">
+    <div className="ds-page">
       {/* Header */}
-      <div className="income-header">
-        <h1 className="income-header__title">{t.pages.earnings.title}</h1>
+      <div className="ds-header ds-header--with-actions">
+        <h1 className="ds-header__title">{t.pages.earnings.title}</h1>
         <CSVLink
           data={csvData}
           headers={csvHeaders}
           filename={`income-${format(new Date(), 'yyyy-MM-dd')}.csv`}
-          className="income-header__export"
+          className="ds-btn ds-btn--outline"
         >
           <Download />
           Export CSV
@@ -159,55 +161,55 @@ export default function Income() {
       </div>
 
       {/* Summary Cards */}
-      <div className="income-summary">
-        <div className="income-card">
-          <div className="income-card__header">
-            <p className="income-card__label">Total Earnings</p>
-            <DollarSign className="income-card__icon" />
+      <div className="ds-summary-grid">
+        <div className="ds-card ds-animate-card">
+          <div className="ds-card__header">
+            <p className="ds-card__label">Total Earnings</p>
+            <DollarSign className="ds-card__icon" />
           </div>
-          <p className="income-card__value income-card__value--highlight">
+          <p className="ds-card__value ds-card__value--success">
             ${summary?.totalIncome?.toFixed(2) || '0.00'}
           </p>
         </div>
 
-        <div className="income-card">
-          <div className="income-card__header">
-            <p className="income-card__label">Total Transactions</p>
-            <TrendingUp className="income-card__icon" />
+        <div className="ds-card ds-animate-card">
+          <div className="ds-card__header">
+            <p className="ds-card__label">Total Transactions</p>
+            <TrendingUp className="ds-card__icon" />
           </div>
-          <p className="income-card__value">
+          <p className="ds-card__value">
             {summary?.transactionCount || 0}
           </p>
         </div>
 
-        <div className="income-card">
-          <div className="income-card__header">
-            <p className="income-card__label">Average Transaction</p>
-            <Calendar className="income-card__icon" />
+        <div className="ds-card ds-animate-card">
+          <div className="ds-card__header">
+            <p className="ds-card__label">Average Transaction</p>
+            <Calendar className="ds-card__icon" />
           </div>
-          <p className="income-card__value">
+          <p className="ds-card__value">
             ${summary?.averageTransactionValue?.toFixed(2) || '0.00'}
           </p>
         </div>
 
-        <div className="income-card">
-          <div className="income-card__header">
-            <p className="income-card__label">This Month</p>
-            <User className="income-card__icon" />
+        <div className="ds-card ds-animate-card">
+          <div className="ds-card__header">
+            <p className="ds-card__label">This Month</p>
+            <User className="ds-card__icon" />
           </div>
-          <p className="income-card__value income-card__value--highlight">
+          <p className="ds-card__value ds-card__value--success">
             ${summary?.thisMonthIncome?.toFixed(2) || '0.00'}
           </p>
         </div>
       </div>
 
       {/* Transactions Table */}
-      <div className="income-table-container">
-        <div className="income-table-header">
-          <h2 className="income-table-title">Transaction History</h2>
+      <div className="ds-section">
+        <div className="ds-section__header">
+          <h2 className="ds-section__title">Transaction History</h2>
         </div>
-        <div className="overflow-x-auto">
-          <table className="income-table">
+        <div className="ds-section__content ds-section__content--no-padding" style={{ overflowX: 'auto' }}>
+          <table className="ds-table">
             <thead>
               <tr>
                 <th>Date</th>
@@ -221,62 +223,64 @@ export default function Income() {
             <tbody>
               {transactions.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="income-table__empty">
-                    No transactions found
+                  <td colSpan={6}>
+                    <div className="ds-empty">
+                      <p className="ds-empty__title">No transactions found</p>
+                    </div>
                   </td>
                 </tr>
               ) : (
-                transactions.map((transaction) => (
-                  <tr key={transaction.id}>
+                transactions.map((transaction, index) => (
+                  <tr key={transaction.id} className="ds-animate-row" style={{ animationDelay: `${200 + index * 30}ms` }}>
                     <td>
-                      <div className="income-table__date">
+                      <div className="ds-table__date">
                         {format(new Date(transaction.created_at), 'MMM dd, yyyy')}
                       </div>
-                      <div className="income-table__time">
+                      <div className="ds-table__time">
                         {format(new Date(transaction.created_at), 'HH:mm')}
                       </div>
                     </td>
                     <td>
-                      <span className={`income-table__type-badge ${
+                      <span className={`ds-badge ${
                         transaction.type === 'inviter_fee'
-                          ? 'income-table__type-badge--referral'
-                          : 'income-table__type-badge--talk'
+                          ? 'ds-badge--purple'
+                          : 'ds-badge--blue'
                       }`}>
                         {transaction.type === 'inviter_fee' ? t.pages.earnings.referralFee : t.talk.singular}
                       </span>
                     </td>
                     <td>
-                      <div className="income-table__talk-name">
+                      <div className="ds-table__primary">
                         {transaction.service?.title || 'N/A'}
                       </div>
                       {transaction.booking && (
-                        <div className="income-table__talk-duration">
+                        <div className="ds-table__secondary">
                           {transaction.booking.duration_minutes} minutes
                         </div>
                       )}
                     </td>
                     <td>
-                      <div className="income-table__visitor">
+                      <div className="ds-table__primary">
                         {transaction.source_user?.display_name || 'Unknown'}
                       </div>
                       {transaction.source_user?.username && (
-                        <div className="income-table__visitor-username">
+                        <div className="ds-table__secondary">
                           @{transaction.source_user.username}
                         </div>
                       )}
                     </td>
                     <td>
                       {transaction.booking?.is_online ? (
-                        <span className="income-table__location--online">Online</span>
+                        <span className="ds-badge ds-badge--green">Online</span>
                       ) : (
                         <span>{transaction.booking?.location || 'N/A'}</span>
                       )}
                     </td>
                     <td>
-                      <div className="income-table__amount">
+                      <div className="ds-table__amount">
                         +${transaction.amount.toFixed(2)}
                       </div>
-                      <div className="income-table__amount-label">
+                      <div className="ds-table__secondary">
                         {transaction.type === 'inviter_fee' ? t.pages.earnings.referralBonus : t.pages.earnings.hostEarnings}
                       </div>
                     </td>

@@ -282,6 +282,7 @@ static async methodName(userId: string, data: any) {
 5. **src/main.tsx**: App initialization with Privy and Smart Wallets
 6. **vite.config.ts**: Node polyfills configuration for crypto operations
 7. **BOOKING_CARD_SPECIFICATIONS.md**: Booking card behavior specifications and required fixes
+8. **src/styles/design-system-2025.css**: Unified CSS design system with `ds-*` class naming
 
 ## Environment Variables
 
@@ -386,6 +387,56 @@ ENABLE_BLOCKCHAIN_MONITORING=false
 - Using shadcn/ui components (in src/components/ui/)
 - Styling with Tailwind CSS
 - Forms use react-hook-form with zod validation
+
+### 2025 Unified Design System
+
+The app uses a **unified CSS design system** located at `src/styles/design-system-2025.css`. This file contains all shared styles for dashboard pages, following 2025 design trends.
+
+#### Key Features
+- **Spring Animations**: `cubic-bezier(0.34, 1.56, 0.64, 1)` for bouncy, modern feel
+- **Large Border Radius**: 20px for cards (`--radius-xl`)
+- **Hover Lift Effects**: Cards lift and scale on hover with shadow transitions
+- **Staggered Entry Animations**: Sequential fade-up animations for lists
+- **Reduced Motion Support**: Respects `prefers-reduced-motion` preference
+
+#### Naming Convention
+All classes use `ds-` prefix with BEM-style naming:
+```css
+.ds-dashboard          /* Dashboard container */
+.ds-sidebar            /* Sidebar layout */
+.ds-nav                /* Navigation */
+.ds-booking-card       /* Booking card component */
+.ds-talk-item          /* Service/Talk item */
+.ds-talk-item--hidden  /* Modifier for hidden state */
+.ds-messages           /* Messages layout */
+.ds-empty              /* Empty state */
+```
+
+#### Pages Using the Design System
+| Page | Import | Key Classes |
+|------|--------|-------------|
+| `Balance.tsx` | `@/styles/design-system-2025.css` | `ds-page`, `ds-card`, `ds-table` |
+| `Income.tsx` | `@/styles/design-system-2025.css` | `ds-page`, `ds-summary-grid`, `ds-table` |
+| `ProviderOrders.tsx` | `@/styles/design-system-2025.css` | `ds-dashboard`, `ds-sidebar`, `ds-booking-card` |
+| `ProviderServices.tsx` | `@/styles/design-system-2025.css` | `ds-main`, `ds-talk-item`, `ds-preview` |
+| `ProviderMessages.tsx` | `@/styles/design-system-2025.css` | `ds-messages`, `ds-conversation-item` |
+| `ProviderReferrals.tsx` | `@/styles/design-system-2025.css` | `ds-page`, `ds-summary-grid`, `ds-table` |
+
+#### CSS Design Tokens
+The design system uses CSS variables defined in `src/index.css`:
+```css
+--radius-xl: 20px;          /* Large border radius */
+--shadow-md: 0 4px 6px...;  /* Medium shadow */
+--timing-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+--border-subtle: #e5e7eb;   /* Subtle border color */
+--duration-normal: 0.2s;    /* Animation duration */
+```
+
+#### When Adding New Pages
+1. Import `@/styles/design-system-2025.css`
+2. Use existing `ds-*` classes where possible
+3. Add new classes to `design-system-2025.css` with `ds-` prefix if needed
+4. Follow BEM naming: `.ds-component`, `.ds-component__element`, `.ds-component--modifier`
 
 ### Username System
 - **Public User Pages**: Only users with usernames have public user pages (`/{username}`)

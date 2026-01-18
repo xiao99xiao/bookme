@@ -18,7 +18,7 @@ import { H3, Text, Loading, EmptyState, Button as DSButton, StatusBadge, OnlineB
 import { calculatePlatformFee } from '@/lib/config';
 import { APP_NAME } from '@/lib/constants';
 import { useSetPageTitle } from '@/contexts/PageTitleContext';
-import './styles/host-dashboard.css';
+import '@/styles/design-system-2025.css';
 
 export default function ProviderOrders() {
   // Set page title for AppHeader (desktop only)
@@ -396,22 +396,22 @@ export default function ProviderOrders() {
   };
 
   return (
-    <div className="host-dashboard">
+    <div className="ds-dashboard">
       {/* Desktop Content Wrapper */}
       <div className="hidden lg:block max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {/* Desktop Layout */}
         <div className="flex gap-8">
           {/* Left Sidebar - Desktop Only */}
-          <div className="bookings-sidebar">
-            <div className="bookings-sidebar__nav">
+          <div className="ds-sidebar">
+            <div className="ds-sidebar__nav">
               {/* Vertical Navigation */}
-              <nav className="bookings-nav">
+              <nav className="ds-nav">
                 {Object.entries(tabLabels).map(([key, label]) => (
                   <button
                     key={key}
                     onClick={() => setActiveTab(key)}
-                    className={`bookings-nav__item ${
-                      activeTab === key ? 'bookings-nav__item--active' : ''
+                    className={`ds-nav__item ${
+                      activeTab === key ? 'ds-nav__item--active' : ''
                     }`}
                   >
                     {label}
@@ -442,7 +442,7 @@ export default function ProviderOrders() {
                   const earnings = booking.total_price - fee;
 
                   return (
-                    <div key={booking.id} className="booking-card">
+                    <div key={booking.id} className="ds-booking-card">
                       {/* Top Section: Title and Icons */}
                       <div className="flex items-start justify-between mb-6">
                         <div className="flex-1">

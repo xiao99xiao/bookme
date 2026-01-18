@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { H1, H3, Text, Description, Loading } from '@/design-system';
 import { t } from '@/lib/i18n';
 import { useSetPageTitle } from '@/contexts/PageTitleContext';
-import './styles/host-dashboard.css';
+import '@/styles/design-system-2025.css';
 
 export default function ProviderMessages() {
   // Set page title for AppHeader (desktop only)
@@ -114,33 +114,33 @@ export default function ProviderMessages() {
   return (
     <>
       {/* Desktop Layout */}
-      <div className="hidden lg:flex messages-container">
+      <div className="hidden lg:flex ds-messages">
         {/* Left Panel - Sidebar */}
-        <div className="messages-sidebar">
+        <div className="ds-messages-sidebar">
           {/* Title Section */}
-          <div className="messages-sidebar__header">
-            <h1 className="messages-sidebar__title">
+          <div className="ds-messages-sidebar__header">
+            <h1 className="ds-messages-sidebar__title">
               {t.pages.messages.title}
             </h1>
-            <p className="messages-sidebar__subtitle">
+            <p className="ds-messages-sidebar__subtitle">
               {t.pages.messages.chatWithAll}
             </p>
           </div>
 
           {/* Search Box */}
-          <div className="messages-search">
-            <Search className="messages-search__icon" />
+          <div className="ds-messages-search">
+            <Search className="ds-messages-search__icon" />
             <input
               type="text"
               placeholder="Search conversations..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="messages-search__input"
+              className="ds-messages-search__input"
             />
           </div>
 
           {/* Conversation List */}
-          <div className="messages-list">
+          <div className="ds-messages-list">
             <ConversationList
               conversations={conversations}
               selectedConversationId={selectedConversation?.id}
@@ -153,19 +153,19 @@ export default function ProviderMessages() {
         </div>
 
         {/* Right Panel - Message Thread */}
-        <div className="messages-thread">
+        <div className="ds-messages-thread">
           {selectedConversation ? (
-            <div className="messages-thread__container">
+            <div className="ds-messages-thread__container">
               <MessageThread
                 conversation={selectedConversation}
                 onConversationUpdate={handleConversationUpdate}
               />
             </div>
           ) : (
-            <div className="messages-empty">
-              <MessageSquare className="messages-empty__icon" />
-              <h3 className="messages-empty__title">Select a conversation</h3>
-              <p className="messages-empty__description">
+            <div className="ds-messages-empty">
+              <MessageSquare className="ds-messages-empty__icon" />
+              <h3 className="ds-messages-empty__title">Select a conversation</h3>
+              <p className="ds-messages-empty__description">
                 Choose a conversation from the left to start messaging
               </p>
             </div>
@@ -174,30 +174,30 @@ export default function ProviderMessages() {
       </div>
 
       {/* Mobile Layout - List only */}
-      <div className="lg:hidden messages-mobile">
+      <div className="lg:hidden ds-messages-mobile">
         {/* Search */}
-        <div className="messages-mobile__search">
-          <div className="messages-search">
-            <Search className="messages-search__icon" />
+        <div className="ds-messages-mobile__search">
+          <div className="ds-messages-search">
+            <Search className="ds-messages-search__icon" />
             <input
               type="text"
               placeholder="Search conversations..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="messages-search__input"
+              className="ds-messages-search__input"
             />
           </div>
         </div>
 
         {/* Conversation List */}
-        <div className="messages-mobile__list">
+        <div className="ds-messages-mobile__list">
           {loading ? (
             <Loading variant="spinner" size="md" text="Loading conversations..." />
           ) : conversations.length === 0 ? (
-            <div className="messages-empty" style={{ height: 'auto', marginTop: '48px' }}>
-              <MessageSquare className="messages-empty__icon" />
-              <h3 className="messages-empty__title">No conversations yet</h3>
-              <p className="messages-empty__description">Your messages will appear here</p>
+            <div className="ds-messages-empty" style={{ height: 'auto', marginTop: '48px' }}>
+              <MessageSquare className="ds-messages-empty__icon" />
+              <h3 className="ds-messages-empty__title">No conversations yet</h3>
+              <p className="ds-messages-empty__description">Your messages will appear here</p>
             </div>
           ) : (
             conversations
@@ -214,11 +214,11 @@ export default function ProviderMessages() {
                 <div
                   key={conversation.id}
                   onClick={() => handleConversationSelect(conversation)}
-                  className="conversation-item-mobile"
+                  className="ds-conversation-item-mobile"
                 >
                   {/* Avatar */}
-                  <div className="conversation-item__avatar">
-                    <div className="conversation-item__avatar-img">
+                  <div className="ds-conversation-item__avatar">
+                    <div className="ds-conversation-item__avatar-img">
                       {conversation.otherUser.avatar ? (
                         <img
                           src={conversation.otherUser.avatar}
@@ -226,26 +226,26 @@ export default function ProviderMessages() {
                           className="w-12 h-12 rounded-full object-cover"
                         />
                       ) : (
-                        <span className="conversation-item__avatar-initial">
+                        <span className="ds-conversation-item__avatar-initial">
                           {conversation.otherUser.display_name.charAt(0).toUpperCase()}
                         </span>
                       )}
                     </div>
                     {conversation.unreadCount > 0 && (
-                      <div className="conversation-item__unread-badge">
+                      <div className="ds-conversation-item__unread-badge">
                         {conversation.unreadCount}
                       </div>
                     )}
                   </div>
 
                   {/* Content */}
-                  <div className="conversation-item__content">
-                    <div className="conversation-item__header">
-                      <span className="conversation-item__name">
+                  <div className="ds-conversation-item__content">
+                    <div className="ds-conversation-item__header">
+                      <span className="ds-conversation-item__name">
                         {conversation.otherUser.display_name}
                       </span>
                       {conversation.lastMessage && (
-                        <span className="conversation-item__time">
+                        <span className="ds-conversation-item__time">
                           {(() => {
                             const date = new Date(conversation.lastMessage.created_at);
                             const now = new Date();
@@ -263,12 +263,12 @@ export default function ProviderMessages() {
                       )}
                     </div>
                     {conversation.booking?.service?.title && (
-                      <div className="conversation-item__service">
+                      <div className="ds-conversation-item__service">
                         {conversation.booking.service.title}
                       </div>
                     )}
                     {conversation.lastMessage && (
-                      <div className="conversation-item__message">
+                      <div className="ds-conversation-item__message">
                         {conversation.lastMessage.content}
                       </div>
                     )}

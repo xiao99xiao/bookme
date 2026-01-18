@@ -22,7 +22,7 @@ import { RefactoredServiceModal } from '@/components/RefactoredServiceModal';
 import { ServiceCard } from '@/components/ServiceCard';
 import { H2, H3, Text, Loading } from '@/design-system';
 import { useSetPageTitle } from '@/contexts/PageTitleContext';
-import './styles/host-dashboard.css';
+import '@/styles/design-system-2025.css';
 
 interface Service {
   id: string;
@@ -186,18 +186,18 @@ export default function ProviderServices() {
   };
 
   return (
-    <div className="host-dashboard">
+    <div className="ds-dashboard">
       {/* Desktop Content Wrapper */}
       <div className="hidden lg:block max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {/* Desktop Layout */}
         <div className="flex gap-8">
           {/* Main Content - Services List */}
-          <div className="host-main flex-1 space-y-6">
+          <div className="ds-main flex-1 space-y-6">
           {/* Add Service Button */}
           <div className={`pb-8 mb-8 ${services.length === 0 ? "mt-12" : "mt-6"} border-b`} style={{ borderColor: 'var(--border-subtle)' }}>
             <button
               onClick={handleCreateService}
-              className="host-action-btn"
+              className="ds-action-btn"
             >
               <Plus className="h-5 w-5" />
               Create a Talk
@@ -208,10 +208,10 @@ export default function ProviderServices() {
           {loading ? (
             <Loading variant="spinner" size="md" text="Loading Talks..." fullHeight={true} />
           ) : services.length === 0 ? (
-            <div className="host-empty-state">
-              <Briefcase className="host-empty-state__icon" />
-              <h3 className="host-empty-state__title">No Talks yet</h3>
-              <p className="host-empty-state__description">
+            <div className="ds-empty">
+              <Briefcase className="ds-empty__icon" />
+              <h3 className="ds-empty__title">No Talks yet</h3>
+              <p className="ds-empty__description">
                 Create your first Talk to start accepting bookings
               </p>
             </div>
@@ -220,36 +220,36 @@ export default function ProviderServices() {
               {services.map((service, index) => (
                 <div
                   key={service.id}
-                  className={`talk-item ${service.is_visible === false ? 'talk-item--hidden' : ''}`}
+                  className={`ds-talk-item ${service.is_visible === false ? 'ds-talk-item--hidden' : ''}`}
                 >
-                  <div className="talk-item__content">
-                    <div className="talk-item__info">
-                      <div className="talk-item__header">
-                        <h3 className="talk-item__title">{service.title}</h3>
+                  <div className="ds-talk-item__content">
+                    <div className="ds-talk-item__info">
+                      <div className="ds-talk-item__header">
+                        <h3 className="ds-talk-item__title">{service.title}</h3>
                         {service.is_visible === false && (
-                          <span className="talk-item__badge">Hidden</span>
+                          <span className="ds-talk-item__badge">Hidden</span>
                         )}
                       </div>
 
-                      <p className="talk-item__description">
+                      <p className="ds-talk-item__description">
                         {service.description}
                       </p>
 
-                      <div className="talk-item__meta">
-                        <div className="talk-item__meta-item">
+                      <div className="ds-talk-item__meta">
+                        <div className="ds-talk-item__meta-item">
                           <Clock />
                           {service.duration_minutes} min
                         </div>
-                        <div className="talk-item__meta-item">
+                        <div className="ds-talk-item__meta-item">
                           <DollarSign />
                           ${service.price}
                         </div>
-                        <div className="talk-item__meta-item">
+                        <div className="ds-talk-item__meta-item">
                           <MapPin />
                           {getLocationDisplay(service)}
                         </div>
                         {service.timeSlots && (
-                          <div className="talk-item__meta-item">
+                          <div className="ds-talk-item__meta-item">
                             <Calendar />
                             {Object.keys(service.timeSlots).length} slots
                           </div>
@@ -257,9 +257,9 @@ export default function ProviderServices() {
                       </div>
                     </div>
 
-                    <div className="talk-item__actions">
+                    <div className="ds-talk-item__actions">
                       <button
-                        className="talk-item__action-btn"
+                        className="ds-talk-item__action-btn"
                         onClick={() => handleToggleVisibility(service)}
                         title={service.is_visible !== false ? 'Hide from public view' : 'Show in public view'}
                       >
@@ -270,14 +270,14 @@ export default function ProviderServices() {
                         )}
                       </button>
                       <button
-                        className="talk-item__action-btn"
+                        className="ds-talk-item__action-btn"
                         onClick={() => handleEditService(service)}
                         title="Edit Talk"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
-                        className="talk-item__action-btn talk-item__action-btn--delete"
+                        className="ds-talk-item__action-btn ds-talk-item__action-btn--delete"
                         onClick={() => setDeletingService(service)}
                         title="Delete Talk"
                       >
@@ -294,11 +294,11 @@ export default function ProviderServices() {
           {/* Right Column - Preview - Desktop Only */}
           <div className="w-[400px] flex-shrink-0">
             <div className="fixed w-[400px] h-screen">
-              <div className="host-preview h-full overflow-y-auto">
-                <div className="host-preview__content">
-                  <div className="host-preview__header">
-                    <h2 className="host-preview__title">Talks Preview</h2>
-                    <p className="host-preview__subtitle">This is how your Talks appear to visitors</p>
+              <div className="ds-preview h-full overflow-y-auto">
+                <div className="ds-preview__content">
+                  <div className="ds-preview__header">
+                    <h2 className="ds-preview__title">Talks Preview</h2>
+                    <p className="ds-preview__subtitle">This is how your Talks appear to visitors</p>
                   </div>
 
                   {services.filter(service => service.is_visible !== false).length > 0 ? (
@@ -306,26 +306,26 @@ export default function ProviderServices() {
                       {services.filter(service => service.is_visible !== false).map((service) => (
                         <div
                           key={service.id}
-                          className="preview-talk-card"
+                          className="ds-preview-card"
                         >
                           {/* Service Header */}
-                          <div className="preview-talk-card__header">
-                            <h3 className="preview-talk-card__title">
+                          <div className="ds-preview-card__header">
+                            <h3 className="ds-preview-card__title">
                               {service.title}
                             </h3>
-                            <div className="preview-talk-card__price-wrapper">
-                              <div className="preview-talk-card__price">${service.price}</div>
-                              <div className="preview-talk-card__duration">{service.duration_minutes} min</div>
+                            <div className="ds-preview-card__price-wrapper">
+                              <div className="ds-preview-card__price">${service.price}</div>
+                              <div className="ds-preview-card__duration">{service.duration_minutes} min</div>
                             </div>
                           </div>
 
                           {/* Service Description */}
-                          <p className="preview-talk-card__description">
+                          <p className="ds-preview-card__description">
                             {service.description || service.short_description}
                           </p>
 
                           {/* Service Metadata */}
-                          <div className="preview-talk-card__meta">
+                          <div className="ds-preview-card__meta">
                             {getLocationIcon(service.is_online, !!service.location)}
                             <span>{getLocationText(service.is_online, !!service.location)}</span>
                           </div>
@@ -333,32 +333,32 @@ export default function ProviderServices() {
                       ))}
                     </div>
                   ) : (
-                    <div className="host-empty-state">
-                      <Briefcase className="host-empty-state__icon" />
-                      <h3 className="host-empty-state__title">No Talks to preview</h3>
-                      <p className="host-empty-state__description">Create your first Talk to see how it will appear to visitors</p>
+                    <div className="ds-empty">
+                      <Briefcase className="ds-empty__icon" />
+                      <h3 className="ds-empty__title">No Talks to preview</h3>
+                      <p className="ds-empty__description">Create your first Talk to see how it will appear to visitors</p>
                     </div>
                   )}
 
                   {/* Talk Tips */}
-                  <div className="host-tips">
-                    <h3 className="host-tips__title">Tips for Great Talks</h3>
-                    <div className="host-tips__list">
-                      <div className="host-tips__item">
-                        <div className="host-tips__bullet" />
-                        <p className="host-tips__text">Use clear, descriptive titles that visitors can easily understand</p>
+                  <div className="ds-tips">
+                    <h3 className="ds-tips__title">Tips for Great Talks</h3>
+                    <div className="ds-tips__list">
+                      <div className="ds-tips__item">
+                        <div className="ds-tips__bullet" />
+                        <p className="ds-tips__text">Use clear, descriptive titles that visitors can easily understand</p>
                       </div>
-                      <div className="host-tips__item">
-                        <div className="host-tips__bullet" />
-                        <p className="host-tips__text">Set competitive prices based on your expertise and market rates</p>
+                      <div className="ds-tips__item">
+                        <div className="ds-tips__bullet" />
+                        <p className="ds-tips__text">Set competitive prices based on your expertise and market rates</p>
                       </div>
-                      <div className="host-tips__item">
-                        <div className="host-tips__bullet" />
-                        <p className="host-tips__text">Include all important details in your Talk description</p>
+                      <div className="ds-tips__item">
+                        <div className="ds-tips__bullet" />
+                        <p className="ds-tips__text">Include all important details in your Talk description</p>
                       </div>
-                      <div className="host-tips__item">
-                        <div className="host-tips__bullet" />
-                        <p className="host-tips__text">Keep Talks visible to appear in search results</p>
+                      <div className="ds-tips__item">
+                        <div className="ds-tips__bullet" />
+                        <p className="ds-tips__text">Keep Talks visible to appear in search results</p>
                       </div>
                     </div>
                   </div>

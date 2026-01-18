@@ -11,7 +11,7 @@ import { useAuth } from '@/contexts/PrivyAuthContext';
 import { ApiClient, type IncomeTransaction } from '@/lib/api-migration';
 import { usePoints } from '@/hooks/usePoints';
 import { useFunding } from '@/hooks/useFunding';
-import './styles/balance.css';
+import '@/styles/design-system-2025.css';
 
 // USDC contract addresses
 const USDC_ADDRESS_BASE = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913' as Address;
@@ -268,19 +268,6 @@ export default function Balance() {
     setFundingInProgress(false);
   };
 
-  const getWalletBadgeClass = (type: WalletInfo['type']) => {
-    switch (type) {
-      case 'smart_wallet':
-        return 'wallet-badge wallet-badge--smart';
-      case 'external':
-        return 'wallet-badge wallet-badge--external';
-      case 'embedded':
-        return 'wallet-badge wallet-badge--embedded';
-      default:
-        return 'wallet-badge';
-    }
-  };
-
   const getWalletBadgeLabel = (type: WalletInfo['type']) => {
     switch (type) {
       case 'smart_wallet':
@@ -307,15 +294,15 @@ export default function Balance() {
 
   if (loading || authLoading) {
     return (
-      <div className="balance-container">
-        <div className="balance-loading">
-          <div className="balance-loading__header" />
-          <div className="balance-loading__grid">
-            <div className="balance-column">
-              <div className="balance-loading__card" />
-              <div className="balance-loading__card" />
+      <div className="ds-page">
+        <div className="ds-loading">
+          <div className="ds-loading__header" />
+          <div className="ds-loading__grid-2">
+            <div className="ds-column">
+              <div className="ds-loading__card ds-loading__card--tall" />
+              <div className="ds-loading__card" />
             </div>
-            <div className="balance-loading__section" />
+            <div className="ds-loading__section" />
           </div>
         </div>
       </div>
@@ -324,60 +311,64 @@ export default function Balance() {
 
   if (!walletInfo) {
     return (
-      <div className="balance-container">
-        <div className="balance-header">
-          <h1 className="balance-header__title">Wallet & Balance</h1>
+      <div className="ds-page">
+        <div className="ds-header">
+          <h1 className="ds-header__title">Wallet & Balance</h1>
         </div>
-        <div className="balance-no-wallet">
-          <Wallet className="balance-no-wallet__icon" />
-          <h2 className="balance-no-wallet__title">No Wallet Detected</h2>
-          <p className="balance-no-wallet__description">
-            Please ensure you're logged in and have a wallet connected.
-          </p>
-          <button className="balance-no-wallet__button" onClick={() => window.location.reload()}>
-            Refresh Page
-          </button>
+        <div className="ds-card ds-card--no-hover">
+          <div className="ds-empty">
+            <Wallet className="ds-empty__icon" />
+            <p className="ds-empty__title">No Wallet Detected</p>
+            <p className="ds-empty__description">
+              Please ensure you're logged in and have a wallet connected.
+            </p>
+          </div>
+          <div className="ds-card__action" style={{ textAlign: 'center' }}>
+            <button className="ds-btn ds-btn--primary" onClick={() => window.location.reload()}>
+              Refresh Page
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="balance-container">
-      <div className="balance-header">
-        <h1 className="balance-header__title">Wallet & Balance</h1>
-        <p className="balance-header__subtitle">
+    <div className="ds-page">
+      <div className="ds-header">
+        <h1 className="ds-header__title">Wallet & Balance</h1>
+        <p className="ds-header__subtitle">
           View your {chain.name} wallet balance and manage your funds
         </p>
       </div>
 
-      <div className="balance-grid">
+      <div className="ds-grid-2">
         {/* Left Column - Wallet Overview */}
-        <div className="balance-column">
+        <div className="ds-column">
           {/* Wallet Details */}
-          <div className="wallet-details">
-            <div className="wallet-details__header">
+          <div className="ds-card ds-card--no-hover ds-animate-card">
+            <div className="ds-card__header">
               <div>
-                <h2 className="wallet-details__title">Wallet Details</h2>
-                <p className="wallet-details__subtitle">Your connected wallet information</p>
+                <h2 className="ds-card__title">Wallet Details</h2>
+                <p className="ds-card__note" style={{ marginTop: '4px' }}>Your connected wallet information</p>
               </div>
-              <span className={getWalletBadgeClass(walletInfo.type)}>
+              <span className={`ds-badge ${walletInfo.type === 'smart_wallet' ? 'ds-badge--purple' : walletInfo.type === 'external' ? 'ds-badge--blue' : 'ds-badge--gray'}`}>
                 {getWalletBadgeLabel(walletInfo.type)}
               </span>
             </div>
-            <div className="wallet-details__content">
-              <div className="wallet-details__row">
-                <span className="wallet-details__label">Address</span>
-                <div className="wallet-details__value">
-                  <code className="wallet-details__address">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
+              <div className="ds-wallet-row">
+                <span className="ds-wallet-label">Address</span>
+                <div className="ds-wallet-value">
+                  <code className="ds-address">
                     {formatAddress(walletInfo.address)}
                   </code>
-                  <div className="wallet-details__actions">
-                    <button className="wallet-details__btn" onClick={copyAddress}>
+                  <div className="ds-wallet-actions">
+                    <button className="ds-btn ds-btn--outline" onClick={copyAddress}>
                       <Copy /> Copy
                     </button>
                     <button
-                      className="wallet-details__btn"
+                      className="ds-btn ds-btn--outline"
                       onClick={() => window.open(`${explorerUrl}/address/${walletInfo.address}`, '_blank')}
                     >
                       <ExternalLink /> Explorer
@@ -385,41 +376,41 @@ export default function Balance() {
                   </div>
                 </div>
               </div>
-              <div className="wallet-details__row">
-                <span className="wallet-details__label">Network</span>
-                <span className="wallet-details__network">{chain.name}</span>
+              <div className="ds-wallet-row">
+                <span className="ds-wallet-label">Network</span>
+                <span className="ds-wallet-network">{chain.name}</span>
               </div>
             </div>
           </div>
 
           {/* Balance Cards */}
-          <div className="balance-summary">
+          <div className="ds-summary-grid-2">
             {/* USDC Balance */}
-            <div className="balance-card">
-              <div className="balance-card__header">
-                <h3 className="balance-card__title">USDC Balance</h3>
+            <div className="ds-card ds-animate-card">
+              <div className="ds-card__header">
+                <h3 className="ds-card__label">USDC Balance</h3>
                 <button
-                  className={`balance-card__refresh ${refreshing ? 'balance-card__refresh--spinning' : ''}`}
+                  className={`ds-refresh-btn ${refreshing ? 'ds-refresh-btn--spinning' : ''}`}
                   onClick={fetchBalances}
                   disabled={refreshing}
                 >
                   <RefreshCw />
                 </button>
               </div>
-              <p className="balance-card__value">
+              <p className="ds-card__value">
                 {usdcBalance ? (
                   <>
                     {parseFloat(usdcBalance.formatted).toLocaleString('en-US', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 6
                     })}
-                    <span className="balance-card__unit">USDC</span>
+                    <span className="ds-card__unit">USDC</span>
                   </>
                 ) : (
-                  <>0.00<span className="balance-card__unit">USDC</span></>
+                  <>0.00<span className="ds-card__unit">USDC</span></>
                 )}
               </p>
-              <div className="balance-card__action">
+              <div className="ds-card__action">
                 <Button
                   onClick={handleFundUSDC}
                   disabled={fundingInProgress || !walletInfo}
@@ -443,30 +434,30 @@ export default function Balance() {
             </div>
 
             {/* ETH Balance */}
-            <div className="balance-card">
-              <div className="balance-card__header">
-                <h3 className="balance-card__title">ETH Balance</h3>
+            <div className="ds-card ds-animate-card">
+              <div className="ds-card__header">
+                <h3 className="ds-card__label">ETH Balance</h3>
               </div>
-              <p className="balance-card__value">
+              <p className="ds-card__value">
                 {parseFloat(nativeBalance).toLocaleString('en-US', {
                   minimumFractionDigits: 4,
                   maximumFractionDigits: 6
                 })}
-                <span className="balance-card__unit">ETH</span>
+                <span className="ds-card__unit">ETH</span>
               </p>
-              <p className="balance-card__note">Used for transaction fees</p>
+              <p className="ds-card__note">Used for transaction fees</p>
             </div>
           </div>
 
           {/* Points Balance Card */}
-          <div className="balance-card balance-card--highlight">
-            <div className="balance-card__header">
-              <h3 className="balance-card__title">
+          <div className="ds-card ds-card--success ds-animate-card">
+            <div className="ds-card__header">
+              <h3 className="ds-card__title">
                 <Coins className="text-emerald-600" />
                 Points Balance
               </h3>
               <button
-                className={`balance-card__refresh ${pointsLoading ? 'balance-card__refresh--spinning' : ''}`}
+                className={`ds-refresh-btn ${pointsLoading ? 'ds-refresh-btn--spinning' : ''}`}
                 onClick={refreshPoints}
                 disabled={pointsLoading}
               >
@@ -476,37 +467,37 @@ export default function Balance() {
             {pointsLoading ? (
               <Skeleton className="h-8 w-24" />
             ) : (
-              <p className="balance-card__value balance-card__value--success">
+              <p className="ds-card__value ds-card__value--success">
                 {formatPoints(pointsBalance)}
-                <span className="balance-card__unit">pts</span>
+                <span className="ds-card__unit">pts</span>
               </p>
             )}
-            <p className="balance-card__secondary">
+            <p className="ds-card__secondary">
               ≈ ${pointsUsdValue.toFixed(2)} USD
             </p>
-            <p className="balance-card__note">
+            <p className="ds-card__note">
               Use points to get up to 5% off on Talks. Earn points when you fund your wallet with a credit card.
             </p>
           </div>
 
           {/* Points History */}
-          <div className="balance-section">
-            <div className="balance-section__header">
+          <div className="ds-section ds-animate-card">
+            <div className="ds-section__header">
               <div>
-                <h2 className="balance-section__title">
+                <h2 className="ds-section__title">
                   <History />
                   Points History
                 </h2>
               </div>
               <button
-                className={`balance-card__refresh ${loadingPointsHistory ? 'balance-card__refresh--spinning' : ''}`}
+                className={`ds-refresh-btn ${loadingPointsHistory ? 'ds-refresh-btn--spinning' : ''}`}
                 onClick={loadPointsHistory}
                 disabled={loadingPointsHistory}
               >
                 <RefreshCw />
               </button>
             </div>
-            <div className="balance-section__content">
+            <div className="ds-section__content">
               {loadingPointsHistory ? (
                 <div className="space-y-3">
                   {[1, 2, 3].map((i) => (
@@ -514,26 +505,26 @@ export default function Balance() {
                   ))}
                 </div>
               ) : pointsHistory.length === 0 ? (
-                <div className="balance-empty">
-                  <Gift className="balance-empty__icon" />
-                  <p className="balance-empty__title">No points history yet</p>
-                  <p className="balance-empty__description">
+                <div className="ds-empty">
+                  <Gift className="ds-empty__icon" />
+                  <p className="ds-empty__title">No points history yet</p>
+                  <p className="ds-empty__description">
                     Earn points by funding with credit card
                   </p>
                 </div>
               ) : (
-                <div className="transaction-list">
-                  {pointsHistory.map((tx) => (
-                    <div key={tx.id} className="transaction-item">
-                      <div className="transaction-item__left">
-                        <div className={`transaction-item__icon ${tx.amount > 0 ? 'transaction-item__icon--points' : 'transaction-item__icon--spend'}`}>
+                <div className="ds-list">
+                  {pointsHistory.map((tx, index) => (
+                    <div key={tx.id} className={`ds-list-item ds-animate-list-item`} style={{ animationDelay: `${100 + index * 30}ms` }}>
+                      <div className="ds-list-item__left">
+                        <div className={`ds-list-item__icon ${tx.amount > 0 ? 'ds-list-item__icon--success' : 'ds-list-item__icon--warning'}`}>
                           {tx.amount > 0 ? <ArrowDownRight /> : <ArrowUpRight />}
                         </div>
-                        <div className="transaction-item__info">
-                          <p className="transaction-item__title" style={{ textTransform: 'capitalize' }}>
+                        <div className="ds-list-item__info">
+                          <p className="ds-list-item__title" style={{ textTransform: 'capitalize' }}>
                             {tx.type.replace(/_/g, ' ')}
                           </p>
-                          <div className="transaction-item__meta">
+                          <div className="ds-list-item__meta">
                             {new Date(tx.createdAt).toLocaleDateString('en-US', {
                               month: 'short',
                               day: 'numeric',
@@ -543,8 +534,8 @@ export default function Balance() {
                           </div>
                         </div>
                       </div>
-                      <div className="transaction-item__right">
-                        <span className={`transaction-item__amount ${tx.amount > 0 ? 'transaction-item__amount--positive' : 'transaction-item__amount--negative'}`}>
+                      <div className="ds-list-item__right">
+                        <span className={`ds-list-item__amount ${tx.amount > 0 ? 'ds-list-item__amount--positive' : 'ds-list-item__amount--negative'}`}>
                           {tx.amount > 0 ? '+' : ''}{formatPoints(tx.amount)} pts
                         </span>
                       </div>
@@ -557,16 +548,18 @@ export default function Balance() {
 
           {/* Quick Actions for empty balance */}
           {parseFloat(usdcBalance?.formatted || '0') === 0 && (
-            <div className="balance-cta">
-              <div className="balance-cta__header">
-                <CreditCard className="balance-cta__icon" />
-                <h3 className="balance-cta__title">Get Started with USDC</h3>
+            <div className="ds-card ds-card--info ds-animate-card">
+              <div className="ds-card__header">
+                <h3 className="ds-card__title">
+                  <CreditCard />
+                  Get Started with USDC
+                </h3>
               </div>
-              <p className="balance-cta__description">
+              <p className="ds-card__note" style={{ marginTop: '8px', marginBottom: '16px' }}>
                 You'll need USDC to book Talks on the platform. Fund your wallet to get started!
               </p>
               <button
-                className="balance-cta__button"
+                className="ds-btn ds-btn--primary ds-btn--full"
                 onClick={handleFundUSDC}
                 disabled={fundingInProgress}
               >
@@ -578,25 +571,25 @@ export default function Balance() {
         </div>
 
         {/* Right Column - Income Transactions */}
-        <div className="balance-column">
-          <div className="balance-section">
-            <div className="balance-section__header">
+        <div className="ds-column">
+          <div className="ds-section ds-animate-card" style={{ animationDelay: '100ms' }}>
+            <div className="ds-section__header">
               <div>
-                <h2 className="balance-section__title balance-section__title--success">
+                <h2 className="ds-section__title ds-section__title--success">
                   <TrendingUp />
                   Your Income
                 </h2>
-                <p className="balance-section__subtitle">Earnings from completed Talks</p>
+                <p className="ds-section__subtitle">Earnings from completed Talks</p>
               </div>
               <button
-                className={`balance-card__refresh ${loadingIncome ? 'balance-card__refresh--spinning' : ''}`}
+                className={`ds-refresh-btn ${loadingIncome ? 'ds-refresh-btn--spinning' : ''}`}
                 onClick={loadIncomeTransactions}
                 disabled={loadingIncome}
               >
                 <RefreshCw />
               </button>
             </div>
-            <div className="balance-section__content">
+            <div className="ds-section__content">
               {loadingIncome ? (
                 <div className="space-y-4">
                   <Skeleton className="h-12 w-32" />
@@ -606,48 +599,48 @@ export default function Balance() {
                 </div>
               ) : (
                 <>
-                  <div className="income-summary-box">
-                    <p className="income-summary-box__value">
+                  <div className="ds-summary-box">
+                    <p className="ds-summary-box__value">
                       ${totalIncome.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </p>
-                    <p className="income-summary-box__label">
+                    <p className="ds-summary-box__label">
                       From {incomeTransactions.length} completed Talks
                     </p>
                   </div>
 
                   {incomeTransactions.length === 0 ? (
-                    <div className="balance-empty">
-                      <TrendingUp className="balance-empty__icon" />
-                      <p className="balance-empty__title">No income yet</p>
-                      <p className="balance-empty__description">
+                    <div className="ds-empty">
+                      <TrendingUp className="ds-empty__icon" />
+                      <p className="ds-empty__title">No income yet</p>
+                      <p className="ds-empty__description">
                         Complete your first Talk to start earning
                       </p>
                     </div>
                   ) : (
-                    <div className="transaction-list">
-                      {incomeTransactions.map((transaction) => (
-                        <div key={transaction.id} className="transaction-item">
-                          <div className="transaction-item__left">
-                            <div className="transaction-item__icon transaction-item__icon--success">
+                    <div className="ds-list">
+                      {incomeTransactions.map((transaction, index) => (
+                        <div key={transaction.id} className={`ds-list-item ds-animate-list-item`} style={{ animationDelay: `${200 + index * 30}ms` }}>
+                          <div className="ds-list-item__left">
+                            <div className="ds-list-item__icon ds-list-item__icon--success">
                               <TrendingUp />
                             </div>
-                            <div className="transaction-item__info">
-                              <p className="transaction-item__title">{transaction.service_title}</p>
-                              <div className="transaction-item__meta">
+                            <div className="ds-list-item__info">
+                              <p className="ds-list-item__title">{transaction.service_title}</p>
+                              <div className="ds-list-item__meta">
                                 <User />
                                 Visitor: {transaction.customer_name}
                               </div>
-                              <div className="transaction-item__meta">
+                              <div className="ds-list-item__meta">
                                 <Calendar />
                                 {formatDate(transaction.created_at)}
                               </div>
                             </div>
                           </div>
-                          <div className="transaction-item__right">
-                            <span className="transaction-item__amount transaction-item__amount--positive">
+                          <div className="ds-list-item__right">
+                            <span className="ds-list-item__amount ds-list-item__amount--positive">
                               +${transaction.amount.toFixed(2)}
                             </span>
-                            <span className="transaction-item__label">
+                            <span className="ds-list-item__label">
                               Host earnings (90%)
                             </span>
                             {transaction.transaction_hash && (
@@ -655,7 +648,7 @@ export default function Balance() {
                                 href={`${explorerUrl}/tx/${transaction.transaction_hash}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="transaction-item__link"
+                                className="ds-list-item__link"
                               >
                                 <ExternalLink />
                                 View tx
